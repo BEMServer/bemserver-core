@@ -1,22 +1,35 @@
 """ Global conftest"""
-import os
 import datetime as dt
 
 import pytest
-
-from dotenv import load_dotenv
+from pytest_postgresql import factories as ppf
 
 from bemserver_core.database import db
 from bemserver_core import model
 
 
-load_dotenv('.env')
+postgresql_proc = ppf.postgresql_proc(
+    postgres_options="-c shared_preload_libraries='timescaledb'"
+)
+postgresql = ppf.postgresql('postgresql_proc')
 
 
 @pytest.fixture
-def database():
-    db.set_db_url(os.getenv("TEST_SQLALCHEMY_DATABASE_URI"))
-    db.setup_tables()
+def database(postgresql):
+
+    db_url = (
+        "postgresql+psycopg2://"
+        f"{postgresql.info.user}:{postgresql.info.password}"
+        f"@{postgresql.info.host}:{postgresql.info.port}/"
+        f"{postgresql.info.dbname}"
+    )
+    db.set_db_url(db_url)
+
+    with db.session() as session:
+        session.execute("CREATE EXTENSION IF NOT EXISTS timescaledb;")
+        session.commit()
+
+    db.create_all()
     yield db
     db.session.remove()
     # Destroy DB engine, mainly for threaded code (as MQTT service).

@@ -28,18 +28,6 @@ class DBConnection:
         """Create all tables"""
         Base.metadata.create_all(bind=self.engine)
 
-    def drop_all(self):
-        """Drop all tables"""
-        # Close all sessions before droping else drop_all can be stucked,
-        #  especially when session is still in an open transaction.
-        sqla.orm.session.close_all_sessions()
-        Base.metadata.drop_all(bind=self.engine)
-
-    def setup_tables(self):
-        """Recreate database tables"""
-        self.drop_all()
-        self.create_all()
-
     def dispose(self):
         self.engine.dispose()
         self.engine = None
