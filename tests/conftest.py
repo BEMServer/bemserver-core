@@ -6,6 +6,7 @@ from pytest_postgresql import factories as ppf
 
 from bemserver_core.database import db
 from bemserver_core import model
+from bemserver_core.testutils import setup_db
 
 
 postgresql_proc = ppf.postgresql_proc(
@@ -16,24 +17,7 @@ postgresql = ppf.postgresql('postgresql_proc')
 
 @pytest.fixture
 def database(postgresql):
-
-    db_url = (
-        "postgresql+psycopg2://"
-        f"{postgresql.info.user}:{postgresql.info.password}"
-        f"@{postgresql.info.host}:{postgresql.info.port}/"
-        f"{postgresql.info.dbname}"
-    )
-    db.set_db_url(db_url)
-
-    with db.session() as session:
-        session.execute("CREATE EXTENSION IF NOT EXISTS timescaledb;")
-        session.commit()
-
-    db.create_all()
-    yield db
-    db.session.remove()
-    # Destroy DB engine, mainly for threaded code (as MQTT service).
-    db.dispose()
+    yield from setup_db(postgresql)
 
 
 @pytest.fixture(params=[{}])
