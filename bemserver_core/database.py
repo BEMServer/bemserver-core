@@ -24,6 +24,10 @@ class DBConnection:
     def session(self):
         return DB_SESSION
 
+    @property
+    def url(self):
+        return self.engine.url if self.engine else None
+
     def create_all(self):
         """Create all tables"""
         Base.metadata.create_all(bind=self.engine)
