@@ -33,6 +33,8 @@ setup(
         "psycopg2>=2.8.0",
         "sqlalchemy>=1.4.0",
         "pandas>=1.2.3",
+        "passlib>=1.7.4",
+        "argon2_cffi>=20.1.0",
     ],
     packages=find_packages(exclude=["tests*"]),
 )
