@@ -1,5 +1,4 @@
 """Databases: SQLAlchemy database access"""
-
 import sqlalchemy as sqla
 from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base
 
@@ -17,7 +16,12 @@ class DBConnection:
 
     def set_db_url(self, db_url):
         """Set DB URL"""
-        self.engine = sqla.create_engine(db_url, future=True)
+        self.engine = sqla.create_engine(
+            db_url,
+            # Set UTC for all connections
+            connect_args={"options": "-c timezone=utc"},
+            future=True,
+        )
         SESSION_FACTORY.configure(bind=self.engine)
 
     @property

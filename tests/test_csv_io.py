@@ -5,8 +5,6 @@ import datetime as dt
 
 import pytest
 
-from sqlalchemy.sql.expression import func
-
 from bemserver_core.model import TimeseriesData
 from bemserver_core.csv_io import tscsvio
 from bemserver_core.database import db
@@ -42,7 +40,7 @@ class TestTimeseriesCSVIO:
         tscsvio.import_csv(csv_file)
 
         data = db.session.query(
-            func.timezone("UTC", TimeseriesData.timestamp).label("timestamp"),
+            TimeseriesData.timestamp,
             TimeseriesData.timeseries_id,
             TimeseriesData.value,
         ).order_by(
@@ -50,7 +48,10 @@ class TestTimeseriesCSVIO:
             TimeseriesData.timestamp,
         ).all()
 
-        timestamps = [dt.datetime(2020, 1, 1, i) for i in range(4)]
+        timestamps = [
+            dt.datetime(2020, 1, 1, i, tzinfo=dt.timezone.utc)
+            for i in range(4)
+        ]
 
         expected = [
                 (timestamp, ts_0_id, float(idx))

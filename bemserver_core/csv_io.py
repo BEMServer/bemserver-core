@@ -81,7 +81,7 @@ class TimeseriesCSVIO:
         """
         data = db.session.execute(
             sqla.select(
-                sqla.func.timezone("UTC", TimeseriesData.timestamp),
+                TimeseriesData.timestamp,
                 TimeseriesData.timeseries_id,
                 TimeseriesData.value,
             ).filter(
@@ -97,7 +97,7 @@ class TimeseriesCSVIO:
             pd.DataFrame(data, columns=('Datetime', 'tsid', 'value'))
             .set_index("Datetime")
         )
-        data_df.index = pd.DatetimeIndex(data_df.index).tz_localize('UTC')
+        data_df.index = pd.DatetimeIndex(data_df.index)
         data_df = data_df.pivot(columns='tsid', values='value')
 
         # Add missing columns, in query order
