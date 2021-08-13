@@ -56,6 +56,20 @@ class UserByCampaign(Base):
         sqla.ForeignKey("users.id"),
     )
 
+    @classmethod
+    def get_by_user(cls, user, **kwargs):
+        """Get all campaigns readable by user"""
+        ret = db.session.query(UserByCampaign).filter_by(**kwargs)
+        if not user.is_admin:
+            ret = ret.filter(UserByCampaign.user_id == user.id)
+        return ret
+
+    def can_read(self, user):
+        """Check user can read user_by_campaign"""
+        if user.is_admin:
+            return True
+        return user.id == self.user_id
+
 
 class TimeseriesByCampaign(Base):
     """Timeseries x Campaign associations
