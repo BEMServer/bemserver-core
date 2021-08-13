@@ -46,3 +46,15 @@ class User(Base):
 
     def check_password(self, password: str) -> bool:
         return argon2.verify(password, self.password)
+
+    def can_read(self, user):
+        """Check user can read user"""
+        if user.is_admin:
+            return True
+        return user.id == self.id
+
+    def can_write(self, user):
+        """Check user can write user"""
+        if user.is_admin:
+            return True
+        return user.id == self.id
