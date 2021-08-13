@@ -1,7 +1,7 @@
 """Campaings"""
 import sqlalchemy as sqla
 
-from bemserver_core.database import Base
+from bemserver_core.database import Base, db
 
 
 class Campaign(Base):
@@ -12,6 +12,28 @@ class Campaign(Base):
     description = sqla.Column(sqla.String(500))
     start_time = sqla.Column(sqla.DateTime(timezone=True))
     end_time = sqla.Column(sqla.DateTime(timezone=True))
+
+    @classmethod
+    def get_by_user(cls, user, **kwargs):
+        """Get all campaigns readable by user"""
+        ret = db.session.query(Campaign).filter_by(**kwargs)
+        if not user.is_admin:
+            ret = ret.join(UserByCampaign).filter(
+                UserByCampaign.user_id == user.id
+            )
+        return ret
+
+    def can_read(self, user):
+        """Check user can read campaign"""
+        if user.is_admin:
+            return True
+        stmt = sqla.select(UserByCampaign).where(
+            sqla.and_(
+                UserByCampaign.user_id == user.id,
+                UserByCampaign.campaign_id == self.id
+            )
+        )
+        return bool(db.session.execute(stmt).all())
 
 
 class UserByCampaign(Base):
