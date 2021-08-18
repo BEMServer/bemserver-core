@@ -3,9 +3,17 @@ import sqlalchemy as sqla
 from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base
 
 
+class Base:
+    """Custom base class"""
+    def update(self, **kwargs):
+        """Update object with kwargs"""
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+
 SESSION_FACTORY = sessionmaker(autocommit=False, autoflush=False)
 DB_SESSION = scoped_session(SESSION_FACTORY)
-Base = declarative_base()
+Base = declarative_base(cls=Base)
 
 
 class DBConnection:
