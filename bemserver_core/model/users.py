@@ -3,9 +3,12 @@ from passlib.hash import argon2
 import sqlalchemy as sqla
 
 from bemserver_core.database import Base
+from bemserver_core.auth import (
+    AuthMixin, CURRENT_USER, BEMServerAuthorizationError
+)
 
 
-class User(Base):
+class User(AuthMixin, Base):
     __tablename__ = "users"
 
     id = sqla.Column(
@@ -42,19 +45,40 @@ class User(Base):
         )
 
     def set_password(self, password: str) -> None:
+        self.check_update_permissions()
         self.password = argon2.hash(password)
 
     def check_password(self, password: str) -> bool:
+        self.check_update_permissions()
         return argon2.verify(password, self.password)
 
-    def can_read(self, user):
-        """Check user can read user"""
-        if user.is_admin:
-            return True
-        return user.id == self.id
+    @classmethod
+    def get(cls, **kwargs):
+        """Get objects"""
+        current_user = CURRENT_USER.get()
+        if current_user and not current_user.is_admin:
+            raise BEMServerAuthorizationError("User can't read users")
+        return super().get(**kwargs)
 
-    def can_write(self, user):
-        """Check user can write user"""
-        if user.is_admin:
-            return True
-        return user.id == self.id
+    def check_read_permissions(self, current_user, **kwargs):
+        """Check read persmissions"""
+        if not current_user.is_admin and current_user.id != self.id:
+            raise BEMServerAuthorizationError("User can't read other user")
+
+    def check_update_permissions(self, **kwargs):
+        current_user = CURRENT_USER.get()
+        if current_user and not current_user.is_admin:
+            if current_user.id != self.id:
+                raise BEMServerAuthorizationError(
+                    "User can't modify other user"
+                )
+            if set(kwargs.keys()) & {"is_admin", "is_active"}:
+                raise BEMServerAuthorizationError(
+                    "User can't modify read-only fields"
+                )
+
+    def update(self, **kwargs):
+        """Update object with kwargs"""
+        # Circumvent AuthMixin.update: users can update themselves
+        self.check_update_permissions(**kwargs)
+        Base.update(self, **kwargs)

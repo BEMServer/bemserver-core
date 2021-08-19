@@ -2,9 +2,12 @@
 import sqlalchemy as sqla
 
 from bemserver_core.database import Base, db
+from bemserver_core.auth import (
+    AuthMixin, CURRENT_USER, BEMServerAuthorizationError
+)
 
 
-class Campaign(Base):
+class Campaign(AuthMixin, Base):
     __tablename__ = "campaigns"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -14,26 +17,27 @@ class Campaign(Base):
     end_time = sqla.Column(sqla.DateTime(timezone=True))
 
     @classmethod
-    def get_by_user(cls, user, **kwargs):
-        """Get all campaigns readable by user"""
-        ret = db.session.query(Campaign).filter_by(**kwargs)
-        if not user.is_admin:
-            ret = ret.join(UserByCampaign).filter(
-                UserByCampaign.user_id == user.id
+    def get(cls, **kwargs):
+        """Get objects"""
+        query = super().get(**kwargs)
+        current_user = CURRENT_USER.get()
+        if current_user and not current_user.is_admin:
+            query = query.join(UserByCampaign).filter(
+                UserByCampaign.user_id == current_user.id
             )
-        return ret
+        return query
 
-    def can_read(self, user):
-        """Check user can read campaign"""
-        if user.is_admin:
-            return True
-        stmt = sqla.select(UserByCampaign).where(
-            sqla.and_(
-                UserByCampaign.user_id == user.id,
-                UserByCampaign.campaign_id == self.id
+    def check_read_permissions(self, current_user, **kwargs):
+        """Check read persmissions"""
+        if not current_user.is_admin:
+            stmt = sqla.select(UserByCampaign).where(
+                sqla.and_(
+                    UserByCampaign.user_id == current_user.id,
+                    UserByCampaign.campaign_id == self.id
+                )
             )
-        )
-        return bool(db.session.execute(stmt).all())
+            if not db.session.execute(stmt).all():
+                raise BEMServerAuthorizationError("User can't read campaign")
 
 
 class UserByCampaign(Base):
@@ -57,18 +61,18 @@ class UserByCampaign(Base):
     )
 
     @classmethod
-    def get_by_user(cls, user, **kwargs):
-        """Get all campaigns readable by user"""
-        ret = db.session.query(UserByCampaign).filter_by(**kwargs)
-        if not user.is_admin:
-            ret = ret.filter(UserByCampaign.user_id == user.id)
-        return ret
+    def get(cls, **kwargs):
+        """Get objects"""
+        query = super().get(**kwargs)
+        current_user = CURRENT_USER.get()
+        if current_user and not current_user.is_admin:
+            query = query.filter(UserByCampaign.user_id == current_user.id)
+        return query
 
-    def can_read(self, user):
-        """Check user can read user_by_campaign"""
-        if user.is_admin:
-            return True
-        return user.id == self.user_id
+    def check_read_permissions(self, current_user, **kwargs):
+        """Check read persmissions"""
+        if not current_user.is_admin and current_user.id != self.id:
+            raise BEMServerAuthorizationError("User can't read UserByCampaign")
 
 
 class TimeseriesByCampaign(Base):
