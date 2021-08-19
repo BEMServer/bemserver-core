@@ -5,10 +5,33 @@ from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base
 
 class Base:
     """Custom base class"""
+
+    @classmethod
+    def get(cls, **kwargs):
+        """Get objects"""
+        query = db.session.query(cls).filter_by(**kwargs)
+        return query
+
+    @classmethod
+    def new(cls, **kwargs):
+        """Create new object"""
+        item = cls(**kwargs)
+        db.session.add(item)
+        return item
+
+    @classmethod
+    def get_by_id(cls, item_id):
+        """Get object by ID"""
+        return db.session.get(cls, item_id)
+
     def update(self, **kwargs):
         """Update object with kwargs"""
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    def delete(self):
+        """Delete object"""
+        db.session.delete(self)
 
 
 SESSION_FACTORY = sessionmaker(autocommit=False, autoflush=False)
