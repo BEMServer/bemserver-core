@@ -51,14 +51,8 @@ class UserByCampaign(Base):
     )
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    campaign_id = sqla.Column(
-        sqla.Integer,
-        sqla.ForeignKey("campaigns.id"),
-    )
-    user_id = sqla.Column(
-        sqla.Integer,
-        sqla.ForeignKey("users.id"),
-    )
+    campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"))
+    user_id = sqla.Column(sqla.ForeignKey("users.id"))
 
     @classmethod
     def get(cls, **kwargs):
@@ -87,14 +81,8 @@ class TimeseriesByCampaign(Base):
     )
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    campaign_id = sqla.Column(
-        sqla.Integer,
-        sqla.ForeignKey("campaigns.id"),
-    )
-    timeseries_id = sqla.Column(
-        sqla.Integer,
-        sqla.ForeignKey("timeseries.id"),
-    )
+    campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"))
+    timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"))
 
 
 class TimeseriesByCampaignByUser(Base):
@@ -109,11 +97,7 @@ class TimeseriesByCampaignByUser(Base):
     )
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    user_id = sqla.Column(
-        sqla.Integer,
-        sqla.ForeignKey("users.id"),
-    )
+    user_id = sqla.Column(sqla.ForeignKey("users.id"))
     timeseries_by_campaign_id = sqla.Column(
-        sqla.Integer,
         sqla.ForeignKey("timeseries_by_campaigns.id"),
     )
