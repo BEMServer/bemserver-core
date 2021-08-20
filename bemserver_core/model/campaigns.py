@@ -31,10 +31,8 @@ class Campaign(AuthMixin, Base):
         """Check read persmissions"""
         if not current_user.is_admin:
             stmt = sqla.select(UserByCampaign).where(
-                sqla.and_(
-                    UserByCampaign.user_id == current_user.id,
-                    UserByCampaign.campaign_id == self.id
-                )
+                UserByCampaign.user_id == current_user.id,
+                UserByCampaign.campaign_id == self.id,
             )
             if not db.session.execute(stmt).all():
                 raise BEMServerAuthorizationError("User can't read campaign")
