@@ -67,7 +67,7 @@ class UserByCampaign(Base):
             raise BEMServerAuthorizationError("User can't read UserByCampaign")
 
 
-class TimeseriesByCampaign(Base):
+class TimeseriesByCampaign(AuthMixin, Base):
     """Timeseries x Campaign associations
 
     Timeseries associated with a campaign can be read by all campaign users
@@ -81,6 +81,44 @@ class TimeseriesByCampaign(Base):
     id = sqla.Column(sqla.Integer, primary_key=True)
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"))
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"))
+
+    @classmethod
+    def get(cls, *, campaign_id=None, **kwargs):
+        current_user = CURRENT_USER.get()
+        if current_user and not current_user.is_admin:
+            if not campaign_id:
+                raise BEMServerAuthorizationError(
+                    "User must specify Campaign ID")
+            # Check User can read campaign
+            stmt = sqla.select(UserByCampaign).where(
+                UserByCampaign.user_id == current_user.id,
+                UserByCampaign.campaign_id == campaign_id,
+            )
+            if not db.session.execute(stmt).all():
+                raise BEMServerAuthorizationError("User can't read Campaign")
+
+        query = super().get(**kwargs)
+
+        if campaign_id:
+            query = query.filter_by(campaign_id=campaign_id)
+
+        return query
+
+    def check_read_permissions(self, user, campaign_id=None):
+        """Check user can read timeseries"""
+        if user and not user.is_admin:
+            if campaign_id is None:
+                raise BEMServerAuthorizationError("Campaign ID not provided")
+            # Check User can read campaign
+            stmt = sqla.select(UserByCampaign).where(
+                UserByCampaign.user_id == user.id,
+                UserByCampaign.campaign_id == campaign_id,
+            )
+            if not db.session.execute(stmt).all():
+                raise BEMServerAuthorizationError("User can't read Campaign")
+            # Check TimeseriesByCampaign is in Campaign
+            if not self.campaign_id == campaign_id:
+                raise BEMServerAuthorizationError("Timeseries not in campaign")
 
 
 class TimeseriesByCampaignByUser(Base):
