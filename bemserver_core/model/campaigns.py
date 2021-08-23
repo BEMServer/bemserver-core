@@ -38,7 +38,7 @@ class Campaign(AuthMixin, Base):
                 raise BEMServerAuthorizationError("User can't read campaign")
 
 
-class UserByCampaign(Base):
+class UserByCampaign(AuthMixin, Base):
     """User x Campaign associations
 
     Users associated with a campaign have read permissions campaign-wise
@@ -63,7 +63,7 @@ class UserByCampaign(Base):
 
     def check_read_permissions(self, current_user, **kwargs):
         """Check read persmissions"""
-        if not current_user.is_admin and current_user.id != self.id:
+        if not current_user.is_admin and current_user.id != self.user_id:
             raise BEMServerAuthorizationError("User can't read UserByCampaign")
 
 
