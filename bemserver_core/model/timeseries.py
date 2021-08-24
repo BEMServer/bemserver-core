@@ -55,7 +55,7 @@ class Timeseries(AuthMixin, Base):
                 raise BEMServerAuthorizationError("User can't read Campaign")
             # Check Timeseries is in Campaign
             stmt = sqla.select(TimeseriesByCampaign).where(
-                TimeseriesByCampaign.id == self.id,
+                TimeseriesByCampaign.timeseries_id == self.id,
                 TimeseriesByCampaign.campaign_id == campaign_id,
             )
             if not db.session.execute(stmt).all():
