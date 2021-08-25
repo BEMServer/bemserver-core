@@ -1,6 +1,7 @@
 """Timeseries CSV I/O"""
 import io
 import csv
+import datetime as dt
 
 import sqlalchemy as sqla
 import pandas as pd
@@ -16,10 +17,12 @@ AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max")
 class TimeseriesCSVIO:
 
     @staticmethod
-    def import_csv(csv_file):
+    def import_csv(csv_file, campaign_id=None):
         """Import CSV file
 
         :param srt|TextIOBase csv_file: CSV as string or text stream
+        :param int campaign_id: ID of the campaign which is the context of the
+            request. Must be specifid when calling as non-admin user.
         """
         # If input is not a text stream, then it is a plain string
         # Make it an iterator
@@ -56,6 +59,13 @@ class TimeseriesCSVIO:
             except IndexError as exc:
                 raise TimeseriesCSVIOError('Missing column') from exc
 
+        # TODO: manage all ISO formats
+        timestamps = [dt.datetime.fromisoformat(r["timestamp"]) for r in datas]
+        start_dt, end_dt = min(timestamps), max(timestamps)
+
+        TimeseriesData.check_can_import(
+            start_dt, end_dt, ts_ids, campaign_id=campaign_id)
+
         query = (
             sqla.dialects.postgresql
             .insert(TimeseriesData).values(datas)
@@ -71,14 +81,20 @@ class TimeseriesCSVIO:
             raise TimeseriesCSVIOError('Error writing to DB') from exc
 
     @staticmethod
-    def export_csv(start_dt, end_dt, timeseries):
+    def export_csv(start_dt, end_dt, timeseries, campaign_id=None):
         """Export timeseries data as CSV file
 
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
+        :param list timeseries: List of timeseries IDs
+        :param int campaign_id: ID of the campaign which is the context of the
+            request. Must be specifid when calling as non-admin user.
 
         Returns csv as a string.
         """
+        TimeseriesData.check_can_export(
+            start_dt, end_dt, timeseries, campaign_id=campaign_id)
+
         data = db.session.execute(
             sqla.select(
                 TimeseriesData.timestamp,
@@ -117,6 +133,7 @@ class TimeseriesCSVIO:
         bucket_width,
         timezone="UTC",
         aggregation="avg",
+        campaign_id=None,
     ):
         """Bucket timeseries data and export as CSV file
 
@@ -127,9 +144,14 @@ class TimeseriesCSVIO:
         :param str timezone: IANA timezone
         :param str aggreagation: Aggregation function. Must be one of
             "avg", "sum", "min" and "max".
+        :param int campaign_id: ID of the campaign which is the context of the
+            request. Must be specifid when calling as non-admin user.
 
         Returns csv as a string.
         """
+        TimeseriesData.check_can_export(
+            start_dt, end_dt, timeseries, campaign_id=campaign_id)
+
         if aggregation not in AGGREGATION_FUNCTIONS:
             raise ValueError(f'Invalid aggregation method "{aggregation}"')
 
