@@ -2,7 +2,8 @@
 import sqlalchemy as sqla
 
 from bemserver_core.database import Base, db
-from bemserver_core.auth import AuthMixin, BEMServerAuthorizationError
+from bemserver_core.authentication import (
+    AuthMixin, BEMServerAuthorizationError)
 
 
 class Campaign(AuthMixin, Base):

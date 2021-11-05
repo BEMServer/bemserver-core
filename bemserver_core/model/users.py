@@ -3,7 +3,8 @@ from passlib.hash import argon2
 import sqlalchemy as sqla
 
 from bemserver_core.database import Base
-from bemserver_core.auth import AuthMixin, BEMServerAuthorizationError
+from bemserver_core.authentication import (
+    AuthMixin, BEMServerAuthorizationError)
 
 
 class User(AuthMixin, Base):

@@ -2,12 +2,10 @@
 from contextvars import ContextVar
 from contextlib import AbstractContextManager
 
+from .exceptions import BEMServerAuthorizationError
+
 
 CURRENT_USER = ContextVar("current_user", default=None)
-
-
-class BEMServerAuthorizationError(Exception):
-    """Operation not autorized to current user"""
 
 
 def get_current_user():

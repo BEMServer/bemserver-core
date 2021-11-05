@@ -5,7 +5,7 @@ import pytest
 from pytest_postgresql import factories as ppf
 
 from bemserver_core.database import db
-from bemserver_core.auth import CurrentUser
+from bemserver_core.authentication import CurrentUser
 from bemserver_core import model
 from bemserver_core.testutils import setup_db
 

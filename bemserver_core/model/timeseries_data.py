@@ -5,7 +5,8 @@ from bemserver_core.database import Base, db
 from bemserver_core.model.campaigns import (
     Campaign, TimeseriesByCampaign, TimeseriesByCampaignByUser
 )
-from bemserver_core.auth import AuthMixin, BEMServerAuthorizationError
+from bemserver_core.authentication import (
+    AuthMixin, BEMServerAuthorizationError)
 
 
 class TimeseriesData(AuthMixin, Base):
