@@ -3,9 +3,7 @@ from passlib.hash import argon2
 import sqlalchemy as sqla
 
 from bemserver_core.database import Base
-from bemserver_core.auth import (
-    AuthMixin, CURRENT_USER, BEMServerAuthorizationError
-)
+from bemserver_core.auth import AuthMixin, BEMServerAuthorizationError
 
 
 class User(AuthMixin, Base):
@@ -49,14 +47,13 @@ class User(AuthMixin, Base):
         self.password = argon2.hash(password)
 
     def check_password(self, password: str) -> bool:
-        self.check_update_permissions()
         return argon2.verify(password, self.password)
 
     @classmethod
     def get(cls, **kwargs):
         """Get objects"""
-        current_user = CURRENT_USER.get()
-        if current_user and not current_user.is_admin:
+        current_user = cls.current_user()
+        if not current_user.is_admin:
             raise BEMServerAuthorizationError("User can't read users")
         return super().get(**kwargs)
 
@@ -66,8 +63,8 @@ class User(AuthMixin, Base):
             raise BEMServerAuthorizationError("User can't read other user")
 
     def check_update_permissions(self, **kwargs):
-        current_user = CURRENT_USER.get()
-        if current_user and not current_user.is_admin:
+        current_user = self.current_user()
+        if not current_user.is_admin:
             if current_user.id != self.id:
                 raise BEMServerAuthorizationError(
                     "User can't modify other user"

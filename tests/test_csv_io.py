@@ -19,6 +19,7 @@ class TestTimeseriesCSVIO:
             indirect=True
     )
     @pytest.mark.parametrize('mode', ('str', 'textiobase'))
+    @pytest.mark.usefixtures("as_admin")
     def test_timeseries_csv_io_import_csv(self, timeseries_data, mode):
 
         ts_0_id, _, _, _ = timeseries_data[0]
@@ -80,6 +81,7 @@ class TestTimeseriesCSVIO:
         )
     )
     @pytest.mark.usefixtures("timeseries_data")
+    @pytest.mark.usefixtures("as_admin")
     def test_timeseries_csv_io_import_csv_error(self, csv_file):
         with pytest.raises(TimeseriesCSVIOError):
             tscsvio.import_csv(io.StringIO(csv_file))
@@ -89,6 +91,7 @@ class TestTimeseriesCSVIO:
             ({"nb_ts": 4, "nb_tsd": 0}, ),
             indirect=True
     )
+    @pytest.mark.usefixtures("as_admin")
     def test_timeseries_csv_io_export_csv(self, timeseries_data):
 
         ts_0_id, _, _, _ = timeseries_data[0]
@@ -137,6 +140,7 @@ class TestTimeseriesCSVIO:
             ({"nb_ts": 4, "nb_tsd": 0}, ),
             indirect=True
     )
+    @pytest.mark.usefixtures("as_admin")
     def test_timeseries_csv_io_export_csv_bucket(self, timeseries_data):
 
         ts_0_id, _, _, _ = timeseries_data[0]

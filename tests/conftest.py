@@ -5,6 +5,7 @@ import pytest
 from pytest_postgresql import factories as ppf
 
 from bemserver_core.database import db
+from bemserver_core.auth import CurrentUser
 from bemserver_core import model
 from bemserver_core.testutils import setup_db
 
@@ -18,6 +19,20 @@ postgresql = ppf.postgresql('postgresql_proc')
 @pytest.fixture
 def database(postgresql):
     yield from setup_db(postgresql)
+
+
+@pytest.fixture
+def as_admin():
+    """Set an admin user for the test"""
+    with CurrentUser(
+        model.User(
+            name="Chuck",
+            email="chuck@test.com",
+            is_admin=True,
+            is_active=True
+        )
+    ):
+        yield
 
 
 @pytest.fixture(params=[{}])

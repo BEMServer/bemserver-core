@@ -5,9 +5,7 @@ from bemserver_core.database import Base, db
 from bemserver_core.model.campaigns import (
     Campaign, TimeseriesByCampaign, TimeseriesByCampaignByUser
 )
-from bemserver_core.auth import (
-    AuthMixin, CURRENT_USER, BEMServerAuthorizationError
-)
+from bemserver_core.auth import AuthMixin, BEMServerAuthorizationError
 
 
 class TimeseriesData(AuthMixin, Base):
@@ -75,7 +73,7 @@ class TimeseriesData(AuthMixin, Base):
 
     @staticmethod
     def _check_campaign(user, start_dt, end_dt, campaign_id=None):
-        if user and not user.is_admin:
+        if not user.is_admin:
             # Check user specified campaign_id
             if not campaign_id:
                 raise BEMServerAuthorizationError(
@@ -92,16 +90,16 @@ class TimeseriesData(AuthMixin, Base):
             ):
                 raise BEMServerAuthorizationError("Time range out of Campaign")
 
-    @staticmethod
-    def check_can_export(start_dt, end_dt, timeseries, campaign_id=None):
-        current_user = CURRENT_USER.get()
+    @classmethod
+    def check_can_export(cls, start_dt, end_dt, timeseries, campaign_id=None):
+        current_user = cls.current_user()
         TimeseriesData._check_campaign(
             current_user,
             start_dt,
             end_dt,
             campaign_id=campaign_id,
         )
-        if current_user and campaign_id is not None:
+        if campaign_id is not None:
             for ts_id in timeseries:
                 (
                     TimeseriesData
@@ -109,16 +107,16 @@ class TimeseriesData(AuthMixin, Base):
                         current_user, campaign_id, ts_id)
                 )
 
-    @staticmethod
-    def check_can_import(start_dt, end_dt, timeseries, campaign_id=None):
-        current_user = CURRENT_USER.get()
+    @classmethod
+    def check_can_import(cls, start_dt, end_dt, timeseries, campaign_id=None):
+        current_user = cls.current_user()
         TimeseriesData._check_campaign(
             current_user,
             start_dt,
             end_dt,
             campaign_id=campaign_id,
         )
-        if current_user and campaign_id is not None:
+        if campaign_id is not None:
             for ts_id in timeseries:
                 (
                     TimeseriesData

@@ -3,9 +3,7 @@ import sqlalchemy as sqla
 
 from bemserver_core.model.campaigns import TimeseriesByCampaign, UserByCampaign
 from bemserver_core.database import Base, db
-from bemserver_core.auth import (
-    AuthMixin, CURRENT_USER, BEMServerAuthorizationError
-)
+from bemserver_core.auth import AuthMixin, BEMServerAuthorizationError
 
 
 class Timeseries(AuthMixin, Base):
@@ -20,8 +18,8 @@ class Timeseries(AuthMixin, Base):
 
     @classmethod
     def get(cls, *, campaign_id=None, **kwargs):
-        current_user = CURRENT_USER.get()
-        if current_user and not current_user.is_admin:
+        current_user = cls.current_user()
+        if not current_user.is_admin:
             if not campaign_id:
                 raise BEMServerAuthorizationError(
                     "User must specify Campaign ID")
@@ -41,14 +39,14 @@ class Timeseries(AuthMixin, Base):
 
         return query
 
-    def check_read_permissions(self, user, campaign_id=None):
+    def check_read_permissions(self, current_user, campaign_id=None):
         """Check user can read timeseries"""
-        if user and not user.is_admin:
+        if not current_user.is_admin:
             if campaign_id is None:
                 raise BEMServerAuthorizationError("Campaign ID not provided")
             # Check User can read campaign
             stmt = sqla.select(UserByCampaign).where(
-                UserByCampaign.user_id == user.id,
+                UserByCampaign.user_id == current_user.id,
                 UserByCampaign.campaign_id == campaign_id,
             )
             if not db.session.execute(stmt).all():

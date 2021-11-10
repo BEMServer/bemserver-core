@@ -1,4 +1,6 @@
 """User tests"""
+import pytest
+
 from bemserver_core.model import User
 
 
@@ -16,6 +18,7 @@ class TestUserModel:
             "<User Chuck <chuck@norris.com>, admin: True, active: True>"
         )
 
+    @pytest.mark.usefixtures("as_admin")
     def test_user_password_hash_check(self):
         user = User(name="Chuck", email="chuck@norris.com")
         user.set_password("correct horse battery staple")

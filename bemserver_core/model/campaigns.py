@@ -2,9 +2,7 @@
 import sqlalchemy as sqla
 
 from bemserver_core.database import Base, db
-from bemserver_core.auth import (
-    AuthMixin, CURRENT_USER, BEMServerAuthorizationError
-)
+from bemserver_core.auth import AuthMixin, BEMServerAuthorizationError
 
 
 class Campaign(AuthMixin, Base):
@@ -20,8 +18,8 @@ class Campaign(AuthMixin, Base):
     def get(cls, **kwargs):
         """Get objects"""
         query = super().get(**kwargs)
-        current_user = CURRENT_USER.get()
-        if current_user and not current_user.is_admin:
+        current_user = cls.current_user()
+        if not current_user.is_admin:
             query = query.join(UserByCampaign).filter(
                 UserByCampaign.user_id == current_user.id
             )
@@ -63,8 +61,8 @@ class UserByCampaign(AuthMixin, Base):
     def get(cls, **kwargs):
         """Get objects"""
         query = super().get(**kwargs)
-        current_user = CURRENT_USER.get()
-        if current_user and not current_user.is_admin:
+        current_user = cls.current_user()
+        if not current_user.is_admin:
             query = query.filter(UserByCampaign.user_id == current_user.id)
         return query
 
@@ -91,9 +89,8 @@ class TimeseriesByCampaign(AuthMixin, Base):
 
     @classmethod
     def get(cls, *, campaign_id=None, **kwargs):
-        current_user = CURRENT_USER.get()
-        if current_user:
-            Campaign.check_user_can_read_campaign(current_user, campaign_id)
+        current_user = cls.current_user()
+        Campaign.check_user_can_read_campaign(current_user, campaign_id)
 
         query = super().get(**kwargs)
 
@@ -104,8 +101,7 @@ class TimeseriesByCampaign(AuthMixin, Base):
 
     def check_read_permissions(self, current_user, campaign_id=None):
         """Check user can read timeseries by campaign"""
-        if current_user:
-            Campaign.check_user_can_read_campaign(current_user, campaign_id)
+        Campaign.check_user_can_read_campaign(current_user, campaign_id)
         if campaign_id is not None:
             # Check TimeseriesByCampaign is in Campaign
             if not self.campaign_id == campaign_id:
@@ -131,13 +127,12 @@ class TimeseriesByCampaignByUser(AuthMixin, Base):
 
     @classmethod
     def get(cls, *, campaign_id=None, **kwargs):
-        current_user = CURRENT_USER.get()
-        if current_user:
-            Campaign.check_user_can_read_campaign(current_user, campaign_id)
+        current_user = cls.current_user()
+        Campaign.check_user_can_read_campaign(current_user, campaign_id)
 
         query = super().get(**kwargs)
 
-        if current_user and not current_user.is_admin:
+        if not current_user.is_admin:
             query = query.filter(
                 TimeseriesByCampaignByUser.user_id == current_user.id
             )
@@ -150,8 +145,7 @@ class TimeseriesByCampaignByUser(AuthMixin, Base):
 
     def check_read_permissions(self, current_user, campaign_id=None):
         """Check user can read timeseries by campaign by user"""
-        if current_user:
-            Campaign.check_user_can_read_campaign(current_user, campaign_id)
+        Campaign.check_user_can_read_campaign(current_user, campaign_id)
         if campaign_id is not None:
             # Check TimeseriesByCampaignByUser is in Campaign
             stmt = sqla.select(TimeseriesByCampaign).where(
