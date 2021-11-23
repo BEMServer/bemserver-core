@@ -5,6 +5,7 @@ from bemserver_core.database import Base, db
 from bemserver_core.model.campaigns import Campaign, TimeseriesByCampaign
 from bemserver_core.authorization import (
     auth, AuthMixin, BEMServerAuthorizationError, get_current_user)
+from bemserver_core.exceptions import BEMServerUnknownCampaignError
 
 
 class TimeseriesData(AuthMixin, Base):
@@ -25,26 +26,20 @@ class TimeseriesData(AuthMixin, Base):
     value = sqla.Column(sqla.Float)
 
     @staticmethod
-    def _check_campaign(user, start_dt, end_dt, campaign_id=None):
-        if not user.is_admin:
-            # Check user specified campaign_id
-            if not campaign_id:
-                raise BEMServerAuthorizationError(
-                    "User must specify Campaign ID")
-        if campaign_id is not None:
-            # Check campaign exists
-            campaign = Campaign.get_by_id(campaign_id)
-            if campaign is None:
-                raise BEMServerAuthorizationError("Invalid Campaign ID")
-            # Check date range is in campaign
-            if (
-                (campaign.start_time and start_dt < campaign.start_time) or
-                (campaign.end_time and end_dt > campaign.end_time)
-            ):
-                raise BEMServerAuthorizationError("Time range out of Campaign")
+    def _check_campaign(campaign_id, start_dt, end_dt):
+        # Check campaign exists
+        campaign = Campaign.get_by_id(campaign_id)
+        if campaign is None:
+            raise BEMServerUnknownCampaignError()
+        # Check date range is in campaign
+        if (
+            (campaign.start_time and start_dt < campaign.start_time) or
+            (campaign.end_time and end_dt > campaign.end_time)
+        ):
+            raise BEMServerAuthorizationError("Time range out of Campaign")
 
     @staticmethod
-    def authorize(user, action, campaign_id, timeseries_id):
+    def _authorize(user, action, campaign_id, timeseries_id):
         stmt = sqla.select(TimeseriesByCampaign).where(
             TimeseriesByCampaign.timeseries_id == timeseries_id,
             TimeseriesByCampaign.campaign_id == campaign_id,
@@ -57,32 +52,22 @@ class TimeseriesData(AuthMixin, Base):
     @classmethod
     def check_can_export(cls, start_dt, end_dt, timeseries, campaign_id=None):
         current_user = get_current_user()
-        TimeseriesData._check_campaign(
-            current_user,
-            start_dt,
-            end_dt,
-            campaign_id=campaign_id,
-        )
-        if campaign_id is not None:
+        if campaign_id is None:
+            auth.authorize(current_user, "read_without_campaign", cls)
+        else:
+            cls._check_campaign(campaign_id, start_dt, end_dt)
             for ts_id in timeseries:
-                TimeseriesData.authorize(
-                    current_user, "read_data", campaign_id, ts_id
-                )
+                cls._authorize(current_user, "read_data", campaign_id, ts_id)
 
     @classmethod
     def check_can_import(cls, start_dt, end_dt, timeseries, campaign_id=None):
         current_user = get_current_user()
-        TimeseriesData._check_campaign(
-            current_user,
-            start_dt,
-            end_dt,
-            campaign_id=campaign_id,
-        )
-        if campaign_id is not None:
+        if campaign_id is None:
+            auth.authorize(current_user, "write_without_campaign", cls)
+        else:
+            cls._check_campaign(campaign_id, start_dt, end_dt)
             for ts_id in timeseries:
-                TimeseriesData.authorize(
-                    current_user, "write_data", campaign_id, ts_id
-                )
+                cls._authorize(current_user, "write_data", campaign_id, ts_id)
 
 
 sqla.event.listen(

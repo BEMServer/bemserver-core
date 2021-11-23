@@ -85,3 +85,9 @@ resource Timeseries {
 has_role(user: UserActor, "reader", ts: Timeseries) if
     tbc in ts.timeseries_by_campaigns and
     has_role(user, "member", tbc.campaign);
+
+
+resource TimeseriesData {
+    # Only admin can read/write without specifying a campaign
+    permissions = ["read_without_campaign", "write_without_campaign"];
+}
