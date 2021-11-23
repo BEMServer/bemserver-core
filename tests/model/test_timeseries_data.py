@@ -4,7 +4,7 @@ import datetime as dt
 import pytest
 
 from bemserver_core.model import TimeseriesData
-from bemserver_core.authentication import CurrentUser
+from bemserver_core.authorization import CurrentUser
 from bemserver_core.exceptions import BEMServerAuthorizationError
 
 

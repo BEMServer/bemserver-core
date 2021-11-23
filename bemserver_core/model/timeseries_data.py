@@ -4,7 +4,7 @@ import sqlalchemy as sqla
 from bemserver_core.database import Base, db
 from bemserver_core.model.campaigns import Campaign, TimeseriesByCampaign
 from bemserver_core.authorization import (
-    auth, AuthMixin, BEMServerAuthorizationError)
+    auth, AuthMixin, BEMServerAuthorizationError, get_current_user)
 
 
 class TimeseriesData(AuthMixin, Base):
@@ -56,7 +56,7 @@ class TimeseriesData(AuthMixin, Base):
 
     @classmethod
     def check_can_export(cls, start_dt, end_dt, timeseries, campaign_id=None):
-        current_user = cls.current_user()
+        current_user = get_current_user()
         TimeseriesData._check_campaign(
             current_user,
             start_dt,
@@ -71,7 +71,7 @@ class TimeseriesData(AuthMixin, Base):
 
     @classmethod
     def check_can_import(cls, start_dt, end_dt, timeseries, campaign_id=None):
-        current_user = cls.current_user()
+        current_user = get_current_user()
         TimeseriesData._check_campaign(
             current_user,
             start_dt,

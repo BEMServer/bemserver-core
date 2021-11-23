@@ -1,12 +1,55 @@
+"""Authorization"""
+from contextvars import ContextVar
+from contextlib import AbstractContextManager
 from pathlib import Path
 
 import sqlalchemy as sqla
 from oso import Oso, OsoError, Relation  # noqa, republishing
 from polar import polar_class
 
-from .database import db
-from .authentication import OPEN_BAR, get_current_user
-from .exceptions import BEMServerAuthorizationError
+from bemserver_core.database import db
+from bemserver_core.exceptions import BEMServerAuthorizationError
+
+
+CURRENT_USER = ContextVar("current_user", default=None)
+OPEN_BAR = ContextVar("open_bar", default=False)
+
+
+class CurrentUser(AbstractContextManager):
+    """Set current user for context"""
+    def __init__(self, user):
+        self._token = None
+        self._user = user
+
+    def __enter__(self):
+        self._token = CURRENT_USER.set(self._user)
+
+    def __exit__(self, *args, **kwargs):
+        CURRENT_USER.reset(self._token)
+
+
+class OpenBar(AbstractContextManager):
+    """Open bar mode
+
+    Used for tests or admin tasks.
+    "With great power comes great responsibility."
+    """
+    def __init__(self):
+        self._token = None
+
+    def __enter__(self):
+        self._token = OPEN_BAR.set(True)
+
+    def __exit__(self, *args, **kwargs):
+        OPEN_BAR.reset(self._token)
+
+
+def get_current_user():
+    current_user = CURRENT_USER.get()
+    if current_user is None or not current_user.is_active:
+        if not OPEN_BAR.get():
+            raise BEMServerAuthorizationError("No user")
+    return current_user
 
 
 @polar_class
@@ -46,7 +89,9 @@ def query_builder(model):
 
 class SQLAlchemyOso(Oso):
     def register_class(self, cls, *args, **kwargs):
-        super().register_class(cls, *args, build_query=query_builder(cls), **kwargs)
+        super().register_class(
+            cls, *args, build_query=query_builder(cls), **kwargs
+        )
 
 
 auth = SQLAlchemyOso(
@@ -81,12 +126,8 @@ class AuthMixin:
         auth.register_class(cls)
 
     @classmethod
-    def current_user(cls):
-        return get_current_user()
-
-    @classmethod
     def get(cls, **kwargs):
-        query = auth.authorized_query(cls.current_user(), "read", cls)
+        query = auth.authorized_query(get_current_user(), "read", cls)
         for key, val in kwargs.items():
             query = query.filter(getattr(cls, key) == val)
         return query
@@ -94,7 +135,7 @@ class AuthMixin:
     @classmethod
     def new(cls, **kwargs):
         item = super().new(**kwargs)
-        auth.authorize(cls.current_user(), "create", item)
+        auth.authorize(get_current_user(), "create", item)
         return item
 
     @classmethod
@@ -102,13 +143,13 @@ class AuthMixin:
         item = super().get_by_id(item_id)
         if item is None:
             return None
-        auth.authorize(cls.current_user(), "read", item)
+        auth.authorize(get_current_user(), "read", item)
         return item
 
     def update(self, **kwargs):
-        auth.authorize(self.current_user(), "update", self)
+        auth.authorize(get_current_user(), "update", self)
         super().update(**kwargs)
 
     def delete(self):
-        auth.authorize(self.current_user(), "delete", self)
+        auth.authorize(get_current_user(), "delete", self)
         super().delete()

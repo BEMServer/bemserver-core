@@ -4,7 +4,7 @@ import sqlalchemy as sqla
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from bemserver_core.database import Base
-from bemserver_core.authorization import AuthMixin, auth
+from bemserver_core.authorization import AuthMixin, auth, get_current_user
 
 
 class User(AuthMixin, Base):
@@ -54,7 +54,7 @@ class User(AuthMixin, Base):
 
     @is_admin.setter
     def is_admin(self, is_admin):
-        auth.authorize(self.current_user(), "set_admin", self)
+        auth.authorize(get_current_user(), "set_admin", self)
         self._is_admin = is_admin
 
     @hybrid_property
@@ -63,11 +63,11 @@ class User(AuthMixin, Base):
 
     @is_active.setter
     def is_active(self, is_active):
-        auth.authorize(self.current_user(), "set_active", self)
+        auth.authorize(get_current_user(), "set_active", self)
         self._is_active = is_active
 
     def set_password(self, password: str) -> None:
-        auth.authorize(self.current_user(), "update", self)
+        auth.authorize(get_current_user(), "update", self)
         self.password = argon2.hash(password)
 
     def check_password(self, password: str) -> bool:

@@ -3,7 +3,7 @@ import pytest
 
 from bemserver_core.model import User
 from bemserver_core.database import db
-from bemserver_core.authentication import CurrentUser
+from bemserver_core.authorization import CurrentUser
 from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
