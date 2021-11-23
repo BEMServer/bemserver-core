@@ -4,7 +4,7 @@ import sqlalchemy as sqla
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from bemserver_core.database import Base
-from bemserver_core.authorization import AuthMixin, auth, query_builder
+from bemserver_core.authorization import AuthMixin, auth
 
 
 class User(AuthMixin, Base):
@@ -39,15 +39,8 @@ class User(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
-            build_query=query_builder(cls),
-        )
-        auth.register_class(
-            cls,
-            name="UserActor",
-            build_query=query_builder(cls),
-        )
+        auth.register_class(cls)
+        auth.register_class(cls, name="UserActor")
 
     def __repr__(self):
         return (

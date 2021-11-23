@@ -44,12 +44,12 @@ def query_builder(model):
     return combine_filters
 
 
-# class SQLAlchemyOso(Oso):
-#     def register_class(cls):
-#         super().register_class(cls, build_query=query_builder(cls))
+class SQLAlchemyOso(Oso):
+    def register_class(self, cls, *args, **kwargs):
+        super().register_class(cls, *args, build_query=query_builder(cls), **kwargs)
 
 
-auth = Oso(
+auth = SQLAlchemyOso(
     forbidden_error=BEMServerAuthorizationError,
     not_found_error=BEMServerAuthorizationError,
 )
@@ -62,22 +62,15 @@ auth.set_data_filtering_query_defaults(
 )
 
 
-def register_class(model_cls):
-    auth.register_class(
-        model_cls,
-        build_query=query_builder(model_cls),
-    )
-
-
 def init_authorization(model_classes):
     """Register model classes and load rules
 
-    Must be done after model classes are importer
+    Must be done after model classes are imported
     """
     for cls in model_classes:
         cls.register_class()
 
-    # Load authorization policy.
+    # Load authorization policy
     auth.load_files([Path(__file__).parent / "authorization.polar"])
 
 
@@ -85,10 +78,7 @@ class AuthMixin:
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
-            build_query=query_builder(cls),
-        )
+        auth.register_class(cls)
 
     @classmethod
     def current_user(cls):

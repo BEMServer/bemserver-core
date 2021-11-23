@@ -2,8 +2,7 @@
 import sqlalchemy as sqla
 
 from bemserver_core.database import Base
-from bemserver_core.authorization import (
-    AuthMixin, auth, query_builder, Relation)
+from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.model.campaigns import TimeseriesByCampaign
 
 
@@ -29,7 +28,6 @@ class Timeseries(AuthMixin, Base):
                     other_field="timeseries_id",
                 ),
             },
-            build_query=query_builder(cls),
         )
 
     @classmethod
