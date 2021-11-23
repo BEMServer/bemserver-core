@@ -4,10 +4,7 @@ import pytest
 from bemserver_core.model import User
 from bemserver_core.database import db
 from bemserver_core.authentication import CurrentUser
-from bemserver_core.exceptions import (
-    BEMServerCoreUpdateError,
-    BEMServerAuthorizationError,
-)
+from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestUserModel:
@@ -66,9 +63,8 @@ class TestUserModel:
             users = list(User.get(is_admin=False))
             assert len(users) == 1
             assert users[0].id == user_1.id
-
-            with pytest.raises(BEMServerCoreUpdateError):
-                user.update(is_admin=True)
+            user.update(is_admin=True)
+            assert user.is_admin is True
 
     def test_user_authorizations_as_user(self, database, users):
         admin_user = users[0]
@@ -104,5 +100,5 @@ class TestUserModel:
             users = list(User.get())
             assert len(users) == 1
 
-            with pytest.raises(BEMServerCoreUpdateError):
+            with pytest.raises(BEMServerAuthorizationError):
                 user_1.update(is_admin=True)

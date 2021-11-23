@@ -5,7 +5,6 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from bemserver_core.database import Base
 from bemserver_core.authorization import AuthMixin, auth, query_builder
-from bemserver_core.exceptions import BEMServerCoreUpdateError
 
 
 class User(AuthMixin, Base):
@@ -80,11 +79,3 @@ class User(AuthMixin, Base):
 
     def check_password(self, password: str) -> bool:
         return argon2.verify(password, self.password)
-
-    def update(self, **kwargs):
-        forbidden_keys = {"password", "is_admin", "is_active"} & set(kwargs)
-        if forbidden_keys:
-            raise BEMServerCoreUpdateError(
-                f"Can't modify {forbidden_keys} in update"
-            )
-        super().update(**kwargs)
