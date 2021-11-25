@@ -110,7 +110,7 @@ def make_timeseries(nb_ts):
 
 @pytest.fixture
 def timeseries(database):
-    return make_timeseries(4)
+    return make_timeseries(2)
 
 
 @pytest.fixture(params=[{}])
@@ -156,32 +156,5 @@ def timeseries_by_campaigns(database, campaigns, timeseries):
             campaign_id=campaigns[1].id,
         )
         db.session.add(tbc_2)
-        tbc_3 = model.TimeseriesByCampaign(
-            timeseries_id=timeseries[2].id,
-            campaign_id=campaigns[0].id,
-        )
-        db.session.add(tbc_3)
-        tbc_4 = model.TimeseriesByCampaign(
-            timeseries_id=timeseries[3].id,
-            campaign_id=campaigns[1].id,
-        )
-        db.session.add(tbc_4)
         db.session.commit()
-    return (tbc_1, tbc_2, tbc_3, tbc_4)
-
-
-@pytest.fixture
-def timeseries_by_campaigns_by_users(database, users, timeseries_by_campaigns):
-    with OpenBar():
-        tbcbu_1 = model.TimeseriesByCampaignByUser(
-            user_id=users[0].id,
-            timeseries_by_campaign_id=timeseries_by_campaigns[0].id,
-        )
-        db.session.add(tbcbu_1)
-        tbcbu_2 = model.TimeseriesByCampaignByUser(
-            user_id=users[1].id,
-            timeseries_by_campaign_id=timeseries_by_campaigns[1].id,
-        )
-        db.session.add(tbcbu_2)
-        db.session.commit()
-    return (tbcbu_1, tbcbu_2)
+    return (tbc_1, tbc_2)

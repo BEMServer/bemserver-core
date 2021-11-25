@@ -84,52 +84,5 @@ class TimeseriesByCampaign(AuthMixin, Base):
                     my_field="campaign_id",
                     other_field="id",
                 ),
-                "timeseries_by_campaigns_by_users": Relation(
-                    kind="many",
-                    other_type="TimeseriesByCampaignByUser",
-                    my_field="id",
-                    other_field="timeseries_by_campaign_id",
-                ),
             },
         )
-
-
-class TimeseriesByCampaignByUser(AuthMixin, Base):
-    """Timeseries x Campaign x User associations
-
-    Users associated with a Timeseries x Campaign association get write access
-    to the timeseries for the campaign time range.
-    """
-    __tablename__ = "timeseries_by_campaigns_by_users"
-    __table_args__ = (
-        sqla.UniqueConstraint("user_id", "timeseries_by_campaign_id"),
-    )
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    user_id = sqla.Column(sqla.ForeignKey("users.id"))
-    timeseries_by_campaign_id = sqla.Column(
-        sqla.ForeignKey("timeseries_by_campaigns.id"),
-    )
-
-    @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "user": Relation(
-                    kind="one",
-                    other_type="User",
-                    my_field="user_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-    @classmethod
-    def get(cls, *, campaign_id=None, **kwargs):
-        query = super().get(**kwargs)
-        if campaign_id:
-            query = query.join(TimeseriesByCampaign).filter(
-                TimeseriesByCampaign.campaign_id == campaign_id
-            )
-        return query

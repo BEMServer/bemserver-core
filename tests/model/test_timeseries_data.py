@@ -64,7 +64,6 @@ class TestTimeseriesDataModel:
 
     @pytest.mark.usefixtures("users_by_campaigns")
     @pytest.mark.usefixtures("timeseries_by_campaigns")
-    @pytest.mark.usefixtures("timeseries_by_campaigns_by_users")
     def test_timeseries_data_authorizations_as_user(
         self, users, campaigns, timeseries
     ):
@@ -73,7 +72,6 @@ class TestTimeseriesDataModel:
         campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
         ts_2 = timeseries[1]
-        ts_4 = timeseries[3]
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 2, 1, tzinfo=dt.timezone.utc)
@@ -118,7 +116,3 @@ class TestTimeseriesDataModel:
                 TimeseriesData.check_can_import(
                     start_dt, end_dt_out, [ts_2.id], campaign_id=campaign_2.id
                 )
-            # User not in TS by Campaign
-            TimeseriesData.check_can_export(
-                start_dt, end_dt, [ts_4.id], campaign_id=campaign_2.id
-            )

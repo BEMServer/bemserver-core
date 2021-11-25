@@ -53,26 +53,11 @@ resource TimeseriesByCampaign {
 
     "read" if "member" on "campaign";
     "read_data" if "member" on "campaign";
+    "write_data" if "member" on "campaign";
 }
 
 has_relation(campaign: Campaign, "campaign", tbc: TimeseriesByCampaign) if
   campaign = tbc.campaign;
-
-has_permission(user: UserActor, "write_data", tbc: TimeseriesByCampaign) if
-    has_role(user, "member", tbc.campaign) and
-    tbcbu in tbc.timeseries_by_campaigns_by_users and
-    user = tbcbu.user;
-
-
-resource TimeseriesByCampaignByUser {
-    permissions = ["create", "read", "update", "delete"];
-    roles = ["self"];
-
-    "read" if "self";
-}
-
-has_role(user: UserActor, "self", tbcbu: TimeseriesByCampaignByUser ) if
-    user = tbcbu.user;
 
 
 resource Timeseries {

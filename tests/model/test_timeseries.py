@@ -37,7 +37,6 @@ class TestTimeseriesModel:
         assert not user_1.is_admin
         ts_1 = timeseries[0]
         ts_2 = timeseries[1]
-        ts_4 = timeseries[3]
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
@@ -47,9 +46,8 @@ class TestTimeseriesModel:
 
             timeseries = Timeseries.get_by_id(ts_2.id)
             timeseries_list = list(Timeseries.get())
-            assert len(timeseries_list) == 2
+            assert len(timeseries_list) == 1
             assert timeseries_list[0].id == ts_2.id
-            assert timeseries_list[1].id == ts_4.id
             with pytest.raises(BEMServerAuthorizationError):
                 Timeseries.get_by_id(ts_1.id)
             with pytest.raises(BEMServerAuthorizationError):
