@@ -3,11 +3,11 @@
 import datetime as dt
 import sqlalchemy as sqla
 
-from bemserver_core.database import Base, BaseMixin, db
+from bemserver_core.database import Base, db
 from bemserver_core.model.exceptions import EventError
 
 
-class EventCategory(Base, BaseMixin):
+class EventCategory(Base):
     __tablename__ = "event_category"
 
     id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
@@ -19,21 +19,21 @@ class EventCategory(Base, BaseMixin):
     )
 
 
-class EventState(Base, BaseMixin):
+class EventState(Base):
     __tablename__ = "event_state"
 
     id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
     description = sqla.Column(sqla.String(250))
 
 
-class EventLevel(Base, BaseMixin):
+class EventLevel(Base):
     __tablename__ = "event_level"
 
     id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
     description = sqla.Column(sqla.String(250))
 
 
-class EventTarget(Base, BaseMixin):
+class EventTarget(Base):
     __tablename__ = "event_target"
 
     id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
@@ -51,7 +51,7 @@ class EventTarget(Base, BaseMixin):
 #  the database ("state" column of "Event" table). It will probably help us
 #  later when requesting events from the database (by making things easier as
 #  "state" will just be an additional filter criteria).
-class Event(Base, BaseMixin):
+class Event(Base):
     __tablename__ = "event"
 
     id = sqla.Column(
@@ -120,7 +120,6 @@ class Event(Base, BaseMixin):
         if self.state != "ONGOING":
             self.state = "ONGOING"
         self.timestamp_last_update = dt.datetime.now(dt.timezone.utc)
-        self.save()
 
     def close(self, timestamp_end=None):
         """Change the state of the event to CLOSED (if not CLOSED yet) and
@@ -137,7 +136,6 @@ class Event(Base, BaseMixin):
             ts_now = dt.datetime.now(dt.timezone.utc)
             self.timestamp_last_update = ts_now
             self.timestamp_end = timestamp_end or ts_now
-            self.save()
 
     @classmethod
     def open(
@@ -159,13 +157,12 @@ class Event(Base, BaseMixin):
         :returns Event: The instance of the event created.
         """
         ts_now = dt.datetime.now(dt.timezone.utc)
-        evt = cls(
+        return cls.new(
             category=category, source=source, level=level, state="NEW",
             target_type=target_type, target_id=target_id,
             timestamp_start=timestamp_start or ts_now,
-            timestamp_last_update=ts_now, description=description)
-        evt.save()
-        return evt
+            timestamp_last_update=ts_now, description=description,
+        )
 
     @classmethod
     def list_by_state(
