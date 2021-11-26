@@ -5,7 +5,10 @@ from .users import User
 from .campaigns import Campaign, UserByCampaign, TimeseriesByCampaign
 from .timeseries import Timeseries
 from .timeseries_data import TimeseriesData
-from .events import Event, EventCategory, EventState, EventLevel
+from .events import (  # noqa
+    EventChannel, EventCategory, EventState, EventLevel,
+    TimeseriesEvent, TimeseriesEventByTimeseries,
+)
 
 
 __all__ = [
@@ -15,10 +18,11 @@ __all__ = [
     "TimeseriesByCampaign",
     "Timeseries",
     "TimeseriesData",
-    "Event",
     "EventCategory",
     "EventState",
     "EventLevel",
+    "TimeseriesEvent",
+    "TimeseriesEventByTimeseries",
 ]
 
 

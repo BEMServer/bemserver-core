@@ -158,3 +158,18 @@ def timeseries_by_campaigns(database, campaigns, timeseries):
         db.session.add(tbc_2)
         db.session.commit()
     return (tbc_1, tbc_2)
+
+
+@pytest.fixture
+@pytest.mark.usefixtures("database")
+def channels():
+    channel_1 = model.EventChannel(
+        name="Channel 1",
+    )
+    db.session.add(channel_1)
+    channel_2 = model.EventChannel(
+        name="Channel 2",
+    )
+    db.session.add(channel_2)
+    db.session.commit()
+    return (channel_1, channel_2)

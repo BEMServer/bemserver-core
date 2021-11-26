@@ -2,9 +2,17 @@
 
 import datetime as dt
 import sqlalchemy as sqla
+import sqlalchemy.orm as sqlaorm
 
 from bemserver_core.database import Base, db
 from bemserver_core.model.exceptions import EventError
+
+
+class EventChannel(Base):
+    __tablename__ = "event_channels"
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    name = sqla.Column(sqla.String(80))
 
 
 class EventCategory(Base):
@@ -44,34 +52,49 @@ class EventLevel(Base):
 #  the database ("state" column of "Event" table). It will probably help us
 #  later when requesting events from the database (by making things easier as
 #  "state" will just be an additional filter criteria).
-class Event(Base):
-    __tablename__ = "events"
+@sqlaorm.declarative_mixin
+class Event:
+    """Abstract base class for event classes"""
 
     id = sqla.Column(
         sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
 
-    category = sqla.Column(
-        sqla.String,
-        sqla.ForeignKey("event_categories.id"),
-        nullable=False
-    )
+    @sqlaorm.declared_attr
+    def channel_id(cls):
+        return sqla.Column(
+            sqla.Integer,
+            sqla.ForeignKey("event_channels.id"),
+            nullable=False
+        )
 
-    level = sqla.Column(
-        sqla.String,
-        sqla.ForeignKey("event_levels.id"),
-        nullable=False
-    )
+    @sqlaorm.declared_attr
+    def category(cls):
+        return sqla.Column(
+            sqla.String,
+            sqla.ForeignKey("event_categories.id"),
+            nullable=False
+        )
+
+    @sqlaorm.declared_attr
+    def level(cls):
+        return sqla.Column(
+            sqla.String,
+            sqla.ForeignKey("event_levels.id"),
+            nullable=False
+        )
+
+    @sqlaorm.declared_attr
+    def state(cls):
+        return sqla.Column(
+            sqla.String,
+            sqla.ForeignKey("event_states.id"),
+            nullable=False
+        )
 
     timestamp_start = sqla.Column(sqla.DateTime(timezone=True), nullable=False)
     timestamp_end = sqla.Column(sqla.DateTime(timezone=True))
 
     source = sqla.Column(sqla.String, nullable=False)
-
-    state = sqla.Column(
-        sqla.String,
-        sqla.ForeignKey("event_states.id"),
-        nullable=False
-    )
 
     timestamp_last_update = sqla.Column(
         sqla.DateTime(timezone=True), nullable=False)
@@ -126,11 +149,12 @@ class Event(Base):
 
     @classmethod
     def open(
-            cls, category, source, level="ERROR",
+            cls, channel_id, category, source, level="ERROR",
             timestamp_start=None, description=None
     ):
         """Create a NEW event.
 
+        :param int channel_id: The channel ID of the event. See `EventChannel`.
         :param string category: The category of the event. See `EventCategory`.
         :param string source: The source name of the event (service name...).
         :param string level: (optional, default "ERROR")
@@ -143,6 +167,7 @@ class Event(Base):
         """
         ts_now = dt.datetime.now(dt.timezone.utc)
         return cls.new(
+            channel_id=channel_id,
             category=category, source=source, level=level, state="NEW",
             timestamp_start=timestamp_start or ts_now,
             timestamp_last_update=ts_now, description=description,
@@ -150,12 +175,15 @@ class Event(Base):
 
     @classmethod
     def list_by_state(
-            cls, states=("NEW", "ONGOING",), category=None, source=None,
-            level="ERROR"):
+        cls, states=("NEW", "ONGOING",), channel_id=None,
+        category=None, source=None, level="ERROR"
+    ):
         if states is None or len(states) <= 0:
             raise EventError("Missing `state` filter.")
         state_conditions = tuple((cls.state == x) for x in states)
         stmt = sqla.select(cls).filter(sqla.or_(*state_conditions))
+        if channel_id is not None:
+            stmt = stmt.filter(cls.channel_id == channel_id)
         if category is not None:
             stmt = stmt.filter(cls.category == category)
         if source is not None:
@@ -163,6 +191,30 @@ class Event(Base):
         if level is not None:
             stmt = stmt.filter(cls.level == level)
         return db.session.execute(stmt).all()
+
+
+class TimeseriesEvent(Event, Base):
+    __tablename__ = "timeseries_events"
+
+
+class TimeseriesEventByTimeseries(Base):
+    """TimeseriesEvent x Timeseries associations"""
+    __tablename__ = "timeseries_events_by_timeseries"
+    __table_args__ = (
+        sqla.UniqueConstraint("timeseries_event_id", "timeseries_id"),
+    )
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    timeseries_event_id = sqla.Column(
+        sqla.Integer,
+        sqla.ForeignKey("timeseries_events.id"),
+        nullable=True
+    )
+    timeseries_id = sqla.Column(
+        sqla.Integer,
+        sqla.ForeignKey("timeseries.id"),
+        nullable=True
+    )
 
 
 # TODO: maybe this is something the concerned service could fill
