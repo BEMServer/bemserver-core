@@ -33,13 +33,6 @@ class EventLevel(Base):
     description = sqla.Column(sqla.String(250))
 
 
-class EventTarget(Base):
-    __tablename__ = "event_targets"
-
-    id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
-    description = sqla.Column(sqla.String(250))
-
-
 # Event state could be deduced on the fly:
 #   1/ if no timestamp_end is defined then it can be NEW or ONGOING:
 #       a/ if time elapsed between timestamp_start and timestamp_last_update
@@ -73,12 +66,6 @@ class Event(Base):
     timestamp_end = sqla.Column(sqla.DateTime(timezone=True))
 
     source = sqla.Column(sqla.String, nullable=False)
-    target_type = sqla.Column(
-        sqla.String,
-        sqla.ForeignKey("event_targets.id"),
-        nullable=False
-    )
-    target_id = sqla.Column(sqla.Integer, nullable=False)
 
     state = sqla.Column(
         sqla.String,
@@ -139,15 +126,13 @@ class Event(Base):
 
     @classmethod
     def open(
-            cls, category, source, target_type, target_id, level="ERROR",
-            timestamp_start=None, description=None):
+            cls, category, source, level="ERROR",
+            timestamp_start=None, description=None
+    ):
         """Create a NEW event.
 
         :param string category: The category of the event. See `EventCategory`.
         :param string source: The source name of the event (service name...).
-        :param string target_type: The target type of the event.
-            Can be "TIMESERIES" for a timeseries target. See `EventTarget`.
-        :param int target_id: The target unique ID (can be a timeseries ID).
         :param string level: (optional, default "ERROR")
             The level name of the event. See `EventLevel`.
         :param datetime timestamp_start: (optional, default None)
@@ -159,7 +144,6 @@ class Event(Base):
         ts_now = dt.datetime.now(dt.timezone.utc)
         return cls.new(
             category=category, source=source, level=level, state="NEW",
-            target_type=target_type, target_id=target_id,
             timestamp_start=timestamp_start or ts_now,
             timestamp_last_update=ts_now, description=description,
         )
@@ -167,7 +151,7 @@ class Event(Base):
     @classmethod
     def list_by_state(
             cls, states=("NEW", "ONGOING",), category=None, source=None,
-            level="ERROR", target_type=None, target_id=None):
+            level="ERROR"):
         if states is None or len(states) <= 0:
             raise EventError("Missing `state` filter.")
         state_conditions = tuple((cls.state == x) for x in states)
@@ -178,10 +162,6 @@ class Event(Base):
             stmt = stmt.filter(cls.source == source)
         if level is not None:
             stmt = stmt.filter(cls.level == level)
-        if target_type is not None:
-            stmt = stmt.filter(cls.target_type == target_type)
-        if target_id is not None:
-            stmt = stmt.filter(cls.target_id == target_id)
         return db.session.execute(stmt).all()
 
 
@@ -262,35 +242,6 @@ def _insert_initial_event_categories(target, connection, **kwargs):
             "parent": "ABNORMAL_MEASURE_VALUES",
             "description": "Measure value is out of range",
         }
-    )
-
-
-@sqla.event.listens_for(EventTarget.__table__, "after_create")
-def _insert_initial_event_targets(target, connection, **kwargs):
-    # add default event targets
-    connection.execute(
-        target.insert(),
-        {"id": "TIMESERIES", "description": "Timeseries"}
-    )
-    connection.execute(
-        target.insert(),
-        {"id": "SITE", "description": "Site"}
-    )
-    connection.execute(
-        target.insert(),
-        {"id": "BUILDING", "description": "Building"}
-    )
-    connection.execute(
-        target.insert(),
-        {"id": "FLOOR", "description": "Floor"}
-    )
-    connection.execute(
-        target.insert(),
-        {"id": "SPACE", "description": "Space"}
-    )
-    connection.execute(
-        target.insert(),
-        {"id": "SENSOR", "description": "Sensor"}
     )
 
 

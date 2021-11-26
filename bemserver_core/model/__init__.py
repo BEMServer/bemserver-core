@@ -5,9 +5,7 @@ from .users import User
 from .campaigns import Campaign, UserByCampaign, TimeseriesByCampaign
 from .timeseries import Timeseries
 from .timeseries_data import TimeseriesData
-from .events import (
-    Event, EventCategory, EventState, EventLevel, EventTarget
-)
+from .events import Event, EventCategory, EventState, EventLevel
 
 
 __all__ = [
@@ -21,7 +19,6 @@ __all__ = [
     "EventCategory",
     "EventState",
     "EventLevel",
-    "EventTarget",
 ]
 
 

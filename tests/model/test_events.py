@@ -14,7 +14,7 @@ class TestEventModel:
 
         # Open a new event.
         ts_now = dt.datetime.now(dt.timezone.utc)
-        evt_1 = Event.open("observation_missing", "src", "TIMESERIES", 42)
+        evt_1 = Event.open("observation_missing", "src")
         assert evt_1.state == "NEW"
         assert evt_1.level == "ERROR"
         assert evt_1.timestamp_start is not None
@@ -27,8 +27,7 @@ class TestEventModel:
         # Open with timestamp start.
         ts_start = dt.datetime.now(dt.timezone.utc)
         evt_2 = Event.open(
-            "observation_missing", "src", "TIMESERIES", 42,
-            timestamp_start=ts_start)
+            "observation_missing", "src", timestamp_start=ts_start)
         assert evt_2.timestamp_start == ts_start
         assert evt_2.timestamp_last_update > evt_2.timestamp_start
         assert evt_2.timestamp_end is None
@@ -76,8 +75,8 @@ class TestEventModel:
         assert evts == []
 
         # create 2 events
-        evt_1 = Event.open("observation_missing", "src", "TIMESERIES", 42)
-        evt_2 = Event.open("observation_missing", "src", "TIMESERIES", 69)
+        evt_1 = Event.open("observation_missing", "src")
+        evt_2 = Event.open("observation_missing", "src")
         db.session.commit()
 
         # all events' state is NEW, so we have 2 events listing NEW or ONGOING
@@ -87,7 +86,7 @@ class TestEventModel:
         # close one event
         evt_2.close()
         # open and extend an event to ONGOING state
-        evt_3 = Event.open("observation_missing", "src", "TIMESERIES", 666)
+        evt_3 = Event.open("observation_missing", "src")
         evt_3.extend()
         db.session.commit()
 
