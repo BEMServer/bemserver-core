@@ -1,11 +1,14 @@
 """DB framework related tests"""
 import sqlalchemy as sqla
 
+import pytest
+
 from bemserver_core.database import Base
 
 
 class TestDatabase:
 
+    @pytest.mark.usefixtures("database")
     def test_database_base_update(self):
         """Test update method of custom Base class"""
 
