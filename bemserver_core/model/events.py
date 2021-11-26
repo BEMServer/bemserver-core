@@ -8,33 +8,33 @@ from bemserver_core.model.exceptions import EventError
 
 
 class EventCategory(Base):
-    __tablename__ = "event_category"
+    __tablename__ = "event_categories"
 
     id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
     description = sqla.Column(sqla.String(250))
     parent = sqla.Column(
         sqla.String,
-        sqla.ForeignKey("event_category.id"),
+        sqla.ForeignKey("event_categories.id"),
         nullable=True
     )
 
 
 class EventState(Base):
-    __tablename__ = "event_state"
+    __tablename__ = "event_states"
 
     id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
     description = sqla.Column(sqla.String(250))
 
 
 class EventLevel(Base):
-    __tablename__ = "event_level"
+    __tablename__ = "event_levels"
 
     id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
     description = sqla.Column(sqla.String(250))
 
 
 class EventTarget(Base):
-    __tablename__ = "event_target"
+    __tablename__ = "event_targets"
 
     id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
     description = sqla.Column(sqla.String(250))
@@ -52,20 +52,20 @@ class EventTarget(Base):
 #  later when requesting events from the database (by making things easier as
 #  "state" will just be an additional filter criteria).
 class Event(Base):
-    __tablename__ = "event"
+    __tablename__ = "events"
 
     id = sqla.Column(
         sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
 
     category = sqla.Column(
         sqla.String,
-        sqla.ForeignKey("event_category.id"),
+        sqla.ForeignKey("event_categories.id"),
         nullable=False
     )
 
     level = sqla.Column(
         sqla.String,
-        sqla.ForeignKey("event_level.id"),
+        sqla.ForeignKey("event_levels.id"),
         nullable=False
     )
 
@@ -75,14 +75,14 @@ class Event(Base):
     source = sqla.Column(sqla.String, nullable=False)
     target_type = sqla.Column(
         sqla.String,
-        sqla.ForeignKey("event_target.id"),
+        sqla.ForeignKey("event_targets.id"),
         nullable=False
     )
     target_id = sqla.Column(sqla.Integer, nullable=False)
 
     state = sqla.Column(
         sqla.String,
-        sqla.ForeignKey("event_state.id"),
+        sqla.ForeignKey("event_states.id"),
         nullable=False
     )
 
