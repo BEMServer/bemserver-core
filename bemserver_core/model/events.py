@@ -80,8 +80,7 @@ class Event:
             nullable=False
         )
 
-    timestamp_start = sqla.Column(sqla.DateTime(timezone=True), nullable=False)
-    timestamp_end = sqla.Column(sqla.DateTime(timezone=True))
+    timestamp = sqla.Column(sqla.DateTime(timezone=True), nullable=False)
 
     source = sqla.Column(sqla.String, nullable=False)
 
@@ -90,7 +89,7 @@ class Event:
     @classmethod
     def open(
             cls, channel_id, category, source, level="ERROR",
-            timestamp_start=None, description=None
+            timestamp=None, description=None
     ):
         """Create a NEW event.
 
@@ -99,8 +98,8 @@ class Event:
         :param string source: The source name of the event (service name...).
         :param string level: (optional, default "ERROR")
             The level name of the event. See `EventLevel`.
-        :param datetime timestamp_start: (optional, default None)
-            Time (tz-aware) of when the event is opened. Set to NOW if None.
+        :param datetime timestamp: (optional, default None)
+            Time (tz-aware) of the event. Set to now if None.
         :param string description: (optional, default None)
             Text to describe the event.
         :returns Event: The instance of the event created.
@@ -109,7 +108,7 @@ class Event:
         return cls.new(
             channel_id=channel_id,
             category=category, source=source, level=level, state="NEW",
-            timestamp_start=timestamp_start or ts_now,
+            timestamp=timestamp or ts_now,
             description=description,
         )
 

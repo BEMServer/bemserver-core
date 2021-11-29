@@ -19,18 +19,15 @@ class TestTimeseriesEventModel:
             channel_1.id, "observation_missing", "src")
         assert evt_1.state == "NEW"
         assert evt_1.level == "ERROR"
-        assert evt_1.timestamp_start is not None
-        assert evt_1.timestamp_start > ts_now
-        assert evt_1.timestamp_end is None
+        assert evt_1.timestamp > ts_now
         assert evt_1.description is None
 
         # Open with timestamp start.
-        ts_start = dt.datetime.now(dt.timezone.utc)
+        ts_now = dt.datetime.now(dt.timezone.utc)
         evt_2 = TimeseriesEvent.open(
             channel_1.id, "observation_missing", "src",
-            timestamp_start=ts_start)
-        assert evt_2.timestamp_start == ts_start
-        assert evt_2.timestamp_end is None
+            timestamp=ts_now)
+        assert evt_2.timestamp == ts_now
 
     @pytest.mark.usefixtures("database")
     def test_event_list_by_state(self, channels):
