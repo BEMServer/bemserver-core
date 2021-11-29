@@ -41,17 +41,6 @@ class EventLevel(Base):
     description = sqla.Column(sqla.String(250))
 
 
-# Event state could be deduced on the fly:
-#   1/ if no timestamp_end is defined then it can be NEW or ONGOING:
-#       a/ if time elapsed between timestamp_start and timestamp_last_update
-#           is less than an amount of seconds (maybe 30) then the event is NEW
-#       b/ else the event is older than 30 seconds and its state is ONGOING
-#   2/ else timestamp_end is defined and the event state is CLOSED
-# These deductions have to be done in the code and SQL request when needed.
-# Instead of this we choose to manually set the event state and store it in
-#  the database ("state" column of "Event" table). It will probably help us
-#  later when requesting events from the database (by making things easier as
-#  "state" will just be an additional filter criteria).
 @sqlaorm.declarative_mixin
 class Event:
     """Abstract base class for event classes"""
@@ -96,9 +85,6 @@ class Event:
 
     source = sqla.Column(sqla.String, nullable=False)
 
-    timestamp_last_update = sqla.Column(
-        sqla.DateTime(timezone=True), nullable=False)
-
     description = sqla.Column(sqla.String(250))
 
     @property
@@ -108,10 +94,7 @@ class Event:
             if self.timestamp_end is not None:
                 return self.timestamp_end - self.timestamp_start
             # event is NEW or ONGOING
-            if self.timestamp_last_update is not None:
-                return self.timestamp_last_update - self.timestamp_start
-            else:
-                return dt.datetime.now(dt.timezone.utc) - self.timestamp_start
+            return dt.datetime.now(dt.timezone.utc) - self.timestamp_start
         return None
 
     def extend(self):
@@ -120,20 +103,15 @@ class Event:
             - an ONGOING event will still ONGOING
             - a CLOSED event can not be extended (an EventError is raised)
 
-        Extending a NEW or ONGOING event also updates the timestamp_last_update
-        field value.
-
         :raises EventError: When trying to extend a CLOSED event.
         """
         if self.state == "CLOSED":
             raise EventError("A closed event can not be extended.")
         if self.state != "ONGOING":
             self.state = "ONGOING"
-        self.timestamp_last_update = dt.datetime.now(dt.timezone.utc)
 
     def close(self, timestamp_end=None):
-        """Change the state of the event to CLOSED (if not CLOSED yet) and
-        update the timestamp_last_update field value.
+        """Change the state of the event to CLOSED (if not CLOSED yet).
 
         Note that a NEW event can be CLOSED without being ONGOING before.
 
@@ -144,7 +122,6 @@ class Event:
         if self.state != "CLOSED":
             self.state = "CLOSED"
             ts_now = dt.datetime.now(dt.timezone.utc)
-            self.timestamp_last_update = ts_now
             self.timestamp_end = timestamp_end or ts_now
 
     @classmethod
@@ -170,7 +147,7 @@ class Event:
             channel_id=channel_id,
             category=category, source=source, level=level, state="NEW",
             timestamp_start=timestamp_start or ts_now,
-            timestamp_last_update=ts_now, description=description,
+            description=description,
         )
 
     @classmethod
