@@ -10,7 +10,7 @@ from bemserver_core.database import db
 class TestTimeseriesEventModel:
 
     @pytest.mark.usefixtures("database")
-    def test_event_open_close(self, channels):
+    def test_event_open(self, channels):
         channel_1 = channels[0]
 
         # Open a new event.
@@ -31,16 +31,6 @@ class TestTimeseriesEventModel:
             timestamp_start=ts_start)
         assert evt_2.timestamp_start == ts_start
         assert evt_2.timestamp_end is None
-
-        # Close events.
-        evt_1.close()
-        assert evt_1.state == "CLOSED"
-        assert evt_1.timestamp_end is not None
-
-        ts_end = dt.datetime.now(dt.timezone.utc)
-        evt_2.close(timestamp_end=ts_end)
-        assert evt_2.state == "CLOSED"
-        assert evt_2.timestamp_end == ts_end
 
     @pytest.mark.usefixtures("database")
     def test_event_list_by_state(self, channels):
@@ -68,7 +58,7 @@ class TestTimeseriesEventModel:
         assert evts == [(evt_1,), (evt_2,)]
 
         # close one event
-        evt_2.close()
+        evt_2.state = "CLOSED"
         # open and set an event to ONGOING state
         evt_3 = TimeseriesEvent.open(
             channel_1.id, "observation_missing", "src")

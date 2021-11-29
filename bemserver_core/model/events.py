@@ -87,20 +87,6 @@ class Event:
 
     description = sqla.Column(sqla.String(250))
 
-    def close(self, timestamp_end=None):
-        """Change the state of the event to CLOSED (if not CLOSED yet).
-
-        Note that a NEW event can be CLOSED without being ONGOING before.
-
-        :param datetime timestamp_end: (optional, default None)
-            Time (tz-aware) of when the event is CLOSED. Set to NOW if None.
-        """
-        # TODO: warn if event is already closed?
-        if self.state != "CLOSED":
-            self.state = "CLOSED"
-            ts_now = dt.datetime.now(dt.timezone.utc)
-            self.timestamp_end = timestamp_end or ts_now
-
     @classmethod
     def open(
             cls, channel_id, category, source, level="ERROR",
