@@ -43,13 +43,11 @@ class TestTimeseriesEventModel:
         evt_1.close()
         assert evt_1.state == "CLOSED"
         assert evt_1.timestamp_end is not None
-        assert evt_1.duration == evt_1.timestamp_end - evt_1.timestamp_start
 
         ts_end = dt.datetime.now(dt.timezone.utc)
         evt_2.close(timestamp_end=ts_end)
         assert evt_2.state == "CLOSED"
         assert evt_2.timestamp_end == ts_end
-        assert evt_2.duration == ts_end - ts_start
 
     @pytest.mark.usefixtures("database")
     def test_event_list_by_state(self, channels):

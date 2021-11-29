@@ -87,16 +87,6 @@ class Event:
 
     description = sqla.Column(sqla.String(250))
 
-    @property
-    def duration(self):
-        if self.timestamp_start is not None:
-            # event is CLOSED
-            if self.timestamp_end is not None:
-                return self.timestamp_end - self.timestamp_start
-            # event is NEW or ONGOING
-            return dt.datetime.now(dt.timezone.utc) - self.timestamp_start
-        return None
-
     def extend(self):
         """Change the state of the event to ONGOING:
             - a NEW event will be updated to ONGOING
