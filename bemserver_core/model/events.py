@@ -1,6 +1,5 @@
 """Event"""
 
-import datetime as dt
 import sqlalchemy as sqla
 import sqlalchemy.orm as sqlaorm
 
@@ -85,32 +84,6 @@ class Event:
     source = sqla.Column(sqla.String, nullable=False)
 
     description = sqla.Column(sqla.String(250))
-
-    @classmethod
-    def open(
-            cls, channel_id, category, source, level="ERROR",
-            timestamp=None, description=None
-    ):
-        """Create a NEW event.
-
-        :param int channel_id: The channel ID of the event. See `EventChannel`.
-        :param string category: The category of the event. See `EventCategory`.
-        :param string source: The source name of the event (service name...).
-        :param string level: (optional, default "ERROR")
-            The level name of the event. See `EventLevel`.
-        :param datetime timestamp: (optional, default None)
-            Time (tz-aware) of the event. Set to now if None.
-        :param string description: (optional, default None)
-            Text to describe the event.
-        :returns Event: The instance of the event created.
-        """
-        ts_now = dt.datetime.now(dt.timezone.utc)
-        return cls.new(
-            channel_id=channel_id,
-            category=category, source=source, level=level, state="NEW",
-            timestamp=timestamp or ts_now,
-            description=description,
-        )
 
     @classmethod
     def list_by_state(

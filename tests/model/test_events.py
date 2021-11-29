@@ -10,30 +10,9 @@ from bemserver_core.database import db
 class TestTimeseriesEventModel:
 
     @pytest.mark.usefixtures("database")
-    def test_event_open(self, channels):
-        channel_1 = channels[0]
-
-        # Open a new event.
-        ts_now = dt.datetime.now(dt.timezone.utc)
-        evt_1 = TimeseriesEvent.open(
-            channel_1.id, "observation_missing", "src")
-        assert evt_1.state == "NEW"
-        assert evt_1.level == "ERROR"
-        assert evt_1.timestamp > ts_now
-        assert evt_1.description is None
-
-        # Open with timestamp start.
-        ts_now = dt.datetime.now(dt.timezone.utc)
-        evt_2 = TimeseriesEvent.open(
-            channel_1.id, "observation_missing", "src",
-            timestamp=ts_now)
-        assert evt_2.timestamp == ts_now
-
-    @pytest.mark.usefixtures("database")
     def test_event_list_by_state(self, channels):
         channel_1 = channels[0]
 
-        # no events at all
         evts = TimeseriesEvent.list_by_state()
         assert evts == []
         evts = TimeseriesEvent.list_by_state(states=("NEW",))
@@ -43,23 +22,36 @@ class TestTimeseriesEventModel:
         evts = TimeseriesEvent.list_by_state(states=("CLOSED",))
         assert evts == []
 
-        # create 2 events
-        evt_1 = TimeseriesEvent.open(
-            channel_1.id, "observation_missing", "src")
-        evt_2 = TimeseriesEvent.open(
-            channel_1.id, "observation_missing", "src")
+        evt_1 = TimeseriesEvent.new(
+            channel_id=channel_1.id,
+            timestamp=dt.datetime.now(dt.timezone.utc),
+            category="observation_missing",
+            source="src",
+            level="ERROR",
+            state="NEW",
+        )
+        evt_2 = TimeseriesEvent.new(
+            channel_id=channel_1.id,
+            timestamp=dt.datetime.now(dt.timezone.utc),
+            category="observation_missing",
+            source="src",
+            level="ERROR",
+            state="NEW",
+        )
         db.session.commit()
 
-        # all events' state is NEW, so we have 2 events listing NEW or ONGOING
         evts = TimeseriesEvent.list_by_state()
         assert evts == [(evt_1,), (evt_2,)]
 
-        # close one event
         evt_2.state = "CLOSED"
-        # open and set an event to ONGOING state
-        evt_3 = TimeseriesEvent.open(
-            channel_1.id, "observation_missing", "src")
-        evt_3.state = "ONGOING"
+        evt_3 = TimeseriesEvent.new(
+            channel_id=channel_1.id,
+            timestamp=dt.datetime.now(dt.timezone.utc),
+            category="observation_missing",
+            source="src",
+            level="ERROR",
+            state="ONGOING",
+        )
         db.session.commit()
 
         # 2 of 3 events are in NEW or ONGOING state
