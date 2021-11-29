@@ -4,7 +4,7 @@ import datetime as dt
 import pytest
 
 from bemserver_core.model import TimeseriesData
-from bemserver_core.authorization import CurrentUser
+from bemserver_core.authorization import CurrentUser, CurrentCampaign
 from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
@@ -27,40 +27,38 @@ class TestTimeseriesDataModel:
         with CurrentUser(admin_user):
 
             # Export
-            TimeseriesData.check_can_export(
-                start_dt, end_dt, [ts_1.id], campaign_id=None
-            )
-            TimeseriesData.check_can_export(
-                start_dt, end_dt, [ts_1.id], campaign_id=campaign_1.id
-            )
+            TimeseriesData.check_can_export(start_dt, end_dt, [ts_1.id])
+            with CurrentCampaign(campaign_1):
+                TimeseriesData.check_can_export(start_dt, end_dt, [ts_1.id])
             # TS not in Campaign
-            with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesData.check_can_export(
-                    start_dt, end_dt, [ts_1.id], campaign_id=campaign_2.id
-                )
+            with CurrentCampaign(campaign_2):
+                with pytest.raises(BEMServerAuthorizationError):
+                    TimeseriesData.check_can_export(
+                        start_dt, end_dt, [ts_1.id]
+                    )
             # Dates out of Campaign
-            with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesData.check_can_export(
-                    start_dt, end_dt_out, [ts_1.id], campaign_id=campaign_1.id
-                )
+            with CurrentCampaign(campaign_1):
+                with pytest.raises(BEMServerAuthorizationError):
+                    TimeseriesData.check_can_export(
+                        start_dt, end_dt_out, [ts_1.id]
+                    )
 
             # Import
-            TimeseriesData.check_can_import(
-                start_dt, end_dt, [ts_1.id], campaign_id=None
-            )
-            TimeseriesData.check_can_import(
-                start_dt, end_dt, [ts_1.id], campaign_id=campaign_1.id
-            )
+            TimeseriesData.check_can_import(start_dt, end_dt, [ts_1.id])
+            with CurrentCampaign(campaign_1):
+                TimeseriesData.check_can_import(start_dt, end_dt, [ts_1.id])
             # TS not in Campaign
-            with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesData.check_can_import(
-                    start_dt, end_dt, [ts_1.id], campaign_id=campaign_2.id
-                )
+            with CurrentCampaign(campaign_2):
+                with pytest.raises(BEMServerAuthorizationError):
+                    TimeseriesData.check_can_import(
+                        start_dt, end_dt, [ts_1.id]
+                    )
             # Dates out of Campaign
-            with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesData.check_can_import(
-                    start_dt, end_dt_out, [ts_1.id], campaign_id=campaign_1.id
-                )
+            with CurrentCampaign(campaign_1):
+                with pytest.raises(BEMServerAuthorizationError):
+                    TimeseriesData.check_can_import(
+                        start_dt, end_dt_out, [ts_1.id]
+                    )
 
     @pytest.mark.usefixtures("users_by_campaigns")
     @pytest.mark.usefixtures("timeseries_by_campaigns")
@@ -81,38 +79,40 @@ class TestTimeseriesDataModel:
 
             # Export
             with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesData.check_can_export(
-                    start_dt, end_dt, [ts_2.id], campaign_id=None
-                )
-            TimeseriesData.check_can_export(
-                start_dt, end_dt, [ts_2.id], campaign_id=campaign_2.id
-            )
+                TimeseriesData.check_can_export(start_dt, end_dt, [ts_2.id])
+            with CurrentCampaign(campaign_2):
+                TimeseriesData.check_can_export(start_dt, end_dt, [ts_2.id])
             # TS not in Campaign
-            with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesData.check_can_export(
-                    start_dt, end_dt, [ts_2.id], campaign_id=campaign_1.id
-                )
+            with CurrentCampaign(campaign_1):
+                with pytest.raises(BEMServerAuthorizationError):
+                    TimeseriesData.check_can_export(
+                        start_dt, end_dt, [ts_2.id]
+                    )
             # Dates out of Campaign
-            with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesData.check_can_export(
-                    start_dt, end_dt_out, [ts_2.id], campaign_id=campaign_2.id
-                )
+            with CurrentCampaign(campaign_2):
+                with pytest.raises(BEMServerAuthorizationError):
+                    TimeseriesData.check_can_export(
+                        start_dt, end_dt_out, [ts_2.id]
+                    )
 
             # Import
             with pytest.raises(BEMServerAuthorizationError):
                 TimeseriesData.check_can_import(
-                    start_dt, end_dt, [ts_2.id], campaign_id=None
+                    start_dt, end_dt, [ts_2.id]
                 )
-            TimeseriesData.check_can_import(
-                start_dt, end_dt, [ts_2.id], campaign_id=campaign_2.id
-            )
+            with CurrentCampaign(campaign_2):
+                TimeseriesData.check_can_import(
+                    start_dt, end_dt, [ts_2.id]
+                )
             # TS not in Campaign
-            with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesData.check_can_import(
-                    start_dt, end_dt, [ts_2.id], campaign_id=campaign_1.id
-                )
+            with CurrentCampaign(campaign_1):
+                with pytest.raises(BEMServerAuthorizationError):
+                    TimeseriesData.check_can_import(
+                        start_dt, end_dt, [ts_2.id]
+                    )
             # Dates out of Campaign
-            with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesData.check_can_import(
-                    start_dt, end_dt_out, [ts_2.id], campaign_id=campaign_2.id
-                )
+            with CurrentCampaign(campaign_2):
+                with pytest.raises(BEMServerAuthorizationError):
+                    TimeseriesData.check_can_import(
+                        start_dt, end_dt_out, [ts_2.id]
+                    )
