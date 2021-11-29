@@ -7,6 +7,13 @@ allow(_actor, _action, _resource) if OpenBarPolarClass.get();
 # Admin can do anything
 allow(user: UserActor, _action, _resource) if user.is_admin = true;
 
+# User has role "user" on anything
+resource Base {
+    roles = ["user"];
+}
+
+has_role(_: UserActor, "user", _: Base);
+
 
 actor UserActor {}
 
@@ -76,3 +83,72 @@ resource TimeseriesData {
     # Only admin can read/write without specifying a campaign
     permissions = ["read_without_campaign", "write_without_campaign"];
 }
+
+
+resource EventCategory{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource EventState{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+resource EventLevel{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource EventChannel {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["reader"];
+
+    "read" if "reader";
+}
+
+has_role(user: UserActor, "reader", ec: EventChannel) if
+    ecbc in ec.event_channels_by_campaigns and
+    has_role(user, "member", ecbc.campaign);
+
+
+resource EventChannelByCampaign {
+    permissions = ["create", "read", "update", "delete", "create_events", "read_events", "update_events", "delete_events"];
+    relations = {
+        campaign: Campaign
+    };
+
+    "read" if "member" on "campaign";
+    "read_events" if "member" on "campaign";
+    "create_events" if "member" on "campaign";
+    "update_events" if "member" on "campaign";
+    "delete_events" if "member" on "campaign";
+}
+
+has_relation(campaign: Campaign, "campaign", ecbc: EventChannelByCampaign) if
+  campaign = ecbc.campaign;
+
+
+resource TimeseriesEvent {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["reader", "writer"];
+
+    "reader" if "writer";
+
+    "create" if "writer";
+    "read" if "reader";
+    "update" if "writer";
+    "delete" if "writer";
+}
+
+has_role(_user: UserActor, "writer", event:TimeseriesEvent) if
+    ecbc in event.channel.event_channels_by_campaigns and
+    ecbc.campaign = CampaignPolarClass.get();

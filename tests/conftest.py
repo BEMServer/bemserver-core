@@ -173,3 +173,45 @@ def channels():
     db.session.add(channel_2)
     db.session.commit()
     return (channel_1, channel_2)
+
+
+@pytest.fixture
+def event_channels_by_campaigns(database, campaigns, channels):
+    with OpenBar():
+        ecc_1 = model.EventChannelByCampaign(
+            event_channel_id=channels[0].id,
+            campaign_id=campaigns[0].id,
+        )
+        db.session.add(ecc_1)
+        ecc_2 = model.EventChannelByCampaign(
+            event_channel_id=channels[1].id,
+            campaign_id=campaigns[1].id,
+        )
+        db.session.add(ecc_2)
+        db.session.commit()
+    return (ecc_1, ecc_2)
+
+
+@pytest.fixture
+def timeseries_events(database, channels):
+    with OpenBar():
+        ts_event_1 = model.TimeseriesEvent(
+            channel_id=channels[0].id,
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            category="observation_missing",
+            source="src",
+            level="ERROR",
+            state="NEW",
+        )
+        db.session.add(ts_event_1)
+        ts_event_2 = model.TimeseriesEvent(
+            channel_id=channels[1].id,
+            timestamp=dt.datetime(2020, 1, 15, tzinfo=dt.timezone.utc),
+            category="observation_missing",
+            source="src",
+            level="WARNING",
+            state="ONGOING",
+        )
+        db.session.add(ts_event_2)
+        db.session.commit()
+    return (ts_event_1, ts_event_2)
