@@ -10,7 +10,7 @@ from bemserver_core.database import db
 class TestTimeseriesEventModel:
 
     @pytest.mark.usefixtures("database")
-    def test_event_open_extend_close(self, channels):
+    def test_event_open_close(self, channels):
         channel_1 = channels[0]
 
         # Open a new event.
@@ -31,13 +31,6 @@ class TestTimeseriesEventModel:
             timestamp_start=ts_start)
         assert evt_2.timestamp_start == ts_start
         assert evt_2.timestamp_end is None
-
-        # Extend events.
-        evt_1.extend()
-        assert evt_1.state == "ONGOING"
-
-        evt_2.extend()
-        assert evt_2.state == "ONGOING"
 
         # Close events.
         evt_1.close()
@@ -76,10 +69,10 @@ class TestTimeseriesEventModel:
 
         # close one event
         evt_2.close()
-        # open and extend an event to ONGOING state
+        # open and set an event to ONGOING state
         evt_3 = TimeseriesEvent.open(
             channel_1.id, "observation_missing", "src")
-        evt_3.extend()
+        evt_3.state = "ONGOING"
         db.session.commit()
 
         # 2 of 3 events are in NEW or ONGOING state

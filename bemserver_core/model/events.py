@@ -87,19 +87,6 @@ class Event:
 
     description = sqla.Column(sqla.String(250))
 
-    def extend(self):
-        """Change the state of the event to ONGOING:
-            - a NEW event will be updated to ONGOING
-            - an ONGOING event will still ONGOING
-            - a CLOSED event can not be extended (an EventError is raised)
-
-        :raises EventError: When trying to extend a CLOSED event.
-        """
-        if self.state == "CLOSED":
-            raise EventError("A closed event can not be extended.")
-        if self.state != "ONGOING":
-            self.state = "ONGOING"
-
     def close(self, timestamp_end=None):
         """Change the state of the event to CLOSED (if not CLOSED yet).
 
