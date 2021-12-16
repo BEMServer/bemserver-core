@@ -23,7 +23,7 @@ class User(Base):
         nullable=False
     )
     password = sqla.Column(
-        sqla.String(80),
+        sqla.String(200),
         nullable=False
     )
     is_admin = sqla.Column(
