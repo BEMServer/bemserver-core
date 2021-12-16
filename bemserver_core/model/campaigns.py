@@ -2,9 +2,10 @@
 import sqlalchemy as sqla
 
 from bemserver_core.database import Base
+from bemserver_core.authorization import AuthMixin, auth, Relation
 
 
-class Campaign(Base):
+class Campaign(AuthMixin, Base):
     __tablename__ = "campaigns"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -13,8 +14,22 @@ class Campaign(Base):
     start_time = sqla.Column(sqla.DateTime(timezone=True))
     end_time = sqla.Column(sqla.DateTime(timezone=True))
 
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "users_by_campaigns": Relation(
+                    kind="many",
+                    other_type="UserByCampaign",
+                    my_field="id",
+                    other_field="campaign_id",
+                ),
+            },
+        )
 
-class UserByCampaign(Base):
+
+class UserByCampaign(AuthMixin, Base):
     """User x Campaign associations
 
     Users associated with a campaign have read permissions campaign-wise
@@ -25,17 +40,25 @@ class UserByCampaign(Base):
     )
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    campaign_id = sqla.Column(
-        sqla.Integer,
-        sqla.ForeignKey("campaigns.id"),
-    )
-    user_id = sqla.Column(
-        sqla.Integer,
-        sqla.ForeignKey("users.id"),
-    )
+    campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
+    user_id = sqla.Column(sqla.ForeignKey("users.id"), nullable=False)
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "user": Relation(
+                    kind="one",
+                    other_type="User",
+                    my_field="user_id",
+                    other_field="id",
+                ),
+            },
+        )
 
 
-class TimeseriesByCampaign(Base):
+class TimeseriesByCampaign(AuthMixin, Base):
     """Timeseries x Campaign associations
 
     Timeseries associated with a campaign can be read by all campaign users
@@ -47,33 +70,19 @@ class TimeseriesByCampaign(Base):
     )
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    campaign_id = sqla.Column(
-        sqla.Integer,
-        sqla.ForeignKey("campaigns.id"),
-    )
-    timeseries_id = sqla.Column(
-        sqla.Integer,
-        sqla.ForeignKey("timeseries.id"),
-    )
+    campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"))
+    timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"))
 
-
-class TimeseriesByCampaignByUser(Base):
-    """Timeseries x Campaign x User associations
-
-    Users associated with a Timeseries x Campaign association get write access
-    to the timeseries for the campaign time range.
-    """
-    __tablename__ = "timeseries_by_campaigns_by_users"
-    __table_args__ = (
-        sqla.UniqueConstraint("user_id", "timeseries_by_campaign_id"),
-    )
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    user_id = sqla.Column(
-        sqla.Integer,
-        sqla.ForeignKey("users.id"),
-    )
-    timeseries_by_campaign_id = sqla.Column(
-        sqla.Integer,
-        sqla.ForeignKey("timeseries_by_campaigns.id"),
-    )
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "campaign": Relation(
+                    kind="one",
+                    other_type="Campaign",
+                    my_field="campaign_id",
+                    other_field="id",
+                ),
+            },
+        )

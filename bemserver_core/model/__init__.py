@@ -1,10 +1,38 @@
 """Model"""
-from .users import User  # noqa
-from .timeseries import Timeseries  # noqa
-from .timeseries_data import TimeseriesData  # noqa
-from .events import (  # noqa
+from bemserver_core.authorization import init_authorization
+
+from .users import User
+from .campaigns import Campaign, UserByCampaign, TimeseriesByCampaign
+from .timeseries import Timeseries
+from .timeseries_data import TimeseriesData
+from .events import (
     Event, EventCategory, EventState, EventLevel, EventTarget
 )
-from .campaigns import (  # noqa
-    Campaign, UserByCampaign, TimeseriesByCampaign, TimeseriesByCampaignByUser
-)
+
+
+__all__ = [
+    "User",
+    "Campaign",
+    "UserByCampaign",
+    "TimeseriesByCampaign",
+    "Timeseries",
+    "TimeseriesData",
+    "Event",
+    "EventCategory",
+    "EventState",
+    "EventLevel",
+    "EventTarget",
+]
+
+
+# Register classes for authorization
+auth_model_classes = [
+    User,
+    Campaign,
+    UserByCampaign,
+    TimeseriesByCampaign,
+    Timeseries,
+    TimeseriesData,
+]
+
+init_authorization(auth_model_classes)

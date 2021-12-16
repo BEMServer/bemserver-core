@@ -1,6 +1,7 @@
 """Timeseries CSV I/O"""
 import io
 import csv
+import datetime as dt
 
 import sqlalchemy as sqla
 import pandas as pd
@@ -56,6 +57,12 @@ class TimeseriesCSVIO:
             except IndexError as exc:
                 raise TimeseriesCSVIOError('Missing column') from exc
 
+        # TODO: manage all ISO formats
+        timestamps = [dt.datetime.fromisoformat(r["timestamp"]) for r in datas]
+        start_dt, end_dt = min(timestamps), max(timestamps)
+
+        TimeseriesData.check_can_import(start_dt, end_dt, ts_ids)
+
         query = (
             sqla.dialects.postgresql
             .insert(TimeseriesData).values(datas)
@@ -76,9 +83,12 @@ class TimeseriesCSVIO:
 
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
+        :param list timeseries: List of timeseries IDs
 
         Returns csv as a string.
         """
+        TimeseriesData.check_can_export(start_dt, end_dt, timeseries)
+
         data = db.session.execute(
             sqla.select(
                 TimeseriesData.timestamp,
@@ -130,6 +140,8 @@ class TimeseriesCSVIO:
 
         Returns csv as a string.
         """
+        TimeseriesData.check_can_export(start_dt, end_dt, timeseries)
+
         if aggregation not in AGGREGATION_FUNCTIONS:
             raise ValueError(f'Invalid aggregation method "{aggregation}"')
 
