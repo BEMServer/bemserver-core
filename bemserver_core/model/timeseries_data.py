@@ -27,14 +27,6 @@ class TimeseriesData(AuthMixin, Base):
     value = sqla.Column(sqla.Float)
 
     @staticmethod
-    def _check_campaign(campaign, start_dt, end_dt):
-        if (
-            (campaign.start_time and start_dt < campaign.start_time) or
-            (campaign.end_time and end_dt > campaign.end_time)
-        ):
-            raise BEMServerAuthorizationError("Time range out of Campaign")
-
-    @staticmethod
     def _authorize(user, action, campaign, timeseries_id):
         stmt = sqla.select(TimeseriesByCampaign).where(
             TimeseriesByCampaign.timeseries_id == timeseries_id,
@@ -52,7 +44,7 @@ class TimeseriesData(AuthMixin, Base):
         if current_campaign is None:
             raise BEMServerCoreMissingCampaignError
         else:
-            cls._check_campaign(current_campaign, start_dt, end_dt)
+            current_campaign.auth_dates((start_dt, end_dt, ))
             for ts_id in timeseries:
                 cls._authorize(
                     current_user, "read_data", current_campaign, ts_id)
@@ -64,7 +56,7 @@ class TimeseriesData(AuthMixin, Base):
         if current_campaign is None:
             raise BEMServerCoreMissingCampaignError
         else:
-            cls._check_campaign(current_campaign, start_dt, end_dt)
+            current_campaign.auth_dates((start_dt, end_dt, ))
             for ts_id in timeseries:
                 cls._authorize(
                     current_user, "write_data", current_campaign, ts_id)

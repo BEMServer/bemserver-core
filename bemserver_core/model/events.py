@@ -7,8 +7,8 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from bemserver_core.database import Base, db
 from bemserver_core.authorization import (
-    auth, AuthMixin, Relation, BEMServerAuthorizationError,
-    get_current_user, get_current_campaign)
+    auth, AuthMixin, Relation, get_current_user, get_current_campaign
+)
 from bemserver_core.exceptions import BEMServerCoreMissingCampaignError
 
 
@@ -213,15 +213,6 @@ class Event:
             },
         )
 
-    @staticmethod
-    def _check_campaign(campaign, timestamps):
-        for timestamp in timestamps:
-            if (
-                (campaign.start_time and timestamp < campaign.start_time) or
-                (campaign.end_time and timestamp > campaign.end_time)
-            ):
-                raise BEMServerAuthorizationError("Time range out of Campaign")
-
     @classmethod
     def get(cls, **kwargs):
         current_campaign = get_current_campaign()
@@ -244,7 +235,7 @@ class Event:
         current_campaign = get_current_campaign()
         if current_campaign is None:
             raise BEMServerCoreMissingCampaignError
-        cls._check_campaign(current_campaign, (timestamp, ))
+        current_campaign.auth_dates((timestamp, ))
         return super().new(*args, timestamp=timestamp, **kwargs)
 
     @classmethod
