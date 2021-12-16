@@ -4,7 +4,6 @@ import sqlalchemy as sqla
 import sqlalchemy.orm as sqlaorm
 
 from bemserver_core.database import Base, db
-from bemserver_core.model.exceptions import EventError
 
 
 class EventChannel(Base):
@@ -91,7 +90,7 @@ class Event:
         category=None, source=None, level="ERROR"
     ):
         if states is None or len(states) <= 0:
-            raise EventError("Missing `state` filter.")
+            raise ValueError("Missing `state` filter.")
         state_conditions = tuple((cls.state == x) for x in states)
         stmt = sqla.select(cls).filter(sqla.or_(*state_conditions))
         if channel_id is not None:
