@@ -70,9 +70,8 @@ class TimeseriesCSVIO:
         )
 
         try:
-            with db.session() as session:
-                session.execute(query)
-                session.commit()
+            db.session.execute(query)
+            db.session.commit()
         # TODO: filter server and client errors (constraint violation)
         except sqla.exc.DBAPIError as exc:
             raise TimeseriesCSVIOError('Error writing to DB') from exc
@@ -162,8 +161,7 @@ class TimeseriesCSVIO:
             "start_dt": start_dt,
             "end_dt": end_dt,
         }
-        with db.session() as session:
-            data = session.execute(query, params)
+        data = db.session.execute(query, params)
 
         data_df = (
             pd.DataFrame(data, columns=('Datetime', 'tsid', 'value'))
