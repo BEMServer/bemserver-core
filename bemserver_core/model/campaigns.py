@@ -2,7 +2,8 @@
 import sqlalchemy as sqla
 
 from bemserver_core.database import Base
-from bemserver_core.authorization import AuthMixin, auth, Relation
+from bemserver_core.authorization import (
+    AuthMixin, auth, Relation, BEMServerAuthorizationError)
 
 
 class Campaign(AuthMixin, Base):
@@ -27,6 +28,14 @@ class Campaign(AuthMixin, Base):
                 ),
             },
         )
+
+    def auth_dates(self, dates):
+        for date in dates:
+            if (
+                (self.start_time and date < self.start_time) or
+                (self.end_time and date > self.end_time)
+            ):
+                raise BEMServerAuthorizationError("Date out of Campaign")
 
 
 class UserByCampaign(AuthMixin, Base):
