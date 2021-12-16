@@ -79,12 +79,6 @@ has_role(user: UserActor, "reader", ts: Timeseries) if
     has_role(user, "member", tbc.campaign);
 
 
-resource TimeseriesData {
-    # Only admin can read/write without specifying a campaign
-    permissions = ["read_without_campaign", "write_without_campaign"];
-}
-
-
 resource EventCategory{
     permissions = ["create", "read", "update", "delete"];
     roles = ["user"];
