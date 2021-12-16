@@ -95,69 +95,47 @@ def users_by_campaigns(database, users, campaigns):
     return (ubc_1, ubc_2)
 
 
-def make_timeseries(nb_ts):
+@pytest.fixture(params=[2])
+def timeseries(request, database):
     ts_l = []
-    for i in range(nb_ts):
+    for i in range(request.param):
         ts_i = model.Timeseries(
             name=f"Timeseries {i}",
             description=f"Test timeseries #{i}",
         )
         ts_l.append(ts_i)
-        db.session.add(ts_i)
+    db.session.add_all(ts_l)
     db.session.commit()
     return ts_l
 
 
 @pytest.fixture
-def timeseries(database):
-    return make_timeseries(2)
-
-
-@pytest.fixture(params=[{}])
-def timeseries_data(request, database):
-
-    param = request.param
-
-    nb_ts = param.get("nb_ts", 1)
-    nb_tsd = param.get("nb_tsd", 24 * 100)
-
-    ts_l = make_timeseries(nb_ts)
-
-    for ts_i in ts_l:
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
-        for i in range(nb_tsd):
-            timestamp = start_dt + dt.timedelta(hours=i)
-            db.session.add(
-                model.TimeseriesData(
-                    timestamp=timestamp,
-                    timeseries=ts_i,
-                    value=i
-                )
-            )
-
-    db.session.commit()
-
-    return [
-        (ts.id, nb_tsd, start_dt, start_dt + dt.timedelta(hours=nb_tsd))
-        for ts in ts_l
-    ]
-
-
-@pytest.fixture
 def timeseries_by_campaigns(database, campaigns, timeseries):
+    """Create timeseries x campaigns associations
+
+    Example:
+        campaigns = [C1, C2]
+        timeseries = [TS1, TS2, TS3, TS4, TS5]
+         timeseries x campaigns = [
+            TS1 x C1,
+            TS2 x C2,
+            TS2 x C1,
+            TS4 x C2,
+            TS5 x C1,
+        ]
+    """
     with OpenBar():
-        tbc_1 = model.TimeseriesByCampaign(
-            timeseries_id=timeseries[0].id,
-            campaign_id=campaigns[0].id,
-        )
-        db.session.add(tbc_1)
-        tbc_2 = model.TimeseriesByCampaign(
-            timeseries_id=timeseries[1].id,
-            campaign_id=campaigns[1].id,
-        )
-        db.session.add(tbc_2)
+        tbc_l = []
+        for idx, ts_i in enumerate(timeseries):
+            campaign = campaigns[idx % len(campaigns)]
+            tbc = model.TimeseriesByCampaign(
+                timeseries_id=ts_i.id,
+                campaign_id=campaign.id,
+            )
+            tbc_l.append(tbc)
+        db.session.add_all(tbc_l)
         db.session.commit()
-    return (tbc_1, tbc_2)
+    return tbc_l
 
 
 @pytest.fixture

@@ -6,6 +6,7 @@ from bemserver_core.model.campaigns import TimeseriesByCampaign
 from bemserver_core.authorization import (
     auth, AuthMixin, BEMServerAuthorizationError,
     get_current_user, get_current_campaign)
+from bemserver_core.exceptions import BEMServerCoreMissingCampaignError
 
 
 class TimeseriesData(AuthMixin, Base):
@@ -49,7 +50,7 @@ class TimeseriesData(AuthMixin, Base):
         current_user = get_current_user()
         current_campaign = get_current_campaign()
         if current_campaign is None:
-            auth.authorize(current_user, "read_without_campaign", cls)
+            raise BEMServerCoreMissingCampaignError
         else:
             cls._check_campaign(current_campaign, start_dt, end_dt)
             for ts_id in timeseries:
@@ -61,7 +62,7 @@ class TimeseriesData(AuthMixin, Base):
         current_user = get_current_user()
         current_campaign = get_current_campaign()
         if current_campaign is None:
-            auth.authorize(current_user, "write_without_campaign", cls)
+            raise BEMServerCoreMissingCampaignError
         else:
             cls._check_campaign(current_campaign, start_dt, end_dt)
             for ts_id in timeseries:

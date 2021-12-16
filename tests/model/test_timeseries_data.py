@@ -5,7 +5,9 @@ import pytest
 
 from bemserver_core.model import TimeseriesData
 from bemserver_core.authorization import CurrentUser, CurrentCampaign
-from bemserver_core.exceptions import BEMServerAuthorizationError
+from bemserver_core.exceptions import (
+    BEMServerAuthorizationError, BEMServerCoreMissingCampaignError,
+)
 
 
 class TestTimeseriesDataModel:
@@ -27,7 +29,8 @@ class TestTimeseriesDataModel:
         with CurrentUser(admin_user):
 
             # Export
-            TimeseriesData.check_can_export(start_dt, end_dt, [ts_1.id])
+            with pytest.raises(BEMServerCoreMissingCampaignError):
+                TimeseriesData.check_can_export(start_dt, end_dt, [ts_1.id])
             with CurrentCampaign(campaign_1):
                 TimeseriesData.check_can_export(start_dt, end_dt, [ts_1.id])
             # TS not in Campaign
@@ -44,7 +47,8 @@ class TestTimeseriesDataModel:
                     )
 
             # Import
-            TimeseriesData.check_can_import(start_dt, end_dt, [ts_1.id])
+            with pytest.raises(BEMServerCoreMissingCampaignError):
+                TimeseriesData.check_can_import(start_dt, end_dt, [ts_1.id])
             with CurrentCampaign(campaign_1):
                 TimeseriesData.check_can_import(start_dt, end_dt, [ts_1.id])
             # TS not in Campaign
@@ -78,7 +82,7 @@ class TestTimeseriesDataModel:
         with CurrentUser(user_1):
 
             # Export
-            with pytest.raises(BEMServerAuthorizationError):
+            with pytest.raises(BEMServerCoreMissingCampaignError):
                 TimeseriesData.check_can_export(start_dt, end_dt, [ts_2.id])
             with CurrentCampaign(campaign_2):
                 TimeseriesData.check_can_export(start_dt, end_dt, [ts_2.id])
@@ -96,7 +100,7 @@ class TestTimeseriesDataModel:
                     )
 
             # Import
-            with pytest.raises(BEMServerAuthorizationError):
+            with pytest.raises(BEMServerCoreMissingCampaignError):
                 TimeseriesData.check_can_import(
                     start_dt, end_dt, [ts_2.id]
                 )
