@@ -77,6 +77,13 @@ class OpenBarPolarClass:
         return OPEN_BAR.get()
 
 
+@polar_class
+class CampaignPolarClass:
+    @staticmethod
+    def get():
+        return CURRENT_CAMPAIGN.get()
+
+
 def query_builder(model):
     # A "filter" is an object returned from Oso that describes
     # a condition that must hold on an object. This turns an
@@ -130,6 +137,8 @@ def init_authorization(model_classes):
 
     Must be done after model classes are imported
     """
+    AuthMixin.register_class(name="Base")
+
     for cls in model_classes:
         cls.register_class()
 
@@ -140,8 +149,8 @@ def init_authorization(model_classes):
 class AuthMixin:
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(cls)
+    def register_class(cls, *args, **kwargs):
+        auth.register_class(cls, *args, **kwargs)
 
     @classmethod
     def get(cls, **kwargs):

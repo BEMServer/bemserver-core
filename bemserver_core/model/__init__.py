@@ -6,8 +6,9 @@ from .campaigns import Campaign, UserByCampaign, TimeseriesByCampaign
 from .timeseries import Timeseries
 from .timeseries_data import TimeseriesData
 from .events import (  # noqa
-    EventChannel, EventCategory, EventState, EventLevel,
-    TimeseriesEvent, TimeseriesEventByTimeseries,
+    EventCategory, EventState, EventLevel,
+    EventChannel, EventChannelByCampaign,
+    TimeseriesEvent,
 )
 
 
@@ -21,8 +22,9 @@ __all__ = [
     "EventCategory",
     "EventState",
     "EventLevel",
+    "EventChannel",
+    "EventChannelByCampaign",
     "TimeseriesEvent",
-    "TimeseriesEventByTimeseries",
 ]
 
 
@@ -34,6 +36,12 @@ auth_model_classes = [
     TimeseriesByCampaign,
     Timeseries,
     TimeseriesData,
+    EventCategory,
+    EventState,
+    EventLevel,
+    EventChannel,
+    EventChannelByCampaign,
+    TimeseriesEvent,
 ]
 
 init_authorization(auth_model_classes)
