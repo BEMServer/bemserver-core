@@ -12,9 +12,8 @@ from bemserver_core.authorization import CurrentCampaign
 
 
 class TestTimeseriesCSVIO:
-
-    @pytest.mark.parametrize('timeseries', (3, ), indirect=True)
-    @pytest.mark.parametrize('mode', ('str', 'textiobase'))
+    @pytest.mark.parametrize("timeseries", (3,), indirect=True)
+    @pytest.mark.parametrize("mode", ("str", "textiobase"))
     @pytest.mark.usefixtures("timeseries_by_campaigns")
     @pytest.mark.usefixtures("as_admin")
     def test_timeseries_csv_io_import_csv(self, timeseries, mode, campaigns):
@@ -38,27 +37,29 @@ class TestTimeseriesCSVIO:
         with CurrentCampaign(campaign_1):
             tscsvio.import_csv(csv_file)
 
-        data = db.session.query(
-            TimeseriesData.timestamp,
-            TimeseriesData.timeseries_id,
-            TimeseriesData.value,
-        ).order_by(
-            TimeseriesData.timeseries_id,
-            TimeseriesData.timestamp,
-        ).all()
+        data = (
+            db.session.query(
+                TimeseriesData.timestamp,
+                TimeseriesData.timeseries_id,
+                TimeseriesData.value,
+            )
+            .order_by(
+                TimeseriesData.timeseries_id,
+                TimeseriesData.timestamp,
+            )
+            .all()
+        )
 
         timestamps = [
-            dt.datetime(2020, 1, 1, i, tzinfo=dt.timezone.utc)
-            for i in range(4)
+            dt.datetime(2020, 1, 1, i, tzinfo=dt.timezone.utc) for i in range(4)
         ]
 
         expected = [
-                (timestamp, ts_0.id, float(idx))
-                for idx, timestamp in enumerate(timestamps)
-            ] + [
-                (timestamp, ts_2.id, float(idx) + 10)
-                for idx, timestamp in enumerate(timestamps)
-            ]
+            (timestamp, ts_0.id, float(idx)) for idx, timestamp in enumerate(timestamps)
+        ] + [
+            (timestamp, ts_2.id, float(idx) + 10)
+            for idx, timestamp in enumerate(timestamps)
+        ]
 
         assert data == expected
 
@@ -71,7 +72,7 @@ class TestTimeseriesCSVIO:
             "Datetime,1\n2020-01-01T00:00:00+00:00",
             "Datetime,1\n2020-01-01T00:00:00+00:00,",
             "Datetime,1\n2020-01-01T00:00:00+00:00,a",
-        )
+        ),
     )
     @pytest.mark.usefixtures("timeseries_by_campaigns")
     @pytest.mark.usefixtures("as_admin")
@@ -82,7 +83,7 @@ class TestTimeseriesCSVIO:
             with pytest.raises(TimeseriesCSVIOError):
                 tscsvio.import_csv(io.StringIO(csv_file))
 
-    @pytest.mark.parametrize('timeseries', (5, ), indirect=True)
+    @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.usefixtures("timeseries_by_campaigns")
     @pytest.mark.usefixtures("as_admin")
     def test_timeseries_csv_io_export_csv(self, timeseries, campaigns):
@@ -98,28 +99,20 @@ class TestTimeseriesCSVIO:
         for i in range(3):
             timestamp = start_dt + dt.timedelta(hours=i)
             db.session.add(
-                TimeseriesData(
-                    timestamp=timestamp,
-                    timeseries_id=ts_0.id,
-                    value=i
-                )
+                TimeseriesData(timestamp=timestamp, timeseries_id=ts_0.id, value=i)
             )
         for i in range(2):
             timestamp = start_dt + dt.timedelta(hours=i)
             db.session.add(
                 TimeseriesData(
-                    timestamp=timestamp,
-                    timeseries_id=ts_4.id,
-                    value=10 + 2 * i
+                    timestamp=timestamp, timeseries_id=ts_4.id, value=10 + 2 * i
                 )
             )
         db.session.commit()
 
         # Export CSV
         with CurrentCampaign(campaign_1):
-            data = tscsvio.export_csv(
-                start_dt, end_dt, (ts_0.id, ts_2.id, ts_4.id)
-            )
+            data = tscsvio.export_csv(start_dt, end_dt, (ts_0.id, ts_2.id, ts_4.id))
 
         assert data == (
             f"Datetime,{ts_0.id},{ts_2.id},{ts_4.id}\n"
@@ -128,7 +121,7 @@ class TestTimeseriesCSVIO:
             "2020-01-01T02:00:00+0000,2.0,,\n"
         )
 
-    @pytest.mark.parametrize('timeseries', (5, ), indirect=True)
+    @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.usefixtures("timeseries_by_campaigns")
     @pytest.mark.usefixtures("as_admin")
     def test_timeseries_csv_io_export_csv_bucket(self, timeseries, campaigns):
@@ -138,25 +131,19 @@ class TestTimeseriesCSVIO:
         ts_4 = timeseries[4]
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
-        end_dt = start_dt + dt.timedelta(hours=24*3)
+        end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
         # Create DB data
         for i in range(24 * 3):
             timestamp = start_dt + dt.timedelta(hours=i)
             db.session.add(
-                TimeseriesData(
-                    timestamp=timestamp,
-                    timeseries_id=ts_0.id,
-                    value=i
-                )
+                TimeseriesData(timestamp=timestamp, timeseries_id=ts_0.id, value=i)
             )
         for i in range(24 * 2):
             timestamp = start_dt + dt.timedelta(hours=i)
             db.session.add(
                 TimeseriesData(
-                    timestamp=timestamp,
-                    timeseries_id=ts_4.id,
-                    value=10 + 2 * i
+                    timestamp=timestamp, timeseries_id=ts_4.id, value=10 + 2 * i
                 )
             )
         db.session.commit()
@@ -176,7 +163,10 @@ class TestTimeseriesCSVIO:
 
             # Export CSV: local TZ avg
             data = tscsvio.export_csv_bucket(
-                start_dt, end_dt, (ts_0.id, ts_2.id, ts_4.id), "P1D",
+                start_dt,
+                end_dt,
+                (ts_0.id, ts_2.id, ts_4.id),
+                "P1D",
                 timezone="Europe/Paris",
             )
             assert data == (
@@ -189,7 +179,10 @@ class TestTimeseriesCSVIO:
 
             # Export CSV: UTC sum
             data = tscsvio.export_csv_bucket(
-                start_dt, end_dt, [ts_0.id, ts_2.id, ts_4.id], "1 day",
+                start_dt,
+                end_dt,
+                [ts_0.id, ts_2.id, ts_4.id],
+                "1 day",
                 aggregation="sum",
             )
             assert data == (
@@ -201,7 +194,10 @@ class TestTimeseriesCSVIO:
 
             # Export CSV: UTC min
             data = tscsvio.export_csv_bucket(
-                start_dt, end_dt, [ts_0.id, ts_2.id, ts_4.id], "1 day",
+                start_dt,
+                end_dt,
+                [ts_0.id, ts_2.id, ts_4.id],
+                "1 day",
                 aggregation="min",
             )
             assert data == (
@@ -213,7 +209,10 @@ class TestTimeseriesCSVIO:
 
             # Export CSV: UTC max
             data = tscsvio.export_csv_bucket(
-                start_dt, end_dt, [ts_0.id, ts_2.id, ts_4.id], "1 day",
+                start_dt,
+                end_dt,
+                [ts_0.id, ts_2.id, ts_4.id],
+                "1 day",
                 aggregation="max",
             )
             assert data == (
@@ -226,6 +225,9 @@ class TestTimeseriesCSVIO:
             # Export CSV: invalid aggregation
             with pytest.raises(ValueError):
                 tscsvio.export_csv_bucket(
-                    start_dt, end_dt, [ts_0.id, ts_2.id, ts_4.id], "1 day",
+                    start_dt,
+                    end_dt,
+                    [ts_0.id, ts_2.id, ts_4.id],
+                    "1 day",
                     aggregation="lol",
                 )

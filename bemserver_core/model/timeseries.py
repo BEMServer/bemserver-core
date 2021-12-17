@@ -34,6 +34,5 @@ class Timeseries(AuthMixin, Base):
     def get(cls, *, campaign_id=None, **kwargs):
         query = super().get(**kwargs)
         if campaign_id:
-            query = query.join(TimeseriesByCampaign).filter_by(
-                campaign_id=campaign_id)
+            query = query.join(TimeseriesByCampaign).filter_by(campaign_id=campaign_id)
         return query

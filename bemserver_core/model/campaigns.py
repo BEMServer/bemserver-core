@@ -3,7 +3,11 @@ import sqlalchemy as sqla
 
 from bemserver_core.database import Base
 from bemserver_core.authorization import (
-    AuthMixin, auth, Relation, BEMServerAuthorizationError)
+    AuthMixin,
+    auth,
+    Relation,
+    BEMServerAuthorizationError,
+)
 
 
 class Campaign(AuthMixin, Base):
@@ -31,9 +35,8 @@ class Campaign(AuthMixin, Base):
 
     def auth_dates(self, dates):
         for date in dates:
-            if (
-                (self.start_time and date < self.start_time) or
-                (self.end_time and date > self.end_time)
+            if (self.start_time and date < self.start_time) or (
+                self.end_time and date > self.end_time
             ):
                 raise BEMServerAuthorizationError("Date out of Campaign")
 
@@ -43,10 +46,9 @@ class UserByCampaign(AuthMixin, Base):
 
     Users associated with a campaign have read permissions campaign-wise
     """
+
     __tablename__ = "users_by_campaigns"
-    __table_args__ = (
-        sqla.UniqueConstraint("campaign_id", "user_id"),
-    )
+    __table_args__ = (sqla.UniqueConstraint("campaign_id", "user_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
@@ -73,10 +75,9 @@ class TimeseriesByCampaign(AuthMixin, Base):
     Timeseries associated with a campaign can be read by all campaign users
     for the campaign time range.
     """
+
     __tablename__ = "timeseries_by_campaigns"
-    __table_args__ = (
-        sqla.UniqueConstraint("campaign_id", "timeseries_id"),
-    )
+    __table_args__ = (sqla.UniqueConstraint("campaign_id", "timeseries_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"))

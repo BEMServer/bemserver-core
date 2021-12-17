@@ -6,8 +6,11 @@ from .campaigns import Campaign, UserByCampaign, TimeseriesByCampaign
 from .timeseries import Timeseries
 from .timeseries_data import TimeseriesData  # noqa
 from .events import (  # noqa
-    EventCategory, EventState, EventLevel,
-    EventChannel, EventChannelByCampaign,
+    EventCategory,
+    EventState,
+    EventLevel,
+    EventChannel,
+    EventChannelByCampaign,
     TimeseriesEvent,
 )
 

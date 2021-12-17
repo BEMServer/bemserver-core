@@ -7,7 +7,11 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 from bemserver_core.database import Base, db
 from bemserver_core.authorization import (
-    auth, AuthMixin, Relation, get_current_user, get_current_campaign
+    auth,
+    AuthMixin,
+    Relation,
+    get_current_user,
+    get_current_campaign,
 )
 from bemserver_core.exceptions import BEMServerCoreMissingCampaignError
 
@@ -37,7 +41,8 @@ class EventChannel(AuthMixin, Base):
         query = super().get(**kwargs)
         if campaign_id:
             query = query.join(EventChannelByCampaign).filter_by(
-                campaign_id=campaign_id)
+                campaign_id=campaign_id
+            )
         return query
 
 
@@ -47,10 +52,9 @@ class EventChannelByCampaign(AuthMixin, Base):
     Event channels associated with a campaign can be read by all campaign
     users for the campaign time range.
     """
+
     __tablename__ = "event_channels_by_campaigns"
-    __table_args__ = (
-        sqla.UniqueConstraint("campaign_id", "event_channel_id"),
-    )
+    __table_args__ = (sqla.UniqueConstraint("campaign_id", "event_channel_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"))
@@ -77,9 +81,7 @@ class EventCategory(AuthMixin, Base):
     id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
     description = sqla.Column(sqla.String(250))
     parent = sqla.Column(
-        sqla.String,
-        sqla.ForeignKey("event_categories.id"),
-        nullable=True
+        sqla.String, sqla.ForeignKey("event_categories.id"), nullable=True
     )
 
 
@@ -106,16 +108,13 @@ class Event:
     used by the authorization rules.
     """
 
-    id = sqla.Column(
-        sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
+    id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
 
     # Use getter/setter to prevent modifying channel after commit
     @sqlaorm.declared_attr
     def _channel_id(cls):
         return sqla.Column(
-            sqla.Integer,
-            sqla.ForeignKey("event_channels.id"),
-            nullable=False
+            sqla.Integer, sqla.ForeignKey("event_channels.id"), nullable=False
         )
 
     @hybrid_property
@@ -131,25 +130,19 @@ class Event:
     @sqlaorm.declared_attr
     def category(cls):
         return sqla.Column(
-            sqla.String,
-            sqla.ForeignKey("event_categories.id"),
-            nullable=False
+            sqla.String, sqla.ForeignKey("event_categories.id"), nullable=False
         )
 
     @sqlaorm.declared_attr
     def level(cls):
         return sqla.Column(
-            sqla.String,
-            sqla.ForeignKey("event_levels.id"),
-            nullable=False
+            sqla.String, sqla.ForeignKey("event_levels.id"), nullable=False
         )
 
     @sqlaorm.declared_attr
     def state(cls):
         return sqla.Column(
-            sqla.String,
-            sqla.ForeignKey("event_states.id"),
-            nullable=False
+            sqla.String, sqla.ForeignKey("event_states.id"), nullable=False
         )
 
     # Use getter/setter to prevent modifying timestamp after commit
@@ -171,8 +164,15 @@ class Event:
 
     @classmethod
     def list_by_state(
-        cls, states=("NEW", "ONGOING",), channel_id=None,
-        category=None, source=None, level="ERROR"
+        cls,
+        states=(
+            "NEW",
+            "ONGOING",
+        ),
+        channel_id=None,
+        category=None,
+        source=None,
+        level="ERROR",
     ):
         current_campaign = get_current_campaign()
         if current_campaign is None:
@@ -190,13 +190,9 @@ class Event:
         if level is not None:
             stmt = stmt.filter(cls.level == level)
         if current_campaign.start_time:
-            stmt = stmt.filter(
-                cls.timestamp >= current_campaign.start_time
-            )
+            stmt = stmt.filter(cls.timestamp >= current_campaign.start_time)
         if current_campaign.end_time:
-            stmt = stmt.filter(
-                cls.timestamp <= current_campaign.end_time
-            )
+            stmt = stmt.filter(cls.timestamp <= current_campaign.end_time)
         return db.session.execute(stmt).all()
 
     @classmethod
@@ -221,13 +217,9 @@ class Event:
         auth.authorize(get_current_user(), "read", current_campaign)
         query = super().get(**kwargs)
         if current_campaign.start_time:
-            query = query.filter(
-                cls.timestamp >= current_campaign.start_time
-            )
+            query = query.filter(cls.timestamp >= current_campaign.start_time)
         if current_campaign.end_time:
-            query = query.filter(
-                cls.timestamp <= current_campaign.end_time
-            )
+            query = query.filter(cls.timestamp <= current_campaign.end_time)
         return query
 
     @classmethod
@@ -235,7 +227,7 @@ class Event:
         current_campaign = get_current_campaign()
         if current_campaign is None:
             raise BEMServerCoreMissingCampaignError
-        current_campaign.auth_dates((timestamp, ))
+        current_campaign.auth_dates((timestamp,))
         return super().new(*args, timestamp=timestamp, **kwargs)
 
     @classmethod
@@ -270,10 +262,9 @@ class TimeseriesEvent(Event, AuthMixin, Base):
 
 class TimeseriesEventByTimeseries(AuthMixin, Base):
     """TimeseriesEvent x Timeseries associations"""
+
     __tablename__ = "timeseries_events_by_timeseries"
-    __table_args__ = (
-        sqla.UniqueConstraint("timeseries_event_id", "timeseries_id"),
-    )
+    __table_args__ = (sqla.UniqueConstraint("timeseries_event_id", "timeseries_id"),)
 
     timeseries_event_id = sqla.Column(
         sqla.Integer,
@@ -283,9 +274,7 @@ class TimeseriesEventByTimeseries(AuthMixin, Base):
     timeseries_event = sqla.orm.relationship(
         "TimeseriesEvent",
         backref=sqla.orm.backref(
-            "timeseries",
-            passive_deletes=True,
-            cascade="all, delete-orphan"
+            "timeseries", passive_deletes=True, cascade="all, delete-orphan"
         ),
     )
     timeseries_id = sqla.Column(
@@ -304,7 +293,7 @@ def _insert_initial_event_categories(target, connection, **kwargs):
         {
             "id": "ABNORMAL_TIMESTAMPS",
             "description": "Abnormal timestamps in timeseries",
-        }
+        },
     )
     connection.execute(
         target.insert(),
@@ -312,7 +301,7 @@ def _insert_initial_event_categories(target, connection, **kwargs):
             "id": "observation_missing",
             "parent": "ABNORMAL_TIMESTAMPS",
             "description": "Observation timestamp is missing",
-        }
+        },
     )
     connection.execute(
         target.insert(),
@@ -323,7 +312,7 @@ def _insert_initial_event_categories(target, connection, **kwargs):
                 "Observation timestamp interval is too large"
                 " compared to the timeseries observation interval"
             ),
-        }
+        },
     )
     connection.execute(
         target.insert(),
@@ -334,7 +323,7 @@ def _insert_initial_event_categories(target, connection, **kwargs):
                 "Observation timestamp interval is too short"
                 " compared to the timeseries observation interval"
             ),
-        }
+        },
     )
     connection.execute(
         target.insert(),
@@ -345,7 +334,7 @@ def _insert_initial_event_categories(target, connection, **kwargs):
                 "Reception timestamp interval is too large"
                 " compared to the timeseries reception interval"
             ),
-        }
+        },
     )
     connection.execute(
         target.insert(),
@@ -356,14 +345,14 @@ def _insert_initial_event_categories(target, connection, **kwargs):
                 "Reception timestamp interval is too short"
                 " compared to the timeseries reception interval"
             ),
-        }
+        },
     )
     connection.execute(
         target.insert(),
         {
             "id": "ABNORMAL_MEASURE_VALUES",
             "description": "Abnormal measure values in timeseries",
-        }
+        },
     )
     connection.execute(
         target.insert(),
@@ -371,29 +360,17 @@ def _insert_initial_event_categories(target, connection, **kwargs):
             "id": "out_of_range",
             "parent": "ABNORMAL_MEASURE_VALUES",
             "description": "Measure value is out of range",
-        }
+        },
     )
 
 
 @sqla.event.listens_for(EventLevel.__table__, "after_create")
 def _insert_initial_event_levels(target, connection, **kwargs):
     # add the 3 default event levels
-    connection.execute(
-        target.insert(),
-        {"id": "INFO", "description": "Information"}
-    )
-    connection.execute(
-        target.insert(),
-        {"id": "WARNING", "description": "Warning"}
-    )
-    connection.execute(
-        target.insert(),
-        {"id": "ERROR", "description": "Error"}
-    )
-    connection.execute(
-        target.insert(),
-        {"id": "CRITICAL", "description": "Critical"}
-    )
+    connection.execute(target.insert(), {"id": "INFO", "description": "Information"})
+    connection.execute(target.insert(), {"id": "WARNING", "description": "Warning"})
+    connection.execute(target.insert(), {"id": "ERROR", "description": "Error"})
+    connection.execute(target.insert(), {"id": "CRITICAL", "description": "Critical"})
 
 
 @sqla.event.listens_for(EventState.__table__, "after_create")

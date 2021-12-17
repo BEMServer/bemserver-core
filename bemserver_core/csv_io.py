@@ -15,7 +15,6 @@ AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max")
 
 
 class TimeseriesCSVIO:
-
     @staticmethod
     def import_csv(csv_file):
         """Import CSV file
@@ -32,30 +31,29 @@ class TimeseriesCSVIO:
         try:
             header = next(reader)
         except StopIteration as exc:
-            raise TimeseriesCSVIOError('Missing headers line') from exc
+            raise TimeseriesCSVIOError("Missing headers line") from exc
         if header[0] != "Datetime":
             raise TimeseriesCSVIOError('First column must be "Datetime"')
         try:
-            ts_ids = [
-                db.session.get(Timeseries, col).id
-                for col in header[1:]
-            ]
+            ts_ids = [db.session.get(Timeseries, col).id for col in header[1:]]
         except AttributeError as exc:
-            raise TimeseriesCSVIOError('Unknown timeseries ID') from exc
+            raise TimeseriesCSVIOError("Unknown timeseries ID") from exc
 
         datas = []
         for row in reader:
             try:
-                datas.extend([
-                    {
-                        "timestamp": row[0],
-                        "timeseries_id": ts_id,
-                        "value": row[col+1]
-                    }
-                    for col, ts_id in enumerate(ts_ids)
-                ])
+                datas.extend(
+                    [
+                        {
+                            "timestamp": row[0],
+                            "timeseries_id": ts_id,
+                            "value": row[col + 1],
+                        }
+                        for col, ts_id in enumerate(ts_ids)
+                    ]
+                )
             except IndexError as exc:
-                raise TimeseriesCSVIOError('Missing column') from exc
+                raise TimeseriesCSVIOError("Missing column") from exc
 
         # TODO: manage all ISO formats
         timestamps = [dt.datetime.fromisoformat(r["timestamp"]) for r in datas]
@@ -64,8 +62,8 @@ class TimeseriesCSVIO:
         TimeseriesData.check_can_import(start_dt, end_dt, ts_ids)
 
         query = (
-            sqla.dialects.postgresql
-            .insert(TimeseriesData).values(datas)
+            sqla.dialects.postgresql.insert(TimeseriesData)
+            .values(datas)
             .on_conflict_do_nothing()
         )
 
@@ -74,7 +72,7 @@ class TimeseriesCSVIO:
             db.session.commit()
         # TODO: filter server and client errors (constraint violation)
         except sqla.exc.DBAPIError as exc:
-            raise TimeseriesCSVIOError('Error writing to DB') from exc
+            raise TimeseriesCSVIOError("Error writing to DB") from exc
 
     @staticmethod
     def export_csv(start_dt, end_dt, timeseries):
@@ -93,21 +91,17 @@ class TimeseriesCSVIO:
                 TimeseriesData.timestamp,
                 TimeseriesData.timeseries_id,
                 TimeseriesData.value,
-            ).filter(
-                TimeseriesData.timeseries_id.in_(timeseries)
-            ).filter(
-                start_dt <= TimeseriesData.timestamp
-            ).filter(
-                TimeseriesData.timestamp < end_dt
             )
+            .filter(TimeseriesData.timeseries_id.in_(timeseries))
+            .filter(start_dt <= TimeseriesData.timestamp)
+            .filter(TimeseriesData.timestamp < end_dt)
         ).all()
 
-        data_df = (
-            pd.DataFrame(data, columns=('Datetime', 'tsid', 'value'))
-            .set_index("Datetime")
+        data_df = pd.DataFrame(data, columns=("Datetime", "tsid", "value")).set_index(
+            "Datetime"
         )
         data_df.index = pd.DatetimeIndex(data_df.index)
-        data_df = data_df.pivot(columns='tsid', values='value')
+        data_df = data_df.pivot(columns="tsid", values="value")
 
         # Add missing columns, in query order
         for idx, ts_id in enumerate(timeseries):
@@ -116,7 +110,7 @@ class TimeseriesCSVIO:
 
         # Specify ISO 8601 manually
         # https://github.com/pandas-dev/pandas/issues/27328
-        return data_df.to_csv(date_format='%Y-%m-%dT%H:%M:%S%z')
+        return data_df.to_csv(date_format="%Y-%m-%dT%H:%M:%S%z")
 
     @staticmethod
     def export_csv_bucket(
@@ -163,16 +157,13 @@ class TimeseriesCSVIO:
         }
         data = db.session.execute(query, params)
 
-        data_df = (
-            pd.DataFrame(data, columns=('Datetime', 'tsid', 'value'))
-            .set_index("Datetime")
+        data_df = pd.DataFrame(data, columns=("Datetime", "tsid", "value")).set_index(
+            "Datetime"
         )
         data_df.index = (
-            pd.DatetimeIndex(data_df.index)
-            .tz_localize(timezone)
-            .tz_convert('UTC')
+            pd.DatetimeIndex(data_df.index).tz_localize(timezone).tz_convert("UTC")
         )
-        data_df = data_df.pivot(columns='tsid', values='value')
+        data_df = data_df.pivot(columns="tsid", values="value")
 
         # Add missing columns, in query order
         for idx, ts_id in enumerate(timeseries):
@@ -181,7 +172,7 @@ class TimeseriesCSVIO:
 
         # Specify ISO 8601 manually
         # https://github.com/pandas-dev/pandas/issues/27328
-        return data_df.to_csv(date_format='%Y-%m-%dT%H:%M:%S%z')
+        return data_df.to_csv(date_format="%Y-%m-%dT%H:%M:%S%z")
 
 
 tscsvio = TimeseriesCSVIO()

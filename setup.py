@@ -3,6 +3,22 @@
 
 from setuptools import setup, find_packages
 
+EXTRAS_REQUIRE = {
+    "tests": [
+        "pytest>=4.4.4",
+        "pytest-postgresql>=3.0.0,<4.0.0",
+        "pytest-cov>=2.12.1",
+        "coverage>=5.3.0",
+    ],
+    "lint": [
+        "flake8>=3.9.2",
+        "flake8-bugbear>=21.4.3",
+        "pre-commit>=2.15",
+    ],
+}
+EXTRAS_REQUIRE["dev"] = EXTRAS_REQUIRE["tests"] + EXTRAS_REQUIRE["lint"]
+
+
 # Get the long description from the README file
 with open("README.rst", encoding="utf-8") as f:
     long_description = f.read()
@@ -37,6 +53,7 @@ setup(
         "argon2_cffi>=20.1.0",
         "oso>=0.24.0,<0.25",
     ],
+    extras_require=EXTRAS_REQUIRE,
     packages=find_packages(exclude=["tests*"]),
     include_package_data=True,
 )
