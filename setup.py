@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 EXTRAS_REQUIRE = {
     "tests": [
         "pytest>=4.4.4",
-        "pytest-postgresql>=3.0.0,<4.0.0",
+        "pytest-postgresql>=3.0.0,<5.0.0",
         "pytest-cov>=2.12.1",
         "coverage>=5.3.0",
     ],
