@@ -1,1 +1,8 @@
+include LICENSE
+
 include bemserver_core/authorization.polar
+
+graft tests
+include tox.ini
+
+global-exclude *.py[co]
