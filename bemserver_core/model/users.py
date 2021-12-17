@@ -10,32 +10,12 @@ from bemserver_core.authorization import AuthMixin, auth, get_current_user
 class User(AuthMixin, Base):
     __tablename__ = "users"
 
-    id = sqla.Column(
-        sqla.Integer,
-        primary_key=True
-    )
-    name = sqla.Column(
-        sqla.String(80),
-        unique=True,
-        nullable=False
-    )
-    email = sqla.Column(
-        sqla.String(80),
-        unique=True,
-        nullable=False
-    )
-    password = sqla.Column(
-        sqla.String(200),
-        nullable=False
-    )
-    _is_admin = sqla.Column(
-        sqla.Boolean(),
-        nullable=False
-    )
-    _is_active = sqla.Column(
-        sqla.Boolean(),
-        nullable=False
-    )
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
+    email = sqla.Column(sqla.String(80), unique=True, nullable=False)
+    password = sqla.Column(sqla.String(200), nullable=False)
+    _is_admin = sqla.Column(sqla.Boolean(), nullable=False)
+    _is_active = sqla.Column(sqla.Boolean(), nullable=False)
 
     @classmethod
     def register_class(cls):

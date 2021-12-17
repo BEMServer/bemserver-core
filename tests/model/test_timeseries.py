@@ -8,7 +8,6 @@ from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestTimeseriesModel:
-
     def test_timeseries_authorizations_as_admin(self, users):
         admin_user = users[0]
         assert admin_user.is_admin

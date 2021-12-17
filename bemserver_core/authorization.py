@@ -18,6 +18,7 @@ OPEN_BAR = ContextVar("open_bar", default=False)
 
 class CurrentUser(AbstractContextManager):
     """Set current user for context"""
+
     def __init__(self, user):
         self._token = None
         self._user = user
@@ -31,6 +32,7 @@ class CurrentUser(AbstractContextManager):
 
 class CurrentCampaign(AbstractContextManager):
     """Set current campaign for context"""
+
     def __init__(self, campaign):
         self._token = None
         self._campaign = campaign
@@ -48,6 +50,7 @@ class OpenBar(AbstractContextManager):
     Used for tests or admin tasks.
     "With great power comes great responsibility."
     """
+
     def __init__(self):
         self._token = None
 
@@ -114,9 +117,7 @@ def query_builder(model):
 
 class SQLAlchemyOso(Oso):
     def register_class(self, cls, *args, **kwargs):
-        super().register_class(
-            cls, *args, build_query=query_builder(cls), **kwargs
-        )
+        super().register_class(cls, *args, build_query=query_builder(cls), **kwargs)
 
 
 auth = SQLAlchemyOso(
@@ -126,9 +127,7 @@ auth = SQLAlchemyOso(
 
 
 auth.set_data_filtering_query_defaults(
-    combine_query=lambda q,
-    r: q.union(r),
-    exec_query=lambda q: q.distinct().all()
+    combine_query=lambda q, r: q.union(r), exec_query=lambda q: q.distinct().all()
 )
 
 
@@ -147,7 +146,6 @@ def init_authorization(model_classes):
 
 
 class AuthMixin:
-
     @classmethod
     def register_class(cls, *args, **kwargs):
         auth.register_class(cls, *args, **kwargs)

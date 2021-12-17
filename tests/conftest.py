@@ -13,7 +13,7 @@ from bemserver_core.testutils import setup_db
 postgresql_proc = ppf.postgresql_proc(
     postgres_options="-c shared_preload_libraries='timescaledb'"
 )
-postgresql = ppf.postgresql('postgresql_proc')
+postgresql = ppf.postgresql("postgresql_proc")
 
 
 @pytest.fixture
@@ -25,12 +25,7 @@ def database(postgresql):
 def as_admin():
     """Set an admin user for the test"""
     with OpenBar(), CurrentUser(
-        model.User(
-            name="Chuck",
-            email="chuck@test.com",
-            is_admin=True,
-            is_active=True
-        )
+        model.User(name="Chuck", email="chuck@test.com", is_admin=True, is_active=True)
     ):
         yield
 

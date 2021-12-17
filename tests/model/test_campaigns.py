@@ -10,7 +10,6 @@ from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestCampaignModel:
-
     def test_campaign_authorizations_as_admin(self, users):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -68,20 +67,14 @@ class TestCampaignModel:
             name="Campaign 1",
         )
         campaign_1.auth_dates((dt_1, dt_2, dt_3, dt_4))
-        campaign_2 = Campaign.new(
-            name="Campaign 2",
-            start_time=dt_2
-        )
+        campaign_2 = Campaign.new(name="Campaign 2", start_time=dt_2)
         campaign_2.auth_dates((dt_2, dt_3, dt_4))
         with pytest.raises(BEMServerAuthorizationError):
-            campaign_2.auth_dates((dt_1, ))
-        campaign_3 = Campaign.new(
-            name="Campaign 3",
-            end_time=dt_3
-        )
+            campaign_2.auth_dates((dt_1,))
+        campaign_3 = Campaign.new(name="Campaign 3", end_time=dt_3)
         campaign_3.auth_dates((dt_1, dt_2, dt_3))
         with pytest.raises(BEMServerAuthorizationError):
-            campaign_3.auth_dates((dt_4, ))
+            campaign_3.auth_dates((dt_4,))
         campaign_4 = Campaign.new(
             name="Campaign 4",
             start_time=dt_2,
@@ -89,15 +82,19 @@ class TestCampaignModel:
         )
         campaign_4.auth_dates((dt_2, dt_3))
         with pytest.raises(BEMServerAuthorizationError):
-            campaign_4.auth_dates((dt_1, ))
+            campaign_4.auth_dates((dt_1,))
         with pytest.raises(BEMServerAuthorizationError):
-            campaign_4.auth_dates((dt_4, ))
+            campaign_4.auth_dates((dt_4,))
         with pytest.raises(BEMServerAuthorizationError):
-            campaign_4.auth_dates((dt_1, dt_4, ))
+            campaign_4.auth_dates(
+                (
+                    dt_1,
+                    dt_4,
+                )
+            )
 
 
 class TestUserByCampaignModel:
-
     def test_user_by_campaign_authorizations_as_admin(self, users, campaigns):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -151,9 +148,8 @@ class TestUserByCampaignModel:
 
 
 class TestTimeseriesByCampaignModel:
-
     def test_timeseries_by_campaign_authorizations_as_admin(
-            self, users, campaigns, timeseries
+        self, users, campaigns, timeseries
     ):
         admin_user = users[0]
         assert admin_user.is_admin

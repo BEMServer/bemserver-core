@@ -4,19 +4,23 @@ import datetime as dt
 import pytest
 
 from bemserver_core.model import (
-    EventCategory, EventState, EventLevel,
-    EventChannel, EventChannelByCampaign,
+    EventCategory,
+    EventState,
+    EventLevel,
+    EventChannel,
+    EventChannelByCampaign,
     TimeseriesEvent,
 )
 from bemserver_core.model.events import TimeseriesEventByTimeseries
 from bemserver_core.authorization import CurrentUser, CurrentCampaign
 from bemserver_core.database import db
 from bemserver_core.exceptions import (
-    BEMServerAuthorizationError, BEMServerCoreMissingCampaignError)
+    BEMServerAuthorizationError,
+    BEMServerCoreMissingCampaignError,
+)
 
 
 class TestEventStateModel:
-
     def test_event_state_authorizations_as_admin(self, users):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -55,7 +59,6 @@ class TestEventStateModel:
 
 
 class TestEventLevelModel:
-
     def test_event_level_authorizations_as_admin(self, users):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -94,7 +97,6 @@ class TestEventLevelModel:
 
 
 class TestEventCategoryModel:
-
     def test_event_category_authorizations_as_admin(self, users):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -133,7 +135,6 @@ class TestEventCategoryModel:
 
 
 class TestEventChannelModel:
-
     def test_event_channel_authorizations_as_admin(self, users):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -182,7 +183,6 @@ class TestEventChannelModel:
 
 
 class TestEventModel:
-
     @pytest.mark.usefixtures("database")
     @pytest.mark.usefixtures("as_admin")
     def test_event_list_by_state(self, channels, campaigns):
@@ -284,15 +284,13 @@ class TestEventModel:
             assert tse_list == []
             tse_list = list(TimeseriesEvent.get(timestamp=campaign_1.end_time))
             assert tse_list == [evt_1]
-            tse_list = list(
-                TimeseriesEvent.get(timestamp=campaign_1.start_time))
+            tse_list = list(TimeseriesEvent.get(timestamp=campaign_1.start_time))
             assert tse_list == []
 
 
 class TestEventChannelByCampaignModel:
-
     def test_event_channels_by_campaign_authorizations_as_admin(
-            self, users, campaigns, channels
+        self, users, campaigns, channels
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -347,10 +345,14 @@ class TestEventChannelByCampaignModel:
 
 
 class TestTimeseriesEventModel:
-
     @pytest.mark.usefixtures("event_channels_by_campaigns")
     def test_timeseries_event_authorizations_as_admin(
-        self, users, campaigns, channels, timeseries_events, timeseries,
+        self,
+        users,
+        campaigns,
+        channels,
+        timeseries_events,
+        timeseries,
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -403,7 +405,7 @@ class TestTimeseriesEventModel:
                     source="src",
                     level="ERROR",
                     state="NEW",
-                    timeseries_ids=[timeseries_1.id, timeseries_2.id]
+                    timeseries_ids=[timeseries_1.id, timeseries_2.id],
                 )
                 db.session.commit()
                 ts_event_2.update(level="WARNING", state="ONGOING")
@@ -495,10 +497,13 @@ class TestTimeseriesEventModel:
 
 
 class TestTimeseriesEventByTimeseriesModel:
-
     @pytest.mark.usefixtures("event_channels_by_campaigns")
     def test_timeseries_event_by_timeseries(
-        self, users, campaigns, channels, timeseries,
+        self,
+        users,
+        campaigns,
+        channels,
+        timeseries,
     ):
         """Check TS_event x TS associations are created/deleted.
 
@@ -524,12 +529,10 @@ class TestTimeseriesEventByTimeseriesModel:
                 timeseries_ids=[timeseries_1.id, timeseries_2.id],
             )
             db.session.commit()
-            assert len(
-                list(db.session.query(TimeseriesEventByTimeseries))) == 2
+            assert len(list(db.session.query(TimeseriesEventByTimeseries))) == 2
             tse_1.update(timeseries_ids=[timeseries_2.id])
             db.session.commit()
-            assert len(
-                list(db.session.query(TimeseriesEventByTimeseries))) == 1
+            assert len(list(db.session.query(TimeseriesEventByTimeseries))) == 1
             tse_1.delete()
             db.session.commit()
             assert not list(db.session.query(TimeseriesEventByTimeseries))

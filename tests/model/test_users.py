@@ -8,7 +8,6 @@ from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestUserModel:
-
     @pytest.mark.usefixtures("as_admin")
     def test_user_repr(self):
         user = User(
@@ -18,8 +17,7 @@ class TestUserModel:
             is_active=True,
         )
         assert (
-            repr(user) ==
-            "<User Chuck <chuck@norris.com>, admin: True, active: True>"
+            repr(user) == "<User Chuck <chuck@norris.com>, admin: True, active: True>"
         )
 
     @pytest.mark.usefixtures("as_admin")
