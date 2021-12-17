@@ -49,8 +49,8 @@ class EventChannel(AuthMixin, Base):
 class EventChannelByCampaign(AuthMixin, Base):
     """EventChannel x Campaign associations
 
-    Event channels associated with a campaign can be read by all campaign
-    users for the campaign time range.
+    Event channels associated with a campaign can be read/written by all
+    campaign users for the campaign time range.
     """
 
     __tablename__ = "event_channels_by_campaigns"

@@ -72,8 +72,8 @@ class UserByCampaign(AuthMixin, Base):
 class TimeseriesByCampaign(AuthMixin, Base):
     """Timeseries x Campaign associations
 
-    Timeseries associated with a campaign can be read by all campaign users
-    for the campaign time range.
+    Timeseries associated with a campaign can be read/written by all campaign
+    users for the campaign time range.
     """
 
     __tablename__ = "timeseries_by_campaigns"
