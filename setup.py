@@ -45,7 +45,6 @@ setup(
     ],
     python_requires=">=3.7",
     install_requires=[
-        "python-dotenv>=0.9.0",
         "psycopg2>=2.8.0",
         "sqlalchemy>=1.4.0",
         "pandas>=1.2.3",
