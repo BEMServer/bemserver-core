@@ -30,7 +30,7 @@ setup(
     long_description=long_description,
     # url="",
     author="Nobatek/INEF4",
-    author_email="jlafrechoux@nobatek.com",
+    author_email="jlafrechoux@nobatek.inef4.com",
     # license="",
     # keywords=[
     # ],
