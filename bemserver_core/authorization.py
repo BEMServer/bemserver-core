@@ -3,9 +3,8 @@ from contextvars import ContextVar
 from contextlib import AbstractContextManager
 from pathlib import Path
 
-import sqlalchemy as sqla
 from oso import Oso, OsoError, Relation  # noqa, republishing
-from polar import polar_class
+from polar.data.adapter.sqlalchemy_adapter import SqlAlchemyAdapter
 
 from bemserver_core.database import db
 from bemserver_core.exceptions import BEMServerAuthorizationError
@@ -54,55 +53,18 @@ def get_current_user():
     return current_user
 
 
-@polar_class
 class OpenBarPolarClass:
     @staticmethod
     def get():
         return OPEN_BAR.get()
 
 
-def query_builder(model):
-    # A "filter" is an object returned from Oso that describes
-    # a condition that must hold on an object. This turns an
-    # Oso filter into one that can be applied to an SQLAlchemy
-    # query.
-    def to_sqlalchemy_filter(filter):
-        if filter.field is not None:
-            field = getattr(model, filter.field)
-            value = filter.value
-        else:
-            field = model.id
-            value = filter.value.id
-
-        if filter.kind == "Eq":
-            return field == value
-        elif filter.kind == "In":
-            return field.in_(value)
-        else:
-            raise OsoError(f"Unsupported filter kind: {filter.kind}")
-
-    # Turn a collection of Oso filters into one SQLAlchemy filter.
-    def combine_filters(filters):
-        filter = sqla.and_(True, *[to_sqlalchemy_filter(f) for f in filters])
-        return db.session().query(model).filter(filter)
-
-    return combine_filters
-
-
-class SQLAlchemyOso(Oso):
-    def register_class(self, cls, *args, **kwargs):
-        super().register_class(cls, *args, build_query=query_builder(cls), **kwargs)
-
-
-auth = SQLAlchemyOso(
+auth = Oso(
     forbidden_error=BEMServerAuthorizationError,
     not_found_error=BEMServerAuthorizationError,
 )
 
-
-auth.set_data_filtering_query_defaults(
-    combine_query=lambda q, r: q.union(r), exec_query=lambda q: q.distinct().all()
-)
+auth.set_data_filtering_adapter(SqlAlchemyAdapter(db.session))
 
 
 def init_authorization(model_classes):
@@ -115,6 +77,8 @@ def init_authorization(model_classes):
     for cls in model_classes:
         cls.register_class()
 
+    auth.register_class(OpenBarPolarClass)
+
     # Load authorization policy
     auth.load_files([Path(__file__).parent / "authorization.polar"])
 
@@ -126,7 +90,12 @@ class AuthMixin:
 
     @classmethod
     def get(cls, **kwargs):
-        query = auth.authorized_query(get_current_user(), "read", cls)
+        user = get_current_user()
+        # TODO: Workaround for https://github.com/osohq/oso/issues/1536
+        if user.is_admin:
+            query = super().get()
+        else:
+            query = auth.authorized_query(get_current_user(), "read", cls)
         for key, val in kwargs.items():
             query = query.filter(getattr(cls, key) == val)
         return query

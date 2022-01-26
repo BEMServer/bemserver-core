@@ -19,8 +19,17 @@ class User(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(cls)
-        auth.register_class(cls, name="UserActor")
+        auth.register_class(
+            cls,
+            fields={
+                "users_by_user_groups": Relation(
+                    kind="many",
+                    other_type="UserByUserGroup",
+                    my_field="id",
+                    other_field="user_id",
+                ),
+            },
+        )
 
     def __repr__(self):
         return (
@@ -100,6 +109,12 @@ class UserByUserGroup(AuthMixin, Base):
                     kind="one",
                     other_type="User",
                     my_field="user_id",
+                    other_field="id",
+                ),
+                "user_group": Relation(
+                    kind="one",
+                    other_type="UserGroup",
+                    my_field="user_group_id",
                     other_field="id",
                 ),
             },
