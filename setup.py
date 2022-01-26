@@ -50,7 +50,7 @@ setup(
         "pandas>=1.2.3",
         "passlib>=1.7.4",
         "argon2_cffi>=20.1.0",
-        "oso>=0.24.0,<0.26",
+        "oso>=0.24.0,<0.27",
     ],
     extras_require=EXTRAS_REQUIRE,
     packages=find_packages(exclude=["tests*"]),
