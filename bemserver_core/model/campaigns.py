@@ -42,10 +42,7 @@ class Campaign(AuthMixin, Base):
 
 
 class UserByCampaign(AuthMixin, Base):
-    """User x Campaign associations
-
-    Users associated with a campaign have read permissions campaign-wise
-    """
+    """User x Campaign associations"""
 
     __tablename__ = "users_by_campaigns"
     __table_args__ = (sqla.UniqueConstraint("campaign_id", "user_id"),)
@@ -92,6 +89,12 @@ class TimeseriesGroupByCampaign(AuthMixin, Base):
                     kind="one",
                     other_type="Campaign",
                     my_field="campaign_id",
+                    other_field="id",
+                ),
+                "timeseries_group": Relation(
+                    kind="one",
+                    other_type="TimeseriesGroup",
+                    my_field="timeseries_group_id",
                     other_field="id",
                 ),
             },

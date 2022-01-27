@@ -1,3 +1,8 @@
+# TODO: Investigate potential Oso issue
+# We should't have to write "c_member" and "tg_member", Oso should infer which
+# has_role rule matches which resource type.
+# "self" could be impacted as well
+
 # General rule
 allow(actor, action, resource) if has_permission(actor, action, resource);
 
@@ -31,14 +36,14 @@ has_role(_user: UserActor{id: id}, "self", _user: User{id: id});
 
 resource Campaign {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["member"];
+    roles = ["c_member"];
 
-    "read" if "member";
+    "read" if "c_member";
 }
 
-has_role(user: UserActor, "member", campaign: Campaign) if
+has_role(user: UserActor, "c_member", campaign: Campaign) if
     ubc in campaign.users_by_campaigns and
-    ubc.user = user;
+    has_role(user, "self", ubc);
 
 
 resource UserByCampaign {
@@ -53,30 +58,24 @@ has_role(user: UserActor, "self", ubc: UserByCampaign) if
 
 
 resource TimeseriesGroupByCampaign {
-    permissions = ["create", "read", "update", "delete", "read_data", "write_data"];
-    relations = {
-        campaign: Campaign
-    };
-
-    "read" if "member" on "campaign";
-    "read_data" if "member" on "campaign";
-    "write_data" if "member" on "campaign";
+    permissions = ["create", "read", "update", "delete"];
 }
 
-has_relation(campaign: Campaign, "campaign", tgbc: TimeseriesGroupByCampaign) if
-  campaign = tgbc.campaign;
+has_permission(user: UserActor, "read", tgbc: TimeseriesGroupByCampaign) if
+    has_role(user, "c_member", tgbc.campaign) and
+    has_role(user, "tg_member", tgbc.timeseries_group);
 
 
 resource TimeseriesGroup {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["reader"];
+    roles = ["tg_member"];
 
-    "read" if "reader";
+    "read" if "tg_member";
 }
 
-has_role(user: UserActor, "reader", tg: TimeseriesGroup) if
-    tgbc in tg.timeseries_groups_by_campaigns and
-    has_role(user, "member", tgbc.campaign);
+has_role(user: UserActor, "tg_member", tg: TimeseriesGroup) if
+    tgbu in tg.timeseries_groups_by_users and
+    has_role(user, "self", tgbu);
 
 
 resource TimeseriesGroupByUser {
@@ -91,14 +90,14 @@ has_role(user: UserActor, "self", tgbu: TimeseriesGroupByUser) if
 
 
 resource Timeseries {
-    permissions = ["create", "read", "update", "delete"];
+    permissions = ["create", "read", "update", "delete", "read_data", "write_data"];
     relations = {
         group: TimeseriesGroup
     };
-    roles = ["reader"];
 
-    "read" if "reader";
-    "reader" if "reader" on "group";
+    "read" if "tg_member" on "group";
+    "read_data" if "tg_member" on "group";
+    "write_data" if "tg_member" on "group";
 }
 
 has_relation(group: TimeseriesGroup, "group", ts: Timeseries) if
@@ -137,7 +136,7 @@ resource EventChannel {
 
 has_role(user: UserActor, "reader", ec: EventChannel) if
     ecbc in ec.event_channels_by_campaigns and
-    has_role(user, "member", ecbc.campaign);
+    has_role(user, "c_member", ecbc.campaign);
 
 
 resource EventChannelByCampaign {
@@ -146,11 +145,11 @@ resource EventChannelByCampaign {
         campaign: Campaign
     };
 
-    "read" if "member" on "campaign";
-    "read_events" if "member" on "campaign";
-    "create_events" if "member" on "campaign";
-    "update_events" if "member" on "campaign";
-    "delete_events" if "member" on "campaign";
+    "read" if "c_member" on "campaign";
+    "read_events" if "c_member" on "campaign";
+    "create_events" if "c_member" on "campaign";
+    "update_events" if "c_member" on "campaign";
+    "delete_events" if "c_member" on "campaign";
 }
 
 has_relation(campaign: Campaign, "campaign", ecbc: EventChannelByCampaign) if

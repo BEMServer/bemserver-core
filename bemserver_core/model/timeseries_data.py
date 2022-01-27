@@ -1,17 +1,9 @@
 """Timeseries data"""
 import sqlalchemy as sqla
 
-from bemserver_core.database import Base, db
-from bemserver_core.model.campaigns import TimeseriesGroupByCampaign
-from bemserver_core.model.timeseries import Timeseries, TimeseriesGroup
-from bemserver_core.authorization import (
-    auth,
-    AuthMixin,
-    BEMServerAuthorizationError,
-    get_current_user,
-    get_current_campaign,
-)
-from bemserver_core.exceptions import BEMServerCoreMissingCampaignError
+from bemserver_core.database import Base
+from bemserver_core.model.timeseries import Timeseries
+from bemserver_core.authorization import auth, AuthMixin, get_current_user
 
 
 class TimeseriesData(AuthMixin, Base):
@@ -27,45 +19,21 @@ class TimeseriesData(AuthMixin, Base):
     timeseries = sqla.orm.relationship("Timeseries")
     value = sqla.Column(sqla.Float)
 
-    @staticmethod
-    def _authorize(user, action, campaign, timeseries_id):
-        stmt = (
-            sqla.select(TimeseriesGroupByCampaign)
-            .join(TimeseriesGroup)
-            .join(Timeseries)
-            .where(
-                Timeseries.id == timeseries_id,
-                Timeseries.group_id == TimeseriesGroup.id,
-                TimeseriesGroupByCampaign.timeseries_group_id == TimeseriesGroup.id,
-                TimeseriesGroupByCampaign.campaign_id == campaign.id,
-            )
-        )
-        tbc = db.session.execute(stmt).scalar()
-        if tbc is None:
-            raise BEMServerAuthorizationError("Timeseries not in Campaign")
-        auth.authorize(user, action, tbc)
-
     @classmethod
     def check_can_export(cls, start_dt, end_dt, timeseries):
         current_user = get_current_user()
-        current_campaign = get_current_campaign()
-        if current_campaign is None:
-            raise BEMServerCoreMissingCampaignError
-        else:
-            current_campaign.auth_dates((start_dt, end_dt))
-            for ts_id in timeseries:
-                cls._authorize(current_user, "read_data", current_campaign, ts_id)
+        # TODO: test non-existent timeseries
+        for ts_id in timeseries:
+            ts = Timeseries.get_by_id(ts_id)
+            auth.authorize(current_user, "read_data", ts)
 
     @classmethod
     def check_can_import(cls, start_dt, end_dt, timeseries):
         current_user = get_current_user()
-        current_campaign = get_current_campaign()
-        if current_campaign is None:
-            raise BEMServerCoreMissingCampaignError
-        else:
-            current_campaign.auth_dates((start_dt, end_dt))
-            for ts_id in timeseries:
-                cls._authorize(current_user, "write_data", current_campaign, ts_id)
+        # TODO: test non-existent timeseries
+        for ts_id in timeseries:
+            ts = Timeseries.get_by_id(ts_id)
+            auth.authorize(current_user, "write_data", ts)
 
 
 sqla.event.listen(

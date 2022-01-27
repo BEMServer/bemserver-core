@@ -173,6 +173,7 @@ class TestTimeseriesGroupByCampaignModel:
             tgbc.update(campaign_id=campaign_2.id)
             tgbc.delete()
 
+    @pytest.mark.usefixtures("timeseries_groups_by_users")
     @pytest.mark.usefixtures("users_by_campaigns")
     def test_timeseries_group_by_campaign_authorizations_as_user(
         self, users, campaigns, timeseries_groups_by_campaigns

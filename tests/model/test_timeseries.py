@@ -29,8 +29,7 @@ class TestTimeseriesGroupModel:
             timeseries_group.delete()
             db.session.commit()
 
-    @pytest.mark.usefixtures("users_by_campaigns")
-    @pytest.mark.usefixtures("timeseries_groups_by_campaigns")
+    @pytest.mark.usefixtures("timeseries_groups_by_users")
     def test_timeseries_group_authorizations_as_user(self, users, timeseries_groups):
         user_1 = users[1]
         assert not user_1.is_admin
@@ -111,15 +110,31 @@ class TestTimeseriesGroupByUserModel:
 
 
 class TestTimeseriesModel:
+    @pytest.mark.usefixtures("timeseries_groups_by_users")
     @pytest.mark.usefixtures("timeseries_groups_by_campaigns")
-    def test_timeseries_filter_by_campaign(self, users, timeseries, campaigns):
+    def test_timeseries_filter_by_campaign_or_user(self, users, timeseries, campaigns):
         admin_user = users[0]
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
+        user_1 = users[1]
+        ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
 
         with CurrentUser(admin_user):
-            timeseries = list(Timeseries.get(campaign_id=campaign_1.id))
-            print(timeseries)
+            ts_l = list(Timeseries.get(campaign_id=campaign_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_1
+
+        with CurrentUser(admin_user):
+            ts_l = list(Timeseries.get(user_id=user_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_2
+
+        with CurrentUser(admin_user):
+            ts_l = list(Timeseries.get(user_id=user_1.id, campaign_id=campaign_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_2
 
     def test_timeseries_authorizations_as_admin(self, users, timeseries_groups):
         admin_user = users[0]
@@ -144,8 +159,7 @@ class TestTimeseriesModel:
             timeseries.delete()
             db.session.commit()
 
-    @pytest.mark.usefixtures("users_by_campaigns")
-    @pytest.mark.usefixtures("timeseries_groups_by_campaigns")
+    @pytest.mark.usefixtures("timeseries_groups_by_users")
     def test_timeseries_authorizations_as_user(
         self, users, timeseries, timeseries_groups
     ):

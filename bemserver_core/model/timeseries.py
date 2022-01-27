@@ -33,14 +33,18 @@ class Timeseries(AuthMixin, Base):
         )
 
     @classmethod
-    def get(cls, *, campaign_id=None, **kwargs):
+    def get(cls, *, campaign_id=None, user_id=None, **kwargs):
         query = super().get(**kwargs)
-        if campaign_id:
-            query = (
-                query.join(Timeseries.group)
-                .join(TimeseriesGroupByCampaign)
-                .filter(TimeseriesGroupByCampaign.campaign_id == campaign_id)
-            )
+        if campaign_id or user_id:
+            query = query.join(Timeseries.group)
+            if campaign_id:
+                query = query.join(TimeseriesGroupByCampaign).filter(
+                    TimeseriesGroupByCampaign.campaign_id == campaign_id
+                )
+            if user_id:
+                query = query.join(TimeseriesGroupByUser).filter(
+                    TimeseriesGroupByUser.user_id == user_id
+                )
         return query
 
 
@@ -61,12 +65,21 @@ class TimeseriesGroup(AuthMixin, Base):
                     my_field="id",
                     other_field="timeseries_group_id",
                 ),
+                "timeseries_groups_by_users": Relation(
+                    kind="many",
+                    other_type="TimeseriesGroupByUser",
+                    my_field="id",
+                    other_field="timeseries_group_id",
+                ),
             },
         )
 
 
 class TimeseriesGroupByUser(AuthMixin, Base):
-    """TimeseriesGroup x User associations"""
+    """TimeseriesGroup x User associations
+
+    Users associated with a TimeseriesGroup have R/W permissions on timeseries
+    """
 
     __tablename__ = "timeseries_groups_by_users"
     __table_args__ = (sqla.UniqueConstraint("user_id", "timeseries_group_id"),)
