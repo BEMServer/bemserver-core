@@ -14,7 +14,7 @@ from bemserver_core.authorization import CurrentCampaign
 class TestTimeseriesCSVIO:
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
     @pytest.mark.parametrize("mode", ("str", "textiobase"))
-    @pytest.mark.usefixtures("timeseries_by_campaigns")
+    @pytest.mark.usefixtures("timeseries_groups_by_campaigns")
     @pytest.mark.usefixtures("as_admin")
     def test_timeseries_csv_io_import_csv(self, timeseries, mode, campaigns):
         campaign_1 = campaigns[0]
@@ -74,7 +74,7 @@ class TestTimeseriesCSVIO:
             "Datetime,1\n2020-01-01T00:00:00+00:00,a",
         ),
     )
-    @pytest.mark.usefixtures("timeseries_by_campaigns")
+    @pytest.mark.usefixtures("timeseries_groups_by_campaigns")
     @pytest.mark.usefixtures("as_admin")
     def test_timeseries_csv_io_import_csv_error(self, csv_file, campaigns):
         campaign_1 = campaigns[0]
@@ -84,7 +84,7 @@ class TestTimeseriesCSVIO:
                 tscsvio.import_csv(io.StringIO(csv_file))
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
-    @pytest.mark.usefixtures("timeseries_by_campaigns")
+    @pytest.mark.usefixtures("timeseries_groups_by_campaigns")
     @pytest.mark.usefixtures("as_admin")
     def test_timeseries_csv_io_export_csv(self, timeseries, campaigns):
         campaign_1 = campaigns[0]
@@ -122,7 +122,7 @@ class TestTimeseriesCSVIO:
         )
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
-    @pytest.mark.usefixtures("timeseries_by_campaigns")
+    @pytest.mark.usefixtures("timeseries_groups_by_campaigns")
     @pytest.mark.usefixtures("as_admin")
     def test_timeseries_csv_io_export_csv_bucket(self, timeseries, campaigns):
         campaign_1 = campaigns[0]

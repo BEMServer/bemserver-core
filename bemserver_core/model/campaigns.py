@@ -69,19 +69,19 @@ class UserByCampaign(AuthMixin, Base):
         )
 
 
-class TimeseriesByCampaign(AuthMixin, Base):
+class TimeseriesGroupByCampaign(AuthMixin, Base):
     """Timeseries x Campaign associations
 
     Timeseries associated with a campaign can be read/written by all campaign
     users for the campaign time range.
     """
 
-    __tablename__ = "timeseries_by_campaigns"
-    __table_args__ = (sqla.UniqueConstraint("campaign_id", "timeseries_id"),)
+    __tablename__ = "timeseries_groups_by_campaigns"
+    __table_args__ = (sqla.UniqueConstraint("campaign_id", "timeseries_group_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"))
-    timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"))
+    timeseries_group_id = sqla.Column(sqla.ForeignKey("timeseries_groups.id"))
 
     @classmethod
     def register_class(cls):

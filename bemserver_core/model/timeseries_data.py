@@ -2,7 +2,8 @@
 import sqlalchemy as sqla
 
 from bemserver_core.database import Base, db
-from bemserver_core.model.campaigns import TimeseriesByCampaign
+from bemserver_core.model.campaigns import TimeseriesGroupByCampaign
+from bemserver_core.model.timeseries import Timeseries, TimeseriesGroup
 from bemserver_core.authorization import (
     auth,
     AuthMixin,
@@ -28,9 +29,16 @@ class TimeseriesData(AuthMixin, Base):
 
     @staticmethod
     def _authorize(user, action, campaign, timeseries_id):
-        stmt = sqla.select(TimeseriesByCampaign).where(
-            TimeseriesByCampaign.timeseries_id == timeseries_id,
-            TimeseriesByCampaign.campaign_id == campaign.id,
+        stmt = (
+            sqla.select(TimeseriesGroupByCampaign)
+            .join(TimeseriesGroup)
+            .join(Timeseries)
+            .where(
+                Timeseries.id == timeseries_id,
+                Timeseries.group_id == TimeseriesGroup.id,
+                TimeseriesGroupByCampaign.timeseries_group_id == TimeseriesGroup.id,
+                TimeseriesGroupByCampaign.campaign_id == campaign.id,
+            )
         )
         tbc = db.session.execute(stmt).scalar()
         if tbc is None:

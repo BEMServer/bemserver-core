@@ -52,7 +52,7 @@ has_role(user: UserActor, "self", ubc: UserByCampaign) if
     user = ubc.user;
 
 
-resource TimeseriesByCampaign {
+resource TimeseriesGroupByCampaign {
     permissions = ["create", "read", "update", "delete", "read_data", "write_data"];
     relations = {
         campaign: Campaign
@@ -63,20 +63,36 @@ resource TimeseriesByCampaign {
     "write_data" if "member" on "campaign";
 }
 
-has_relation(campaign: Campaign, "campaign", tbc: TimeseriesByCampaign) if
-  campaign = tbc.campaign;
+has_relation(campaign: Campaign, "campaign", tgbc: TimeseriesGroupByCampaign) if
+  campaign = tgbc.campaign;
 
 
-resource Timeseries {
+resource TimeseriesGroup {
     permissions = ["create", "read", "update", "delete"];
     roles = ["reader"];
 
     "read" if "reader";
 }
 
-has_role(user: UserActor, "reader", ts: Timeseries) if
-    tbc in ts.timeseries_by_campaigns and
-    has_role(user, "member", tbc.campaign);
+has_role(user: UserActor, "reader", tg: TimeseriesGroup) if
+    tgbc in tg.timeseries_groups_by_campaigns and
+    has_role(user, "member", tgbc.campaign);
+
+
+
+resource Timeseries {
+    permissions = ["create", "read", "update", "delete"];
+    relations = {
+        group: TimeseriesGroup
+    };
+    roles = ["reader"];
+
+    "read" if "reader";
+    "reader" if "reader" on "group";
+}
+
+has_relation(group: TimeseriesGroup, "group", ts: Timeseries) if
+    group = ts.group;
 
 
 resource EventCategory{

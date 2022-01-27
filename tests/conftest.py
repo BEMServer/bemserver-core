@@ -93,13 +93,29 @@ def users_by_campaigns(database, users, campaigns):
     return (ubc_1, ubc_2)
 
 
+@pytest.fixture
+def timeseries_groups(database):
+    with OpenBar():
+        ts_group_1 = model.TimeseriesGroup(
+            name="TS Group 1",
+        )
+        db.session.add(ts_group_1)
+        ts_group_2 = model.TimeseriesGroup(
+            name="TS Group 2",
+        )
+        db.session.add(ts_group_2)
+        db.session.commit()
+    return (ts_group_1, ts_group_2)
+
+
 @pytest.fixture(params=[2])
-def timeseries(request, database):
+def timeseries(request, database, timeseries_groups):
     ts_l = []
     for i in range(request.param):
         ts_i = model.Timeseries(
             name=f"Timeseries {i}",
             description=f"Test timeseries #{i}",
+            group=timeseries_groups[i % len(timeseries_groups)],
         )
         ts_l.append(ts_i)
     db.session.add_all(ts_l)
@@ -108,26 +124,26 @@ def timeseries(request, database):
 
 
 @pytest.fixture
-def timeseries_by_campaigns(database, campaigns, timeseries):
-    """Create timeseries x campaigns associations
+def timeseries_groups_by_campaigns(database, campaigns, timeseries_groups):
+    """Create timeseries groups x campaigns associations
 
     Example:
         campaigns = [C1, C2]
-        timeseries = [TS1, TS2, TS3, TS4, TS5]
+        timeseries groups = [TG1, TG2, TG3, TG4, TG5]
          timeseries x campaigns = [
-            TS1 x C1,
-            TS2 x C2,
-            TS2 x C1,
-            TS4 x C2,
-            TS5 x C1,
+            TG1 x C1,
+            TG2 x C2,
+            TG2 x C1,
+            TG4 x C2,
+            TG5 x C1,
         ]
     """
     with OpenBar():
         tbc_l = []
-        for idx, ts_i in enumerate(timeseries):
+        for idx, tg_i in enumerate(timeseries_groups):
             campaign = campaigns[idx % len(campaigns)]
-            tbc = model.TimeseriesByCampaign(
-                timeseries_id=ts_i.id,
+            tbc = model.TimeseriesGroupByCampaign(
+                timeseries_group_id=tg_i.id,
                 campaign_id=campaign.id,
             )
             tbc_l.append(tbc)
