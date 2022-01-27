@@ -11,7 +11,10 @@ from bemserver_core.testutils import setup_db
 
 
 postgresql_proc = ppf.postgresql_proc(
-    postgres_options="-c shared_preload_libraries='timescaledb'"
+    postgres_options=(
+        "-c shared_preload_libraries='timescaledb' "
+        "-c timescaledb.telemetry_level=off"
+    )
 )
 postgresql = ppf.postgresql("postgresql_proc")
 
