@@ -79,6 +79,16 @@ has_role(user: UserActor, "reader", tg: TimeseriesGroup) if
     has_role(user, "member", tgbc.campaign);
 
 
+resource TimeseriesGroupByUser {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["self"];
+
+    "read" if "self";
+}
+
+has_role(user: UserActor, "self", tgbu: TimeseriesGroupByUser) if
+    user = tgbu.user;
+
 
 resource Timeseries {
     permissions = ["create", "read", "update", "delete"];

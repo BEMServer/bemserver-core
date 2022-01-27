@@ -108,6 +108,23 @@ def timeseries_groups(database):
     return (ts_group_1, ts_group_2)
 
 
+@pytest.fixture
+def timeseries_groups_by_users(database, timeseries_groups, users):
+    with OpenBar():
+        tgbu_1 = model.TimeseriesGroupByUser(
+            timeseries_group_id=timeseries_groups[0].id,
+            user_id=users[0].id,
+        )
+        db.session.add(tgbu_1)
+        tgbu_2 = model.TimeseriesGroupByUser(
+            timeseries_group_id=timeseries_groups[1].id,
+            user_id=users[1].id,
+        )
+        db.session.add(tgbu_2)
+        db.session.commit()
+    return (tgbu_1, tgbu_2)
+
+
 @pytest.fixture(params=[2])
 def timeseries(request, database, timeseries_groups):
     ts_l = []

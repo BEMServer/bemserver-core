@@ -63,3 +63,30 @@ class TimeseriesGroup(AuthMixin, Base):
                 ),
             },
         )
+
+
+class TimeseriesGroupByUser(AuthMixin, Base):
+    """TimeseriesGroup x User associations"""
+
+    __tablename__ = "timeseries_groups_by_users"
+    __table_args__ = (sqla.UniqueConstraint("user_id", "timeseries_group_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    user_id = sqla.Column(sqla.ForeignKey("users.id"), nullable=False)
+    timeseries_group_id = sqla.Column(
+        sqla.ForeignKey("timeseries_groups.id"), nullable=False
+    )
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "user": Relation(
+                    kind="one",
+                    other_type="User",
+                    my_field="user_id",
+                    other_field="id",
+                ),
+            },
+        )

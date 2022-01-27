@@ -3,7 +3,7 @@ from bemserver_core.authorization import init_authorization
 
 from .users import User
 from .campaigns import Campaign, UserByCampaign, TimeseriesGroupByCampaign
-from .timeseries import Timeseries, TimeseriesGroup
+from .timeseries import Timeseries, TimeseriesGroup, TimeseriesGroupByUser
 from .timeseries_data import TimeseriesData  # noqa
 from .events import (  # noqa
     EventCategory,
@@ -22,6 +22,7 @@ __all__ = [
     "TimeseriesGroupByCampaign",
     "Timeseries",
     "TimeseriesGroup",
+    "TimeseriesGroupByUser",
     "TimeseriesData",
     "EventCategory",
     "EventState",
@@ -40,6 +41,7 @@ auth_model_classes = [
     TimeseriesGroupByCampaign,
     Timeseries,
     TimeseriesGroup,
+    TimeseriesGroupByUser,
     EventCategory,
     EventState,
     EventLevel,
