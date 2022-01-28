@@ -1,7 +1,7 @@
 # TODO: Investigate potential Oso issue
 # We should't have to write "c_member" and "tg_member", Oso should infer which
 # has_role rule matches which resource type.
-# "self" could be impacted as well
+# Same for *_owner.
 
 # General rule
 allow(actor, action, resource) if has_permission(actor, action, resource);
@@ -43,17 +43,17 @@ resource Campaign {
 
 has_role(user: UserActor, "c_member", campaign: Campaign) if
     ubc in campaign.users_by_campaigns and
-    has_role(user, "self", ubc);
+    user = ubc.user;
 
 
 resource UserByCampaign {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["self"];
+    roles = ["ubc_owner"];
 
-    "read" if "self";
+    "read" if "ubc_owner";
 }
 
-has_role(user: UserActor, "self", ubc: UserByCampaign) if
+has_role(user: UserActor, "ubc_owner", ubc: UserByCampaign) if
     user = ubc.user;
 
 
@@ -75,17 +75,17 @@ resource TimeseriesGroup {
 
 has_role(user: UserActor, "tg_member", tg: TimeseriesGroup) if
     tgbu in tg.timeseries_groups_by_users and
-    has_role(user, "self", tgbu);
+    user = tgbu.user;
 
 
 resource TimeseriesGroupByUser {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["self"];
+    roles = ["tgbu_owner"];
 
-    "read" if "self";
+    "read" if "tgbu_owner";
 }
 
-has_role(user: UserActor, "self", tgbu: TimeseriesGroupByUser) if
+has_role(user: UserActor, "tgbu_owner", tgbu: TimeseriesGroupByUser) if
     user = tgbu.user;
 
 
@@ -144,7 +144,7 @@ resource EventChannel {
 
 has_role(user: UserActor, "ec_member", ec: EventChannel) if
     ecbu in ec.event_channels_by_users and
-    has_role(user, "self", ecbu);
+    user = ecbu.user;
 
 
 resource EventChannelByCampaign {
@@ -162,12 +162,12 @@ has_relation(campaign: Campaign, "campaign", ecbc: EventChannelByCampaign) if
 
 resource EventChannelByUser {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["self"];
+    roles = ["ecbu_owner"];
 
-    "read" if "self";
+    "read" if "ecbu_owner";
 }
 
-has_role(user: UserActor, "self", ecbu: EventChannelByUser) if
+has_role(user: UserActor, "ecbu_owner", ecbu: EventChannelByUser) if
     user = ecbu.user;
 
 
