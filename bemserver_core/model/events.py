@@ -75,6 +75,34 @@ class EventChannelByCampaign(AuthMixin, Base):
         )
 
 
+class EventChannelByUser(AuthMixin, Base):
+    """EventChannel x User associations
+
+    Users associated with a EventChannel have R/W permissions on events
+    """
+
+    __tablename__ = "event_channels_by_users"
+    __table_args__ = (sqla.UniqueConstraint("user_id", "event_channel_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    user_id = sqla.Column(sqla.ForeignKey("users.id"), nullable=False)
+    event_channel_id = sqla.Column(sqla.ForeignKey("event_channels.id"), nullable=False)
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "user": Relation(
+                    kind="one",
+                    other_type="User",
+                    my_field="user_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
 class EventCategory(AuthMixin, Base):
     __tablename__ = "event_categories"
 

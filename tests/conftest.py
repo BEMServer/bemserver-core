@@ -171,7 +171,7 @@ def timeseries_groups_by_campaigns(database, campaigns, timeseries_groups):
 
 @pytest.fixture
 @pytest.mark.usefixtures("database")
-def channels():
+def event_channels():
     channel_1 = model.EventChannel(
         name="Channel 1",
     )
@@ -185,15 +185,15 @@ def channels():
 
 
 @pytest.fixture
-def event_channels_by_campaigns(database, campaigns, channels):
+def event_channels_by_campaigns(database, campaigns, event_channels):
     with OpenBar():
         ecc_1 = model.EventChannelByCampaign(
-            event_channel_id=channels[0].id,
+            event_channel_id=event_channels[0].id,
             campaign_id=campaigns[0].id,
         )
         db.session.add(ecc_1)
         ecc_2 = model.EventChannelByCampaign(
-            event_channel_id=channels[1].id,
+            event_channel_id=event_channels[1].id,
             campaign_id=campaigns[1].id,
         )
         db.session.add(ecc_2)
@@ -202,10 +202,27 @@ def event_channels_by_campaigns(database, campaigns, channels):
 
 
 @pytest.fixture
-def timeseries_events(database, channels):
+def event_channels_by_users(database, event_channels, users):
+    with OpenBar():
+        ecbu_1 = model.EventChannelByUser(
+            event_channel_id=event_channels[0].id,
+            user_id=users[0].id,
+        )
+        db.session.add(ecbu_1)
+        ecbu_2 = model.EventChannelByUser(
+            event_channel_id=event_channels[1].id,
+            user_id=users[1].id,
+        )
+        db.session.add(ecbu_2)
+        db.session.commit()
+    return (ecbu_1, ecbu_2)
+
+
+@pytest.fixture
+def timeseries_events(database, event_channels):
     with OpenBar():
         ts_event_1 = model.TimeseriesEvent(
-            channel_id=channels[0].id,
+            channel_id=event_channels[0].id,
             timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
             category="observation_missing",
             source="src",
@@ -214,7 +231,7 @@ def timeseries_events(database, channels):
         )
         db.session.add(ts_event_1)
         ts_event_2 = model.TimeseriesEvent(
-            channel_id=channels[1].id,
+            channel_id=event_channels[1].id,
             timestamp=dt.datetime(2020, 1, 15, tzinfo=dt.timezone.utc),
             category="observation_missing",
             source="src",

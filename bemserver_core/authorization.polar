@@ -156,6 +156,17 @@ has_relation(campaign: Campaign, "campaign", ecbc: EventChannelByCampaign) if
   campaign = ecbc.campaign;
 
 
+resource EventChannelByUser {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["self"];
+
+    "read" if "self";
+}
+
+has_role(user: UserActor, "self", ecbu: EventChannelByUser) if
+    user = ecbu.user;
+
+
 resource TimeseriesEvent {
     permissions = ["create", "read", "update", "delete"];
     roles = ["reader", "writer"];

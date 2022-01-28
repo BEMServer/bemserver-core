@@ -9,6 +9,7 @@ from bemserver_core.model import (
     EventLevel,
     EventChannel,
     EventChannelByCampaign,
+    EventChannelByUser,
     TimeseriesEvent,
 )
 from bemserver_core.model.events import TimeseriesEventByTimeseries
@@ -158,11 +159,11 @@ class TestEventChannelModel:
 
     @pytest.mark.usefixtures("users_by_campaigns")
     @pytest.mark.usefixtures("event_channels_by_campaigns")
-    def test_event_channel_authorizations_as_user(self, users, channels):
+    def test_event_channel_authorizations_as_user(self, users, event_channels):
         user_1 = users[1]
         assert not user_1.is_admin
-        channel_1 = channels[0]
-        channel_2 = channels[1]
+        channel_1 = event_channels[0]
+        channel_2 = event_channels[1]
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
@@ -185,8 +186,8 @@ class TestEventChannelModel:
 class TestEventModel:
     @pytest.mark.usefixtures("database")
     @pytest.mark.usefixtures("as_admin")
-    def test_event_list_by_state(self, channels, campaigns):
-        channel_1 = channels[0]
+    def test_event_list_by_state(self, event_channels, campaigns):
+        channel_1 = event_channels[0]
         campaign_1 = campaigns[0]
 
         with pytest.raises(BEMServerCoreMissingCampaignError):
@@ -250,14 +251,14 @@ class TestEventModel:
 
     @pytest.mark.usefixtures("database")
     @pytest.mark.usefixtures("as_admin")
-    def test_event_read_only_fields(self, channels, campaigns):
+    def test_event_read_only_fields(self, event_channels, campaigns):
         """Check channel and timestamp can't be modified after commit
 
         Also check the getter/setter don't get in the way when querying.
         This is kind of a "framework test".
         """
-        channel_1 = channels[0]
-        channel_2 = channels[1]
+        channel_1 = event_channels[0]
+        channel_2 = event_channels[1]
         campaign_1 = campaigns[0]
 
         with CurrentCampaign(campaign_1):
@@ -290,13 +291,13 @@ class TestEventModel:
 
 class TestEventChannelByCampaignModel:
     def test_event_channels_by_campaign_authorizations_as_admin(
-        self, users, campaigns, channels
+        self, users, campaigns, event_channels
     ):
         admin_user = users[0]
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
-        channel_1 = channels[0]
+        channel_1 = event_channels[0]
 
         with CurrentUser(admin_user):
             ecbc_1 = EventChannelByCampaign.new(
@@ -344,20 +345,73 @@ class TestEventChannelByCampaignModel:
                 ecbc.delete()
 
 
+class TestEventChannelByUserModel:
+    def test_event_channel_by_user_authorizations_as_admin(self, users, event_channels):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        user_1 = users[1]
+        event_channel_1 = event_channels[0]
+        event_channel_2 = event_channels[1]
+
+        with CurrentUser(admin_user):
+            tgbu_1 = EventChannelByUser.new(
+                user_id=user_1.id,
+                event_channel_id=event_channel_1.id,
+            )
+            db.session.add(tgbu_1)
+            db.session.commit()
+
+            tgbu = EventChannelByUser.get_by_id(tgbu_1.id)
+            assert tgbu.id == tgbu_1.id
+            tgbus = list(EventChannelByUser.get())
+            assert len(tgbus) == 1
+            assert tgbus[0].id == tgbu_1.id
+            tgbu.update(event_channel_id=event_channel_2.id)
+            tgbu.delete()
+
+    def test_event_channel_by_user_authorizations_as_user(
+        self, users, event_channels, event_channels_by_users
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+        event_channel_1 = event_channels[0]
+        event_channel_2 = event_channels[1]
+        tgbu_1 = event_channels_by_users[0]
+        tgbu_2 = event_channels_by_users[1]
+
+        with CurrentUser(user_1):
+            with pytest.raises(BEMServerAuthorizationError):
+                EventChannelByUser.new(
+                    user_id=user_1.id,
+                    event_channel_id=event_channel_2.id,
+                )
+
+            tgbu = EventChannelByUser.get_by_id(tgbu_2.id)
+            tgbus = list(EventChannelByUser.get())
+            assert len(tgbus) == 1
+            assert tgbus[0].id == tgbu_2.id
+            with pytest.raises(BEMServerAuthorizationError):
+                EventChannelByUser.get_by_id(tgbu_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tgbu.update(event_channel_id=event_channel_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tgbu.delete()
+
+
 class TestTimeseriesEventModel:
     @pytest.mark.usefixtures("event_channels_by_campaigns")
     def test_timeseries_event_authorizations_as_admin(
         self,
         users,
         campaigns,
-        channels,
+        event_channels,
         timeseries_events,
         timeseries,
     ):
         admin_user = users[0]
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
-        channel_1 = channels[0]
+        channel_1 = event_channels[0]
         timeseries_1 = timeseries[0]
         timeseries_2 = timeseries[1]
         ts_event_1 = timeseries_events[0]
@@ -416,14 +470,14 @@ class TestTimeseriesEventModel:
     @pytest.mark.usefixtures("users_by_campaigns")
     @pytest.mark.usefixtures("event_channels_by_campaigns")
     def test_timeseries_event_authorizations_as_user(
-        self, users, campaigns, channels, timeseries_events
+        self, users, campaigns, event_channels, timeseries_events
     ):
         user_1 = users[1]
         assert not user_1.is_admin
         campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
-        channel_1 = channels[0]
-        channel_2 = channels[1]
+        channel_1 = event_channels[0]
+        channel_2 = event_channels[1]
         ts_event_2 = timeseries_events[1]
 
         ooc_dt = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
@@ -502,7 +556,7 @@ class TestTimeseriesEventByTimeseriesModel:
         self,
         users,
         campaigns,
-        channels,
+        event_channels,
         timeseries,
     ):
         """Check TS_event x TS associations are created/deleted.
@@ -513,7 +567,7 @@ class TestTimeseriesEventByTimeseriesModel:
         admin_user = users[0]
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
-        channel_1 = channels[0]
+        channel_1 = event_channels[0]
         timeseries_1 = timeseries[0]
         timeseries_2 = timeseries[1]
 

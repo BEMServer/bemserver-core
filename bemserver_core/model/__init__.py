@@ -11,6 +11,7 @@ from .events import (  # noqa
     EventLevel,
     EventChannel,
     EventChannelByCampaign,
+    EventChannelByUser,
     TimeseriesEvent,
 )
 
@@ -29,6 +30,7 @@ __all__ = [
     "EventLevel",
     "EventChannel",
     "EventChannelByCampaign",
+    "EventChannelByUser",
     "TimeseriesEvent",
 ]
 
@@ -47,6 +49,7 @@ auth_model_classes = [
     EventLevel,
     EventChannel,
     EventChannelByCampaign,
+    EventChannelByUser,
     TimeseriesEvent,
 ]
 
