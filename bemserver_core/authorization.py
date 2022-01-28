@@ -12,7 +12,6 @@ from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 CURRENT_USER = ContextVar("current_user", default=None)
-CURRENT_CAMPAIGN = ContextVar("current_campaign", default=None)
 OPEN_BAR = ContextVar("open_bar", default=False)
 
 
@@ -28,20 +27,6 @@ class CurrentUser(AbstractContextManager):
 
     def __exit__(self, *args, **kwargs):
         CURRENT_USER.reset(self._token)
-
-
-class CurrentCampaign(AbstractContextManager):
-    """Set current campaign for context"""
-
-    def __init__(self, campaign):
-        self._token = None
-        self._campaign = campaign
-
-    def __enter__(self):
-        self._token = CURRENT_CAMPAIGN.set(self._campaign)
-
-    def __exit__(self, *args, **kwargs):
-        CURRENT_CAMPAIGN.reset(self._token)
 
 
 class OpenBar(AbstractContextManager):
@@ -69,22 +54,11 @@ def get_current_user():
     return current_user
 
 
-def get_current_campaign():
-    return CURRENT_CAMPAIGN.get()
-
-
 @polar_class
 class OpenBarPolarClass:
     @staticmethod
     def get():
         return OPEN_BAR.get()
-
-
-@polar_class
-class CampaignPolarClass:
-    @staticmethod
-    def get():
-        return CURRENT_CAMPAIGN.get()
 
 
 def query_builder(model):

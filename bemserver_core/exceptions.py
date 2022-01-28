@@ -11,7 +11,3 @@ class TimeseriesCSVIOError(BEMServerCoreError):
 
 class BEMServerAuthorizationError(BEMServerCoreError):
     """Operation not autorized to current user"""
-
-
-class BEMServerCoreMissingCampaignError(BEMServerCoreError):
-    """Operation requires a Campaign context"""
