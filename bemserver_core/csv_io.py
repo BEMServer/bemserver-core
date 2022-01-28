@@ -1,14 +1,14 @@
 """Timeseries CSV I/O"""
 import io
 import csv
-import datetime as dt
 
 import sqlalchemy as sqla
 import pandas as pd
 
-from .database import db
-from .exceptions import TimeseriesCSVIOError
-from .model import Timeseries, TimeseriesData
+from bemserver_core.database import db
+from bemserver_core.model import Timeseries, TimeseriesData
+from bemserver_core.authorization import auth, get_current_user
+from bemserver_core.exceptions import TimeseriesCSVIOError
 
 
 AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max")
@@ -34,10 +34,12 @@ class TimeseriesCSVIO:
             raise TimeseriesCSVIOError("Missing headers line") from exc
         if header[0] != "Datetime":
             raise TimeseriesCSVIOError('First column must be "Datetime"')
-        try:
-            ts_ids = [db.session.get(Timeseries, col).id for col in header[1:]]
-        except AttributeError as exc:
-            raise TimeseriesCSVIOError("Unknown timeseries ID") from exc
+        timeseries_l = [db.session.get(Timeseries, col) for col in header[1:]]
+        if None in timeseries_l:
+            raise TimeseriesCSVIOError("Unknown timeseries ID")
+
+        for timeseries in timeseries_l:
+            auth.authorize(get_current_user(), "write_data", timeseries)
 
         datas = []
         for row in reader:
@@ -46,20 +48,14 @@ class TimeseriesCSVIO:
                     [
                         {
                             "timestamp": row[0],
-                            "timeseries_id": ts_id,
+                            "timeseries_id": timeseries.id,
                             "value": row[col + 1],
                         }
-                        for col, ts_id in enumerate(ts_ids)
+                        for col, timeseries in enumerate(timeseries_l)
                     ]
                 )
             except IndexError as exc:
                 raise TimeseriesCSVIOError("Missing column") from exc
-
-        # TODO: manage all ISO formats
-        timestamps = [dt.datetime.fromisoformat(r["timestamp"]) for r in datas]
-        start_dt, end_dt = min(timestamps), max(timestamps)
-
-        TimeseriesData.check_can_import(start_dt, end_dt, ts_ids)
 
         query = (
             sqla.dialects.postgresql.insert(TimeseriesData)
@@ -75,16 +71,21 @@ class TimeseriesCSVIO:
             raise TimeseriesCSVIOError("Error writing to DB") from exc
 
     @staticmethod
-    def export_csv(start_dt, end_dt, timeseries):
+    def export_csv(start_dt, end_dt, timeseries_ids):
         """Export timeseries data as CSV file
 
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
-        :param list timeseries: List of timeseries IDs
+        :param list timeseries_ids: List of timeseries IDs
 
         Returns csv as a string.
         """
-        TimeseriesData.check_can_export(start_dt, end_dt, timeseries)
+        timeseries_l = [db.session.get(Timeseries, ts_id) for ts_id in timeseries_ids]
+        if None in timeseries_l:
+            raise TimeseriesCSVIOError("Unknown timeseries ID")
+
+        for timeseries in timeseries_l:
+            auth.authorize(get_current_user(), "read_data", timeseries)
 
         data = db.session.execute(
             sqla.select(
@@ -92,7 +93,7 @@ class TimeseriesCSVIO:
                 TimeseriesData.timeseries_id,
                 TimeseriesData.value,
             )
-            .filter(TimeseriesData.timeseries_id.in_(timeseries))
+            .filter(TimeseriesData.timeseries_id.in_(timeseries_ids))
             .filter(start_dt <= TimeseriesData.timestamp)
             .filter(TimeseriesData.timestamp < end_dt)
         ).all()
@@ -104,7 +105,7 @@ class TimeseriesCSVIO:
         data_df = data_df.pivot(columns="tsid", values="value")
 
         # Add missing columns, in query order
-        for idx, ts_id in enumerate(timeseries):
+        for idx, ts_id in enumerate(timeseries_ids):
             if ts_id not in data_df:
                 data_df.insert(idx, ts_id, None)
 
@@ -116,7 +117,7 @@ class TimeseriesCSVIO:
     def export_csv_bucket(
         start_dt,
         end_dt,
-        timeseries,
+        timeseries_ids,
         bucket_width,
         timezone="UTC",
         aggregation="avg",
@@ -125,7 +126,7 @@ class TimeseriesCSVIO:
 
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
-        :param list timeseries: List of timeseries IDs
+        :param list timeseries_ids: List of timeseries IDs
         :param str bucket_width: Bucket width (ISO 8601 or PostgreSQL interval)
         :param str timezone: IANA timezone
         :param str aggreagation: Aggregation function. Must be one of
@@ -133,7 +134,12 @@ class TimeseriesCSVIO:
 
         Returns csv as a string.
         """
-        TimeseriesData.check_can_export(start_dt, end_dt, timeseries)
+        timeseries_l = [db.session.get(Timeseries, ts_id) for ts_id in timeseries_ids]
+        if None in timeseries_l:
+            raise TimeseriesCSVIOError("Unknown timeseries ID")
+
+        for timeseries in timeseries_l:
+            auth.authorize(get_current_user(), "read_data", timeseries)
 
         if aggregation not in AGGREGATION_FUNCTIONS:
             raise ValueError(f'Invalid aggregation method "{aggregation}"')
@@ -143,7 +149,7 @@ class TimeseriesCSVIO:
             " :bucket_width, timestamp AT TIME ZONE :timezone)"
             f"  AS bucket, timeseries_id, {aggregation}(value) "
             "FROM timeseries_data "
-            "WHERE timeseries_id IN :timeseries "
+            "WHERE timeseries_id IN :timeseries_ids "
             "  AND timestamp >= :start_dt AND timestamp < :end_dt "
             "GROUP BY bucket, timeseries_id "
             "ORDER BY bucket;"
@@ -151,7 +157,7 @@ class TimeseriesCSVIO:
         params = {
             "bucket_width": bucket_width,
             "timezone": timezone,
-            "timeseries": tuple(timeseries),
+            "timeseries_ids": tuple(timeseries_ids),
             "start_dt": start_dt,
             "end_dt": end_dt,
         }
@@ -166,7 +172,7 @@ class TimeseriesCSVIO:
         data_df = data_df.pivot(columns="tsid", values="value")
 
         # Add missing columns, in query order
-        for idx, ts_id in enumerate(timeseries):
+        for idx, ts_id in enumerate(timeseries_ids):
             if ts_id not in data_df:
                 data_df.insert(idx, ts_id, None)
 
