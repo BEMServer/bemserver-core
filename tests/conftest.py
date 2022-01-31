@@ -88,12 +88,12 @@ def users_by_campaigns(database, users, campaigns):
 
 
 @pytest.fixture
-def timeseries_groups(database):
+def timeseries_cluster_groups(database):
     with OpenBar():
-        ts_group_1 = model.TimeseriesGroup.new(
+        ts_group_1 = model.TimeseriesClusterGroup.new(
             name="TS Group 1",
         )
-        ts_group_2 = model.TimeseriesGroup.new(
+        ts_group_2 = model.TimeseriesClusterGroup.new(
             name="TS Group 2",
         )
         db.session.commit()
@@ -101,14 +101,14 @@ def timeseries_groups(database):
 
 
 @pytest.fixture
-def timeseries_groups_by_users(database, timeseries_groups, users):
+def timeseries_cluster_groups_by_users(database, timeseries_cluster_groups, users):
     with OpenBar():
-        tgbu_1 = model.TimeseriesGroupByUser.new(
-            timeseries_group_id=timeseries_groups[0].id,
+        tgbu_1 = model.TimeseriesClusterGroupByUser.new(
+            timeseries_cluster_group_id=timeseries_cluster_groups[0].id,
             user_id=users[0].id,
         )
-        tgbu_2 = model.TimeseriesGroupByUser.new(
-            timeseries_group_id=timeseries_groups[1].id,
+        tgbu_2 = model.TimeseriesClusterGroupByUser.new(
+            timeseries_cluster_group_id=timeseries_cluster_groups[1].id,
             user_id=users[1].id,
         )
         db.session.commit()
@@ -116,22 +116,40 @@ def timeseries_groups_by_users(database, timeseries_groups, users):
 
 
 @pytest.fixture(params=[2])
-def timeseries(request, database, timeseries_groups):
+def timeseries_clusters(request, database, timeseries_cluster_groups):
+    with OpenBar():
+        tsc_l = []
+        for i in range(request.param):
+            tsc_i = model.TimeseriesCluster(
+                name=f"Timeseries cluster {i}",
+                description=f"Test timeseries cluster #{i}",
+                group=timeseries_cluster_groups[i % len(timeseries_cluster_groups)],
+            )
+            tsc_l.append(tsc_i)
+        db.session.add_all(tsc_l)
+        db.session.commit()
+        return tsc_l
+
+
+@pytest.fixture(params=[2])
+def timeseries(request, database, timeseries_clusters):
     with OpenBar():
         ts_l = []
         for i in range(request.param):
-            ts_i = model.Timeseries.new(
-                name=f"Timeseries {i}",
-                description=f"Test timeseries #{i}",
-                group=timeseries_groups[i % len(timeseries_groups)],
+            ts_i = model.Timeseries(
+                cluster=timeseries_clusters[i % len(timeseries_clusters)],
+                data_state_id=1,
             )
             ts_l.append(ts_i)
+        db.session.add_all(ts_l)
         db.session.commit()
         return ts_l
 
 
 @pytest.fixture
-def timeseries_groups_by_campaigns(database, campaigns, timeseries_groups):
+def timeseries_cluster_groups_by_campaigns(
+    database, campaigns, timeseries_cluster_groups
+):
     """Create timeseries groups x campaigns associations
 
     Example:
@@ -147,10 +165,10 @@ def timeseries_groups_by_campaigns(database, campaigns, timeseries_groups):
     """
     with OpenBar():
         tbc_l = []
-        for idx, tg_i in enumerate(timeseries_groups):
+        for idx, tg_i in enumerate(timeseries_cluster_groups):
             campaign = campaigns[idx % len(campaigns)]
-            tbc = model.TimeseriesGroupByCampaign.new(
-                timeseries_group_id=tg_i.id,
+            tbc = model.TimeseriesClusterGroupByCampaign.new(
+                timeseries_cluster_group_id=tg_i.id,
                 campaign_id=campaign.id,
             )
             tbc_l.append(tbc)
