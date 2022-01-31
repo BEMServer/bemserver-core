@@ -9,15 +9,13 @@ from bemserver_core.model import (
     EventLevel,
     EventChannel,
     EventChannelByCampaign,
+    EventChannelByUser,
     TimeseriesEvent,
 )
 from bemserver_core.model.events import TimeseriesEventByTimeseries
-from bemserver_core.authorization import CurrentUser, CurrentCampaign
+from bemserver_core.authorization import CurrentUser
 from bemserver_core.database import db
-from bemserver_core.exceptions import (
-    BEMServerAuthorizationError,
-    BEMServerCoreMissingCampaignError,
-)
+from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestEventStateModel:
@@ -156,13 +154,12 @@ class TestEventChannelModel:
             event_channel.delete()
             db.session.commit()
 
-    @pytest.mark.usefixtures("users_by_campaigns")
-    @pytest.mark.usefixtures("event_channels_by_campaigns")
-    def test_event_channel_authorizations_as_user(self, users, channels):
+    @pytest.mark.usefixtures("event_channels_by_users")
+    def test_event_channel_authorizations_as_user(self, users, event_channels):
         user_1 = users[1]
         assert not user_1.is_admin
-        channel_1 = channels[0]
-        channel_2 = channels[1]
+        channel_1 = event_channels[0]
+        channel_2 = event_channels[1]
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
@@ -185,118 +182,115 @@ class TestEventChannelModel:
 class TestEventModel:
     @pytest.mark.usefixtures("database")
     @pytest.mark.usefixtures("as_admin")
-    def test_event_list_by_state(self, channels, campaigns):
-        channel_1 = channels[0]
-        campaign_1 = campaigns[0]
+    def test_event_list_by_state(self, event_channels):
+        channel_1 = event_channels[0]
 
-        with pytest.raises(BEMServerCoreMissingCampaignError):
-            TimeseriesEvent.list_by_state()
+        evts = TimeseriesEvent.list_by_state()
+        assert evts == []
+        evts = TimeseriesEvent.list_by_state(states=("NEW",))
+        assert evts == []
+        evts = TimeseriesEvent.list_by_state(states=("ONGOING",))
+        assert evts == []
+        evts = TimeseriesEvent.list_by_state(states=("CLOSED",))
+        assert evts == []
 
-        with CurrentCampaign(campaign_1):
+        timestamp = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
 
-            evts = TimeseriesEvent.list_by_state()
-            assert evts == []
-            evts = TimeseriesEvent.list_by_state(states=("NEW",))
-            assert evts == []
-            evts = TimeseriesEvent.list_by_state(states=("ONGOING",))
-            assert evts == []
-            evts = TimeseriesEvent.list_by_state(states=("CLOSED",))
-            assert evts == []
+        evt_1 = TimeseriesEvent.new(
+            channel_id=channel_1.id,
+            timestamp=timestamp,
+            category="observation_missing",
+            source="src",
+            level="ERROR",
+            state="NEW",
+        )
+        evt_2 = TimeseriesEvent.new(
+            channel_id=channel_1.id,
+            timestamp=timestamp,
+            category="observation_missing",
+            source="src",
+            level="ERROR",
+            state="NEW",
+        )
+        db.session.commit()
 
-            evt_1 = TimeseriesEvent.new(
-                channel_id=channel_1.id,
-                timestamp=campaign_1.start_time,
-                category="observation_missing",
-                source="src",
-                level="ERROR",
-                state="NEW",
-            )
-            evt_2 = TimeseriesEvent.new(
-                channel_id=channel_1.id,
-                timestamp=campaign_1.end_time,
-                category="observation_missing",
-                source="src",
-                level="ERROR",
-                state="NEW",
-            )
-            db.session.commit()
+        evts = TimeseriesEvent.list_by_state()
+        assert evts == [(evt_1,), (evt_2,)]
 
-            evts = TimeseriesEvent.list_by_state()
-            assert evts == [(evt_1,), (evt_2,)]
+        evt_2.state = "CLOSED"
+        evt_3 = TimeseriesEvent.new(
+            channel_id=channel_1.id,
+            timestamp=timestamp,
+            category="observation_missing",
+            source="src",
+            level="ERROR",
+            state="ONGOING",
+        )
+        db.session.commit()
 
-            evt_2.state = "CLOSED"
-            evt_3 = TimeseriesEvent.new(
-                channel_id=channel_1.id,
-                timestamp=campaign_1.start_time,
-                category="observation_missing",
-                source="src",
-                level="ERROR",
-                state="ONGOING",
-            )
-            db.session.commit()
-
-            # 2 of 3 events are in NEW or ONGOING state
-            evts = TimeseriesEvent.list_by_state()
-            assert evts == [(evt_1,), (evt_3,)]
-            # one is NEW
-            evts = TimeseriesEvent.list_by_state(states=("NEW",))
-            assert evts == [(evt_1,)]
-            # one is ONGOING
-            evts = TimeseriesEvent.list_by_state(states=("ONGOING",))
-            assert evts == [(evt_3,)]
-            # one is closed
-            evts = TimeseriesEvent.list_by_state(states=("CLOSED",))
-            assert evts == [(evt_2,)]
+        # 2 of 3 events are in NEW or ONGOING state
+        evts = TimeseriesEvent.list_by_state()
+        assert evts == [(evt_1,), (evt_3,)]
+        # one is NEW
+        evts = TimeseriesEvent.list_by_state(states=("NEW",))
+        assert evts == [(evt_1,)]
+        # one is ONGOING
+        evts = TimeseriesEvent.list_by_state(states=("ONGOING",))
+        assert evts == [(evt_3,)]
+        # one is closed
+        evts = TimeseriesEvent.list_by_state(states=("CLOSED",))
+        assert evts == [(evt_2,)]
 
     @pytest.mark.usefixtures("database")
     @pytest.mark.usefixtures("as_admin")
-    def test_event_read_only_fields(self, channels, campaigns):
+    def test_event_read_only_fields(self, event_channels):
         """Check channel and timestamp can't be modified after commit
 
         Also check the getter/setter don't get in the way when querying.
         This is kind of a "framework test".
         """
-        channel_1 = channels[0]
-        channel_2 = channels[1]
-        campaign_1 = campaigns[0]
+        channel_1 = event_channels[0]
+        channel_2 = event_channels[1]
 
-        with CurrentCampaign(campaign_1):
-            evt_1 = TimeseriesEvent.new(
-                channel_id=channel_1.id,
-                timestamp=campaign_1.start_time,
-                category="observation_missing",
-                source="src",
-                level="ERROR",
-                state="NEW",
-            )
-            evt_1.update(timestamp=campaign_1.end_time)
+        timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
+        timestamp_2 = dt.datetime(2020, 6, 1, tzinfo=dt.timezone.utc)
+
+        evt_1 = TimeseriesEvent.new(
+            channel_id=channel_1.id,
+            timestamp=timestamp_1,
+            category="observation_missing",
+            source="src",
+            level="ERROR",
+            state="NEW",
+        )
+        evt_1.update(timestamp=timestamp_2)
+        evt_1.update(channel_id=channel_2.id)
+        db.session.commit()
+
+        with pytest.raises(AttributeError):
+            evt_1.update(timestamp=timestamp_1)
+        with pytest.raises(AttributeError):
             evt_1.update(channel_id=channel_2.id)
-            db.session.commit()
 
-            with pytest.raises(AttributeError):
-                evt_1.update(timestamp=campaign_1.end_time)
-            with pytest.raises(AttributeError):
-                evt_1.update(channel_id=channel_2.id)
-
-            tse_list = list(TimeseriesEvent.get(channel_id=2))
-            assert tse_list == [evt_1]
-            tse_list = list(TimeseriesEvent.get(channel_id=1))
-            assert tse_list == []
-            tse_list = list(TimeseriesEvent.get(timestamp=campaign_1.end_time))
-            assert tse_list == [evt_1]
-            tse_list = list(TimeseriesEvent.get(timestamp=campaign_1.start_time))
-            assert tse_list == []
+        tse_list = list(TimeseriesEvent.get(channel_id=2))
+        assert tse_list == [evt_1]
+        tse_list = list(TimeseriesEvent.get(channel_id=1))
+        assert tse_list == []
+        tse_list = list(TimeseriesEvent.get(timestamp=timestamp_2))
+        assert tse_list == [evt_1]
+        tse_list = list(TimeseriesEvent.get(timestamp=timestamp_1))
+        assert tse_list == []
 
 
 class TestEventChannelByCampaignModel:
     def test_event_channels_by_campaign_authorizations_as_admin(
-        self, users, campaigns, channels
+        self, users, campaigns, event_channels
     ):
         admin_user = users[0]
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
-        channel_1 = channels[0]
+        channel_1 = event_channels[0]
 
         with CurrentUser(admin_user):
             ecbc_1 = EventChannelByCampaign.new(
@@ -344,165 +338,152 @@ class TestEventChannelByCampaignModel:
                 ecbc.delete()
 
 
+class TestEventChannelByUserModel:
+    def test_event_channel_by_user_authorizations_as_admin(self, users, event_channels):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        user_1 = users[1]
+        event_channel_1 = event_channels[0]
+        event_channel_2 = event_channels[1]
+
+        with CurrentUser(admin_user):
+            tgbu_1 = EventChannelByUser.new(
+                user_id=user_1.id,
+                event_channel_id=event_channel_1.id,
+            )
+            db.session.add(tgbu_1)
+            db.session.commit()
+
+            tgbu = EventChannelByUser.get_by_id(tgbu_1.id)
+            assert tgbu.id == tgbu_1.id
+            tgbus = list(EventChannelByUser.get())
+            assert len(tgbus) == 1
+            assert tgbus[0].id == tgbu_1.id
+            tgbu.update(event_channel_id=event_channel_2.id)
+            tgbu.delete()
+
+    def test_event_channel_by_user_authorizations_as_user(
+        self, users, event_channels, event_channels_by_users
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+        event_channel_1 = event_channels[0]
+        event_channel_2 = event_channels[1]
+        tgbu_1 = event_channels_by_users[0]
+        tgbu_2 = event_channels_by_users[1]
+
+        with CurrentUser(user_1):
+            with pytest.raises(BEMServerAuthorizationError):
+                EventChannelByUser.new(
+                    user_id=user_1.id,
+                    event_channel_id=event_channel_2.id,
+                )
+
+            tgbu = EventChannelByUser.get_by_id(tgbu_2.id)
+            tgbus = list(EventChannelByUser.get())
+            assert len(tgbus) == 1
+            assert tgbus[0].id == tgbu_2.id
+            with pytest.raises(BEMServerAuthorizationError):
+                EventChannelByUser.get_by_id(tgbu_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tgbu.update(event_channel_id=event_channel_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tgbu.delete()
+
+
 class TestTimeseriesEventModel:
-    @pytest.mark.usefixtures("event_channels_by_campaigns")
+    @pytest.mark.usefixtures("event_channels_by_users")
     def test_timeseries_event_authorizations_as_admin(
         self,
         users,
-        campaigns,
-        channels,
+        event_channels,
         timeseries_events,
         timeseries,
     ):
         admin_user = users[0]
         assert admin_user.is_admin
-        campaign_1 = campaigns[0]
-        channel_1 = channels[0]
+        channel_1 = event_channels[0]
         timeseries_1 = timeseries[0]
         timeseries_2 = timeseries[1]
         ts_event_1 = timeseries_events[0]
         ts_event_2 = timeseries_events[1]
 
-        ooc_dt = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
-
         with CurrentUser(admin_user):
-            with pytest.raises(BEMServerCoreMissingCampaignError):
-                TimeseriesEvent.get()
-            with pytest.raises(BEMServerCoreMissingCampaignError):
-                TimeseriesEvent.get_by_id(ts_event_1.id)
-            with pytest.raises(BEMServerCoreMissingCampaignError):
-                TimeseriesEvent.new(
-                    channel_id=channel_1.id,
-                    timestamp=campaign_1.start_time,
-                    category="observation_missing",
-                    source="src",
-                    level="ERROR",
-                    state="NEW",
-                )
-            with pytest.raises(BEMServerCoreMissingCampaignError):
-                ts_event_2.update(level="WARNING", state="ONGOING")
-            with pytest.raises(BEMServerCoreMissingCampaignError):
-                ts_event_2.delete()
-            with CurrentCampaign(campaign_1):
-                ts_events = list(TimeseriesEvent.get())
-                assert set(ts_events) == {ts_event_1, ts_event_2}
-                ts_events = list(TimeseriesEvent.get(channel_id=channel_1.id))
-                assert ts_events == [ts_event_1]
-                assert TimeseriesEvent.get_by_id(ts_event_1.id) == ts_event_1
-                with pytest.raises(BEMServerAuthorizationError):
-                    TimeseriesEvent.new(
-                        channel_id=channel_1.id,
-                        timestamp=ooc_dt,
-                        category="observation_missing",
-                        source="src",
-                        level="ERROR",
-                        state="NEW",
-                    )
-                TimeseriesEvent.new(
-                    channel_id=channel_1.id,
-                    timestamp=campaign_1.start_time,
-                    category="observation_missing",
-                    source="src",
-                    level="ERROR",
-                    state="NEW",
-                    timeseries_ids=[timeseries_1.id, timeseries_2.id],
-                )
-                db.session.commit()
-                ts_event_2.update(level="WARNING", state="ONGOING")
-                db.session.commit()
-                ts_event_2.delete()
-                db.session.commit()
+            ts_events = list(TimeseriesEvent.get())
+            assert set(ts_events) == {ts_event_1, ts_event_2}
+            ts_events = list(TimeseriesEvent.get(channel_id=channel_1.id))
+            assert ts_events == [ts_event_1]
+            assert TimeseriesEvent.get_by_id(ts_event_1.id) == ts_event_1
+            TimeseriesEvent.new(
+                channel_id=channel_1.id,
+                timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
+                category="observation_missing",
+                source="src",
+                level="ERROR",
+                state="NEW",
+                timeseries_ids=[timeseries_1.id, timeseries_2.id],
+            )
+            db.session.commit()
+            ts_event_2.update(level="WARNING", state="ONGOING")
+            db.session.commit()
+            ts_event_2.delete()
+            db.session.commit()
 
-    @pytest.mark.usefixtures("users_by_campaigns")
-    @pytest.mark.usefixtures("event_channels_by_campaigns")
+    @pytest.mark.usefixtures("event_channels_by_users")
     def test_timeseries_event_authorizations_as_user(
-        self, users, campaigns, channels, timeseries_events
+        self, users, event_channels, timeseries_events
     ):
         user_1 = users[1]
         assert not user_1.is_admin
-        campaign_1 = campaigns[0]
-        campaign_2 = campaigns[1]
-        channel_1 = channels[0]
-        channel_2 = channels[1]
+        channel_1 = event_channels[0]
+        channel_2 = event_channels[1]
+        ts_event_1 = timeseries_events[0]
         ts_event_2 = timeseries_events[1]
 
-        ooc_dt = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
-
         with CurrentUser(user_1):
-            # Without Campaing
-            with pytest.raises(BEMServerCoreMissingCampaignError):
-                assert not TimeseriesEvent.get()
-            with pytest.raises(BEMServerCoreMissingCampaignError):
-                TimeseriesEvent.get_by_id(ts_event_2.id)
-            with pytest.raises(BEMServerCoreMissingCampaignError):
+
+            ts_events = list(TimeseriesEvent.get())
+            assert set(ts_events) == {ts_event_2}
+            ts_events = list(TimeseriesEvent.get(channel_id=channel_1.id))
+            assert not ts_events
+            assert TimeseriesEvent.get_by_id(ts_event_2.id) == ts_event_2
+
+            # Not member of channel
+            with pytest.raises(BEMServerAuthorizationError):
                 TimeseriesEvent.new(
-                    channel_id=channel_2.id,
-                    timestamp=campaign_2.start_time,
+                    channel_id=channel_1.id,
+                    timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
                     category="observation_missing",
                     source="src",
                     level="ERROR",
                     state="NEW",
                 )
-            with pytest.raises(BEMServerCoreMissingCampaignError):
-                ts_event_2.update(level="WARNING", state="ONGOING")
-            with pytest.raises(BEMServerCoreMissingCampaignError):
-                ts_event_2.delete()
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_event_1.update(level="WARNING", state="ONGOING")
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_event_1.delete()
 
-            # Get while not member of Campaign
-            with CurrentCampaign(campaign_1):
-                with pytest.raises(BEMServerAuthorizationError):
-                    TimeseriesEvent.get()
-            with CurrentCampaign(campaign_2):
-                events = list(TimeseriesEvent.get())
-                assert events == [ts_event_2]
-
-            with CurrentCampaign(campaign_2):
-                assert TimeseriesEvent.get_by_id(ts_event_2.id) == ts_event_2
-            # Create with Channel not in Campaign
-            with CurrentCampaign(campaign_2):
-                with pytest.raises(BEMServerAuthorizationError):
-                    TimeseriesEvent.new(
-                        channel_id=channel_1.id,
-                        timestamp=campaign_2.start_time,
-                        category="observation_missing",
-                        source="src",
-                        level="ERROR",
-                        state="NEW",
-                    )
-            # Create with timestamps out of Campaign
-            with CurrentCampaign(campaign_2):
-                with pytest.raises(BEMServerAuthorizationError):
-                    TimeseriesEvent.new(
-                        channel_id=channel_2.id,
-                        timestamp=ooc_dt,
-                        category="observation_missing",
-                        source="src",
-                        level="ERROR",
-                        state="NEW",
-                    )
-            with CurrentCampaign(campaign_2):
-                TimeseriesEvent.new(
-                    channel_id=channel_2.id,
-                    timestamp=campaign_2.start_time,
-                    category="observation_missing",
-                    source="src",
-                    level="ERROR",
-                    state="NEW",
-                )
-            with CurrentCampaign(campaign_2):
-                ts_event_2.update(level="WARNING", state="ONGOING")
-                db.session.commit()
-                ts_event_2.delete()
-                db.session.commit()
+            # Member of channel
+            TimeseriesEvent.new(
+                channel_id=channel_2.id,
+                timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
+                category="observation_missing",
+                source="src",
+                level="ERROR",
+                state="NEW",
+            )
+            db.session.commit()
+            ts_event_2.update(level="WARNING", state="ONGOING")
+            db.session.commit()
+            ts_event_2.delete()
+            db.session.commit()
 
 
 class TestTimeseriesEventByTimeseriesModel:
-    @pytest.mark.usefixtures("event_channels_by_campaigns")
     def test_timeseries_event_by_timeseries(
         self,
         users,
-        campaigns,
-        channels,
+        event_channels,
         timeseries,
     ):
         """Check TS_event x TS associations are created/deleted.
@@ -512,16 +493,15 @@ class TestTimeseriesEventByTimeseriesModel:
         """
         admin_user = users[0]
         assert admin_user.is_admin
-        campaign_1 = campaigns[0]
-        channel_1 = channels[0]
+        channel_1 = event_channels[0]
         timeseries_1 = timeseries[0]
         timeseries_2 = timeseries[1]
 
-        with CurrentUser(admin_user), CurrentCampaign(campaign_1):
+        with CurrentUser(admin_user):
             assert not list(db.session.query(TimeseriesEventByTimeseries))
             tse_1 = TimeseriesEvent.new(
                 channel_id=channel_1.id,
-                timestamp=campaign_1.start_time,
+                timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
                 category="observation_missing",
                 source="src",
                 level="ERROR",

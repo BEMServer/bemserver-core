@@ -6,14 +6,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from bemserver_core.database import Base, db
-from bemserver_core.authorization import (
-    auth,
-    AuthMixin,
-    Relation,
-    get_current_user,
-    get_current_campaign,
-)
-from bemserver_core.exceptions import BEMServerCoreMissingCampaignError
+from bemserver_core.authorization import auth, AuthMixin, Relation
 
 
 class EventChannel(AuthMixin, Base):
@@ -30,6 +23,12 @@ class EventChannel(AuthMixin, Base):
                 "event_channels_by_campaigns": Relation(
                     kind="many",
                     other_type="EventChannelByCampaign",
+                    my_field="id",
+                    other_field="event_channel_id",
+                ),
+                "event_channels_by_users": Relation(
+                    kind="many",
+                    other_type="EventChannelByUser",
                     my_field="id",
                     other_field="event_channel_id",
                 ),
@@ -69,6 +68,34 @@ class EventChannelByCampaign(AuthMixin, Base):
                     kind="one",
                     other_type="Campaign",
                     my_field="campaign_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
+class EventChannelByUser(AuthMixin, Base):
+    """EventChannel x User associations
+
+    Users associated with a EventChannel have R/W permissions on events
+    """
+
+    __tablename__ = "event_channels_by_users"
+    __table_args__ = (sqla.UniqueConstraint("user_id", "event_channel_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    user_id = sqla.Column(sqla.ForeignKey("users.id"), nullable=False)
+    event_channel_id = sqla.Column(sqla.ForeignKey("event_channels.id"), nullable=False)
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "user": Relation(
+                    kind="one",
+                    other_type="User",
+                    my_field="user_id",
                     other_field="id",
                 ),
             },
@@ -174,9 +201,6 @@ class Event:
         source=None,
         level="ERROR",
     ):
-        current_campaign = get_current_campaign()
-        if current_campaign is None:
-            raise BEMServerCoreMissingCampaignError
         if states is None or len(states) <= 0:
             raise ValueError("Missing `state` filter.")
         state_conditions = tuple((cls.state == x) for x in states)
@@ -189,10 +213,6 @@ class Event:
             stmt = stmt.filter(cls.source == source)
         if level is not None:
             stmt = stmt.filter(cls.level == level)
-        if current_campaign.start_time:
-            stmt = stmt.filter(cls.timestamp >= current_campaign.start_time)
-        if current_campaign.end_time:
-            stmt = stmt.filter(cls.timestamp <= current_campaign.end_time)
         return db.session.execute(stmt).all()
 
     @classmethod
@@ -208,46 +228,6 @@ class Event:
                 ),
             },
         )
-
-    @classmethod
-    def get(cls, **kwargs):
-        current_campaign = get_current_campaign()
-        if current_campaign is None:
-            raise BEMServerCoreMissingCampaignError
-        auth.authorize(get_current_user(), "read", current_campaign)
-        query = super().get(**kwargs)
-        if current_campaign.start_time:
-            query = query.filter(cls.timestamp >= current_campaign.start_time)
-        if current_campaign.end_time:
-            query = query.filter(cls.timestamp <= current_campaign.end_time)
-        return query
-
-    @classmethod
-    def new(cls, *args, timestamp, **kwargs):
-        current_campaign = get_current_campaign()
-        if current_campaign is None:
-            raise BEMServerCoreMissingCampaignError
-        current_campaign.auth_dates((timestamp,))
-        return super().new(*args, timestamp=timestamp, **kwargs)
-
-    @classmethod
-    def get_by_id(cls, item_id, **kwargs):
-        current_campaign = get_current_campaign()
-        if current_campaign is None:
-            raise BEMServerCoreMissingCampaignError
-        return super().get_by_id(item_id, **kwargs)
-
-    def update(self, **kwargs):
-        current_campaign = get_current_campaign()
-        if current_campaign is None:
-            raise BEMServerCoreMissingCampaignError
-        return super().update(**kwargs)
-
-    def delete(self):
-        current_campaign = get_current_campaign()
-        if current_campaign is None:
-            raise BEMServerCoreMissingCampaignError
-        return super().delete()
 
 
 class TimeseriesEvent(Event, AuthMixin, Base):
