@@ -316,7 +316,6 @@ class TestEventChannelByUserModel:
 
 
 class TestEventModel:
-    @pytest.mark.usefixtures("database")
     @pytest.mark.usefixtures("as_admin")
     def test_event_list_by_state(self, event_channels):
         channel_1 = event_channels[0]
@@ -377,7 +376,6 @@ class TestEventModel:
         evts = Event.list_by_state(states=("CLOSED",))
         assert evts == [(evt_2,)]
 
-    @pytest.mark.usefixtures("database")
     @pytest.mark.usefixtures("as_admin")
     def test_event_read_only_fields(self, event_channels):
         """Check channel and timestamp can't be modified after commit

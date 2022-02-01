@@ -28,7 +28,7 @@ class TestUserModel:
         assert not user.check_password("Tr0ub4dor&3")
         assert not user.check_password("rosebud")
 
-    def test_user_authorizations_as_admin(self, database, users):
+    def test_user_authorizations_as_admin(self, users):
         admin_user = users[0]
         assert admin_user.is_admin
         user_1 = users[1]
@@ -64,7 +64,7 @@ class TestUserModel:
             user.update(is_admin=True)
             assert user.is_admin is True
 
-    def test_user_authorizations_as_user(self, database, users):
+    def test_user_authorizations_as_user(self, users):
         admin_user = users[0]
         assert admin_user.is_admin
         user_1 = users[1]

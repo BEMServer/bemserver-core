@@ -170,8 +170,7 @@ def timeseries_groups_by_campaigns(database, campaigns, timeseries_groups):
 
 
 @pytest.fixture
-@pytest.mark.usefixtures("database")
-def event_channels():
+def event_channels(database):
     channel_1 = model.EventChannel(
         name="Channel 1",
     )
