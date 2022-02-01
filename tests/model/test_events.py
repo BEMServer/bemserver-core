@@ -10,9 +10,8 @@ from bemserver_core.model import (
     EventChannel,
     EventChannelByCampaign,
     EventChannelByUser,
-    TimeseriesEvent,
+    Event,
 )
-from bemserver_core.model.events import TimeseriesEventByTimeseries
 from bemserver_core.authorization import CurrentUser
 from bemserver_core.database import db
 from bemserver_core.exceptions import BEMServerAuthorizationError
@@ -179,109 +178,6 @@ class TestEventChannelModel:
                 event_channel.delete()
 
 
-class TestEventModel:
-    @pytest.mark.usefixtures("database")
-    @pytest.mark.usefixtures("as_admin")
-    def test_event_list_by_state(self, event_channels):
-        channel_1 = event_channels[0]
-
-        evts = TimeseriesEvent.list_by_state()
-        assert evts == []
-        evts = TimeseriesEvent.list_by_state(states=("NEW",))
-        assert evts == []
-        evts = TimeseriesEvent.list_by_state(states=("ONGOING",))
-        assert evts == []
-        evts = TimeseriesEvent.list_by_state(states=("CLOSED",))
-        assert evts == []
-
-        timestamp = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
-
-        evt_1 = TimeseriesEvent.new(
-            channel_id=channel_1.id,
-            timestamp=timestamp,
-            category="observation_missing",
-            source="src",
-            level="ERROR",
-            state="NEW",
-        )
-        evt_2 = TimeseriesEvent.new(
-            channel_id=channel_1.id,
-            timestamp=timestamp,
-            category="observation_missing",
-            source="src",
-            level="ERROR",
-            state="NEW",
-        )
-        db.session.commit()
-
-        evts = TimeseriesEvent.list_by_state()
-        assert evts == [(evt_1,), (evt_2,)]
-
-        evt_2.state = "CLOSED"
-        evt_3 = TimeseriesEvent.new(
-            channel_id=channel_1.id,
-            timestamp=timestamp,
-            category="observation_missing",
-            source="src",
-            level="ERROR",
-            state="ONGOING",
-        )
-        db.session.commit()
-
-        # 2 of 3 events are in NEW or ONGOING state
-        evts = TimeseriesEvent.list_by_state()
-        assert evts == [(evt_1,), (evt_3,)]
-        # one is NEW
-        evts = TimeseriesEvent.list_by_state(states=("NEW",))
-        assert evts == [(evt_1,)]
-        # one is ONGOING
-        evts = TimeseriesEvent.list_by_state(states=("ONGOING",))
-        assert evts == [(evt_3,)]
-        # one is closed
-        evts = TimeseriesEvent.list_by_state(states=("CLOSED",))
-        assert evts == [(evt_2,)]
-
-    @pytest.mark.usefixtures("database")
-    @pytest.mark.usefixtures("as_admin")
-    def test_event_read_only_fields(self, event_channels):
-        """Check channel and timestamp can't be modified after commit
-
-        Also check the getter/setter don't get in the way when querying.
-        This is kind of a "framework test".
-        """
-        channel_1 = event_channels[0]
-        channel_2 = event_channels[1]
-
-        timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
-        timestamp_2 = dt.datetime(2020, 6, 1, tzinfo=dt.timezone.utc)
-
-        evt_1 = TimeseriesEvent.new(
-            channel_id=channel_1.id,
-            timestamp=timestamp_1,
-            category="observation_missing",
-            source="src",
-            level="ERROR",
-            state="NEW",
-        )
-        evt_1.update(timestamp=timestamp_2)
-        evt_1.update(channel_id=channel_2.id)
-        db.session.commit()
-
-        with pytest.raises(AttributeError):
-            evt_1.update(timestamp=timestamp_1)
-        with pytest.raises(AttributeError):
-            evt_1.update(channel_id=channel_2.id)
-
-        tse_list = list(TimeseriesEvent.get(channel_id=2))
-        assert tse_list == [evt_1]
-        tse_list = list(TimeseriesEvent.get(channel_id=1))
-        assert tse_list == []
-        tse_list = list(TimeseriesEvent.get(timestamp=timestamp_2))
-        assert tse_list == [evt_1]
-        tse_list = list(TimeseriesEvent.get(timestamp=timestamp_1))
-        assert tse_list == []
-
-
 class TestEventChannelByCampaignModel:
     def test_event_channels_by_campaign_authorizations_as_admin(
         self, users, campaigns, event_channels
@@ -391,66 +287,161 @@ class TestEventChannelByUserModel:
                 tgbu.delete()
 
 
-class TestTimeseriesEventModel:
+class TestEventModel:
+    @pytest.mark.usefixtures("database")
+    @pytest.mark.usefixtures("as_admin")
+    def test_event_list_by_state(self, event_channels):
+        channel_1 = event_channels[0]
+
+        evts = Event.list_by_state()
+        assert evts == []
+        evts = Event.list_by_state(states=("NEW",))
+        assert evts == []
+        evts = Event.list_by_state(states=("ONGOING",))
+        assert evts == []
+        evts = Event.list_by_state(states=("CLOSED",))
+        assert evts == []
+
+        timestamp = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
+
+        evt_1 = Event.new(
+            channel_id=channel_1.id,
+            timestamp=timestamp,
+            category="observation_missing",
+            source="src",
+            level="ERROR",
+            state="NEW",
+        )
+        evt_2 = Event.new(
+            channel_id=channel_1.id,
+            timestamp=timestamp,
+            category="observation_missing",
+            source="src",
+            level="ERROR",
+            state="NEW",
+        )
+        db.session.commit()
+
+        evts = Event.list_by_state()
+        assert evts == [(evt_1,), (evt_2,)]
+
+        evt_2.state = "CLOSED"
+        evt_3 = Event.new(
+            channel_id=channel_1.id,
+            timestamp=timestamp,
+            category="observation_missing",
+            source="src",
+            level="ERROR",
+            state="ONGOING",
+        )
+        db.session.commit()
+
+        # 2 of 3 events are in NEW or ONGOING state
+        evts = Event.list_by_state()
+        assert evts == [(evt_1,), (evt_3,)]
+        # one is NEW
+        evts = Event.list_by_state(states=("NEW",))
+        assert evts == [(evt_1,)]
+        # one is ONGOING
+        evts = Event.list_by_state(states=("ONGOING",))
+        assert evts == [(evt_3,)]
+        # one is closed
+        evts = Event.list_by_state(states=("CLOSED",))
+        assert evts == [(evt_2,)]
+
+    @pytest.mark.usefixtures("database")
+    @pytest.mark.usefixtures("as_admin")
+    def test_event_read_only_fields(self, event_channels):
+        """Check channel and timestamp can't be modified after commit
+
+        Also check the getter/setter don't get in the way when querying.
+        This is kind of a "framework test".
+        """
+        channel_1 = event_channels[0]
+        channel_2 = event_channels[1]
+
+        timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
+        timestamp_2 = dt.datetime(2020, 6, 1, tzinfo=dt.timezone.utc)
+
+        evt_1 = Event.new(
+            channel_id=channel_1.id,
+            timestamp=timestamp_1,
+            category="observation_missing",
+            source="src",
+            level="ERROR",
+            state="NEW",
+        )
+        evt_1.update(timestamp=timestamp_2)
+        evt_1.update(channel_id=channel_2.id)
+        db.session.commit()
+
+        with pytest.raises(AttributeError):
+            evt_1.update(timestamp=timestamp_1)
+        with pytest.raises(AttributeError):
+            evt_1.update(channel_id=channel_2.id)
+
+        tse_list = list(Event.get(channel_id=2))
+        assert tse_list == [evt_1]
+        tse_list = list(Event.get(channel_id=1))
+        assert tse_list == []
+        tse_list = list(Event.get(timestamp=timestamp_2))
+        assert tse_list == [evt_1]
+        tse_list = list(Event.get(timestamp=timestamp_1))
+        assert tse_list == []
+
     @pytest.mark.usefixtures("event_channels_by_users")
-    def test_timeseries_event_authorizations_as_admin(
+    def test_event_authorizations_as_admin(
         self,
         users,
         event_channels,
-        timeseries_events,
-        timeseries,
+        events,
     ):
         admin_user = users[0]
         assert admin_user.is_admin
         channel_1 = event_channels[0]
-        timeseries_1 = timeseries[0]
-        timeseries_2 = timeseries[1]
-        ts_event_1 = timeseries_events[0]
-        ts_event_2 = timeseries_events[1]
+        event_1 = events[0]
+        event_2 = events[1]
 
         with CurrentUser(admin_user):
-            ts_events = list(TimeseriesEvent.get())
-            assert set(ts_events) == {ts_event_1, ts_event_2}
-            ts_events = list(TimeseriesEvent.get(channel_id=channel_1.id))
-            assert ts_events == [ts_event_1]
-            assert TimeseriesEvent.get_by_id(ts_event_1.id) == ts_event_1
-            TimeseriesEvent.new(
+            events = list(Event.get())
+            assert set(events) == {event_1, event_2}
+            events = list(Event.get(channel_id=channel_1.id))
+            assert events == [event_1]
+            assert Event.get_by_id(event_1.id) == event_1
+            Event.new(
                 channel_id=channel_1.id,
                 timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
                 category="observation_missing",
                 source="src",
                 level="ERROR",
                 state="NEW",
-                timeseries_ids=[timeseries_1.id, timeseries_2.id],
             )
             db.session.commit()
-            ts_event_2.update(level="WARNING", state="ONGOING")
+            event_2.update(level="WARNING", state="ONGOING")
             db.session.commit()
-            ts_event_2.delete()
+            event_2.delete()
             db.session.commit()
 
     @pytest.mark.usefixtures("event_channels_by_users")
-    def test_timeseries_event_authorizations_as_user(
-        self, users, event_channels, timeseries_events
-    ):
+    def test_event_authorizations_as_user(self, users, event_channels, events):
         user_1 = users[1]
         assert not user_1.is_admin
         channel_1 = event_channels[0]
         channel_2 = event_channels[1]
-        ts_event_1 = timeseries_events[0]
-        ts_event_2 = timeseries_events[1]
+        event_1 = events[0]
+        event_2 = events[1]
 
         with CurrentUser(user_1):
 
-            ts_events = list(TimeseriesEvent.get())
-            assert set(ts_events) == {ts_event_2}
-            ts_events = list(TimeseriesEvent.get(channel_id=channel_1.id))
-            assert not ts_events
-            assert TimeseriesEvent.get_by_id(ts_event_2.id) == ts_event_2
+            events = list(Event.get())
+            assert set(events) == {event_2}
+            events = list(Event.get(channel_id=channel_1.id))
+            assert not events
+            assert Event.get_by_id(event_2.id) == event_2
 
             # Not member of channel
             with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesEvent.new(
+                Event.new(
                     channel_id=channel_1.id,
                     timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
                     category="observation_missing",
@@ -459,12 +450,12 @@ class TestTimeseriesEventModel:
                     state="NEW",
                 )
             with pytest.raises(BEMServerAuthorizationError):
-                ts_event_1.update(level="WARNING", state="ONGOING")
+                event_1.update(level="WARNING", state="ONGOING")
             with pytest.raises(BEMServerAuthorizationError):
-                ts_event_1.delete()
+                event_1.delete()
 
             # Member of channel
-            TimeseriesEvent.new(
+            Event.new(
                 channel_id=channel_2.id,
                 timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
                 category="observation_missing",
@@ -473,46 +464,7 @@ class TestTimeseriesEventModel:
                 state="NEW",
             )
             db.session.commit()
-            ts_event_2.update(level="WARNING", state="ONGOING")
+            event_2.update(level="WARNING", state="ONGOING")
             db.session.commit()
-            ts_event_2.delete()
+            event_2.delete()
             db.session.commit()
-
-
-class TestTimeseriesEventByTimeseriesModel:
-    def test_timeseries_event_by_timeseries(
-        self,
-        users,
-        event_channels,
-        timeseries,
-    ):
-        """Check TS_event x TS associations are created/deleted.
-
-        This test merely checks the SQLAlchemy framework, more specifically
-        the behaviour of the association table.
-        """
-        admin_user = users[0]
-        assert admin_user.is_admin
-        channel_1 = event_channels[0]
-        timeseries_1 = timeseries[0]
-        timeseries_2 = timeseries[1]
-
-        with CurrentUser(admin_user):
-            assert not list(db.session.query(TimeseriesEventByTimeseries))
-            tse_1 = TimeseriesEvent.new(
-                channel_id=channel_1.id,
-                timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
-                category="observation_missing",
-                source="src",
-                level="ERROR",
-                state="NEW",
-                timeseries_ids=[timeseries_1.id, timeseries_2.id],
-            )
-            db.session.commit()
-            assert len(list(db.session.query(TimeseriesEventByTimeseries))) == 2
-            tse_1.update(timeseries_ids=[timeseries_2.id])
-            db.session.commit()
-            assert len(list(db.session.query(TimeseriesEventByTimeseries))) == 1
-            tse_1.delete()
-            db.session.commit()
-            assert not list(db.session.query(TimeseriesEventByTimeseries))

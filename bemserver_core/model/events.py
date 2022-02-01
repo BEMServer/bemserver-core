@@ -2,7 +2,6 @@
 
 import sqlalchemy as sqla
 import sqlalchemy.orm as sqlaorm
-from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from bemserver_core.database import Base, db
@@ -126,16 +125,15 @@ class EventLevel(AuthMixin, Base):
     description = sqla.Column(sqla.String(250))
 
 
-@sqlaorm.declarative_mixin
-class Event:
-    """Abstract base class for event classes
+class Event(AuthMixin, Base):
 
-    Channel and timestamp can't be changed after commit. There is no real use
-    case for modifying these and it would screw up the auth layer as these are
-    used by the authorization rules.
-    """
+    __tablename__ = "events"
 
     id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
+
+    # Channel and timestamp can't be changed after commit. There is no real use
+    # case for modifying these and it would screw up the auth layer as these are
+    # used by the authorization rules.
 
     # Use getter/setter to prevent modifying channel after commit
     @sqlaorm.declared_attr
@@ -228,40 +226,6 @@ class Event:
                 ),
             },
         )
-
-
-class TimeseriesEvent(Event, AuthMixin, Base):
-    __tablename__ = "timeseries_events"
-
-    timeseries_ids = association_proxy(
-        "timeseries",
-        "timeseries_id",
-        creator=lambda ts_id: TimeseriesEventByTimeseries(timeseries_id=ts_id),
-    )
-
-
-class TimeseriesEventByTimeseries(AuthMixin, Base):
-    """TimeseriesEvent x Timeseries associations"""
-
-    __tablename__ = "timeseries_events_by_timeseries"
-    __table_args__ = (sqla.UniqueConstraint("timeseries_event_id", "timeseries_id"),)
-
-    timeseries_event_id = sqla.Column(
-        sqla.Integer,
-        sqla.ForeignKey("timeseries_events.id", ondelete="CASCADE"),
-        primary_key=True,
-    )
-    timeseries_event = sqla.orm.relationship(
-        "TimeseriesEvent",
-        backref=sqla.orm.backref(
-            "timeseries", passive_deletes=True, cascade="all, delete-orphan"
-        ),
-    )
-    timeseries_id = sqla.Column(
-        sqla.Integer,
-        sqla.ForeignKey("timeseries.id", ondelete="CASCADE"),
-        primary_key=True,
-    )
 
 
 # TODO: maybe this is something the concerned service could fill
