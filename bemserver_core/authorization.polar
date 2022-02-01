@@ -171,15 +171,15 @@ has_role(user: UserActor, "ecbu_owner", ecbu: EventChannelByUser) if
     user = ecbu.user;
 
 
-resource TimeseriesEvent {
+resource Event {
     permissions = ["create", "read", "update", "delete"];
 }
 
-has_permission(user: UserActor, "create", event:TimeseriesEvent) if
+has_permission(user: UserActor, "create", event:Event) if
     has_permission(user, "create_events", event.channel);
-has_permission(user: UserActor, "read", event:TimeseriesEvent) if
+has_permission(user: UserActor, "read", event:Event) if
     has_permission(user, "read_events", event.channel);
-has_permission(user: UserActor, "update", event:TimeseriesEvent) if
+has_permission(user: UserActor, "update", event:Event) if
     has_permission(user, "update_events", event.channel);
-has_permission(user: UserActor, "delete", event:TimeseriesEvent) if
+has_permission(user: UserActor, "delete", event:Event) if
     has_permission(user, "delete_events", event.channel);

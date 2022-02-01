@@ -219,9 +219,9 @@ def event_channels_by_users(database, event_channels, users):
 
 
 @pytest.fixture
-def timeseries_events(database, event_channels):
+def events(database, event_channels):
     with OpenBar():
-        ts_event_1 = model.TimeseriesEvent(
+        ts_event_1 = model.Event(
             channel_id=event_channels[0].id,
             timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
             category="observation_missing",
@@ -230,7 +230,7 @@ def timeseries_events(database, event_channels):
             state="NEW",
         )
         db.session.add(ts_event_1)
-        ts_event_2 = model.TimeseriesEvent(
+        ts_event_2 = model.Event(
             channel_id=event_channels[1].id,
             timestamp=dt.datetime(2020, 1, 15, tzinfo=dt.timezone.utc),
             category="observation_missing",

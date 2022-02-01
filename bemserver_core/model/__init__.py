@@ -12,7 +12,7 @@ from .events import (  # noqa
     EventChannel,
     EventChannelByCampaign,
     EventChannelByUser,
-    TimeseriesEvent,
+    Event,
 )
 
 
@@ -31,7 +31,7 @@ __all__ = [
     "EventChannel",
     "EventChannelByCampaign",
     "EventChannelByUser",
-    "TimeseriesEvent",
+    "Event",
 ]
 
 
@@ -50,7 +50,7 @@ auth_model_classes = [
     EventChannel,
     EventChannelByCampaign,
     EventChannelByUser,
-    TimeseriesEvent,
+    Event,
 ]
 
 init_authorization(auth_model_classes)
