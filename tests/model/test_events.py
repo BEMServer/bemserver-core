@@ -132,6 +132,34 @@ class TestEventCategoryModel:
 
 
 class TestEventChannelModel:
+    @pytest.mark.usefixtures("event_channels_by_users")
+    @pytest.mark.usefixtures("event_channels_by_campaigns")
+    def test_event_channels_filter_by_campaign_or_user(
+        self, users, event_channels, campaigns
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
+        user_1 = users[1]
+        ec_1 = event_channels[0]
+        ec_2 = event_channels[1]
+
+        with CurrentUser(admin_user):
+            ec_l = list(EventChannel.get(campaign_id=campaign_1.id))
+            assert len(ec_l) == 1
+            assert ec_l[0] == ec_1
+
+        with CurrentUser(admin_user):
+            ec_l = list(EventChannel.get(user_id=user_1.id))
+            assert len(ec_l) == 1
+            assert ec_l[0] == ec_2
+
+        with CurrentUser(admin_user):
+            ec_l = list(EventChannel.get(user_id=user_1.id, campaign_id=campaign_2.id))
+            assert len(ec_l) == 1
+            assert ec_l[0] == ec_2
+
     def test_event_channel_authorizations_as_admin(self, users):
         admin_user = users[0]
         assert admin_user.is_admin
