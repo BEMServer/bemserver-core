@@ -1,6 +1,4 @@
 """Campaign tests"""
-import datetime as dt
-
 import pytest
 
 from bemserver_core.model import Campaign, UserByCampaign, TimeseriesGroupByCampaign
@@ -54,44 +52,6 @@ class TestCampaignModel:
                 campaign.update(name="Super campaign 1")
             with pytest.raises(BEMServerAuthorizationError):
                 campaign.delete()
-
-    @pytest.mark.usefixtures("database")
-    @pytest.mark.usefixtures("as_admin")
-    def test_campaign_auth_dates(self):
-        dt_1 = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
-        dt_2 = dt.datetime(2020, 2, 1, tzinfo=dt.timezone.utc)
-        dt_3 = dt.datetime(2020, 3, 1, tzinfo=dt.timezone.utc)
-        dt_4 = dt.datetime(2020, 4, 1, tzinfo=dt.timezone.utc)
-
-        campaign_1 = Campaign.new(
-            name="Campaign 1",
-        )
-        campaign_1.auth_dates((dt_1, dt_2, dt_3, dt_4))
-        campaign_2 = Campaign.new(name="Campaign 2", start_time=dt_2)
-        campaign_2.auth_dates((dt_2, dt_3, dt_4))
-        with pytest.raises(BEMServerAuthorizationError):
-            campaign_2.auth_dates((dt_1,))
-        campaign_3 = Campaign.new(name="Campaign 3", end_time=dt_3)
-        campaign_3.auth_dates((dt_1, dt_2, dt_3))
-        with pytest.raises(BEMServerAuthorizationError):
-            campaign_3.auth_dates((dt_4,))
-        campaign_4 = Campaign.new(
-            name="Campaign 4",
-            start_time=dt_2,
-            end_time=dt_3,
-        )
-        campaign_4.auth_dates((dt_2, dt_3))
-        with pytest.raises(BEMServerAuthorizationError):
-            campaign_4.auth_dates((dt_1,))
-        with pytest.raises(BEMServerAuthorizationError):
-            campaign_4.auth_dates((dt_4,))
-        with pytest.raises(BEMServerAuthorizationError):
-            campaign_4.auth_dates(
-                (
-                    dt_1,
-                    dt_4,
-                )
-            )
 
 
 class TestUserByCampaignModel:
