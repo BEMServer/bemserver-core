@@ -35,12 +35,14 @@ class EventChannel(AuthMixin, Base):
         )
 
     @classmethod
-    def get(cls, *, campaign_id=None, **kwargs):
+    def get(cls, *, campaign_id=None, user_id=None, **kwargs):
         query = super().get(**kwargs)
         if campaign_id:
             query = query.join(EventChannelByCampaign).filter_by(
                 campaign_id=campaign_id
             )
+        if user_id:
+            query = query.join(EventChannelByUser).filter_by(user_id=user_id)
         return query
 
 
