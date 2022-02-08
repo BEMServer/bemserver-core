@@ -4,5 +4,6 @@ include bemserver_core/authorization.polar
 
 graft tests
 include tox.ini
+include requirements/*.txt
 
 global-exclude *.py[co]
