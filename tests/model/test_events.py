@@ -271,20 +271,20 @@ class TestEventChannelByUserModel:
         event_channel_2 = event_channels[1]
 
         with CurrentUser(admin_user):
-            tgbu_1 = EventChannelByUser.new(
+            ecbu_1 = EventChannelByUser.new(
                 user_id=user_1.id,
                 event_channel_id=event_channel_1.id,
             )
-            db.session.add(tgbu_1)
+            db.session.add(ecbu_1)
             db.session.commit()
 
-            tgbu = EventChannelByUser.get_by_id(tgbu_1.id)
-            assert tgbu.id == tgbu_1.id
-            tgbus = list(EventChannelByUser.get())
-            assert len(tgbus) == 1
-            assert tgbus[0].id == tgbu_1.id
-            tgbu.update(event_channel_id=event_channel_2.id)
-            tgbu.delete()
+            ecbu = EventChannelByUser.get_by_id(ecbu_1.id)
+            assert ecbu.id == ecbu_1.id
+            ecbus = list(EventChannelByUser.get())
+            assert len(ecbus) == 1
+            assert ecbus[0].id == ecbu_1.id
+            ecbu.update(event_channel_id=event_channel_2.id)
+            ecbu.delete()
 
     def test_event_channel_by_user_authorizations_as_user(
         self, users, event_channels, event_channels_by_users
@@ -293,8 +293,8 @@ class TestEventChannelByUserModel:
         assert not user_1.is_admin
         event_channel_1 = event_channels[0]
         event_channel_2 = event_channels[1]
-        tgbu_1 = event_channels_by_users[0]
-        tgbu_2 = event_channels_by_users[1]
+        ecbu_1 = event_channels_by_users[0]
+        ecbu_2 = event_channels_by_users[1]
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
@@ -303,16 +303,16 @@ class TestEventChannelByUserModel:
                     event_channel_id=event_channel_2.id,
                 )
 
-            tgbu = EventChannelByUser.get_by_id(tgbu_2.id)
-            tgbus = list(EventChannelByUser.get())
-            assert len(tgbus) == 1
-            assert tgbus[0].id == tgbu_2.id
+            ecbu = EventChannelByUser.get_by_id(ecbu_2.id)
+            ecbus = list(EventChannelByUser.get())
+            assert len(ecbus) == 1
+            assert ecbus[0].id == ecbu_2.id
             with pytest.raises(BEMServerAuthorizationError):
-                EventChannelByUser.get_by_id(tgbu_1.id)
+                EventChannelByUser.get_by_id(ecbu_1.id)
             with pytest.raises(BEMServerAuthorizationError):
-                tgbu.update(event_channel_id=event_channel_1.id)
+                ecbu.update(event_channel_id=event_channel_1.id)
             with pytest.raises(BEMServerAuthorizationError):
-                tgbu.delete()
+                ecbu.delete()
 
 
 class TestEventModel:

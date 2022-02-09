@@ -103,16 +103,16 @@ def timeseries_cluster_groups(database):
 @pytest.fixture
 def timeseries_cluster_groups_by_users(database, timeseries_cluster_groups, users):
     with OpenBar():
-        tgbu_1 = model.TimeseriesClusterGroupByUser.new(
+        tscgbu_1 = model.TimeseriesClusterGroupByUser.new(
             timeseries_cluster_group_id=timeseries_cluster_groups[0].id,
             user_id=users[0].id,
         )
-        tgbu_2 = model.TimeseriesClusterGroupByUser.new(
+        tscgbu_2 = model.TimeseriesClusterGroupByUser.new(
             timeseries_cluster_group_id=timeseries_cluster_groups[1].id,
             user_id=users[1].id,
         )
         db.session.commit()
-    return (tgbu_1, tgbu_2)
+    return (tscgbu_1, tscgbu_2)
 
 
 @pytest.fixture(params=[2])
@@ -165,10 +165,10 @@ def timeseries_cluster_groups_by_campaigns(
     """
     with OpenBar():
         tbc_l = []
-        for idx, tg_i in enumerate(timeseries_cluster_groups):
+        for idx, tscg_i in enumerate(timeseries_cluster_groups):
             campaign = campaigns[idx % len(campaigns)]
             tbc = model.TimeseriesClusterGroupByCampaign.new(
-                timeseries_cluster_group_id=tg_i.id,
+                timeseries_cluster_group_id=tscg_i.id,
                 campaign_id=campaign.id,
             )
             tbc_l.append(tbc)

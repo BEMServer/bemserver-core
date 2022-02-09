@@ -119,11 +119,11 @@ class TestTimeseriesClusterGroupByCampaignModel:
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
-        tg_1 = timeseries_cluster_groups[0]
+        tscg_1 = timeseries_cluster_groups[0]
 
         with CurrentUser(admin_user):
             tgbc_1 = TimeseriesClusterGroupByCampaign.new(
-                timeseries_cluster_group_id=tg_1.id,
+                timeseries_cluster_group_id=tscg_1.id,
                 campaign_id=campaign_1.id,
             )
             db.session.add(tgbc_1)

@@ -1,5 +1,5 @@
 # TODO: Investigate potential Oso issue
-# We should't have to write "c_member" and "tg_member", Oso should infer which
+# We should't have to write "c_member" and "tscg_member", Oso should infer which
 # has_role rule matches which resource type.
 # Same for *_owner.
 
@@ -71,30 +71,30 @@ resource TimeseriesClusterGroupByCampaign {
 
 has_permission(user: UserActor, "read", tgbc: TimeseriesClusterGroupByCampaign) if
     has_role(user, "c_member", tgbc.campaign) and
-    has_role(user, "tg_member", tgbc.timeseries_cluster_group);
+    has_role(user, "tscg_member", tgbc.timeseries_cluster_group);
 
 
 resource TimeseriesClusterGroup {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["tg_member"];
+    roles = ["tscg_member"];
 
-    "read" if "tg_member";
+    "read" if "tscg_member";
 }
 
-has_role(user: UserActor, "tg_member", tg: TimeseriesClusterGroup) if
-    tgbu in tg.timeseries_cluster_groups_by_users and
-    user = tgbu.user;
+has_role(user: UserActor, "tscg_member", tg: TimeseriesClusterGroup) if
+    tscgbu in tg.timeseries_cluster_groups_by_users and
+    user = tscgbu.user;
 
 
 resource TimeseriesClusterGroupByUser {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["tgbu_owner"];
+    roles = ["tscgbu_owner"];
 
-    "read" if "tgbu_owner";
+    "read" if "tscgbu_owner";
 }
 
-has_role(user: UserActor, "tgbu_owner", tgbu: TimeseriesClusterGroupByUser) if
-    user = tgbu.user;
+has_role(user: UserActor, "tscgbu_owner", tscgbu: TimeseriesClusterGroupByUser) if
+    user = tscgbu.user;
 
 
 resource TimeseriesCluster {
@@ -103,9 +103,9 @@ resource TimeseriesCluster {
         group: TimeseriesClusterGroup
     };
 
-    "read" if "tg_member" on "group";
-    "read_data" if "tg_member" on "group";
-    "write_data" if "tg_member" on "group";
+    "read" if "tscg_member" on "group";
+    "read_data" if "tscg_member" on "group";
+    "write_data" if "tscg_member" on "group";
 }
 
 has_relation(group: TimeseriesClusterGroup, "group", tsc: TimeseriesCluster) if
