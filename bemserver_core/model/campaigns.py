@@ -54,19 +54,23 @@ class UserByCampaign(AuthMixin, Base):
         )
 
 
-class TimeseriesGroupByCampaign(AuthMixin, Base):
+class TimeseriesClusterGroupByCampaign(AuthMixin, Base):
     """Timeseries x Campaign associations
 
     Timeseries associated with a campaign can be read/written by all campaign
     users for the campaign time range.
     """
 
-    __tablename__ = "timeseries_groups_by_campaigns"
-    __table_args__ = (sqla.UniqueConstraint("campaign_id", "timeseries_group_id"),)
+    __tablename__ = "timeseries_cluster_groups_by_campaigns"
+    __table_args__ = (
+        sqla.UniqueConstraint("campaign_id", "timeseries_cluster_group_id"),
+    )
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"))
-    timeseries_group_id = sqla.Column(sqla.ForeignKey("timeseries_groups.id"))
+    timeseries_cluster_group_id = sqla.Column(
+        sqla.ForeignKey("timeseries_cluster_groups.id")
+    )
 
     @classmethod
     def register_class(cls):
@@ -79,10 +83,10 @@ class TimeseriesGroupByCampaign(AuthMixin, Base):
                     my_field="campaign_id",
                     other_field="id",
                 ),
-                "timeseries_group": Relation(
+                "timeseries_cluster_group": Relation(
                     kind="one",
-                    other_type="TimeseriesGroup",
-                    my_field="timeseries_group_id",
+                    other_type="TimeseriesClusterGroup",
+                    my_field="timeseries_cluster_group_id",
                     other_field="id",
                 ),
             },

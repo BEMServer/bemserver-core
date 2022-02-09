@@ -57,42 +57,50 @@ has_role(user: UserActor, "ubc_owner", ubc: UserByCampaign) if
     user = ubc.user;
 
 
-resource TimeseriesGroupByCampaign {
+resource TimeseriesDataState{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource TimeseriesClusterGroupByCampaign {
     permissions = ["create", "read", "update", "delete"];
 }
 
-has_permission(user: UserActor, "read", tgbc: TimeseriesGroupByCampaign) if
+has_permission(user: UserActor, "read", tgbc: TimeseriesClusterGroupByCampaign) if
     has_role(user, "c_member", tgbc.campaign) and
-    has_role(user, "tg_member", tgbc.timeseries_group);
+    has_role(user, "tg_member", tgbc.timeseries_cluster_group);
 
 
-resource TimeseriesGroup {
+resource TimeseriesClusterGroup {
     permissions = ["create", "read", "update", "delete"];
     roles = ["tg_member"];
 
     "read" if "tg_member";
 }
 
-has_role(user: UserActor, "tg_member", tg: TimeseriesGroup) if
-    tgbu in tg.timeseries_groups_by_users and
+has_role(user: UserActor, "tg_member", tg: TimeseriesClusterGroup) if
+    tgbu in tg.timeseries_cluster_groups_by_users and
     user = tgbu.user;
 
 
-resource TimeseriesGroupByUser {
+resource TimeseriesClusterGroupByUser {
     permissions = ["create", "read", "update", "delete"];
     roles = ["tgbu_owner"];
 
     "read" if "tgbu_owner";
 }
 
-has_role(user: UserActor, "tgbu_owner", tgbu: TimeseriesGroupByUser) if
+has_role(user: UserActor, "tgbu_owner", tgbu: TimeseriesClusterGroupByUser) if
     user = tgbu.user;
 
 
-resource Timeseries {
+resource TimeseriesCluster {
     permissions = ["create", "read", "update", "delete", "read_data", "write_data"];
     relations = {
-        group: TimeseriesGroup
+        group: TimeseriesClusterGroup
     };
 
     "read" if "tg_member" on "group";
@@ -100,8 +108,23 @@ resource Timeseries {
     "write_data" if "tg_member" on "group";
 }
 
-has_relation(group: TimeseriesGroup, "group", ts: Timeseries) if
-    group = ts.group;
+has_relation(group: TimeseriesClusterGroup, "group", tsc: TimeseriesCluster) if
+    group = tsc.group;
+
+
+resource Timeseries {
+    permissions = ["create", "read", "update", "delete", "read_data", "write_data"];
+    relations = {
+        cluster: TimeseriesCluster
+    };
+
+    "read" if "read" on "cluster";
+    "read_data" if "read_data" on "cluster";
+    "write_data" if "write_data" on "cluster";
+}
+
+has_relation(tsc: TimeseriesCluster, "cluster", ts: Timeseries) if
+    tsc = ts.cluster;
 
 
 resource EventCategory{

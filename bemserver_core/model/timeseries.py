@@ -3,20 +3,27 @@ import sqlalchemy as sqla
 
 from bemserver_core.database import Base
 from bemserver_core.authorization import AuthMixin, auth, Relation
-from bemserver_core.model.campaigns import TimeseriesGroupByCampaign
+from bemserver_core.model.campaigns import TimeseriesClusterGroupByCampaign
 
 
-class Timeseries(AuthMixin, Base):
-    __tablename__ = "timeseries"
+class TimeseriesDataState(AuthMixin, Base):
+    __tablename__ = "timeseries_data_states"
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
+
+
+class TimeseriesCluster(AuthMixin, Base):
+    __tablename__ = "timeseries_clusters"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
     description = sqla.Column(sqla.String(500))
-    unit = sqla.Column(sqla.String(20))
-    min_value = sqla.Column(sqla.Float)
-    max_value = sqla.Column(sqla.Float)
-    group_id = sqla.Column(sqla.ForeignKey("timeseries_groups.id"), nullable=False)
-    group = sqla.orm.relationship("TimeseriesGroup")
+    unit_symbol = sqla.Column(sqla.String(20))
+    group_id = sqla.Column(
+        sqla.ForeignKey("timeseries_cluster_groups.id"), nullable=False
+    )
+    group = sqla.orm.relationship("TimeseriesClusterGroup")
 
     @classmethod
     def register_class(cls):
@@ -25,7 +32,7 @@ class Timeseries(AuthMixin, Base):
             fields={
                 "group": Relation(
                     kind="one",
-                    other_type="TimeseriesGroup",
+                    other_type="TimeseriesClusterGroup",
                     my_field="group_id",
                     other_field="id",
                 ),
@@ -36,20 +43,47 @@ class Timeseries(AuthMixin, Base):
     def get(cls, *, campaign_id=None, user_id=None, **kwargs):
         query = super().get(**kwargs)
         if campaign_id or user_id:
-            query = query.join(Timeseries.group)
+            query = query.join(cls.group)
             if campaign_id:
-                query = query.join(TimeseriesGroupByCampaign).filter(
-                    TimeseriesGroupByCampaign.campaign_id == campaign_id
+                query = query.join(TimeseriesClusterGroupByCampaign).filter(
+                    TimeseriesClusterGroupByCampaign.campaign_id == campaign_id
                 )
             if user_id:
-                query = query.join(TimeseriesGroupByUser).filter(
-                    TimeseriesGroupByUser.user_id == user_id
+                query = query.join(TimeseriesClusterGroupByUser).filter(
+                    TimeseriesClusterGroupByUser.user_id == user_id
                 )
         return query
 
 
-class TimeseriesGroup(AuthMixin, Base):
-    __tablename__ = "timeseries_groups"
+class Timeseries(AuthMixin, Base):
+    __tablename__ = "timeseries"
+    __table_args__ = (sqla.UniqueConstraint("cluster_id", "data_state_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    cluster_id = sqla.Column(sqla.ForeignKey("timeseries_clusters.id"), nullable=False)
+    cluster = sqla.orm.relationship("TimeseriesCluster")
+    data_state_id = sqla.Column(
+        sqla.ForeignKey("timeseries_data_states.id"), nullable=False
+    )
+    data_state = sqla.orm.relationship("TimeseriesDataState")
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "cluster": Relation(
+                    kind="one",
+                    other_type="TimeseriesCluster",
+                    my_field="cluster_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
+class TimeseriesClusterGroup(AuthMixin, Base):
+    __tablename__ = "timeseries_cluster_groups"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
@@ -59,35 +93,35 @@ class TimeseriesGroup(AuthMixin, Base):
         auth.register_class(
             cls,
             fields={
-                "timeseries_groups_by_campaigns": Relation(
+                "timeseries_cluster_groups_by_campaigns": Relation(
                     kind="many",
-                    other_type="TimeseriesGroupByCampaign",
+                    other_type="TimeseriesClusterGroupByCampaign",
                     my_field="id",
-                    other_field="timeseries_group_id",
+                    other_field="timeseries_cluster_group_id",
                 ),
-                "timeseries_groups_by_users": Relation(
+                "timeseries_cluster_groups_by_users": Relation(
                     kind="many",
-                    other_type="TimeseriesGroupByUser",
+                    other_type="TimeseriesClusterGroupByUser",
                     my_field="id",
-                    other_field="timeseries_group_id",
+                    other_field="timeseries_cluster_group_id",
                 ),
             },
         )
 
 
-class TimeseriesGroupByUser(AuthMixin, Base):
-    """TimeseriesGroup x User associations
+class TimeseriesClusterGroupByUser(AuthMixin, Base):
+    """TimeseriesClusterGroup x User associations
 
-    Users associated with a TimeseriesGroup have R/W permissions on timeseries
+    Users associated with a TimeseriesClusterGroup have R/W permissions on timeseries
     """
 
-    __tablename__ = "timeseries_groups_by_users"
-    __table_args__ = (sqla.UniqueConstraint("user_id", "timeseries_group_id"),)
+    __tablename__ = "timeseries_cluster_groups_by_users"
+    __table_args__ = (sqla.UniqueConstraint("user_id", "timeseries_cluster_group_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     user_id = sqla.Column(sqla.ForeignKey("users.id"), nullable=False)
-    timeseries_group_id = sqla.Column(
-        sqla.ForeignKey("timeseries_groups.id"), nullable=False
+    timeseries_cluster_group_id = sqla.Column(
+        sqla.ForeignKey("timeseries_cluster_groups.id"), nullable=False
     )
 
     @classmethod
@@ -103,3 +137,9 @@ class TimeseriesGroupByUser(AuthMixin, Base):
                 ),
             },
         )
+
+
+@sqla.event.listens_for(TimeseriesDataState.__table__, "after_create")
+def _insert_initial_timeseries_data_states(target, connection, **kwargs):
+    connection.execute(target.insert(), {"name": "Raw"})
+    connection.execute(target.insert(), {"name": "Clean"})

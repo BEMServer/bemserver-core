@@ -12,6 +12,7 @@ from bemserver_core.exceptions import TimeseriesCSVIOError, BEMServerAuthorizati
 
 
 class TestTimeseriesCSVIO:
+    @pytest.mark.parametrize("timeseries_clusters", (3,), indirect=True)
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
     @pytest.mark.parametrize("mode", ("str", "textiobase"))
     def test_timeseries_csv_io_import_csv_as_admin(self, users, timeseries, mode):
@@ -62,8 +63,9 @@ class TestTimeseriesCSVIO:
 
         assert data == expected
 
+    @pytest.mark.parametrize("timeseries_clusters", (3,), indirect=True)
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
-    @pytest.mark.usefixtures("timeseries_groups_by_users")
+    @pytest.mark.usefixtures("timeseries_cluster_groups_by_users")
     def test_timeseries_csv_io_import_csv_as_user(self, users, timeseries):
         user_1 = users[1]
         assert not user_1.is_admin
@@ -115,8 +117,9 @@ class TestTimeseriesCSVIO:
             with pytest.raises(TimeseriesCSVIOError):
                 tscsvio.import_csv(io.StringIO(csv_file))
 
+    @pytest.mark.parametrize("timeseries_clusters", (5,), indirect=True)
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
-    @pytest.mark.usefixtures("timeseries_groups_by_users")
+    @pytest.mark.usefixtures("timeseries_cluster_groups_by_users")
     def test_timeseries_csv_io_export_csv_as_admin(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -160,8 +163,9 @@ class TestTimeseriesCSVIO:
                     start_dt, end_dt, (ts_0.id, ts_2.id, ts_4.id, dummy_ts_id)
                 )
 
+    @pytest.mark.parametrize("timeseries_clusters", (5,), indirect=True)
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
-    @pytest.mark.usefixtures("timeseries_groups_by_users")
+    @pytest.mark.usefixtures("timeseries_cluster_groups_by_users")
     def test_timeseries_csv_io_export_csv_as_user(self, users, timeseries):
         user_1 = users[1]
         assert not user_1.is_admin
@@ -203,8 +207,9 @@ class TestTimeseriesCSVIO:
                 "2020-01-01T02:00:00+0000,2.0,\n"
             )
 
+    @pytest.mark.parametrize("timeseries_clusters", (5,), indirect=True)
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
-    @pytest.mark.usefixtures("timeseries_groups_by_users")
+    @pytest.mark.usefixtures("timeseries_cluster_groups_by_users")
     def test_timeseries_csv_io_export_csv_bucket_as_admin(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -324,8 +329,9 @@ class TestTimeseriesCSVIO:
                     "1 day",
                 )
 
+    @pytest.mark.parametrize("timeseries_clusters", (5,), indirect=True)
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
-    @pytest.mark.usefixtures("timeseries_groups_by_users")
+    @pytest.mark.usefixtures("timeseries_cluster_groups_by_users")
     def test_timeseries_csv_io_export_csv_bucket_as_user(self, users, timeseries):
         user_1 = users[1]
         assert not user_1.is_admin
