@@ -57,6 +57,14 @@ has_role(user: UserActor, "ubc_owner", ubc: UserByCampaign) if
     user = ubc.user;
 
 
+resource TimeseriesProperty{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
 resource TimeseriesDataState{
     permissions = ["create", "read", "update", "delete"];
     roles = ["user"];
@@ -110,6 +118,19 @@ resource TimeseriesCluster {
 
 has_relation(group: TimeseriesClusterGroup, "group", tsc: TimeseriesCluster) if
     group = tsc.group;
+
+
+resource TimeseriesClusterPropertyData {
+    permissions = ["create", "read", "update", "delete"];
+    relations = {
+        cluster: TimeseriesCluster
+    };
+
+    "read" if "read" on "cluster";
+}
+
+has_relation(tsc: TimeseriesCluster, "cluster", tscpd: TimeseriesClusterPropertyData) if
+    tsc = tscpd.cluster;
 
 
 resource Timeseries {
