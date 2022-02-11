@@ -6,6 +6,14 @@ from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.model.campaigns import TimeseriesClusterGroupByCampaign
 
 
+class TimeseriesProperty(AuthMixin, Base):
+    __tablename__ = "timeseries_properties"
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
+    description = sqla.Column(sqla.String(250))
+
+
 class TimeseriesDataState(AuthMixin, Base):
     __tablename__ = "timeseries_data_states"
 
@@ -53,6 +61,34 @@ class TimeseriesCluster(AuthMixin, Base):
                     TimeseriesClusterGroupByUser.user_id == user_id
                 )
         return query
+
+
+class TimeseriesClusterPropertyData(AuthMixin, Base):
+    """TimeseriesCluster property data"""
+
+    __tablename__ = "timeseries_cluster_property_data"
+    __table_args__ = (sqla.UniqueConstraint("cluster_id", "property_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    cluster_id = sqla.Column(sqla.ForeignKey("timeseries_clusters.id"), nullable=False)
+    property_id = sqla.Column(
+        sqla.ForeignKey("timeseries_properties.id"), nullable=False
+    )
+    value = sqla.Column(sqla.Float)
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "cluster": Relation(
+                    kind="one",
+                    other_type="TimeseriesCluster",
+                    my_field="cluster_id",
+                    other_field="id",
+                ),
+            },
+        )
 
 
 class Timeseries(AuthMixin, Base):

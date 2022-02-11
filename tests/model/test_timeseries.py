@@ -2,15 +2,51 @@
 import pytest
 
 from bemserver_core.model import (
+    TimeseriesProperty,
     TimeseriesDataState,
     TimeseriesClusterGroup,
     TimeseriesClusterGroupByUser,
     TimeseriesCluster,
+    TimeseriesClusterPropertyData,
     Timeseries,
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
 from bemserver_core.exceptions import BEMServerAuthorizationError
+
+
+class TestTimeseriesPropertyModel:
+    def test_timeseries_property_authorizations_as_admin(self, users):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        with CurrentUser(admin_user):
+            assert not list(TimeseriesProperty.get())
+            ts_property_1 = TimeseriesProperty.new(name="Min")
+            db.session.add(ts_property_1)
+            db.session.commit()
+            assert TimeseriesProperty.get_by_id(ts_property_1.id) == ts_property_1
+            assert len(list(TimeseriesProperty.get())) == 1
+            ts_property_1.update(name="Max")
+            ts_property_1.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("timeseries_properties")
+    def test_timeseries_property_authorizations_as_user(self, users):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        with CurrentUser(user_1):
+            ts_properties = list(TimeseriesProperty.get())
+            ts_property_1 = TimeseriesProperty.get_by_id(ts_properties[0].id)
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesProperty.new(
+                    name="Frequency",
+                )
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_property_1.update(name="Mean")
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_property_1.delete()
 
 
 class TestTimeseriesDataStateModel:
@@ -236,6 +272,71 @@ class TestTimeseriesClusterModel:
                 timeseries.update(name="Super timeseries 1")
             with pytest.raises(BEMServerAuthorizationError):
                 timeseries.delete()
+
+
+class TestTimeseriesClusterPropertyDataModel:
+    def test_timeseries_cluster_property_data_authorizations_as_admin(
+        self, users, timeseries_clusters, timeseries_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        tsc_1 = timeseries_clusters[0]
+        tsp_1 = timeseries_properties[0]
+
+        with CurrentUser(admin_user):
+            assert not list(TimeseriesClusterPropertyData.get())
+            tscpd_1 = TimeseriesClusterPropertyData.new(
+                cluster_id=tsc_1.id,
+                property_id=tsp_1.id,
+                value=12,
+            )
+            db.session.add(tscpd_1)
+            db.session.commit()
+
+            tscpd = TimeseriesClusterPropertyData.get_by_id(tscpd_1.id)
+            assert tscpd.id == tscpd_1.id
+            tscpd_l = list(TimeseriesClusterPropertyData.get())
+            assert len(tscpd_l) == 1
+            assert tscpd_l[0].id == tscpd.id
+            tscpd.update(value=42)
+            tscpd.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("timeseries_cluster_groups_by_users")
+    def test_timeseries_cluster_property_data_authorizations_as_user(
+        self,
+        users,
+        timeseries_properties,
+        timeseries_clusters,
+        timeseries_cluster_property_data,
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+        tsp_1 = timeseries_properties[0]
+        tsc_1 = timeseries_clusters[0]
+        tsc_2 = timeseries_clusters[1]
+        tscpd_1 = timeseries_cluster_property_data[0]
+
+        with CurrentUser(user_1):
+            assert not list(TimeseriesClusterPropertyData.get(cluster_id=tsc_1.id))
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesClusterPropertyData.new(
+                    cluster_id=tsc_2.id,
+                    property_id=tsp_1.id,
+                    value=12,
+                )
+
+            tscpd_l = list(TimeseriesClusterPropertyData.get(cluster_id=tsc_2.id))
+            assert len(tscpd_l) == 2
+            tscpd_2 = tscpd_l[0]
+            tscpd = TimeseriesClusterPropertyData.get_by_id(tscpd_2.id)
+            assert tscpd.id == tscpd_2.id
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesClusterPropertyData.get_by_id(tscpd_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tscpd_2.update(data_state_id=2)
+            with pytest.raises(BEMServerAuthorizationError):
+                tscpd_2.delete()
 
 
 class TestTimeseriesModel:
