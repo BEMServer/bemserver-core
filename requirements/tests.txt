@@ -10,13 +10,13 @@ coverage[toml]==6.3.1
     # via pytest-cov
 iniconfig==1.1.1
     # via pytest
-mirakuru==2.4.1
+mirakuru==2.4.2
     # via pytest-postgresql
 packaging==21.3
     # via pytest
 pluggy==1.0.0
     # via pytest
-port-for==0.6.1
+port-for==0.6.2
     # via pytest-postgresql
 psutil==5.9.0
     # via mirakuru
@@ -24,16 +24,16 @@ py==1.11.0
     # via pytest
 pyparsing==3.0.7
     # via packaging
-pytest==6.2.5
+pytest==7.0.1
     # via
     #   -r requirements/tests.in
     #   pytest-cov
     #   pytest-postgresql
 pytest-cov==3.0.0
     # via -r requirements/tests.in
-pytest-postgresql==3.1.2
+pytest-postgresql==3.1.3
     # via -r requirements/tests.in
-toml==0.10.2
-    # via pytest
 tomli==2.0.1
-    # via coverage
+    # via
+    #   coverage
+    #   pytest
