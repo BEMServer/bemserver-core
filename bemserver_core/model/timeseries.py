@@ -32,6 +32,7 @@ class TimeseriesCluster(AuthMixin, Base):
         sqla.ForeignKey("timeseries_cluster_groups.id"), nullable=False
     )
     group = sqla.orm.relationship("TimeseriesClusterGroup")
+    timeseries = sqla.orm.relationship("Timeseries")
 
     @classmethod
     def register_class(cls):
@@ -61,6 +62,9 @@ class TimeseriesCluster(AuthMixin, Base):
                     TimeseriesClusterGroupByUser.user_id == user_id
                 )
         return query
+
+    def get_timeseries(self, data_state):
+        return next((ts for ts in self.timeseries if ts.data_state == data_state), None)
 
 
 class TimeseriesClusterPropertyData(AuthMixin, Base):
@@ -97,7 +101,7 @@ class Timeseries(AuthMixin, Base):
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     cluster_id = sqla.Column(sqla.ForeignKey("timeseries_clusters.id"), nullable=False)
-    cluster = sqla.orm.relationship("TimeseriesCluster")
+    cluster = sqla.orm.relationship("TimeseriesCluster", back_populates="timeseries")
     data_state_id = sqla.Column(
         sqla.ForeignKey("timeseries_data_states.id"), nullable=False
     )

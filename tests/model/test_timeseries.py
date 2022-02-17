@@ -372,21 +372,28 @@ class TestTimeseriesModel:
         ts_1 = timeseries[0]
         ts_2 = timeseries[1]
         tsc_1 = timeseries_clusters[0]
+        tsc_2 = timeseries_clusters[1]
 
         with CurrentUser(user_1):
-            with pytest.raises(BEMServerAuthorizationError):
-                Timeseries.new(
-                    cluster_id=tsc_1.id,
-                    data_state_id=1,
-                )
-
-            timeseries = Timeseries.get_by_id(ts_2.id)
             timeseries_list = list(Timeseries.get())
             assert len(timeseries_list) == 1
             assert timeseries_list[0].id == ts_2.id
+            ts_ = Timeseries.get_by_id(ts_2.id)
+            ts_.update(data_state_id=2)
+            db.session.commit()
+            ts_.delete()
+            db.session.commit()
+            Timeseries.new(
+                cluster_id=tsc_2.id,
+                data_state_id=2,
+            )
+            db.session.commit()
+
+            # Not member of cluster group
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_ = Timeseries.new(
+                    cluster_id=tsc_1.id,
+                    data_state_id=1,
+                )
             with pytest.raises(BEMServerAuthorizationError):
                 Timeseries.get_by_id(ts_1.id)
-            with pytest.raises(BEMServerAuthorizationError):
-                timeseries.update(data_state_id=2)
-            with pytest.raises(BEMServerAuthorizationError):
-                timeseries.delete()

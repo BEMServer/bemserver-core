@@ -134,14 +134,15 @@ has_relation(tsc: TimeseriesCluster, "cluster", tscpd: TimeseriesClusterProperty
 
 
 resource Timeseries {
-    permissions = ["create", "read", "update", "delete", "read_data", "write_data"];
+    permissions = ["create", "read", "update", "delete"];
     relations = {
         cluster: TimeseriesCluster
     };
 
+    "create" if "read" on "cluster";
     "read" if "read" on "cluster";
-    "read_data" if "read_data" on "cluster";
-    "write_data" if "write_data" on "cluster";
+    "update" if "read" on "cluster";
+    "delete" if "read" on "cluster";
 }
 
 has_relation(tsc: TimeseriesCluster, "cluster", ts: Timeseries) if
