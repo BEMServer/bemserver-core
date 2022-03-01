@@ -7,10 +7,10 @@ import pandas as pd
 
 from bemserver_core.database import db
 from bemserver_core.model import (
-    TimeseriesCluster,
     Timeseries,
     TimeseriesData,
     TimeseriesDataState,
+    TimeseriesByDataState,
 )
 from bemserver_core.authorization import auth, get_current_user
 from bemserver_core.exceptions import TimeseriesCSVIOError
@@ -43,19 +43,21 @@ class TimeseriesCSVIO:
             raise TimeseriesCSVIOError("Missing headers line") from exc
         if header[0] != "Datetime":
             raise TimeseriesCSVIOError('First column must be "Datetime"')
-        tsc_l = [db.session.get(TimeseriesCluster, col) for col in header[1:]]
-        if None in tsc_l:
+        ts_l = [db.session.get(Timeseries, col) for col in header[1:]]
+        if None in ts_l:
             raise TimeseriesCSVIOError("Unknown timeseries ID")
 
-        for tsc in tsc_l:
-            auth.authorize(get_current_user(), "write_data", tsc)
+        for ts in ts_l:
+            auth.authorize(get_current_user(), "write_data", ts)
 
         # Create missing timeseries on the fly
         tsbds_l = []
-        for tsc in tsc_l:
-            tsbds = tsc.get_timeseries(data_state)
+        for ts in ts_l:
+            tsbds = ts.get_timeseries_by_data_states(data_state)
             if tsbds is None:
-                tsbds = Timeseries.new(cluster_id=tsc.id, data_state=data_state)
+                tsbds = TimeseriesByDataState.new(
+                    timeseries_id=ts.id, data_state=data_state
+                )
             tsbds_l.append(tsbds)
         db.session.commit()
 
@@ -66,10 +68,10 @@ class TimeseriesCSVIO:
                     [
                         {
                             "timestamp": row[0],
-                            "timeseries_id": timeseries.id,
+                            "timeseries_by_data_state_id": tsbds.id,
                             "value": row[col + 1],
                         }
-                        for col, timeseries in enumerate(tsbds_l)
+                        for col, tsbds in enumerate(tsbds_l)
                     ]
                 )
             except IndexError as exc:
@@ -102,17 +104,17 @@ class TimeseriesCSVIO:
         if data_state is None:
             raise TimeseriesCSVIOError("Unknown data state ID")
 
-        tsc_l = [db.session.get(TimeseriesCluster, ts_id) for ts_id in timeseries_ids]
-        if None in tsc_l:
+        ts_l = [db.session.get(Timeseries, ts_id) for ts_id in timeseries_ids]
+        if None in ts_l:
             raise TimeseriesCSVIOError("Unknown timeseries ID")
 
-        for timeseries in tsc_l:
+        for timeseries in ts_l:
             auth.authorize(get_current_user(), "read_data", timeseries)
 
         # Get timeseries ids
         tsbds_ids = []
-        for tsc in tsc_l:
-            tsbds = tsc.get_timeseries(data_state)
+        for ts in ts_l:
+            tsbds = ts.get_timeseries_by_data_states(data_state)
             if tsbds is not None:
                 tsbds_ids.append(tsbds.id)
 
@@ -120,10 +122,10 @@ class TimeseriesCSVIO:
         data = db.session.execute(
             sqla.select(
                 TimeseriesData.timestamp,
-                TimeseriesData.timeseries_id,
+                TimeseriesData.timeseries_by_data_state_id,
                 TimeseriesData.value,
             )
-            .filter(TimeseriesData.timeseries_id.in_(tsbds_ids))
+            .filter(TimeseriesData.timeseries_by_data_state_id.in_(tsbds_ids))
             .filter(start_dt <= TimeseriesData.timestamp)
             .filter(TimeseriesData.timestamp < end_dt)
         ).all()
@@ -169,11 +171,11 @@ class TimeseriesCSVIO:
         if data_state is None:
             raise TimeseriesCSVIOError("Unknown data state ID")
 
-        tsc_l = [db.session.get(TimeseriesCluster, ts_id) for ts_id in timeseries_ids]
-        if None in tsc_l:
+        ts_l = [db.session.get(Timeseries, ts_id) for ts_id in timeseries_ids]
+        if None in ts_l:
             raise TimeseriesCSVIOError("Unknown timeseries ID")
 
-        for timeseries in tsc_l:
+        for timeseries in ts_l:
             auth.authorize(get_current_user(), "read_data", timeseries)
 
         if aggregation not in AGGREGATION_FUNCTIONS:
@@ -181,8 +183,8 @@ class TimeseriesCSVIO:
 
         # Get timeseries ids
         tsbds_ids = []
-        for tsc in tsc_l:
-            tsbds = tsc.get_timeseries(data_state)
+        for ts in ts_l:
+            tsbds = ts.get_timeseries_by_data_states(data_state)
             if tsbds is not None:
                 tsbds_ids.append(tsbds.id)
 
@@ -190,17 +192,17 @@ class TimeseriesCSVIO:
         query = sqla.text(
             "SELECT time_bucket("
             " :bucket_width, timestamp AT TIME ZONE :timezone)"
-            f"  AS bucket, timeseries_id, {aggregation}(value) "
+            f"  AS bucket, timeseries_by_data_state_id, {aggregation}(value) "
             "FROM timeseries_data "
-            "WHERE timeseries_id IN :timeseries_ids "
+            "WHERE timeseries_by_data_state_id IN :timeseries_by_data_state_ids "
             "  AND timestamp >= :start_dt AND timestamp < :end_dt "
-            "GROUP BY bucket, timeseries_id "
+            "GROUP BY bucket, timeseries_by_data_state_id "
             "ORDER BY bucket;"
         )
         params = {
             "bucket_width": bucket_width,
             "timezone": timezone,
-            "timeseries_ids": tuple(timeseries_ids),
+            "timeseries_by_data_state_ids": tuple(tsbds_ids),
             "start_dt": start_dt,
             "end_dt": end_dt,
         }
