@@ -1,5 +1,5 @@
 # TODO: Investigate potential Oso issue
-# We should't have to write "c_member" and "tscg_member", Oso should infer which
+# We should't have to write "c_member" and "tsg_member", Oso should infer which
 # has_role rule matches which resource type.
 # Same for *_owner.
 
@@ -73,79 +73,80 @@ resource TimeseriesDataState{
 }
 
 
-resource TimeseriesClusterGroupByCampaign {
+resource TimeseriesGroupByCampaign {
     permissions = ["create", "read", "update", "delete"];
 }
 
-has_permission(user: UserActor, "read", tgbc: TimeseriesClusterGroupByCampaign) if
+has_permission(user: UserActor, "read", tgbc: TimeseriesGroupByCampaign) if
     has_role(user, "c_member", tgbc.campaign) and
-    has_role(user, "tscg_member", tgbc.timeseries_cluster_group);
+    has_role(user, "tsg_member", tgbc.timeseries_group);
 
 
-resource TimeseriesClusterGroup {
+resource TimeseriesGroup {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["tscg_member"];
+    roles = ["tsg_member"];
 
-    "read" if "tscg_member";
+    "read" if "tsg_member";
 }
 
-has_role(user: UserActor, "tscg_member", tg: TimeseriesClusterGroup) if
-    tscgbu in tg.timeseries_cluster_groups_by_users and
-    user = tscgbu.user;
+has_role(user: UserActor, "tsg_member", tg: TimeseriesGroup) if
+    tsgbu in tg.timeseries_groups_by_users and
+    user = tsgbu.user;
 
 
-resource TimeseriesClusterGroupByUser {
+resource TimeseriesGroupByUser {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["tscgbu_owner"];
+    roles = ["tsgbu_owner"];
 
-    "read" if "tscgbu_owner";
+    "read" if "tsgbu_owner";
 }
 
-has_role(user: UserActor, "tscgbu_owner", tscgbu: TimeseriesClusterGroupByUser) if
-    user = tscgbu.user;
-
-
-resource TimeseriesCluster {
-    permissions = ["create", "read", "update", "delete", "read_data", "write_data"];
-    relations = {
-        group: TimeseriesClusterGroup
-    };
-
-    "read" if "tscg_member" on "group";
-    "read_data" if "tscg_member" on "group";
-    "write_data" if "tscg_member" on "group";
-}
-
-has_relation(group: TimeseriesClusterGroup, "group", tsc: TimeseriesCluster) if
-    group = tsc.group;
-
-
-resource TimeseriesClusterPropertyData {
-    permissions = ["create", "read", "update", "delete"];
-    relations = {
-        cluster: TimeseriesCluster
-    };
-
-    "read" if "read" on "cluster";
-}
-
-has_relation(tsc: TimeseriesCluster, "cluster", tscpd: TimeseriesClusterPropertyData) if
-    tsc = tscpd.cluster;
+has_role(user: UserActor, "tsgbu_owner", tsgbu: TimeseriesGroupByUser) if
+    user = tsgbu.user;
 
 
 resource Timeseries {
     permissions = ["create", "read", "update", "delete", "read_data", "write_data"];
     relations = {
-        cluster: TimeseriesCluster
+        group: TimeseriesGroup
     };
 
-    "read" if "read" on "cluster";
-    "read_data" if "read_data" on "cluster";
-    "write_data" if "write_data" on "cluster";
+    "read" if "tsg_member" on "group";
+    "read_data" if "tsg_member" on "group";
+    "write_data" if "tsg_member" on "group";
 }
 
-has_relation(tsc: TimeseriesCluster, "cluster", ts: Timeseries) if
-    tsc = ts.cluster;
+has_relation(group: TimeseriesGroup, "group", ts: Timeseries) if
+    group = ts.group;
+
+
+resource TimeseriesPropertyData {
+    permissions = ["create", "read", "update", "delete"];
+    relations = {
+        timeseries: Timeseries
+    };
+
+    "read" if "read" on "timeseries";
+}
+
+has_relation(ts: Timeseries, "timeseries", tspd: TimeseriesPropertyData) if
+    ts = tspd.timeseries;
+
+
+resource TimeseriesByDataState {
+    permissions = ["create", "read", "update", "delete"];
+    relations = {
+        timeseries: Timeseries
+    };
+
+    "create" if "read" on "timeseries";
+    "read" if "read" on "timeseries";
+    "update" if "read" on "timeseries";
+    "delete" if "read" on "timeseries";
+}
+
+has_relation(ts: Timeseries, "timeseries", tsbds: TimeseriesByDataState) if
+    ts = tsbds.timeseries;
 
 
 resource EventCategory{
