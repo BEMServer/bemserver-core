@@ -7,9 +7,6 @@ from bemserver_core.model import (
     EventCategory,
     EventState,
     EventLevel,
-    EventChannel,
-    EventChannelByCampaign,
-    EventChannelByUser,
     Event,
 )
 from bemserver_core.authorization import CurrentUser
@@ -131,194 +128,10 @@ class TestEventCategoryModel:
                 event_category_1.delete()
 
 
-class TestEventChannelModel:
-    @pytest.mark.usefixtures("event_channels_by_users")
-    @pytest.mark.usefixtures("event_channels_by_campaigns")
-    def test_event_channels_filter_by_campaign_or_user(
-        self, users, event_channels, campaigns
-    ):
-        admin_user = users[0]
-        assert admin_user.is_admin
-        campaign_1 = campaigns[0]
-        campaign_2 = campaigns[1]
-        user_1 = users[1]
-        ec_1 = event_channels[0]
-        ec_2 = event_channels[1]
-
-        with CurrentUser(admin_user):
-            ec_l = list(EventChannel.get(campaign_id=campaign_1.id))
-            assert len(ec_l) == 1
-            assert ec_l[0] == ec_1
-
-        with CurrentUser(admin_user):
-            ec_l = list(EventChannel.get(user_id=user_1.id))
-            assert len(ec_l) == 1
-            assert ec_l[0] == ec_2
-
-        with CurrentUser(admin_user):
-            ec_l = list(EventChannel.get(user_id=user_1.id, campaign_id=campaign_2.id))
-            assert len(ec_l) == 1
-            assert ec_l[0] == ec_2
-
-    def test_event_channel_authorizations_as_admin(self, users):
-        admin_user = users[0]
-        assert admin_user.is_admin
-
-        with CurrentUser(admin_user):
-            channel_1 = EventChannel.new(
-                name="Event channel 1",
-            )
-            db.session.add(channel_1)
-            db.session.commit()
-
-            event_channel = EventChannel.get_by_id(channel_1.id)
-            assert event_channel.id == channel_1.id
-            assert event_channel.name == channel_1.name
-            event_channels = list(EventChannel.get())
-            assert len(event_channels) == 1
-            assert event_channels[0].id == channel_1.id
-            event_channel.update(name="Super event channel 1")
-            event_channel.delete()
-            db.session.commit()
-
-    @pytest.mark.usefixtures("event_channels_by_users")
-    def test_event_channel_authorizations_as_user(self, users, event_channels):
-        user_1 = users[1]
-        assert not user_1.is_admin
-        channel_1 = event_channels[0]
-        channel_2 = event_channels[1]
-
-        with CurrentUser(user_1):
-            with pytest.raises(BEMServerAuthorizationError):
-                EventChannel.new(
-                    name="Event channel 1",
-                )
-
-            event_channel = EventChannel.get_by_id(channel_2.id)
-            event_channel_list = list(EventChannel.get())
-            assert len(event_channel_list) == 1
-            assert event_channel_list[0].id == channel_2.id
-            with pytest.raises(BEMServerAuthorizationError):
-                EventChannel.get_by_id(channel_1.id)
-            with pytest.raises(BEMServerAuthorizationError):
-                event_channel.update(name="Super event_channel 1")
-            with pytest.raises(BEMServerAuthorizationError):
-                event_channel.delete()
-
-
-class TestEventChannelByCampaignModel:
-    def test_event_channels_by_campaign_authorizations_as_admin(
-        self, users, campaigns, event_channels
-    ):
-        admin_user = users[0]
-        assert admin_user.is_admin
-        campaign_1 = campaigns[0]
-        campaign_2 = campaigns[1]
-        channel_1 = event_channels[0]
-
-        with CurrentUser(admin_user):
-            ecbc_1 = EventChannelByCampaign.new(
-                event_channel_id=channel_1.id,
-                campaign_id=campaign_1.id,
-            )
-            db.session.add(ecbc_1)
-            db.session.commit()
-
-            ecbc = EventChannelByCampaign.get_by_id(ecbc_1.id)
-            assert ecbc.id == ecbc_1.id
-            ecbcs = list(EventChannelByCampaign.get())
-            assert len(ecbcs) == 1
-            assert ecbcs[0].id == ecbc_1.id
-            ecbc.update(campaign_id=campaign_2.id)
-            ecbc.delete()
-
-    @pytest.mark.usefixtures("users_by_campaigns")
-    def test_event_channels_by_campaign_authorizations_as_user(
-        self, users, campaigns, event_channels_by_campaigns
-    ):
-        user_1 = users[1]
-        assert not user_1.is_admin
-        campaign_1 = campaigns[0]
-        campaign_2 = campaigns[1]
-        ecbc_1 = event_channels_by_campaigns[0]
-        ecbc_2 = event_channels_by_campaigns[1]
-
-        with CurrentUser(user_1):
-            with pytest.raises(BEMServerAuthorizationError):
-                EventChannelByCampaign.new(
-                    event_channel_id=user_1.id,
-                    campaign_id=campaign_2.id,
-                )
-
-            ecbc = EventChannelByCampaign.get_by_id(ecbc_2.id)
-            ecbcs = list(EventChannelByCampaign.get())
-            assert len(ecbcs) == 1
-            assert ecbcs[0].id == ecbc_2.id
-            with pytest.raises(BEMServerAuthorizationError):
-                EventChannelByCampaign.get_by_id(ecbc_1.id)
-            with pytest.raises(BEMServerAuthorizationError):
-                ecbc.update(campaign_id=campaign_1.id)
-            with pytest.raises(BEMServerAuthorizationError):
-                ecbc.delete()
-
-
-class TestEventChannelByUserModel:
-    def test_event_channel_by_user_authorizations_as_admin(self, users, event_channels):
-        admin_user = users[0]
-        assert admin_user.is_admin
-        user_1 = users[1]
-        event_channel_1 = event_channels[0]
-        event_channel_2 = event_channels[1]
-
-        with CurrentUser(admin_user):
-            ecbu_1 = EventChannelByUser.new(
-                user_id=user_1.id,
-                event_channel_id=event_channel_1.id,
-            )
-            db.session.add(ecbu_1)
-            db.session.commit()
-
-            ecbu = EventChannelByUser.get_by_id(ecbu_1.id)
-            assert ecbu.id == ecbu_1.id
-            ecbus = list(EventChannelByUser.get())
-            assert len(ecbus) == 1
-            assert ecbus[0].id == ecbu_1.id
-            ecbu.update(event_channel_id=event_channel_2.id)
-            ecbu.delete()
-
-    def test_event_channel_by_user_authorizations_as_user(
-        self, users, event_channels, event_channels_by_users
-    ):
-        user_1 = users[1]
-        assert not user_1.is_admin
-        event_channel_1 = event_channels[0]
-        event_channel_2 = event_channels[1]
-        ecbu_1 = event_channels_by_users[0]
-        ecbu_2 = event_channels_by_users[1]
-
-        with CurrentUser(user_1):
-            with pytest.raises(BEMServerAuthorizationError):
-                EventChannelByUser.new(
-                    user_id=user_1.id,
-                    event_channel_id=event_channel_2.id,
-                )
-
-            ecbu = EventChannelByUser.get_by_id(ecbu_2.id)
-            ecbus = list(EventChannelByUser.get())
-            assert len(ecbus) == 1
-            assert ecbus[0].id == ecbu_2.id
-            with pytest.raises(BEMServerAuthorizationError):
-                EventChannelByUser.get_by_id(ecbu_1.id)
-            with pytest.raises(BEMServerAuthorizationError):
-                ecbu.update(event_channel_id=event_channel_1.id)
-            with pytest.raises(BEMServerAuthorizationError):
-                ecbu.delete()
-
-
 class TestEventModel:
     @pytest.mark.usefixtures("as_admin")
-    def test_event_list_by_state(self, event_channels):
-        channel_1 = event_channels[0]
+    def test_event_list_by_state(self, campaigns):
+        campaign_1 = campaigns[0]
 
         evts = Event.list_by_state()
         assert evts == []
@@ -332,7 +145,7 @@ class TestEventModel:
         timestamp = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
 
         evt_1 = Event.new(
-            channel_id=channel_1.id,
+            campaign_id=campaign_1.id,
             timestamp=timestamp,
             category="observation_missing",
             source="src",
@@ -340,7 +153,7 @@ class TestEventModel:
             state="NEW",
         )
         evt_2 = Event.new(
-            channel_id=channel_1.id,
+            campaign_id=campaign_1.id,
             timestamp=timestamp,
             category="observation_missing",
             source="src",
@@ -354,7 +167,7 @@ class TestEventModel:
 
         evt_2.state = "CLOSED"
         evt_3 = Event.new(
-            channel_id=channel_1.id,
+            campaign_id=campaign_1.id,
             timestamp=timestamp,
             category="observation_missing",
             source="src",
@@ -377,20 +190,20 @@ class TestEventModel:
         assert evts == [(evt_2,)]
 
     @pytest.mark.usefixtures("as_admin")
-    def test_event_read_only_fields(self, event_channels):
-        """Check channel and timestamp can't be modified after commit
+    def test_event_read_only_fields(self, campaigns):
+        """Check campaign and timestamp can't be modified after commit
 
         Also check the getter/setter don't get in the way when querying.
         This is kind of a "framework test".
         """
-        channel_1 = event_channels[0]
-        channel_2 = event_channels[1]
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
 
         timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
         timestamp_2 = dt.datetime(2020, 6, 1, tzinfo=dt.timezone.utc)
 
         evt_1 = Event.new(
-            channel_id=channel_1.id,
+            campaign_id=campaign_1.id,
             timestamp=timestamp_1,
             category="observation_missing",
             source="src",
@@ -398,44 +211,44 @@ class TestEventModel:
             state="NEW",
         )
         evt_1.update(timestamp=timestamp_2)
-        evt_1.update(channel_id=channel_2.id)
+        evt_1.update(campaign_id=campaign_2.id)
         db.session.commit()
 
         with pytest.raises(AttributeError):
             evt_1.update(timestamp=timestamp_1)
         with pytest.raises(AttributeError):
-            evt_1.update(channel_id=channel_2.id)
+            evt_1.update(campaign_id=campaign_2.id)
 
-        tse_list = list(Event.get(channel_id=2))
+        tse_list = list(Event.get(campaign_id=2))
         assert tse_list == [evt_1]
-        tse_list = list(Event.get(channel_id=1))
+        tse_list = list(Event.get(campaign_id=1))
         assert tse_list == []
         tse_list = list(Event.get(timestamp=timestamp_2))
         assert tse_list == [evt_1]
         tse_list = list(Event.get(timestamp=timestamp_1))
         assert tse_list == []
 
-    @pytest.mark.usefixtures("event_channels_by_users")
+    @pytest.mark.usefixtures("users_by_campaigns")
     def test_event_authorizations_as_admin(
         self,
         users,
-        event_channels,
+        campaigns,
         events,
     ):
         admin_user = users[0]
         assert admin_user.is_admin
-        channel_1 = event_channels[0]
+        campaign_1 = campaigns[0]
         event_1 = events[0]
         event_2 = events[1]
 
         with CurrentUser(admin_user):
             events = list(Event.get())
             assert set(events) == {event_1, event_2}
-            events = list(Event.get(channel_id=channel_1.id))
+            events = list(Event.get(campaign_id=campaign_1.id))
             assert events == [event_1]
             assert Event.get_by_id(event_1.id) == event_1
             Event.new(
-                channel_id=channel_1.id,
+                campaign_id=campaign_1.id,
                 timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
                 category="observation_missing",
                 source="src",
@@ -448,12 +261,12 @@ class TestEventModel:
             event_2.delete()
             db.session.commit()
 
-    @pytest.mark.usefixtures("event_channels_by_users")
-    def test_event_authorizations_as_user(self, users, event_channels, events):
+    @pytest.mark.usefixtures("users_by_campaigns")
+    def test_event_authorizations_as_user(self, users, campaigns, events):
         user_1 = users[1]
         assert not user_1.is_admin
-        channel_1 = event_channels[0]
-        channel_2 = event_channels[1]
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
         event_1 = events[0]
         event_2 = events[1]
 
@@ -461,14 +274,14 @@ class TestEventModel:
 
             events = list(Event.get())
             assert set(events) == {event_2}
-            events = list(Event.get(channel_id=channel_1.id))
+            events = list(Event.get(campaign_id=campaign_1.id))
             assert not events
             assert Event.get_by_id(event_2.id) == event_2
 
-            # Not member of channel
+            # Not member of campaign
             with pytest.raises(BEMServerAuthorizationError):
                 Event.new(
-                    channel_id=channel_1.id,
+                    campaign_id=campaign_1.id,
                     timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
                     category="observation_missing",
                     source="src",
@@ -480,9 +293,9 @@ class TestEventModel:
             with pytest.raises(BEMServerAuthorizationError):
                 event_1.delete()
 
-            # Member of channel
+            # Member of campaign
             Event.new(
-                channel_id=channel_2.id,
+                campaign_id=campaign_2.id,
                 timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
                 category="observation_missing",
                 source="src",

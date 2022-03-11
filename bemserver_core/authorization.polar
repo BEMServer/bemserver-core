@@ -172,59 +172,16 @@ resource EventLevel{
 }
 
 
-resource EventChannel {
-    permissions = [
-        "create", "read", "update", "delete",
-        "create_events", "read_events", "update_events", "delete_events",
-    ];
-
-    roles = ["ec_member"];
-
-    "read" if "ec_member";
-    "read_events" if "ec_member";
-    "create_events" if "ec_member";
-    "update_events" if "ec_member";
-    "delete_events" if "ec_member";
-}
-
-has_role(user: UserActor, "ec_member", ec: EventChannel) if
-    ecbu in ec.event_channels_by_users and
-    user = ecbu.user;
-
-
-resource EventChannelByCampaign {
-    permissions = ["create", "read", "update", "delete"];
-    relations = {
-        campaign: Campaign
-    };
-
-    "read" if "c_member" on "campaign";
-}
-
-has_relation(campaign: Campaign, "campaign", ecbc: EventChannelByCampaign) if
-  campaign = ecbc.campaign;
-
-
-resource EventChannelByUser {
-    permissions = ["create", "read", "update", "delete"];
-    roles = ["ecbu_owner"];
-
-    "read" if "ecbu_owner";
-}
-
-has_role(user: UserActor, "ecbu_owner", ecbu: EventChannelByUser) if
-    user = ecbu.user;
-
-
 resource Event {
     permissions = ["create", "read", "update", "delete"];
 }
 
 has_permission(user: UserActor, "create", event:Event) if
-    has_permission(user, "create_events", event.channel);
+    has_role(user, "c_member", event.campaign);
 has_permission(user: UserActor, "read", event:Event) if
-    has_permission(user, "read_events", event.channel);
+    has_role(user, "c_member", event.campaign);
 has_permission(user: UserActor, "update", event:Event) if
-    has_permission(user, "update_events", event.channel);
+    has_role(user, "c_member", event.campaign);
 has_permission(user: UserActor, "delete", event:Event) if
-    has_permission(user, "delete_events", event.channel);
+    has_role(user, "c_member", event.campaign);
+

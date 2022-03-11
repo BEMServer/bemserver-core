@@ -212,53 +212,10 @@ def timeseries_groups_by_campaigns(database, campaigns, timeseries_groups):
 
 
 @pytest.fixture
-def event_channels(database):
-    with OpenBar():
-        channel_1 = model.EventChannel.new(
-            name="Channel 1",
-        )
-        channel_2 = model.EventChannel.new(
-            name="Channel 2",
-        )
-        db.session.commit()
-        return (channel_1, channel_2)
-
-
-@pytest.fixture
-def event_channels_by_campaigns(database, campaigns, event_channels):
-    with OpenBar():
-        ecc_1 = model.EventChannelByCampaign.new(
-            event_channel_id=event_channels[0].id,
-            campaign_id=campaigns[0].id,
-        )
-        ecc_2 = model.EventChannelByCampaign.new(
-            event_channel_id=event_channels[1].id,
-            campaign_id=campaigns[1].id,
-        )
-        db.session.commit()
-    return (ecc_1, ecc_2)
-
-
-@pytest.fixture
-def event_channels_by_users(database, event_channels, users):
-    with OpenBar():
-        ecbu_1 = model.EventChannelByUser.new(
-            event_channel_id=event_channels[0].id,
-            user_id=users[0].id,
-        )
-        ecbu_2 = model.EventChannelByUser.new(
-            event_channel_id=event_channels[1].id,
-            user_id=users[1].id,
-        )
-        db.session.commit()
-    return (ecbu_1, ecbu_2)
-
-
-@pytest.fixture
-def events(database, event_channels):
+def events(database, campaigns):
     with OpenBar():
         ts_event_1 = model.Event.new(
-            channel_id=event_channels[0].id,
+            campaign_id=campaigns[0].id,
             timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
             category="observation_missing",
             source="src",
@@ -266,7 +223,7 @@ def events(database, event_channels):
             state="NEW",
         )
         ts_event_2 = model.Event.new(
-            channel_id=event_channels[1].id,
+            campaign_id=campaigns[1].id,
             timestamp=dt.datetime(2020, 1, 15, tzinfo=dt.timezone.utc),
             category="observation_missing",
             source="src",

@@ -8,101 +8,6 @@ from bemserver_core.database import Base, db
 from bemserver_core.authorization import auth, AuthMixin, Relation
 
 
-class EventChannel(AuthMixin, Base):
-    __tablename__ = "event_channels"
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    name = sqla.Column(sqla.String(80))
-
-    @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "event_channels_by_campaigns": Relation(
-                    kind="many",
-                    other_type="EventChannelByCampaign",
-                    my_field="id",
-                    other_field="event_channel_id",
-                ),
-                "event_channels_by_users": Relation(
-                    kind="many",
-                    other_type="EventChannelByUser",
-                    my_field="id",
-                    other_field="event_channel_id",
-                ),
-            },
-        )
-
-    @classmethod
-    def get(cls, *, campaign_id=None, user_id=None, **kwargs):
-        query = super().get(**kwargs)
-        if campaign_id:
-            query = query.join(EventChannelByCampaign).filter_by(
-                campaign_id=campaign_id
-            )
-        if user_id:
-            query = query.join(EventChannelByUser).filter_by(user_id=user_id)
-        return query
-
-
-class EventChannelByCampaign(AuthMixin, Base):
-    """EventChannel x Campaign associations
-
-    Event channels associated with a campaign can be read/written by all
-    campaign users for the campaign time range.
-    """
-
-    __tablename__ = "event_channels_by_campaigns"
-    __table_args__ = (sqla.UniqueConstraint("campaign_id", "event_channel_id"),)
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"))
-    event_channel_id = sqla.Column(sqla.ForeignKey("event_channels.id"))
-
-    @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "campaign": Relation(
-                    kind="one",
-                    other_type="Campaign",
-                    my_field="campaign_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-
-class EventChannelByUser(AuthMixin, Base):
-    """EventChannel x User associations
-
-    Users associated with a EventChannel have R/W permissions on events
-    """
-
-    __tablename__ = "event_channels_by_users"
-    __table_args__ = (sqla.UniqueConstraint("user_id", "event_channel_id"),)
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    user_id = sqla.Column(sqla.ForeignKey("users.id"), nullable=False)
-    event_channel_id = sqla.Column(sqla.ForeignKey("event_channels.id"), nullable=False)
-
-    @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "user": Relation(
-                    kind="one",
-                    other_type="User",
-                    my_field="user_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-
 class EventCategory(AuthMixin, Base):
     __tablename__ = "event_categories"
 
@@ -133,26 +38,22 @@ class Event(AuthMixin, Base):
 
     id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
 
-    # Channel and timestamp can't be changed after commit. There is no real use
-    # case for modifying these and it would screw up the auth layer as these are
-    # used by the authorization rules.
-
-    # Use getter/setter to prevent modifying channel after commit
+    # Use getter/setter to prevent modifying campaign after commit
     @sqlaorm.declared_attr
-    def _channel_id(cls):
+    def _campaign_id(cls):
         return sqla.Column(
-            sqla.Integer, sqla.ForeignKey("event_channels.id"), nullable=False
+            sqla.Integer, sqla.ForeignKey("campaigns.id"), nullable=False
         )
 
     @hybrid_property
-    def channel_id(self):
-        return self._channel_id
+    def campaign_id(self):
+        return self._campaign_id
 
-    @channel_id.setter
-    def channel_id(self, channel_id):
+    @campaign_id.setter
+    def campaign_id(self, campaign_id):
         if self.id is not None:
-            raise AttributeError("channel_id cannot be modified")
-        self._channel_id = channel_id
+            raise AttributeError("campaign_id cannot be modified")
+        self._campaign_id = campaign_id
 
     @sqlaorm.declared_attr
     def category(cls):
@@ -196,7 +97,7 @@ class Event(AuthMixin, Base):
             "NEW",
             "ONGOING",
         ),
-        channel_id=None,
+        campaign_id=None,
         category=None,
         source=None,
         level="ERROR",
@@ -205,8 +106,8 @@ class Event(AuthMixin, Base):
             raise ValueError("Missing `state` filter.")
         state_conditions = tuple((cls.state == x) for x in states)
         stmt = sqla.select(cls).filter(sqla.or_(*state_conditions))
-        if channel_id is not None:
-            stmt = stmt.filter(cls.channel_id == channel_id)
+        if campaign_id is not None:
+            stmt = stmt.filter(cls.campaign_id == campaign_id)
         if category is not None:
             stmt = stmt.filter(cls.category == category)
         if source is not None:
@@ -220,10 +121,10 @@ class Event(AuthMixin, Base):
         auth.register_class(
             cls,
             fields={
-                "channel": Relation(
+                "campaign": Relation(
                     kind="one",
-                    other_type="EventChannel",
-                    my_field="channel_id",
+                    other_type="Campaign",
+                    my_field="campaign_id",
                     other_field="id",
                 ),
             },
