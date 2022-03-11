@@ -100,43 +100,15 @@ def timeseries_properties(database):
     return (ts_p_1, ts_p_2)
 
 
-@pytest.fixture
-def timeseries_groups(database):
-    with OpenBar():
-        ts_group_1 = model.TimeseriesGroup.new(
-            name="TS Group 1",
-        )
-        ts_group_2 = model.TimeseriesGroup.new(
-            name="TS Group 2",
-        )
-        db.session.commit()
-    return (ts_group_1, ts_group_2)
-
-
-@pytest.fixture
-def timeseries_groups_by_users(database, timeseries_groups, users):
-    with OpenBar():
-        tsgbu_1 = model.TimeseriesGroupByUser.new(
-            timeseries_group_id=timeseries_groups[0].id,
-            user_id=users[0].id,
-        )
-        tsgbu_2 = model.TimeseriesGroupByUser.new(
-            timeseries_group_id=timeseries_groups[1].id,
-            user_id=users[1].id,
-        )
-        db.session.commit()
-    return (tsgbu_1, tsgbu_2)
-
-
 @pytest.fixture(params=[2])
-def timeseries(request, database, timeseries_groups):
+def timeseries(request, database, campaigns):
     with OpenBar():
         ts_l = []
         for i in range(request.param):
             ts_i = model.Timeseries(
                 name=f"Timeseries {i}",
                 description=f"Test timeseries #{i}",
-                group=timeseries_groups[i % len(timeseries_groups)],
+                campaign=campaigns[i % len(campaigns)],
             )
             ts_l.append(ts_i)
         db.session.add_all(ts_l)
@@ -181,34 +153,6 @@ def timeseries_by_data_states(request, database, timeseries):
         db.session.add_all(ts_l)
         db.session.commit()
         return ts_l
-
-
-@pytest.fixture
-def timeseries_groups_by_campaigns(database, campaigns, timeseries_groups):
-    """Create timeseries groups x campaigns associations
-
-    Example:
-        campaigns = [C1, C2]
-        timeseries groups = [TG1, TG2, TG3, TG4, TG5]
-         timeseries x campaigns = [
-            TG1 x C1,
-            TG2 x C2,
-            TG3 x C1,
-            TG4 x C2,
-            TG5 x C1,
-        ]
-    """
-    with OpenBar():
-        tbc_l = []
-        for idx, tsg_i in enumerate(timeseries_groups):
-            campaign = campaigns[idx % len(campaigns)]
-            tbc = model.TimeseriesGroupByCampaign.new(
-                timeseries_group_id=tsg_i.id,
-                campaign_id=campaign.id,
-            )
-            tbc_l.append(tbc)
-        db.session.commit()
-    return tbc_l
 
 
 @pytest.fixture

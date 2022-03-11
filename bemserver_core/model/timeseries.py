@@ -3,7 +3,7 @@ import sqlalchemy as sqla
 
 from bemserver_core.database import Base
 from bemserver_core.authorization import AuthMixin, auth, Relation
-from bemserver_core.model.campaigns import TimeseriesGroupByCampaign
+from bemserver_core.model.campaigns import UserByCampaign
 
 
 class TimeseriesProperty(AuthMixin, Base):
@@ -28,8 +28,8 @@ class Timeseries(AuthMixin, Base):
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
     description = sqla.Column(sqla.String(500))
     unit_symbol = sqla.Column(sqla.String(20))
-    group_id = sqla.Column(sqla.ForeignKey("timeseries_groups.id"), nullable=False)
-    group = sqla.orm.relationship("TimeseriesGroup")
+    campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
+    campaign = sqla.orm.relationship("Campaign")
     timeseries_by_data_states = sqla.orm.relationship("TimeseriesByDataState")
 
     @classmethod
@@ -37,28 +37,24 @@ class Timeseries(AuthMixin, Base):
         auth.register_class(
             cls,
             fields={
-                "group": Relation(
+                "campaign": Relation(
                     kind="one",
-                    other_type="TimeseriesGroup",
-                    my_field="group_id",
+                    other_type="Campaign",
+                    my_field="campaign_id",
                     other_field="id",
                 ),
             },
         )
 
     @classmethod
-    def get(cls, *, campaign_id=None, user_id=None, **kwargs):
+    def get(cls, *, user_id=None, **kwargs):
         query = super().get(**kwargs)
-        if campaign_id or user_id:
-            query = query.join(cls.group)
-            if campaign_id:
-                query = query.join(TimeseriesGroupByCampaign).filter(
-                    TimeseriesGroupByCampaign.campaign_id == campaign_id
-                )
-            if user_id:
-                query = query.join(TimeseriesGroupByUser).filter(
-                    TimeseriesGroupByUser.user_id == user_id
-                )
+        if user_id:
+            query = (
+                query.join(cls.campaign)
+                .join(UserByCampaign)
+                .filter(UserByCampaign.user_id == user_id)
+            )
         return query
 
     def get_timeseries_by_data_states(self, data_state):
@@ -123,63 +119,6 @@ class TimeseriesByDataState(AuthMixin, Base):
                     kind="one",
                     other_type="Timeseries",
                     my_field="timeseries_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-
-class TimeseriesGroup(AuthMixin, Base):
-    __tablename__ = "timeseries_groups"
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
-
-    @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "timeseries_groups_by_campaigns": Relation(
-                    kind="many",
-                    other_type="TimeseriesGroupByCampaign",
-                    my_field="id",
-                    other_field="timeseries_group_id",
-                ),
-                "timeseries_groups_by_users": Relation(
-                    kind="many",
-                    other_type="TimeseriesGroupByUser",
-                    my_field="id",
-                    other_field="timeseries_group_id",
-                ),
-            },
-        )
-
-
-class TimeseriesGroupByUser(AuthMixin, Base):
-    """TimeseriesGroup x User associations
-
-    Users associated with a TimeseriesGroup have R/W permissions on timeseries
-    """
-
-    __tablename__ = "timeseries_groups_by_users"
-    __table_args__ = (sqla.UniqueConstraint("user_id", "timeseries_group_id"),)
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    user_id = sqla.Column(sqla.ForeignKey("users.id"), nullable=False)
-    timeseries_group_id = sqla.Column(
-        sqla.ForeignKey("timeseries_groups.id"), nullable=False
-    )
-
-    @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "user": Relation(
-                    kind="one",
-                    other_type="User",
-                    my_field="user_id",
                     other_field="id",
                 ),
             },

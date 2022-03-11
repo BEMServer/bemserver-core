@@ -73,51 +73,19 @@ resource TimeseriesDataState{
 }
 
 
-resource TimeseriesGroupByCampaign {
-    permissions = ["create", "read", "update", "delete"];
-}
-
-has_permission(user: UserActor, "read", tgbc: TimeseriesGroupByCampaign) if
-    has_role(user, "c_member", tgbc.campaign) and
-    has_role(user, "tsg_member", tgbc.timeseries_group);
-
-
-resource TimeseriesGroup {
-    permissions = ["create", "read", "update", "delete"];
-    roles = ["tsg_member"];
-
-    "read" if "tsg_member";
-}
-
-has_role(user: UserActor, "tsg_member", tg: TimeseriesGroup) if
-    tsgbu in tg.timeseries_groups_by_users and
-    user = tsgbu.user;
-
-
-resource TimeseriesGroupByUser {
-    permissions = ["create", "read", "update", "delete"];
-    roles = ["tsgbu_owner"];
-
-    "read" if "tsgbu_owner";
-}
-
-has_role(user: UserActor, "tsgbu_owner", tsgbu: TimeseriesGroupByUser) if
-    user = tsgbu.user;
-
-
 resource Timeseries {
     permissions = ["create", "read", "update", "delete", "read_data", "write_data"];
     relations = {
-        group: TimeseriesGroup
+        campaign: Campaign
     };
 
-    "read" if "tsg_member" on "group";
-    "read_data" if "tsg_member" on "group";
-    "write_data" if "tsg_member" on "group";
+    "read" if "c_member" on "campaign";
+    "read_data" if "c_member" on "campaign";
+    "write_data" if "c_member" on "campaign";
 }
 
-has_relation(group: TimeseriesGroup, "group", ts: Timeseries) if
-    group = ts.group;
+has_relation(campaign: Campaign, "campaign", ts: Timeseries) if
+    campaign = ts.campaign;
 
 
 resource TimeseriesPropertyData {
