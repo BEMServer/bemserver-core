@@ -84,7 +84,8 @@ class TestTimeseriesDataStateModel:
 
 
 class TestTimeseriesModel:
-    @pytest.mark.usefixtures("users_by_campaigns")
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
     def test_timeseries_filter_by_campaign_or_user(self, users, timeseries, campaigns):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -132,7 +133,8 @@ class TestTimeseriesModel:
             ts.delete()
             db.session.commit()
 
-    @pytest.mark.usefixtures("users_by_campaigns")
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
     def test_timeseries_authorizations_as_user(
         self,
         users,
@@ -192,7 +194,8 @@ class TestTimeseriesPropertyDataModel:
             tspd.delete()
             db.session.commit()
 
-    @pytest.mark.usefixtures("users_by_campaigns")
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
     def test_timeseries_property_data_authorizations_as_user(
         self,
         users,
@@ -253,7 +256,8 @@ class TestTimeseriesByDataStateModel:
             tsbds.delete()
             db.session.commit()
 
-    @pytest.mark.usefixtures("users_by_campaigns")
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
     def test_timeseries_by_data_state_authorizations_as_user(
         self,
         users,

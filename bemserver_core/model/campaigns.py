@@ -19,9 +19,9 @@ class Campaign(AuthMixin, Base):
         auth.register_class(
             cls,
             fields={
-                "users_by_campaigns": Relation(
+                "user_groups_by_campaigns": Relation(
                     kind="many",
-                    other_type="UserByCampaign",
+                    other_type="UserGroupByCampaign",
                     my_field="id",
                     other_field="campaign_id",
                 ),
@@ -29,25 +29,25 @@ class Campaign(AuthMixin, Base):
         )
 
 
-class UserByCampaign(AuthMixin, Base):
-    """User x Campaign associations"""
+class UserGroupByCampaign(AuthMixin, Base):
+    """UserGroup x Campaign associations"""
 
-    __tablename__ = "users_by_campaigns"
-    __table_args__ = (sqla.UniqueConstraint("campaign_id", "user_id"),)
+    __tablename__ = "user_groups_by_campaigns"
+    __table_args__ = (sqla.UniqueConstraint("campaign_id", "user_group_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
-    user_id = sqla.Column(sqla.ForeignKey("users.id"), nullable=False)
+    user_group_id = sqla.Column(sqla.ForeignKey("user_groups.id"), nullable=False)
 
     @classmethod
     def register_class(cls):
         auth.register_class(
             cls,
             fields={
-                "user": Relation(
+                "user_group": Relation(
                     kind="one",
-                    other_type="User",
-                    my_field="user_id",
+                    other_type="UserGroup",
+                    my_field="user_group_id",
                     other_field="id",
                 ),
             },

@@ -34,6 +34,29 @@ resource User {
 has_role(_user: UserActor{id: id}, "self", _user: User{id: id});
 
 
+resource UserGroup {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["ug_member"];
+
+    "read" if "ug_member";
+}
+
+has_role(user: UserActor, "ug_member", ug: UserGroup) if
+    ubug in ug.users_by_user_groups and
+    ubug.user = user;
+
+
+resource UserByUserGroup {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["ubug_owner"];
+
+    "read" if "ubug_owner";
+}
+
+has_role(user: UserActor, "ubug_owner", ubug: UserByUserGroup) if
+    user = ubug.user;
+
+
 resource Campaign {
     permissions = ["create", "read", "update", "delete"];
     roles = ["c_member"];
@@ -42,19 +65,20 @@ resource Campaign {
 }
 
 has_role(user: UserActor, "c_member", campaign: Campaign) if
-    ubc in campaign.users_by_campaigns and
-    user = ubc.user;
+    ugbc in campaign.user_groups_by_campaigns and
+    ubug in ugbc.user_group.users_by_user_groups and
+    user = ubug.user;
 
 
-resource UserByCampaign {
+resource UserGroupByCampaign {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["ubc_owner"];
+    roles = ["ugbc_owner"];
 
-    "read" if "ubc_owner";
+    "read" if "ugbc_owner";
 }
 
-has_role(user: UserActor, "ubc_owner", ubc: UserByCampaign) if
-    user = ubc.user;
+has_role(user: UserActor, "ugbc_owner", ugbc: UserGroupByCampaign) if
+    has_role(user, "ug_member", ugbc.user_group);
 
 
 resource TimeseriesProperty{

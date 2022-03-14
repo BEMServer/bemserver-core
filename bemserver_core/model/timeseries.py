@@ -3,7 +3,8 @@ import sqlalchemy as sqla
 
 from bemserver_core.database import Base
 from bemserver_core.authorization import AuthMixin, auth, Relation
-from bemserver_core.model.campaigns import UserByCampaign
+from bemserver_core.model.users import UserGroup, UserByUserGroup
+from bemserver_core.model.campaigns import UserGroupByCampaign
 
 
 class TimeseriesProperty(AuthMixin, Base):
@@ -52,8 +53,10 @@ class Timeseries(AuthMixin, Base):
         if user_id:
             query = (
                 query.join(cls.campaign)
-                .join(UserByCampaign)
-                .filter(UserByCampaign.user_id == user_id)
+                .join(UserGroupByCampaign)
+                .join(UserGroup)
+                .join(UserByUserGroup)
+                .filter(UserByUserGroup.user_id == user_id)
             )
         return query
 

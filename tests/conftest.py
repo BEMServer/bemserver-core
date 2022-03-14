@@ -34,6 +34,19 @@ def as_admin():
 
 
 @pytest.fixture
+def user_groups(database):
+    with OpenBar():
+        user_group_1 = model.UserGroup.new(
+            name="User group 1",
+        )
+        user_group_2 = model.UserGroup.new(
+            name="User group 2",
+        )
+        db.session.commit()
+    return (user_group_1, user_group_2)
+
+
+@pytest.fixture
 def users(database):
     with OpenBar():
         user_1 = model.User.new(
@@ -43,7 +56,6 @@ def users(database):
             is_active=True,
         )
         user_1.set_password("N0rr1s")
-        db.session.commit()
         user_2 = model.User.new(
             name="John",
             email="john@test.com",
@@ -53,6 +65,21 @@ def users(database):
         user_2.set_password("D0e")
         db.session.commit()
     return (user_1, user_2)
+
+
+@pytest.fixture
+def users_by_user_groups(database, users, user_groups):
+    with OpenBar():
+        ubug_1 = model.UserByUserGroup.new(
+            user_id=users[0].id,
+            user_group_id=user_groups[0].id,
+        )
+        ubug_2 = model.UserByUserGroup.new(
+            user_id=users[1].id,
+            user_group_id=user_groups[1].id,
+        )
+        db.session.commit()
+    return (ubug_1, ubug_2)
 
 
 @pytest.fixture
@@ -73,18 +100,18 @@ def campaigns(database):
 
 
 @pytest.fixture
-def users_by_campaigns(database, users, campaigns):
+def user_groups_by_campaigns(database, user_groups, campaigns):
     with OpenBar():
-        ubc_1 = model.UserByCampaign.new(
-            user_id=users[0].id,
+        ugbc_1 = model.UserGroupByCampaign.new(
+            user_group_id=user_groups[0].id,
             campaign_id=campaigns[0].id,
         )
-        ubc_2 = model.UserByCampaign.new(
-            user_id=users[1].id,
+        ugbc_2 = model.UserGroupByCampaign.new(
+            user_group_id=user_groups[1].id,
             campaign_id=campaigns[1].id,
         )
         db.session.commit()
-    return (ubc_1, ubc_2)
+    return (ugbc_1, ugbc_2)
 
 
 @pytest.fixture

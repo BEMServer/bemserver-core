@@ -228,7 +228,6 @@ class TestEventModel:
         tse_list = list(Event.get(timestamp=timestamp_1))
         assert tse_list == []
 
-    @pytest.mark.usefixtures("users_by_campaigns")
     def test_event_authorizations_as_admin(
         self,
         users,
@@ -261,7 +260,8 @@ class TestEventModel:
             event_2.delete()
             db.session.commit()
 
-    @pytest.mark.usefixtures("users_by_campaigns")
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
     def test_event_authorizations_as_user(self, users, campaigns, events):
         user_1 = users[1]
         assert not user_1.is_admin

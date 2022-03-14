@@ -1,7 +1,7 @@
 """Campaign tests"""
 import pytest
 
-from bemserver_core.model import Campaign, UserByCampaign
+from bemserver_core.model import Campaign, UserGroupByCampaign
 
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
@@ -30,7 +30,8 @@ class TestCampaignModel:
             campaign.delete()
             db.session.commit()
 
-    @pytest.mark.usefixtures("users_by_campaigns")
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
     def test_campaign_authorizations_as_user(self, users, campaigns):
         user_1 = users[1]
         assert not user_1.is_admin
@@ -55,54 +56,58 @@ class TestCampaignModel:
                 campaign.delete()
 
 
-class TestUserByCampaignModel:
-    def test_user_by_campaign_authorizations_as_admin(self, users, campaigns):
+class TestUserGroupByCampaignModel:
+    @pytest.mark.usefixtures("users_by_user_groups")
+    def test_user_group_by_campaign_authorizations_as_admin(
+        self, users, user_groups, campaigns
+    ):
         admin_user = users[0]
         assert admin_user.is_admin
-        user_1 = users[1]
+        user_group_1 = user_groups[1]
         campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
 
         with CurrentUser(admin_user):
-            ubc_1 = UserByCampaign.new(
-                user_id=user_1.id,
+            ugbc_1 = UserGroupByCampaign.new(
+                user_group_id=user_group_1.id,
                 campaign_id=campaign_1.id,
             )
-            db.session.add(ubc_1)
+            db.session.add(ugbc_1)
             db.session.commit()
 
-            ubc = UserByCampaign.get_by_id(ubc_1.id)
-            assert ubc.id == ubc_1.id
-            ubcs = list(UserByCampaign.get())
-            assert len(ubcs) == 1
-            assert ubcs[0].id == ubc_1.id
-            ubc.update(campaign_id=campaign_2.id)
-            ubc.delete()
+            ugbc = UserGroupByCampaign.get_by_id(ugbc_1.id)
+            assert ugbc.id == ugbc_1.id
+            ugbcs = list(UserGroupByCampaign.get())
+            assert len(ugbcs) == 1
+            assert ugbcs[0].id == ugbc_1.id
+            ugbc.update(campaign_id=campaign_2.id)
+            ugbc.delete()
 
-    def test_user_by_campaign_authorizations_as_user(
-        self, users, campaigns, users_by_campaigns
+    @pytest.mark.usefixtures("users_by_user_groups")
+    def test_user_group_by_campaign_authorizations_as_user(
+        self, users, campaigns, user_groups, user_groups_by_campaigns
     ):
         user_1 = users[1]
         assert not user_1.is_admin
+        user_group_2 = user_groups[1]
         campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
-        ubc_1 = users_by_campaigns[0]
-        ubc_2 = users_by_campaigns[1]
+        ugbc_1 = user_groups_by_campaigns[0]
+        ugbc_2 = user_groups_by_campaigns[1]
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
-                UserByCampaign.new(
-                    user_id=user_1.id,
+                UserGroupByCampaign.new(
+                    user_group_id=user_group_2.id,
                     campaign_id=campaign_2.id,
                 )
-
-            ubc = UserByCampaign.get_by_id(ubc_2.id)
-            ubcs = list(UserByCampaign.get())
-            assert len(ubcs) == 1
-            assert ubcs[0].id == ubc_2.id
+            ugbc = UserGroupByCampaign.get_by_id(ugbc_2.id)
+            ugbcs = list(UserGroupByCampaign.get())
+            assert len(ugbcs) == 1
+            assert ugbcs[0].id == ugbc_2.id
             with pytest.raises(BEMServerAuthorizationError):
-                UserByCampaign.get_by_id(ubc_1.id)
+                UserGroupByCampaign.get_by_id(ugbc_1.id)
             with pytest.raises(BEMServerAuthorizationError):
-                ubc.update(campaign_id=campaign_1.id)
+                ugbc.update(campaign_id=campaign_1.id)
             with pytest.raises(BEMServerAuthorizationError):
-                ubc.delete()
+                ugbc.delete()
