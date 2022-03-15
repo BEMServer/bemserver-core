@@ -34,6 +34,19 @@ def as_admin():
 
 
 @pytest.fixture
+def user_groups(database):
+    with OpenBar():
+        user_group_1 = model.UserGroup.new(
+            name="User group 1",
+        )
+        user_group_2 = model.UserGroup.new(
+            name="User group 2",
+        )
+        db.session.commit()
+    return (user_group_1, user_group_2)
+
+
+@pytest.fixture
 def users(database):
     with OpenBar():
         user_1 = model.User.new(
@@ -43,7 +56,6 @@ def users(database):
             is_active=True,
         )
         user_1.set_password("N0rr1s")
-        db.session.commit()
         user_2 = model.User.new(
             name="John",
             email="john@test.com",
@@ -53,6 +65,21 @@ def users(database):
         user_2.set_password("D0e")
         db.session.commit()
     return (user_1, user_2)
+
+
+@pytest.fixture
+def users_by_user_groups(database, users, user_groups):
+    with OpenBar():
+        ubug_1 = model.UserByUserGroup.new(
+            user_id=users[0].id,
+            user_group_id=user_groups[0].id,
+        )
+        ubug_2 = model.UserByUserGroup.new(
+            user_id=users[1].id,
+            user_group_id=user_groups[1].id,
+        )
+        db.session.commit()
+    return (ubug_1, ubug_2)
 
 
 @pytest.fixture
@@ -73,18 +100,48 @@ def campaigns(database):
 
 
 @pytest.fixture
-def users_by_campaigns(database, users, campaigns):
+def campaign_scopes(database, campaigns):
     with OpenBar():
-        ubc_1 = model.UserByCampaign.new(
-            user_id=users[0].id,
+        cs_1 = model.CampaignScope.new(
+            name="Campaign 1 - Scope 1",
             campaign_id=campaigns[0].id,
         )
-        ubc_2 = model.UserByCampaign.new(
-            user_id=users[1].id,
+        cs_2 = model.CampaignScope.new(
+            name="Campaign 2 - Scope 1",
             campaign_id=campaigns[1].id,
         )
         db.session.commit()
-    return (ubc_1, ubc_2)
+    return (cs_1, cs_2)
+
+
+@pytest.fixture
+def user_groups_by_campaigns(database, user_groups, campaigns):
+    with OpenBar():
+        ugbc_1 = model.UserGroupByCampaign.new(
+            user_group_id=user_groups[0].id,
+            campaign_id=campaigns[0].id,
+        )
+        ugbc_2 = model.UserGroupByCampaign.new(
+            user_group_id=user_groups[1].id,
+            campaign_id=campaigns[1].id,
+        )
+        db.session.commit()
+    return (ugbc_1, ugbc_2)
+
+
+@pytest.fixture
+def user_groups_by_campaign_scopes(database, user_groups, campaign_scopes):
+    with OpenBar():
+        ugbcs_1 = model.UserGroupByCampaignScope.new(
+            user_group_id=user_groups[0].id,
+            campaign_scope_id=campaign_scopes[0].id,
+        )
+        ugbcs_2 = model.UserGroupByCampaignScope.new(
+            user_group_id=user_groups[1].id,
+            campaign_scope_id=campaign_scopes[1].id,
+        )
+        db.session.commit()
+    return (ugbcs_1, ugbcs_2)
 
 
 @pytest.fixture
@@ -100,43 +157,16 @@ def timeseries_properties(database):
     return (ts_p_1, ts_p_2)
 
 
-@pytest.fixture
-def timeseries_groups(database):
-    with OpenBar():
-        ts_group_1 = model.TimeseriesGroup.new(
-            name="TS Group 1",
-        )
-        ts_group_2 = model.TimeseriesGroup.new(
-            name="TS Group 2",
-        )
-        db.session.commit()
-    return (ts_group_1, ts_group_2)
-
-
-@pytest.fixture
-def timeseries_groups_by_users(database, timeseries_groups, users):
-    with OpenBar():
-        tsgbu_1 = model.TimeseriesGroupByUser.new(
-            timeseries_group_id=timeseries_groups[0].id,
-            user_id=users[0].id,
-        )
-        tsgbu_2 = model.TimeseriesGroupByUser.new(
-            timeseries_group_id=timeseries_groups[1].id,
-            user_id=users[1].id,
-        )
-        db.session.commit()
-    return (tsgbu_1, tsgbu_2)
-
-
 @pytest.fixture(params=[2])
-def timeseries(request, database, timeseries_groups):
+def timeseries(request, database, campaigns, campaign_scopes):
     with OpenBar():
         ts_l = []
         for i in range(request.param):
             ts_i = model.Timeseries(
                 name=f"Timeseries {i}",
                 description=f"Test timeseries #{i}",
-                group=timeseries_groups[i % len(timeseries_groups)],
+                campaign=campaigns[i % len(campaigns)],
+                campaign_scope=campaign_scopes[i % len(campaign_scopes)],
             )
             ts_l.append(ts_i)
         db.session.add_all(ts_l)
@@ -184,81 +214,10 @@ def timeseries_by_data_states(request, database, timeseries):
 
 
 @pytest.fixture
-def timeseries_groups_by_campaigns(database, campaigns, timeseries_groups):
-    """Create timeseries groups x campaigns associations
-
-    Example:
-        campaigns = [C1, C2]
-        timeseries groups = [TG1, TG2, TG3, TG4, TG5]
-         timeseries x campaigns = [
-            TG1 x C1,
-            TG2 x C2,
-            TG3 x C1,
-            TG4 x C2,
-            TG5 x C1,
-        ]
-    """
-    with OpenBar():
-        tbc_l = []
-        for idx, tsg_i in enumerate(timeseries_groups):
-            campaign = campaigns[idx % len(campaigns)]
-            tbc = model.TimeseriesGroupByCampaign.new(
-                timeseries_group_id=tsg_i.id,
-                campaign_id=campaign.id,
-            )
-            tbc_l.append(tbc)
-        db.session.commit()
-    return tbc_l
-
-
-@pytest.fixture
-def event_channels(database):
-    with OpenBar():
-        channel_1 = model.EventChannel.new(
-            name="Channel 1",
-        )
-        channel_2 = model.EventChannel.new(
-            name="Channel 2",
-        )
-        db.session.commit()
-        return (channel_1, channel_2)
-
-
-@pytest.fixture
-def event_channels_by_campaigns(database, campaigns, event_channels):
-    with OpenBar():
-        ecc_1 = model.EventChannelByCampaign.new(
-            event_channel_id=event_channels[0].id,
-            campaign_id=campaigns[0].id,
-        )
-        ecc_2 = model.EventChannelByCampaign.new(
-            event_channel_id=event_channels[1].id,
-            campaign_id=campaigns[1].id,
-        )
-        db.session.commit()
-    return (ecc_1, ecc_2)
-
-
-@pytest.fixture
-def event_channels_by_users(database, event_channels, users):
-    with OpenBar():
-        ecbu_1 = model.EventChannelByUser.new(
-            event_channel_id=event_channels[0].id,
-            user_id=users[0].id,
-        )
-        ecbu_2 = model.EventChannelByUser.new(
-            event_channel_id=event_channels[1].id,
-            user_id=users[1].id,
-        )
-        db.session.commit()
-    return (ecbu_1, ecbu_2)
-
-
-@pytest.fixture
-def events(database, event_channels):
+def events(database, campaign_scopes):
     with OpenBar():
         ts_event_1 = model.Event.new(
-            channel_id=event_channels[0].id,
+            campaign_scope_id=campaign_scopes[0].id,
             timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
             category="observation_missing",
             source="src",
@@ -266,7 +225,7 @@ def events(database, event_channels):
             state="NEW",
         )
         ts_event_2 = model.Event.new(
-            channel_id=event_channels[1].id,
+            campaign_scope_id=campaign_scopes[1].id,
             timestamp=dt.datetime(2020, 1, 15, tzinfo=dt.timezone.utc),
             category="observation_missing",
             source="src",

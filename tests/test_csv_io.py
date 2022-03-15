@@ -79,7 +79,8 @@ class TestTimeseriesCSVIO:
         assert data == expected
 
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
-    @pytest.mark.usefixtures("timeseries_groups_by_users")
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
     def test_timeseries_csv_io_import_csv_as_user(self, users, timeseries):
         user_1 = users[1]
         assert not user_1.is_admin
@@ -155,7 +156,6 @@ class TestTimeseriesCSVIO:
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.parametrize("timeseries_by_data_states", (5,), indirect=True)
-    @pytest.mark.usefixtures("timeseries_groups_by_users")
     def test_timeseries_csv_io_export_csv_as_admin(
         self, users, timeseries, timeseries_by_data_states
     ):
@@ -213,7 +213,8 @@ class TestTimeseriesCSVIO:
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.parametrize("timeseries_by_data_states", (5,), indirect=True)
-    @pytest.mark.usefixtures("timeseries_groups_by_users")
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
     def test_timeseries_csv_io_export_csv_as_user(
         self, users, timeseries, timeseries_by_data_states
     ):
@@ -284,7 +285,6 @@ class TestTimeseriesCSVIO:
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.parametrize("timeseries_by_data_states", (5,), indirect=True)
-    @pytest.mark.usefixtures("timeseries_groups_by_users")
     def test_timeseries_csv_io_export_csv_bucket_as_admin(
         self, users, timeseries, timeseries_by_data_states
     ):
@@ -422,7 +422,8 @@ class TestTimeseriesCSVIO:
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.parametrize("timeseries_by_data_states", (5,), indirect=True)
-    @pytest.mark.usefixtures("timeseries_groups_by_users")
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
     def test_timeseries_csv_io_export_csv_bucket_as_user(
         self, users, timeseries, timeseries_by_data_states
     ):

@@ -1,13 +1,16 @@
 """Model"""
 from bemserver_core.authorization import init_authorization
 
-from .users import User
-from .campaigns import Campaign, UserByCampaign, TimeseriesGroupByCampaign
+from .users import User, UserGroup, UserByUserGroup
+from .campaigns import (
+    Campaign,
+    CampaignScope,
+    UserGroupByCampaign,
+    UserGroupByCampaignScope,
+)
 from .timeseries import (
     TimeseriesDataState,
     TimeseriesProperty,
-    TimeseriesGroup,
-    TimeseriesGroupByUser,
     Timeseries,
     TimeseriesPropertyData,
     TimeseriesByDataState,
@@ -17,22 +20,20 @@ from .events import (  # noqa
     EventCategory,
     EventState,
     EventLevel,
-    EventChannel,
-    EventChannelByCampaign,
-    EventChannelByUser,
     Event,
 )
 
 
 __all__ = [
     "User",
+    "UserGroup",
+    "UserByUserGroup",
     "Campaign",
-    "UserByCampaign",
-    "TimeseriesGroupByCampaign",
+    "CampaignScope",
+    "UserGroupByCampaign",
+    "UserGroupByCampaignScope",
     "TimeseriesDataState",
     "TimeseriesProperty",
-    "TimeseriesGroup",
-    "TimeseriesGroupByUser",
     "Timeseries",
     "TimeseriesPropertyData",
     "TimeseriesByDataState",
@@ -40,9 +41,6 @@ __all__ = [
     "EventCategory",
     "EventState",
     "EventLevel",
-    "EventChannel",
-    "EventChannelByCampaign",
-    "EventChannelByUser",
     "Event",
 ]
 
@@ -50,22 +48,20 @@ __all__ = [
 # Register classes for authorization
 auth_model_classes = [
     User,
+    UserGroup,
+    UserByUserGroup,
     Campaign,
-    UserByCampaign,
-    TimeseriesGroupByCampaign,
+    CampaignScope,
+    UserGroupByCampaign,
+    UserGroupByCampaignScope,
     TimeseriesDataState,
     TimeseriesProperty,
-    TimeseriesGroup,
-    TimeseriesGroupByUser,
     Timeseries,
     TimeseriesPropertyData,
     TimeseriesByDataState,
     EventCategory,
     EventState,
     EventLevel,
-    EventChannel,
-    EventChannelByCampaign,
-    EventChannelByUser,
     Event,
 ]
 

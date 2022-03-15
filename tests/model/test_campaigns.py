@@ -3,8 +3,9 @@ import pytest
 
 from bemserver_core.model import (
     Campaign,
-    UserByCampaign,
-    TimeseriesGroupByCampaign,
+    CampaignScope,
+    UserGroupByCampaign,
+    UserGroupByCampaignScope,
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
@@ -33,7 +34,8 @@ class TestCampaignModel:
             campaign.delete()
             db.session.commit()
 
-    @pytest.mark.usefixtures("users_by_campaigns")
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
     def test_campaign_authorizations_as_user(self, users, campaigns):
         user_1 = users[1]
         assert not user_1.is_admin
@@ -58,111 +60,191 @@ class TestCampaignModel:
                 campaign.delete()
 
 
-class TestUserByCampaignModel:
-    def test_user_by_campaign_authorizations_as_admin(self, users, campaigns):
+class TestUserGroupByCampaignModel:
+    @pytest.mark.usefixtures("users_by_user_groups")
+    def test_user_group_by_campaign_authorizations_as_admin(
+        self, users, user_groups, campaigns
+    ):
         admin_user = users[0]
         assert admin_user.is_admin
-        user_1 = users[1]
+        user_group_1 = user_groups[1]
         campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
 
         with CurrentUser(admin_user):
-            ubc_1 = UserByCampaign.new(
-                user_id=user_1.id,
+            ugbc_1 = UserGroupByCampaign.new(
+                user_group_id=user_group_1.id,
                 campaign_id=campaign_1.id,
             )
-            db.session.add(ubc_1)
+            db.session.add(ugbc_1)
             db.session.commit()
 
-            ubc = UserByCampaign.get_by_id(ubc_1.id)
-            assert ubc.id == ubc_1.id
-            ubcs = list(UserByCampaign.get())
-            assert len(ubcs) == 1
-            assert ubcs[0].id == ubc_1.id
-            ubc.update(campaign_id=campaign_2.id)
-            ubc.delete()
+            ugbc = UserGroupByCampaign.get_by_id(ugbc_1.id)
+            assert ugbc.id == ugbc_1.id
+            ugbcs = list(UserGroupByCampaign.get())
+            assert len(ugbcs) == 1
+            assert ugbcs[0].id == ugbc_1.id
+            ugbc.update(campaign_id=campaign_2.id)
+            ugbc.delete()
 
-    def test_user_by_campaign_authorizations_as_user(
-        self, users, campaigns, users_by_campaigns
+    @pytest.mark.usefixtures("users_by_user_groups")
+    def test_user_group_by_campaign_authorizations_as_user(
+        self, users, campaigns, user_groups, user_groups_by_campaigns
     ):
         user_1 = users[1]
         assert not user_1.is_admin
+        user_group_2 = user_groups[1]
         campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
-        ubc_1 = users_by_campaigns[0]
-        ubc_2 = users_by_campaigns[1]
+        ugbc_1 = user_groups_by_campaigns[0]
+        ugbc_2 = user_groups_by_campaigns[1]
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
-                UserByCampaign.new(
-                    user_id=user_1.id,
+                UserGroupByCampaign.new(
+                    user_group_id=user_group_2.id,
                     campaign_id=campaign_2.id,
                 )
-
-            ubc = UserByCampaign.get_by_id(ubc_2.id)
-            ubcs = list(UserByCampaign.get())
-            assert len(ubcs) == 1
-            assert ubcs[0].id == ubc_2.id
+            ugbc = UserGroupByCampaign.get_by_id(ugbc_2.id)
+            ugbcs = list(UserGroupByCampaign.get())
+            assert len(ugbcs) == 1
+            assert ugbcs[0].id == ugbc_2.id
             with pytest.raises(BEMServerAuthorizationError):
-                UserByCampaign.get_by_id(ubc_1.id)
+                UserGroupByCampaign.get_by_id(ugbc_1.id)
             with pytest.raises(BEMServerAuthorizationError):
-                ubc.update(campaign_id=campaign_1.id)
+                ugbc.update(campaign_id=campaign_1.id)
             with pytest.raises(BEMServerAuthorizationError):
-                ubc.delete()
+                ugbc.delete()
 
 
-class TestTimeseriesGroupByCampaignModel:
-    def test_timeseries_group_by_campaign_authorizations_as_admin(
-        self, users, campaigns, timeseries_groups
+class TestCampaignScopeModel:
+    @pytest.mark.usefixtures("as_admin")
+    def test_campaign_scope_read_only_fields(self, campaigns):
+        """Check campaign can't be modified after commit
+
+        Also check the getter/setter don't get in the way when querying.
+        This is kind of a "framework test".
+        """
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
+
+        cs_1 = CampaignScope.new(
+            name="Campaign scope 1",
+            campaign_id=campaign_1.id,
+        )
+        cs_1.update(campaign_id=campaign_2.id)
+        db.session.commit()
+
+        with pytest.raises(AttributeError):
+            cs_1.update(campaign_id=campaign_2.id)
+
+        cs_list = list(CampaignScope.get(campaign_id=2))
+        assert cs_list == [cs_1]
+        cs_list = list(CampaignScope.get(campaign_id=1))
+        assert cs_list == []
+
+    def test_campaign_scope_authorizations_as_admin(self, users, campaigns):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        campaign_1 = campaigns[0]
+
+        with CurrentUser(admin_user):
+            campaign_scope_1 = CampaignScope.new(
+                name="Campaign scope 1",
+                campaign_id=campaign_1.id,
+            )
+            db.session.add(campaign_scope_1)
+            db.session.commit()
+
+            campaign_scope = CampaignScope.get_by_id(campaign_scope_1.id)
+            assert campaign_scope.id == campaign_scope_1.id
+            assert campaign_scope.name == campaign_scope_1.name
+            campaign_scopes = list(CampaignScope.get())
+            assert len(campaign_scopes) == 1
+            assert campaign_scopes[0].id == campaign_scope_1.id
+            campaign_scope.update(name="Super campaign_scope 1")
+            campaign_scope.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    def test_campaign_scope_authorizations_as_user(self, users, campaign_scopes):
+        user_1 = users[1]
+        assert not user_1.is_admin
+        campaign_scope_1 = campaign_scopes[0]
+        campaign_scope_2 = campaign_scopes[1]
+
+        with CurrentUser(user_1):
+            with pytest.raises(BEMServerAuthorizationError):
+                CampaignScope.new(
+                    name="CampaignScope 1",
+                )
+
+            campaign_scope = CampaignScope.get_by_id(campaign_scope_2.id)
+            campaign_scopes = list(CampaignScope.get())
+            assert len(campaign_scopes) == 1
+            assert campaign_scopes[0].id == campaign_scope_2.id
+            with pytest.raises(BEMServerAuthorizationError):
+                CampaignScope.get_by_id(campaign_scope_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                campaign_scope.update(name="Super campaign_scope 1")
+            with pytest.raises(BEMServerAuthorizationError):
+                campaign_scope.delete()
+
+
+class TestUserGroupByCampaignScopeModel:
+    @pytest.mark.usefixtures("users_by_user_groups")
+    def test_user_group_by_campaign_scope_authorizations_as_admin(
+        self, users, user_groups, campaign_scopes
     ):
         admin_user = users[0]
         assert admin_user.is_admin
-        campaign_1 = campaigns[0]
-        campaign_2 = campaigns[1]
-        tsg_1 = timeseries_groups[0]
+        user_group_1 = user_groups[1]
+        campaign_scope_1 = campaign_scopes[0]
+        campaign_scope_2 = campaign_scopes[1]
 
         with CurrentUser(admin_user):
-            tgbc_1 = TimeseriesGroupByCampaign.new(
-                timeseries_group_id=tsg_1.id,
-                campaign_id=campaign_1.id,
+            ugbcs_1 = UserGroupByCampaignScope.new(
+                user_group_id=user_group_1.id,
+                campaign_scope_id=campaign_scope_1.id,
             )
-            db.session.add(tgbc_1)
+            db.session.add(ugbcs_1)
             db.session.commit()
 
-            tgbc = TimeseriesGroupByCampaign.get_by_id(tgbc_1.id)
-            assert tgbc.id == tgbc_1.id
-            tgbcs = list(TimeseriesGroupByCampaign.get())
-            assert len(tgbcs) == 1
-            assert tgbcs[0].id == tgbc_1.id
-            tgbc.update(campaign_id=campaign_2.id)
-            tgbc.delete()
+            ugbcs = UserGroupByCampaignScope.get_by_id(ugbcs_1.id)
+            assert ugbcs.id == ugbcs_1.id
+            ugbcss = list(UserGroupByCampaignScope.get())
+            assert len(ugbcss) == 1
+            assert ugbcss[0].id == ugbcs_1.id
+            ugbcs.update(campaign_scope_id=campaign_scope_2.id)
+            ugbcs.delete()
 
-    @pytest.mark.usefixtures("timeseries_groups_by_users")
-    @pytest.mark.usefixtures("users_by_campaigns")
-    def test_timeseries_group_by_campaign_authorizations_as_user(
-        self, users, campaigns, timeseries_groups_by_campaigns
+    @pytest.mark.usefixtures("users_by_user_groups")
+    def test_user_group_by_campaign_scope_authorizations_as_user(
+        self, users, campaign_scopes, user_groups, user_groups_by_campaign_scopes
     ):
         user_1 = users[1]
         assert not user_1.is_admin
-        campaign_1 = campaigns[0]
-        campaign_2 = campaigns[1]
-        tgbc_1 = timeseries_groups_by_campaigns[0]
-        tgbc_2 = timeseries_groups_by_campaigns[1]
+        user_group_2 = user_groups[1]
+        campaign_scope_1 = campaign_scopes[0]
+        campaign_scope_2 = campaign_scopes[1]
+        ugbcs_1 = user_groups_by_campaign_scopes[0]
+        ugbcs_2 = user_groups_by_campaign_scopes[1]
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesGroupByCampaign.new(
-                    timeseries_group_id=user_1.id,
-                    campaign_id=campaign_2.id,
+                UserGroupByCampaignScope.new(
+                    user_group_id=user_group_2.id,
+                    campaign_scope_id=campaign_scope_2.id,
                 )
-
-            tgbc = TimeseriesGroupByCampaign.get_by_id(tgbc_2.id)
-            tgbcs = list(TimeseriesGroupByCampaign.get())
-            assert len(tgbcs) == 1
-            assert tgbcs[0].id == tgbc_2.id
+            ugbcs = UserGroupByCampaignScope.get_by_id(ugbcs_2.id)
+            ugbcss = list(UserGroupByCampaignScope.get())
+            assert len(ugbcss) == 1
+            assert ugbcss[0].id == ugbcs_2.id
             with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesGroupByCampaign.get_by_id(tgbc_1.id)
+                UserGroupByCampaignScope.get_by_id(ugbcs_1.id)
             with pytest.raises(BEMServerAuthorizationError):
-                tgbc.update(campaign_id=campaign_1.id)
+                ugbcs.update(campaign_scope_id=campaign_scope_1.id)
             with pytest.raises(BEMServerAuthorizationError):
-                tgbc.delete()
+                ugbcs.delete()

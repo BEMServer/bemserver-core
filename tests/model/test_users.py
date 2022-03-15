@@ -1,7 +1,7 @@
 """User tests"""
 import pytest
 
-from bemserver_core.model import User
+from bemserver_core.model import User, UserGroup, UserByUserGroup
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
 from bemserver_core.exceptions import BEMServerAuthorizationError
@@ -100,3 +100,90 @@ class TestUserModel:
 
             with pytest.raises(BEMServerAuthorizationError):
                 user_1.update(is_admin=True)
+
+
+class TestUserGroupModel:
+    def test_user_group_authorizations_as_admin(self, users):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        with CurrentUser(admin_user):
+            user_group = UserGroup.new(name="User group 1")
+            user_group.update(name="Super user group 2")
+            db.session.commit()
+            user_groups = list(UserGroup.get())
+            assert len(user_groups) == 1
+            ug_1 = UserGroup.get_by_id(user_group.id)
+            assert ug_1.id == user_group.id
+            assert ug_1.name == user_group.name
+            user_group.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    def test_user_group_authorizations_as_user(self, users, user_groups):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        user_1 = users[1]
+        assert not user_1.is_admin
+        user_group_1 = user_groups[0]
+        user_group_2 = user_groups[1]
+
+        with CurrentUser(user_1):
+            UserGroup.get_by_id(user_group_2.id)
+            user_groups = list(UserGroup.get())
+            assert len(user_groups) == 1
+            with pytest.raises(BEMServerAuthorizationError):
+                UserGroup.new()
+            with pytest.raises(BEMServerAuthorizationError):
+                UserGroup.get_by_id(user_group_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                user_group_2.update(name="Super user group 2")
+            with pytest.raises(BEMServerAuthorizationError):
+                user_group_2.delete()
+
+
+class TestUserByUserGroupModel:
+    def test_user_by_user_group_authorizations_as_admin(self, users, user_groups):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        user_1 = users[1]
+        assert not user_1.is_admin
+        user_group_1 = user_groups[0]
+        user_group_2 = user_groups[0]
+
+        with CurrentUser(admin_user):
+            ubug_1 = UserByUserGroup.new(
+                user_id=user_1.id, user_group_id=user_group_1.id
+            )
+            ubug_1.update(user_group_id=user_group_2.id)
+            db.session.commit()
+            ubug_l = list(UserByUserGroup.get())
+            assert len(ubug_l) == 1
+            ubug_1.delete()
+            db.session.commit()
+
+    def test_user_by_user_group_authorizations_as_user(
+        self, users, user_groups, users_by_user_groups
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        user_1 = users[1]
+        assert not user_1.is_admin
+        user_group_2 = user_groups[1]
+        ubug_1 = users_by_user_groups[0]
+        ubug_2 = users_by_user_groups[1]
+
+        with CurrentUser(user_1):
+            ubug = UserByUserGroup.get_by_id(ubug_2.id)
+            user_groups = list(UserByUserGroup.get())
+            assert len(user_groups) == 1
+            with pytest.raises(BEMServerAuthorizationError):
+                UserByUserGroup.get_by_id(ubug_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                UserByUserGroup.new(user_id=user_1.id, user_group_id=user_group_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ubug.update(user_group_id=user_group_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ubug.delete()
