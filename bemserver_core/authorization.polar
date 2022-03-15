@@ -1,7 +1,6 @@
 # TODO: Investigate potential Oso issue
-# We should't have to write "c_member" and "tsg_member", Oso should infer which
+# We should't have to write "*_member" or "*_owner, Oso should infer which
 # has_role rule matches which resource type.
-# Same for *_owner.
 
 # General rule
 allow(actor, action, resource) if has_permission(actor, action, resource);
@@ -81,6 +80,30 @@ has_role(user: UserActor, "ugbc_owner", ugbc: UserGroupByCampaign) if
     has_role(user, "ug_member", ugbc.user_group);
 
 
+resource CampaignScope {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["cs_member"];
+
+    "read" if "cs_member";
+}
+
+has_role(user: UserActor, "cs_member", cs: CampaignScope) if
+    ugbcs in cs.user_groups_by_campaign_scopes and
+    ubug in ugbcs.user_group.users_by_user_groups and
+    user = ubug.user;
+
+
+resource UserGroupByCampaignScope {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["ugbcs_owner"];
+
+    "read" if "ugbcs_owner";
+}
+
+has_role(user: UserActor, "ugbcs_owner", ugbcs: UserGroupByCampaignScope) if
+    has_role(user, "ug_member", ugbcs.user_group);
+
+
 resource TimeseriesProperty{
     permissions = ["create", "read", "update", "delete"];
     roles = ["user"];
@@ -100,16 +123,16 @@ resource TimeseriesDataState{
 resource Timeseries {
     permissions = ["create", "read", "update", "delete", "read_data", "write_data"];
     relations = {
-        campaign: Campaign
+        campaign_scope: CampaignScope
     };
 
-    "read" if "c_member" on "campaign";
-    "read_data" if "c_member" on "campaign";
-    "write_data" if "c_member" on "campaign";
+    "read" if "cs_member" on "campaign_scope";
+    "read_data" if "cs_member" on "campaign_scope";
+    "write_data" if "cs_member" on "campaign_scope";
 }
 
-has_relation(campaign: Campaign, "campaign", ts: Timeseries) if
-    campaign = ts.campaign;
+has_relation(cs: CampaignScope, "campaign_scope", ts: Timeseries) if
+    cs = ts.campaign_scope;
 
 
 resource TimeseriesPropertyData {

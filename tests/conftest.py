@@ -100,6 +100,21 @@ def campaigns(database):
 
 
 @pytest.fixture
+def campaign_scopes(database, campaigns):
+    with OpenBar():
+        cs_1 = model.CampaignScope.new(
+            name="Campaign 1 - Scope 1",
+            campaign_id=campaigns[0].id,
+        )
+        cs_2 = model.CampaignScope.new(
+            name="Campaign 2 - Scope 1",
+            campaign_id=campaigns[1].id,
+        )
+        db.session.commit()
+    return (cs_1, cs_2)
+
+
+@pytest.fixture
 def user_groups_by_campaigns(database, user_groups, campaigns):
     with OpenBar():
         ugbc_1 = model.UserGroupByCampaign.new(
@@ -112,6 +127,21 @@ def user_groups_by_campaigns(database, user_groups, campaigns):
         )
         db.session.commit()
     return (ugbc_1, ugbc_2)
+
+
+@pytest.fixture
+def user_groups_by_campaign_scopes(database, user_groups, campaign_scopes):
+    with OpenBar():
+        ugbcs_1 = model.UserGroupByCampaignScope.new(
+            user_group_id=user_groups[0].id,
+            campaign_scope_id=campaign_scopes[0].id,
+        )
+        ugbcs_2 = model.UserGroupByCampaignScope.new(
+            user_group_id=user_groups[1].id,
+            campaign_scope_id=campaign_scopes[1].id,
+        )
+        db.session.commit()
+    return (ugbcs_1, ugbcs_2)
 
 
 @pytest.fixture
@@ -128,7 +158,7 @@ def timeseries_properties(database):
 
 
 @pytest.fixture(params=[2])
-def timeseries(request, database, campaigns):
+def timeseries(request, database, campaigns, campaign_scopes):
     with OpenBar():
         ts_l = []
         for i in range(request.param):
@@ -136,6 +166,7 @@ def timeseries(request, database, campaigns):
                 name=f"Timeseries {i}",
                 description=f"Test timeseries #{i}",
                 campaign=campaigns[i % len(campaigns)],
+                campaign_scope=campaign_scopes[i % len(campaign_scopes)],
             )
             ts_l.append(ts_i)
         db.session.add_all(ts_l)

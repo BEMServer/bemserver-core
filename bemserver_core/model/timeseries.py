@@ -1,5 +1,7 @@
 """Timeseries"""
 import sqlalchemy as sqla
+import sqlalchemy.orm as sqlaorm
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from bemserver_core.database import Base
 from bemserver_core.authorization import AuthMixin, auth, Relation
@@ -24,14 +26,48 @@ class TimeseriesDataState(AuthMixin, Base):
 
 class Timeseries(AuthMixin, Base):
     __tablename__ = "timeseries"
+    __table_args__ = (sqla.UniqueConstraint("name", "_campaign_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
+    name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
     unit_symbol = sqla.Column(sqla.String(20))
-    campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
     campaign = sqla.orm.relationship("Campaign")
+    campaign_scope = sqla.orm.relationship("CampaignScope")
     timeseries_by_data_states = sqla.orm.relationship("TimeseriesByDataState")
+
+    # Use getter/setter to prevent modifying campaign / campaign_scope after commit
+    @sqlaorm.declared_attr
+    def _campaign_id(cls):
+        return sqla.Column(
+            sqla.Integer, sqla.ForeignKey("campaigns.id"), nullable=False
+        )
+
+    @hybrid_property
+    def campaign_id(self):
+        return self._campaign_id
+
+    @campaign_id.setter
+    def campaign_id(self, campaign_id):
+        if self.id is not None:
+            raise AttributeError("campaign_id cannot be modified")
+        self._campaign_id = campaign_id
+
+    @sqlaorm.declared_attr
+    def _campaign_scope_id(cls):
+        return sqla.Column(
+            sqla.Integer, sqla.ForeignKey("campaign_scopes.id"), nullable=False
+        )
+
+    @hybrid_property
+    def campaign_scope_id(self):
+        return self._campaign_scope_id
+
+    @campaign_scope_id.setter
+    def campaign_scope_id(self, campaign_scope_id):
+        if self.id is not None:
+            raise AttributeError("campaign_scope_id cannot be modified")
+        self._campaign_scope_id = campaign_scope_id
 
     @classmethod
     def register_class(cls):
@@ -42,6 +78,12 @@ class Timeseries(AuthMixin, Base):
                     kind="one",
                     other_type="Campaign",
                     my_field="campaign_id",
+                    other_field="id",
+                ),
+                "campaign_scope": Relation(
+                    kind="one",
+                    other_type="CampaignScope",
+                    my_field="campaign_scope_id",
                     other_field="id",
                 ),
             },

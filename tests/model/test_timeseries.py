@@ -84,6 +84,41 @@ class TestTimeseriesDataStateModel:
 
 
 class TestTimeseriesModel:
+    @pytest.mark.usefixtures("as_admin")
+    def test_timeseries_read_only_fields(self, campaigns, campaign_scopes):
+        """Check campaign and campaign_scope can't be modified after commit
+
+        Also check the getter/setter don't get in the way when querying.
+        This is kind of a "framework test".
+        """
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
+        campaign_scope_1 = campaign_scopes[0]
+        campaign_scope_2 = campaign_scopes[1]
+
+        ts_1 = Timeseries.new(
+            name="Timeseries 1",
+            campaign_id=campaign_1.id,
+            campaign_scope_id=campaign_scope_1.id,
+        )
+        ts_1.update(campaign_id=campaign_2.id)
+        ts_1.update(campaign_scope_id=campaign_scope_2.id)
+        db.session.commit()
+
+        with pytest.raises(AttributeError):
+            ts_1.update(campaign_id=campaign_2.id)
+        with pytest.raises(AttributeError):
+            ts_1.update(campaign_scope_id=campaign_scope_2.id)
+
+        ts_list = list(Timeseries.get(campaign_id=2))
+        assert ts_list == [ts_1]
+        ts_list = list(Timeseries.get(campaign_id=1))
+        assert ts_list == []
+        ts_list = list(Timeseries.get(campaign_scope_id=2))
+        assert ts_list == [ts_1]
+        ts_list = list(Timeseries.get(campaign_scope_id=1))
+        assert ts_list == []
+
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
     def test_timeseries_filter_by_campaign_or_user(self, users, timeseries, campaigns):
@@ -110,15 +145,19 @@ class TestTimeseriesModel:
             assert len(ts_l) == 1
             assert ts_l[0] == ts_2
 
-    def test_timeseries_authorizations_as_admin(self, users, campaigns):
+    def test_timeseries_authorizations_as_admin(
+        self, users, campaigns, campaign_scopes
+    ):
         admin_user = users[0]
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
+        cs_1 = campaign_scopes[0]
 
         with CurrentUser(admin_user):
             ts_1 = Timeseries.new(
                 name="Timeseries 1",
                 campaign_id=campaign_1.id,
+                campaign_scope_id=cs_1.id,
             )
             db.session.add(ts_1)
             db.session.commit()
@@ -134,24 +173,27 @@ class TestTimeseriesModel:
             db.session.commit()
 
     @pytest.mark.usefixtures("users_by_user_groups")
-    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
     def test_timeseries_authorizations_as_user(
         self,
         users,
         timeseries,
         campaigns,
+        campaign_scopes,
     ):
         user_1 = users[1]
         assert not user_1.is_admin
         ts_1 = timeseries[0]
         ts_2 = timeseries[1]
         campaign_1 = campaigns[0]
+        campaign_scope_1 = campaign_scopes[0]
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
                 Timeseries.new(
                     name="Timeseries 1",
                     campaign_id=campaign_1.id,
+                    campaign_scope_id=campaign_scope_1.id,
                 )
 
             timeseries = Timeseries.get_by_id(ts_2.id)
@@ -195,7 +237,7 @@ class TestTimeseriesPropertyDataModel:
             db.session.commit()
 
     @pytest.mark.usefixtures("users_by_user_groups")
-    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
     def test_timeseries_property_data_authorizations_as_user(
         self,
         users,
@@ -257,7 +299,7 @@ class TestTimeseriesByDataStateModel:
             db.session.commit()
 
     @pytest.mark.usefixtures("users_by_user_groups")
-    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
     def test_timeseries_by_data_state_authorizations_as_user(
         self,
         users,
