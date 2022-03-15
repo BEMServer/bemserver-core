@@ -130,20 +130,20 @@ class TestEventCategoryModel:
 
 class TestEventModel:
     @pytest.mark.usefixtures("as_admin")
-    def test_event_read_only_fields(self, campaigns):
-        """Check campaign and timestamp can't be modified after commit
+    def test_event_read_only_fields(self, campaign_scopes):
+        """Check campaign_scope and timestamp can't be modified after commit
 
         Also check the getter/setter don't get in the way when querying.
         This is kind of a "framework test".
         """
-        campaign_1 = campaigns[0]
-        campaign_2 = campaigns[1]
+        campaign_scope_1 = campaign_scopes[0]
+        campaign_scope_2 = campaign_scopes[1]
 
         timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
         timestamp_2 = dt.datetime(2020, 6, 1, tzinfo=dt.timezone.utc)
 
         evt_1 = Event.new(
-            campaign_id=campaign_1.id,
+            campaign_scope_id=campaign_scope_1.id,
             timestamp=timestamp_1,
             category="observation_missing",
             source="src",
@@ -151,17 +151,17 @@ class TestEventModel:
             state="NEW",
         )
         evt_1.update(timestamp=timestamp_2)
-        evt_1.update(campaign_id=campaign_2.id)
+        evt_1.update(campaign_scope_id=campaign_scope_2.id)
         db.session.commit()
 
         with pytest.raises(AttributeError):
             evt_1.update(timestamp=timestamp_1)
         with pytest.raises(AttributeError):
-            evt_1.update(campaign_id=campaign_2.id)
+            evt_1.update(campaign_scope_id=campaign_scope_2.id)
 
-        tse_list = list(Event.get(campaign_id=2))
+        tse_list = list(Event.get(campaign_scope_id=2))
         assert tse_list == [evt_1]
-        tse_list = list(Event.get(campaign_id=1))
+        tse_list = list(Event.get(campaign_scope_id=1))
         assert tse_list == []
         tse_list = list(Event.get(timestamp=timestamp_2))
         assert tse_list == [evt_1]
@@ -171,23 +171,23 @@ class TestEventModel:
     def test_event_authorizations_as_admin(
         self,
         users,
-        campaigns,
+        campaign_scopes,
         events,
     ):
         admin_user = users[0]
         assert admin_user.is_admin
-        campaign_1 = campaigns[0]
+        campaign_scope_1 = campaign_scopes[0]
         event_1 = events[0]
         event_2 = events[1]
 
         with CurrentUser(admin_user):
             events = list(Event.get())
             assert set(events) == {event_1, event_2}
-            events = list(Event.get(campaign_id=campaign_1.id))
+            events = list(Event.get(campaign_scope_id=campaign_scope_1.id))
             assert events == [event_1]
             assert Event.get_by_id(event_1.id) == event_1
             Event.new(
-                campaign_id=campaign_1.id,
+                campaign_scope_id=campaign_scope_1.id,
                 timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
                 category="observation_missing",
                 source="src",
@@ -201,27 +201,27 @@ class TestEventModel:
             db.session.commit()
 
     @pytest.mark.usefixtures("users_by_user_groups")
-    @pytest.mark.usefixtures("user_groups_by_campaigns")
-    def test_event_authorizations_as_user(self, users, campaigns, events):
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    def test_event_authorizations_as_user(self, users, campaign_scopes, events):
         user_1 = users[1]
         assert not user_1.is_admin
-        campaign_1 = campaigns[0]
-        campaign_2 = campaigns[1]
+        campaign_scope_1 = campaign_scopes[0]
+        campaign_scope_2 = campaign_scopes[1]
         event_1 = events[0]
         event_2 = events[1]
 
         with CurrentUser(user_1):
 
             events = list(Event.get())
-            assert set(events) == {event_2}
-            events = list(Event.get(campaign_id=campaign_1.id))
+            assert events == [event_2]
+            events = list(Event.get(campaign_scope_id=campaign_scope_1.id))
             assert not events
             assert Event.get_by_id(event_2.id) == event_2
 
-            # Not member of campaign
+            # Not member of campaign_scope
             with pytest.raises(BEMServerAuthorizationError):
                 Event.new(
-                    campaign_id=campaign_1.id,
+                    campaign_scope_id=campaign_scope_1.id,
                     timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
                     category="observation_missing",
                     source="src",
@@ -233,9 +233,9 @@ class TestEventModel:
             with pytest.raises(BEMServerAuthorizationError):
                 event_1.delete()
 
-            # Member of campaign
+            # Member of campaign_scope
             Event.new(
-                campaign_id=campaign_2.id,
+                campaign_scope_id=campaign_scope_2.id,
                 timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
                 category="observation_missing",
                 source="src",

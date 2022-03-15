@@ -192,11 +192,11 @@ resource Event {
 }
 
 has_permission(user: UserActor, "create", event:Event) if
-    has_role(user, "c_member", event.campaign);
+    has_role(user, "cs_member", event.campaign_scope);
 has_permission(user: UserActor, "read", event:Event) if
-    has_role(user, "c_member", event.campaign);
+    has_role(user, "cs_member", event.campaign_scope);
 has_permission(user: UserActor, "update", event:Event) if
-    has_role(user, "c_member", event.campaign);
+    has_role(user, "cs_member", event.campaign_scope);
 has_permission(user: UserActor, "delete", event:Event) if
-    has_role(user, "c_member", event.campaign);
+    has_role(user, "cs_member", event.campaign_scope);
 

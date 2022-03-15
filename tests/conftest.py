@@ -214,10 +214,10 @@ def timeseries_by_data_states(request, database, timeseries):
 
 
 @pytest.fixture
-def events(database, campaigns):
+def events(database, campaign_scopes):
     with OpenBar():
         ts_event_1 = model.Event.new(
-            campaign_id=campaigns[0].id,
+            campaign_scope_id=campaign_scopes[0].id,
             timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
             category="observation_missing",
             source="src",
@@ -225,7 +225,7 @@ def events(database, campaigns):
             state="NEW",
         )
         ts_event_2 = model.Event.new(
-            campaign_id=campaigns[1].id,
+            campaign_scope_id=campaign_scopes[1].id,
             timestamp=dt.datetime(2020, 1, 15, tzinfo=dt.timezone.utc),
             category="observation_missing",
             source="src",

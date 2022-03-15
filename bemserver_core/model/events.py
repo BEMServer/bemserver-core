@@ -38,22 +38,22 @@ class Event(AuthMixin, Base):
 
     id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
 
-    # Use getter/setter to prevent modifying campaign after commit
+    # Use getter/setter to prevent modifying campaign_scope after commit
     @sqlaorm.declared_attr
-    def _campaign_id(cls):
+    def _campaign_scope_id(cls):
         return sqla.Column(
-            sqla.Integer, sqla.ForeignKey("campaigns.id"), nullable=False
+            sqla.Integer, sqla.ForeignKey("campaign_scopes.id"), nullable=False
         )
 
     @hybrid_property
-    def campaign_id(self):
-        return self._campaign_id
+    def campaign_scope_id(self):
+        return self._campaign_scope_id
 
-    @campaign_id.setter
-    def campaign_id(self, campaign_id):
+    @campaign_scope_id.setter
+    def campaign_scope_id(self, campaign_scope_id):
         if self.id is not None:
-            raise AttributeError("campaign_id cannot be modified")
-        self._campaign_id = campaign_id
+            raise AttributeError("campaign_scope_id cannot be modified")
+        self._campaign_scope_id = campaign_scope_id
 
     @sqlaorm.declared_attr
     def category(cls):
@@ -95,10 +95,10 @@ class Event(AuthMixin, Base):
         auth.register_class(
             cls,
             fields={
-                "campaign": Relation(
+                "campaign_scope": Relation(
                     kind="one",
-                    other_type="Campaign",
-                    my_field="campaign_id",
+                    other_type="CampaignScope",
+                    my_field="campaign_scope_id",
                     other_field="id",
                 ),
             },
