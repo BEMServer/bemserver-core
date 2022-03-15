@@ -130,66 +130,6 @@ class TestEventCategoryModel:
 
 class TestEventModel:
     @pytest.mark.usefixtures("as_admin")
-    def test_event_list_by_state(self, campaigns):
-        campaign_1 = campaigns[0]
-
-        evts = Event.list_by_state()
-        assert evts == []
-        evts = Event.list_by_state(states=("NEW",))
-        assert evts == []
-        evts = Event.list_by_state(states=("ONGOING",))
-        assert evts == []
-        evts = Event.list_by_state(states=("CLOSED",))
-        assert evts == []
-
-        timestamp = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
-
-        evt_1 = Event.new(
-            campaign_id=campaign_1.id,
-            timestamp=timestamp,
-            category="observation_missing",
-            source="src",
-            level="ERROR",
-            state="NEW",
-        )
-        evt_2 = Event.new(
-            campaign_id=campaign_1.id,
-            timestamp=timestamp,
-            category="observation_missing",
-            source="src",
-            level="ERROR",
-            state="NEW",
-        )
-        db.session.commit()
-
-        evts = Event.list_by_state()
-        assert evts == [(evt_1,), (evt_2,)]
-
-        evt_2.state = "CLOSED"
-        evt_3 = Event.new(
-            campaign_id=campaign_1.id,
-            timestamp=timestamp,
-            category="observation_missing",
-            source="src",
-            level="ERROR",
-            state="ONGOING",
-        )
-        db.session.commit()
-
-        # 2 of 3 events are in NEW or ONGOING state
-        evts = Event.list_by_state()
-        assert evts == [(evt_1,), (evt_3,)]
-        # one is NEW
-        evts = Event.list_by_state(states=("NEW",))
-        assert evts == [(evt_1,)]
-        # one is ONGOING
-        evts = Event.list_by_state(states=("ONGOING",))
-        assert evts == [(evt_3,)]
-        # one is closed
-        evts = Event.list_by_state(states=("CLOSED",))
-        assert evts == [(evt_2,)]
-
-    @pytest.mark.usefixtures("as_admin")
     def test_event_read_only_fields(self, campaigns):
         """Check campaign and timestamp can't be modified after commit
 

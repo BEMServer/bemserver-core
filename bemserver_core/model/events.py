@@ -4,7 +4,7 @@ import sqlalchemy as sqla
 import sqlalchemy.orm as sqlaorm
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from bemserver_core.database import Base, db
+from bemserver_core.database import Base
 from bemserver_core.authorization import auth, AuthMixin, Relation
 
 
@@ -89,32 +89,6 @@ class Event(AuthMixin, Base):
     source = sqla.Column(sqla.String, nullable=False)
 
     description = sqla.Column(sqla.String(250))
-
-    @classmethod
-    def list_by_state(
-        cls,
-        states=(
-            "NEW",
-            "ONGOING",
-        ),
-        campaign_id=None,
-        category=None,
-        source=None,
-        level="ERROR",
-    ):
-        if states is None or len(states) <= 0:
-            raise ValueError("Missing `state` filter.")
-        state_conditions = tuple((cls.state == x) for x in states)
-        stmt = sqla.select(cls).filter(sqla.or_(*state_conditions))
-        if campaign_id is not None:
-            stmt = stmt.filter(cls.campaign_id == campaign_id)
-        if category is not None:
-            stmt = stmt.filter(cls.category == category)
-        if source is not None:
-            stmt = stmt.filter(cls.source == source)
-        if level is not None:
-            stmt = stmt.filter(cls.level == level)
-        return db.session.execute(stmt).all()
 
     @classmethod
     def register_class(cls):
