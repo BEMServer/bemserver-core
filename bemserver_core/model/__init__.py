@@ -8,6 +8,13 @@ from .campaigns import (
     UserGroupByCampaign,
     UserGroupByCampaignScope,
 )
+from .sites import (
+    Site,
+    Building,
+    Storey,
+    Space,
+    Zone,
+)
 from .timeseries import (
     TimeseriesDataState,
     TimeseriesProperty,
@@ -32,6 +39,11 @@ __all__ = [
     "CampaignScope",
     "UserGroupByCampaign",
     "UserGroupByCampaignScope",
+    "Site",
+    "Building",
+    "Storey",
+    "Space",
+    "Zone",
     "TimeseriesDataState",
     "TimeseriesProperty",
     "Timeseries",
@@ -54,6 +66,11 @@ auth_model_classes = [
     CampaignScope,
     UserGroupByCampaign,
     UserGroupByCampaignScope,
+    Site,
+    Building,
+    Storey,
+    Space,
+    Zone,
     TimeseriesDataState,
     TimeseriesProperty,
     Timeseries,

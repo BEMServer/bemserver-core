@@ -234,3 +234,78 @@ def events(database, campaign_scopes):
         )
         db.session.commit()
     return (ts_event_1, ts_event_2)
+
+
+@pytest.fixture
+def sites(database, campaigns):
+    with OpenBar():
+        site_1 = model.Site.new(
+            name="Site 1",
+            campaign_id=campaigns[0].id,
+        )
+        site_2 = model.Site.new(
+            name="Site 2",
+            campaign_id=campaigns[1].id,
+        )
+        db.session.commit()
+    return (site_1, site_2)
+
+
+@pytest.fixture
+def buildings(database, sites):
+    with OpenBar():
+        building_1 = model.Building.new(
+            name="Building 1",
+            site_id=sites[0].id,
+        )
+        building_2 = model.Building.new(
+            name="Building 2",
+            site_id=sites[1].id,
+        )
+        db.session.commit()
+    return (building_1, building_2)
+
+
+@pytest.fixture
+def storeys(database, buildings):
+    with OpenBar():
+        storey_1 = model.Storey.new(
+            name="Storey 1",
+            building_id=buildings[0].id,
+        )
+        storey_2 = model.Storey.new(
+            name="Storey 2",
+            building_id=buildings[1].id,
+        )
+        db.session.commit()
+    return (storey_1, storey_2)
+
+
+@pytest.fixture
+def spaces(database, storeys):
+    with OpenBar():
+        space_1 = model.Space.new(
+            name="Space 1",
+            storey_id=storeys[0].id,
+        )
+        space_2 = model.Space.new(
+            name="Space 2",
+            storey_id=storeys[1].id,
+        )
+        db.session.commit()
+    return (space_1, space_2)
+
+
+@pytest.fixture
+def zones(database, campaigns):
+    with OpenBar():
+        zone_1 = model.Zone.new(
+            name="Zone 1",
+            campaign_id=campaigns[0].id,
+        )
+        zone_2 = model.Zone.new(
+            name="Zone 2",
+            campaign_id=campaigns[1].id,
+        )
+        db.session.commit()
+    return (zone_1, zone_2)

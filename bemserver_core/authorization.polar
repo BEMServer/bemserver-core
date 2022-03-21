@@ -199,3 +199,34 @@ has_permission(user: User, "update", event:Event) if
     has_role(user, "cs_member", event.campaign_scope);
 has_permission(user: User, "delete", event:Event) if
     has_role(user, "cs_member", event.campaign_scope);
+
+
+resource Site {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", site:Site) if
+    has_role(user, "c_member", site.campaign);
+
+resource Building {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", building:Building) if
+    has_permission(user, "read", building.site);
+
+resource Storey {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", storey:Storey) if
+    has_permission(user, "read", storey.building);
+
+resource Space{
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", space:Space) if
+    has_permission(user, "read", space.storey);
+
+resource Zone {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", zone:Zone) if
+    has_role(user, "c_member", zone.campaign);
