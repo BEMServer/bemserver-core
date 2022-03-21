@@ -237,6 +237,84 @@ def events(database, campaign_scopes):
 
 
 @pytest.fixture
+def structural_element_properties(database):
+    with OpenBar():
+        sep_1 = model.StructuralElementProperty.new(
+            name="Surface",
+        )
+        sep_2 = model.StructuralElementProperty.new(
+            name="Volume",
+        )
+        db.session.commit()
+    return (sep_1, sep_2)
+
+
+@pytest.fixture
+def site_properties(database, structural_element_properties):
+    with OpenBar():
+        site_p_1 = model.SiteProperty.new(
+            structural_element_property_id=structural_element_properties[0].id,
+        )
+        site_p_2 = model.SiteProperty.new(
+            structural_element_property_id=structural_element_properties[1].id,
+        )
+        db.session.commit()
+    return (site_p_1, site_p_2)
+
+
+@pytest.fixture
+def building_properties(database, structural_element_properties):
+    with OpenBar():
+        building_p_1 = model.BuildingProperty.new(
+            structural_element_property_id=structural_element_properties[0].id,
+        )
+        building_p_2 = model.BuildingProperty.new(
+            structural_element_property_id=structural_element_properties[1].id,
+        )
+        db.session.commit()
+    return (building_p_1, building_p_2)
+
+
+@pytest.fixture
+def storey_properties(database, structural_element_properties):
+    with OpenBar():
+        storey_p_1 = model.StoreyProperty.new(
+            structural_element_property_id=structural_element_properties[0].id,
+        )
+        storey_p_2 = model.StoreyProperty.new(
+            structural_element_property_id=structural_element_properties[1].id,
+        )
+        db.session.commit()
+    return (storey_p_1, storey_p_2)
+
+
+@pytest.fixture
+def space_properties(database, structural_element_properties):
+    with OpenBar():
+        space_p_1 = model.SpaceProperty.new(
+            structural_element_property_id=structural_element_properties[0].id,
+        )
+        space_p_2 = model.SpaceProperty.new(
+            structural_element_property_id=structural_element_properties[1].id,
+        )
+        db.session.commit()
+    return (space_p_1, space_p_2)
+
+
+@pytest.fixture
+def zone_properties(database, structural_element_properties):
+    with OpenBar():
+        zone_p_1 = model.ZoneProperty.new(
+            structural_element_property_id=structural_element_properties[0].id,
+        )
+        zone_p_2 = model.ZoneProperty.new(
+            structural_element_property_id=structural_element_properties[1].id,
+        )
+        db.session.commit()
+    return (zone_p_1, zone_p_2)
+
+
+@pytest.fixture
 def sites(database, campaigns):
     with OpenBar():
         site_1 = model.Site.new(

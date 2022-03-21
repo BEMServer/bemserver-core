@@ -201,6 +201,54 @@ has_permission(user: User, "delete", event:Event) if
     has_role(user, "cs_member", event.campaign_scope);
 
 
+resource StructuralElementProperty{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource SiteProperty{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource BuildingProperty{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource StoreyProperty{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource SpaceProperty{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource ZoneProperty{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
 resource Site {
     permissions = ["create", "read", "update", "delete"];
 }

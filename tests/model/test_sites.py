@@ -2,6 +2,12 @@
 import pytest
 
 from bemserver_core.model import (
+    StructuralElementProperty,
+    SiteProperty,
+    BuildingProperty,
+    StoreyProperty,
+    SpaceProperty,
+    ZoneProperty,
     Site,
     Building,
     Storey,
@@ -11,6 +17,248 @@ from bemserver_core.model import (
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
 from bemserver_core.exceptions import BEMServerAuthorizationError
+
+
+class TestStructuralElementPropertyModel:
+    def test_structural_element_property_authorizations_as_admin(self, users):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        with CurrentUser(admin_user):
+            sep_1 = StructuralElementProperty.new(name="Surface")
+            db.session.add(sep_1)
+            db.session.commit()
+            StructuralElementProperty.get_by_id(sep_1.id)
+            seps = list(StructuralElementProperty.get())
+            assert len(seps) == 1
+            sep_1.update(name="Surface")
+            sep_1.delete()
+            db.session.commit()
+
+    def test_structural_element_property_authorizations_as_user(
+        self, users, structural_element_properties
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        sep_1 = structural_element_properties[0]
+
+        with CurrentUser(user_1):
+            sep = StructuralElementProperty.get_by_id(sep_1.id)
+            assert sep.name == sep_1.name
+            with pytest.raises(BEMServerAuthorizationError):
+                StructuralElementProperty.new(
+                    name="Whatever",
+                )
+            with pytest.raises(BEMServerAuthorizationError):
+                sep_1.update(name="Whatever")
+            with pytest.raises(BEMServerAuthorizationError):
+                sep_1.delete()
+
+
+class TestSitePropertyModel:
+    def test_site_property_authorizations_as_admin(
+        self, users, structural_element_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+
+        with CurrentUser(admin_user):
+            site_p_1 = SiteProperty.new(structural_element_property_id=sep_1.id)
+            db.session.add(site_p_1)
+            db.session.commit()
+            SiteProperty.get_by_id(site_p_1.id)
+            site_ps = list(SiteProperty.get())
+            assert len(site_ps) == 1
+            site_p_1.update(structural_element_property_id=sep_2.id)
+            site_p_1.delete()
+            db.session.commit()
+
+    def test_site_property_authorizations_as_user(
+        self, users, structural_element_properties, site_properties
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+        site_p_1 = site_properties[0]
+
+        with CurrentUser(user_1):
+            SiteProperty.get_by_id(site_p_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                SiteProperty.new(structural_element_property_id=sep_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                site_p_1.update(structural_element_property_id=sep_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                site_p_1.delete()
+
+
+class TestBuildingPropertyModel:
+    def test_building_property_authorizations_as_admin(
+        self, users, structural_element_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+
+        with CurrentUser(admin_user):
+            building_p_1 = BuildingProperty.new(structural_element_property_id=sep_1.id)
+            db.session.add(building_p_1)
+            db.session.commit()
+            BuildingProperty.get_by_id(building_p_1.id)
+            building_ps = list(BuildingProperty.get())
+            assert len(building_ps) == 1
+            building_p_1.update(structural_element_property_id=sep_2.id)
+            building_p_1.delete()
+            db.session.commit()
+
+    def test_building_property_authorizations_as_user(
+        self, users, structural_element_properties, building_properties
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+        building_p_1 = building_properties[0]
+
+        with CurrentUser(user_1):
+            BuildingProperty.get_by_id(building_p_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                BuildingProperty.new(structural_element_property_id=sep_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                building_p_1.update(structural_element_property_id=sep_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                building_p_1.delete()
+
+
+class TestStoreyPropertyModel:
+    def test_storey_property_authorizations_as_admin(
+        self, users, structural_element_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+
+        with CurrentUser(admin_user):
+            storey_p_1 = StoreyProperty.new(structural_element_property_id=sep_1.id)
+            db.session.add(storey_p_1)
+            db.session.commit()
+            StoreyProperty.get_by_id(storey_p_1.id)
+            storey_ps = list(StoreyProperty.get())
+            assert len(storey_ps) == 1
+            storey_p_1.update(structural_element_property_id=sep_2.id)
+            storey_p_1.delete()
+            db.session.commit()
+
+    def test_storey_property_authorizations_as_user(
+        self, users, structural_element_properties, storey_properties
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+        storey_p_1 = storey_properties[0]
+
+        with CurrentUser(user_1):
+            StoreyProperty.get_by_id(storey_p_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                StoreyProperty.new(structural_element_property_id=sep_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                storey_p_1.update(structural_element_property_id=sep_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                storey_p_1.delete()
+
+
+class TestSpacePropertyModel:
+    def test_space_property_authorizations_as_admin(
+        self, users, structural_element_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+
+        with CurrentUser(admin_user):
+            space_p_1 = SpaceProperty.new(structural_element_property_id=sep_1.id)
+            db.session.add(space_p_1)
+            db.session.commit()
+            SpaceProperty.get_by_id(space_p_1.id)
+            space_ps = list(SpaceProperty.get())
+            assert len(space_ps) == 1
+            space_p_1.update(structural_element_property_id=sep_2.id)
+            space_p_1.delete()
+            db.session.commit()
+
+    def test_space_property_authorizations_as_user(
+        self, users, structural_element_properties, space_properties
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+        space_p_1 = space_properties[0]
+
+        with CurrentUser(user_1):
+            SpaceProperty.get_by_id(space_p_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                SpaceProperty.new(structural_element_property_id=sep_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                space_p_1.update(structural_element_property_id=sep_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                space_p_1.delete()
+
+
+class TestZonePropertyModel:
+    def test_zone_property_authorizations_as_admin(
+        self, users, structural_element_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+
+        with CurrentUser(admin_user):
+            zone_p_1 = ZoneProperty.new(structural_element_property_id=sep_1.id)
+            db.session.add(zone_p_1)
+            db.session.commit()
+            ZoneProperty.get_by_id(zone_p_1.id)
+            zone_ps = list(ZoneProperty.get())
+            assert len(zone_ps) == 1
+            zone_p_1.update(structural_element_property_id=sep_2.id)
+            zone_p_1.delete()
+            db.session.commit()
+
+    def test_zone_property_authorizations_as_user(
+        self, users, structural_element_properties, zone_properties
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+        zone_p_1 = zone_properties[0]
+
+        with CurrentUser(user_1):
+            ZoneProperty.get_by_id(zone_p_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ZoneProperty.new(structural_element_property_id=sep_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                zone_p_1.update(structural_element_property_id=sep_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                zone_p_1.delete()
 
 
 class TestSiteModel:

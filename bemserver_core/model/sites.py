@@ -5,6 +5,59 @@ from bemserver_core.database import Base
 from bemserver_core.authorization import AuthMixin, auth, Relation
 
 
+class StructuralElementProperty(AuthMixin, Base):
+    __tablename__ = "structural_element_properties"
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
+    description = sqla.Column(sqla.String(500))
+
+
+class SiteProperty(AuthMixin, Base):
+    __tablename__ = "site_properties"
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    structural_element_property_id = sqla.Column(
+        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
+    )
+
+
+class BuildingProperty(AuthMixin, Base):
+    __tablename__ = "building_properties"
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    structural_element_property_id = sqla.Column(
+        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
+    )
+
+
+class StoreyProperty(AuthMixin, Base):
+    __tablename__ = "storey_properties"
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    structural_element_property_id = sqla.Column(
+        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
+    )
+
+
+class SpaceProperty(AuthMixin, Base):
+    __tablename__ = "space_properties"
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    structural_element_property_id = sqla.Column(
+        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
+    )
+
+
+class ZoneProperty(AuthMixin, Base):
+    __tablename__ = "zone_properties"
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    structural_element_property_id = sqla.Column(
+        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
+    )
+
+
 class Site(AuthMixin, Base):
     __tablename__ = "sites"
     __table_args__ = (sqla.UniqueConstraint("campaign_id", "name"),)
