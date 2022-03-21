@@ -387,3 +387,78 @@ def zones(database, campaigns):
         )
         db.session.commit()
     return (zone_1, zone_2)
+
+
+@pytest.fixture
+def timeseries_by_sites(database, timeseries, sites):
+    with OpenBar():
+        tbs_1 = model.TimeseriesBySite.new(
+            timeseries_id=timeseries[0].id,
+            site_id=sites[0].id,
+        )
+        tbs_2 = model.TimeseriesBySite.new(
+            timeseries_id=timeseries[1].id,
+            site_id=sites[1].id,
+        )
+        db.session.commit()
+    return (tbs_1, tbs_2)
+
+
+@pytest.fixture
+def timeseries_by_buildings(database, timeseries, buildings):
+    with OpenBar():
+        tbb_1 = model.TimeseriesByBuilding.new(
+            timeseries_id=timeseries[0].id,
+            building_id=buildings[0].id,
+        )
+        tbb_2 = model.TimeseriesByBuilding.new(
+            timeseries_id=timeseries[1].id,
+            building_id=buildings[1].id,
+        )
+        db.session.commit()
+    return (tbb_1, tbb_2)
+
+
+@pytest.fixture
+def timeseries_by_storeys(database, timeseries, storeys):
+    with OpenBar():
+        tbs_1 = model.TimeseriesByStorey.new(
+            timeseries_id=timeseries[0].id,
+            storey_id=storeys[0].id,
+        )
+        tbs_2 = model.TimeseriesByStorey.new(
+            timeseries_id=timeseries[1].id,
+            storey_id=storeys[1].id,
+        )
+        db.session.commit()
+    return (tbs_1, tbs_2)
+
+
+@pytest.fixture
+def timeseries_by_spaces(database, timeseries, spaces):
+    with OpenBar():
+        tbs_1 = model.TimeseriesBySpace.new(
+            timeseries_id=timeseries[0].id,
+            space_id=spaces[0].id,
+        )
+        tbs_2 = model.TimeseriesBySpace.new(
+            timeseries_id=timeseries[1].id,
+            space_id=spaces[1].id,
+        )
+        db.session.commit()
+    return (tbs_1, tbs_2)
+
+
+@pytest.fixture
+def timeseries_by_zones(database, timeseries, zones):
+    with OpenBar():
+        tbz_1 = model.TimeseriesByZone.new(
+            timeseries_id=timeseries[0].id,
+            zone_id=zones[0].id,
+        )
+        tbz_2 = model.TimeseriesByZone.new(
+            timeseries_id=timeseries[1].id,
+            zone_id=zones[1].id,
+        )
+        db.session.commit()
+    return (tbz_1, tbz_2)

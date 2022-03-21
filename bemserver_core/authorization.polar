@@ -278,3 +278,46 @@ resource Zone {
 }
 has_permission(user: User, "read", zone:Zone) if
     has_role(user, "c_member", zone.campaign);
+
+
+# TODO: Oso issue: checking both site and timeseries involves user x group
+# twice and triggers an error in Oso when building the query:
+# "Type `UserGroup` occurs more than once as the target of a relation"
+# Fortunately, in our case, checking only timeseries is enough because users
+# having access to the timeseries "should" be part of the campaign and
+# therefore should have access to the site.
+
+resource TimeseriesBySite {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", tbs:TimeseriesBySite) if
+    #has_permission(user, "read", tbs.site) and
+    has_permission(user, "read", tbs.timeseries);
+
+resource TimeseriesByBuilding {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", tbb:TimeseriesByBuilding) if
+    #has_permission(user, "read", tbb.building) and
+    has_permission(user, "read", tbb.timeseries);
+
+resource TimeseriesByStorey {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", tbs:TimeseriesByStorey) if
+    #has_permission(user, "read", tbs.storey) and
+    has_permission(user, "read", tbs.timeseries);
+
+resource TimeseriesBySpace {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", tbs:TimeseriesBySpace) if
+    #has_permission(user, "read", tbs.space) and
+    has_permission(user, "read", tbs.timeseries);
+
+resource TimeseriesByZone {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", tbz:TimeseriesByZone) if
+    #has_permission(user, "read", tbz.zone) and
+    has_permission(user, "read", tbz.timeseries);

@@ -172,6 +172,151 @@ class TimeseriesByDataState(AuthMixin, Base):
         )
 
 
+class TimeseriesBySite(AuthMixin, Base):
+    __tablename__ = "timeseries_by_sites"
+    __table_args__ = (sqla.UniqueConstraint("timeseries_id", "site_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
+    site_id = sqla.Column(sqla.ForeignKey("sites.id"), nullable=False)
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "timeseries": Relation(
+                    kind="one",
+                    other_type="Timeseries",
+                    my_field="timeseries_id",
+                    other_field="id",
+                ),
+                "site": Relation(
+                    kind="one",
+                    other_type="Site",
+                    my_field="site_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
+class TimeseriesByBuilding(AuthMixin, Base):
+    __tablename__ = "timeseries_by_buildings"
+    __table_args__ = (sqla.UniqueConstraint("timeseries_id", "building_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
+    building_id = sqla.Column(sqla.ForeignKey("buildings.id"), nullable=False)
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "timeseries": Relation(
+                    kind="one",
+                    other_type="Timeseries",
+                    my_field="timeseries_id",
+                    other_field="id",
+                ),
+                "building": Relation(
+                    kind="one",
+                    other_type="Building",
+                    my_field="building_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
+class TimeseriesByStorey(AuthMixin, Base):
+    __tablename__ = "timeseries_by_storeys"
+    __table_args__ = (sqla.UniqueConstraint("timeseries_id", "storey_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
+    storey_id = sqla.Column(sqla.ForeignKey("storeys.id"), nullable=False)
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "timeseries": Relation(
+                    kind="one",
+                    other_type="Timeseries",
+                    my_field="timeseries_id",
+                    other_field="id",
+                ),
+                "storey": Relation(
+                    kind="one",
+                    other_type="Storey",
+                    my_field="storey_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
+class TimeseriesBySpace(AuthMixin, Base):
+    __tablename__ = "timeseries_by_spaces"
+    __table_args__ = (sqla.UniqueConstraint("timeseries_id", "space_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
+    space_id = sqla.Column(sqla.ForeignKey("spaces.id"), nullable=False)
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "timeseries": Relation(
+                    kind="one",
+                    other_type="Timeseries",
+                    my_field="timeseries_id",
+                    other_field="id",
+                ),
+                "space": Relation(
+                    kind="one",
+                    other_type="Space",
+                    my_field="space_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
+class TimeseriesByZone(AuthMixin, Base):
+    __tablename__ = "timeseries_by_zones"
+    __table_args__ = (sqla.UniqueConstraint("timeseries_id", "zone_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
+    zone_id = sqla.Column(sqla.ForeignKey("zones.id"), nullable=False)
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "timeseries": Relation(
+                    kind="one",
+                    other_type="Timeseries",
+                    my_field="timeseries_id",
+                    other_field="id",
+                ),
+                "zone": Relation(
+                    kind="one",
+                    other_type="Zone",
+                    my_field="zone_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
 @sqla.event.listens_for(TimeseriesDataState.__table__, "after_create")
 def _insert_initial_timeseries_data_states(target, connection, **kwargs):
     connection.execute(target.insert(), {"name": "Raw"})
