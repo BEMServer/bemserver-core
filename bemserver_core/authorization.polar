@@ -321,3 +321,34 @@ resource TimeseriesByZone {
 has_permission(user: User, "read", tbz:TimeseriesByZone) if
     #has_permission(user, "read", tbz.zone) and
     has_permission(user, "read", tbz.timeseries);
+
+
+resource SitePropertyData{
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", spd:SitePropertyData) if
+    has_permission(user, "read", spd.site);
+
+resource BuildingPropertyData{
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", bpd:BuildingPropertyData) if
+    has_permission(user, "read", bpd.building);
+
+resource StoreyPropertyData{
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", spd:StoreyPropertyData) if
+    has_permission(user, "read", spd.storey);
+
+resource SpacePropertyData{
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", spd:SpacePropertyData) if
+    has_permission(user, "read", spd.space);
+
+resource ZonePropertyData{
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", zpd:ZonePropertyData) if
+    has_permission(user, "read", zpd.zone);

@@ -13,6 +13,11 @@ from bemserver_core.model import (
     Storey,
     Space,
     Zone,
+    SitePropertyData,
+    BuildingPropertyData,
+    StoreyPropertyData,
+    SpacePropertyData,
+    ZonePropertyData,
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
@@ -529,3 +534,303 @@ class TestZoneModel:
                 zone.update(name="Super zone 1")
             with pytest.raises(BEMServerAuthorizationError):
                 zone.delete()
+
+
+class TestSitePropertyDataModel:
+    def test_site_property_data_authorizations_as_admin(
+        self, users, sites, site_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        site_1 = sites[0]
+        site_p_1 = site_properties[0]
+        site_p_2 = site_properties[1]
+
+        with CurrentUser(admin_user):
+            site_p_1 = SitePropertyData.new(
+                site_id=site_1.id,
+                site_property_id=site_p_1.id,
+                value=12,
+            )
+            db.session.add(site_p_1)
+            db.session.commit()
+            SitePropertyData.get_by_id(site_p_1.id)
+            site_ps = list(SitePropertyData.get())
+            assert len(site_ps) == 1
+            site_p_1.update(structural_element_property_data_id=site_p_2.id)
+            site_p_1.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    def test_site_property_data_authorizations_as_user(
+        self,
+        users,
+        sites,
+        site_properties,
+        site_property_data,
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        site_2 = sites[1]
+        site_p_1 = site_properties[0]
+        spd_1 = site_property_data[0]
+        spd_2 = site_property_data[1]
+
+        with CurrentUser(user_1):
+            SitePropertyData.get_by_id(spd_2.id)
+
+            with pytest.raises(BEMServerAuthorizationError):
+                SitePropertyData.get_by_id(spd_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                SitePropertyData.new(
+                    site_id=site_2.id,
+                    site_property_id=site_p_1.id,
+                    value=12,
+                )
+            with pytest.raises(BEMServerAuthorizationError):
+                spd_2.update(value="69")
+            with pytest.raises(BEMServerAuthorizationError):
+                spd_2.delete()
+
+
+class TestBuildingPropertyDataModel:
+    def test_building_property_data_authorizations_as_admin(
+        self, users, buildings, building_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        building_1 = buildings[0]
+        building_p_1 = building_properties[0]
+        building_p_2 = building_properties[1]
+
+        with CurrentUser(admin_user):
+            building_p_1 = BuildingPropertyData.new(
+                building_id=building_1.id,
+                building_property_id=building_p_1.id,
+                value=12,
+            )
+            db.session.add(building_p_1)
+            db.session.commit()
+            BuildingPropertyData.get_by_id(building_p_1.id)
+            building_ps = list(BuildingPropertyData.get())
+            assert len(building_ps) == 1
+            building_p_1.update(structural_element_property_data_id=building_p_2.id)
+            building_p_1.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    def test_building_property_data_authorizations_as_user(
+        self,
+        users,
+        buildings,
+        building_properties,
+        building_property_data,
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        building_2 = buildings[1]
+        building_p_1 = building_properties[0]
+        bpd_1 = building_property_data[0]
+        bpd_2 = building_property_data[1]
+
+        with CurrentUser(user_1):
+            BuildingPropertyData.get_by_id(bpd_2.id)
+
+            with pytest.raises(BEMServerAuthorizationError):
+                BuildingPropertyData.get_by_id(bpd_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                BuildingPropertyData.new(
+                    building_id=building_2.id,
+                    building_property_id=building_p_1.id,
+                    value=12,
+                )
+            with pytest.raises(BEMServerAuthorizationError):
+                bpd_2.update(value="69")
+            with pytest.raises(BEMServerAuthorizationError):
+                bpd_2.delete()
+
+
+class TestStoreyPropertyDataModel:
+    def test_storey_property_data_authorizations_as_admin(
+        self, users, storeys, storey_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        storey_1 = storeys[0]
+        storey_p_1 = storey_properties[0]
+        storey_p_2 = storey_properties[1]
+
+        with CurrentUser(admin_user):
+            storey_p_1 = StoreyPropertyData.new(
+                storey_id=storey_1.id,
+                storey_property_id=storey_p_1.id,
+                value=12,
+            )
+            db.session.add(storey_p_1)
+            db.session.commit()
+            StoreyPropertyData.get_by_id(storey_p_1.id)
+            storey_ps = list(StoreyPropertyData.get())
+            assert len(storey_ps) == 1
+            storey_p_1.update(structural_element_property_data_id=storey_p_2.id)
+            storey_p_1.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    def test_storey_property_data_authorizations_as_user(
+        self,
+        users,
+        storeys,
+        storey_properties,
+        storey_property_data,
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        storey_2 = storeys[1]
+        storey_p_1 = storey_properties[0]
+        spd_1 = storey_property_data[0]
+        spd_2 = storey_property_data[1]
+
+        with CurrentUser(user_1):
+            StoreyPropertyData.get_by_id(spd_2.id)
+
+            with pytest.raises(BEMServerAuthorizationError):
+                StoreyPropertyData.get_by_id(spd_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                StoreyPropertyData.new(
+                    storey_id=storey_2.id,
+                    storey_property_id=storey_p_1.id,
+                    value=12,
+                )
+            with pytest.raises(BEMServerAuthorizationError):
+                spd_2.update(value="69")
+            with pytest.raises(BEMServerAuthorizationError):
+                spd_2.delete()
+
+
+class TestSpacePropertyDataModel:
+    def test_space_property_data_authorizations_as_admin(
+        self, users, spaces, space_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        space_1 = spaces[0]
+        space_p_1 = space_properties[0]
+        space_p_2 = space_properties[1]
+
+        with CurrentUser(admin_user):
+            space_p_1 = SpacePropertyData.new(
+                space_id=space_1.id,
+                space_property_id=space_p_1.id,
+                value=12,
+            )
+            db.session.add(space_p_1)
+            db.session.commit()
+            SpacePropertyData.get_by_id(space_p_1.id)
+            space_ps = list(SpacePropertyData.get())
+            assert len(space_ps) == 1
+            space_p_1.update(structural_element_property_data_id=space_p_2.id)
+            space_p_1.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    def test_space_property_data_authorizations_as_user(
+        self,
+        users,
+        spaces,
+        space_properties,
+        space_property_data,
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        space_2 = spaces[1]
+        space_p_1 = space_properties[0]
+        spd_1 = space_property_data[0]
+        spd_2 = space_property_data[1]
+
+        with CurrentUser(user_1):
+            SpacePropertyData.get_by_id(spd_2.id)
+
+            with pytest.raises(BEMServerAuthorizationError):
+                SpacePropertyData.get_by_id(spd_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                SpacePropertyData.new(
+                    space_id=space_2.id,
+                    space_property_id=space_p_1.id,
+                    value=12,
+                )
+            with pytest.raises(BEMServerAuthorizationError):
+                spd_2.update(value="69")
+            with pytest.raises(BEMServerAuthorizationError):
+                spd_2.delete()
+
+
+class TestZonePropertyDataModel:
+    def test_zone_property_data_authorizations_as_admin(
+        self, users, zones, zone_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        zone_1 = zones[0]
+        zone_p_1 = zone_properties[0]
+        zone_p_2 = zone_properties[1]
+
+        with CurrentUser(admin_user):
+            zone_p_1 = ZonePropertyData.new(
+                zone_id=zone_1.id,
+                zone_property_id=zone_p_1.id,
+                value=12,
+            )
+            db.session.add(zone_p_1)
+            db.session.commit()
+            ZonePropertyData.get_by_id(zone_p_1.id)
+            zone_ps = list(ZonePropertyData.get())
+            assert len(zone_ps) == 1
+            zone_p_1.update(structural_element_property_data_id=zone_p_2.id)
+            zone_p_1.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    def test_zone_property_data_authorizations_as_user(
+        self,
+        users,
+        zones,
+        zone_properties,
+        zone_property_data,
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        zone_2 = zones[1]
+        zone_p_1 = zone_properties[0]
+        zpd_1 = zone_property_data[0]
+        zpd_2 = zone_property_data[1]
+
+        with CurrentUser(user_1):
+            ZonePropertyData.get_by_id(zpd_2.id)
+
+            with pytest.raises(BEMServerAuthorizationError):
+                ZonePropertyData.get_by_id(zpd_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ZonePropertyData.new(
+                    zone_id=zone_2.id,
+                    zone_property_id=zone_p_1.id,
+                    value=12,
+                )
+            with pytest.raises(BEMServerAuthorizationError):
+                zpd_2.update(value="69")
+            with pytest.raises(BEMServerAuthorizationError):
+                zpd_2.delete()

@@ -254,3 +254,133 @@ class Zone(AuthMixin, Base):
                 ),
             },
         )
+
+
+class SitePropertyData(AuthMixin, Base):
+    __tablename__ = "site_property_data"
+    __table_args__ = (sqla.UniqueConstraint("site_id", "site_property_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    site_id = sqla.Column(sqla.ForeignKey("sites.id"), nullable=False)
+    site_property_id = sqla.Column(
+        sqla.ForeignKey("site_properties.id"), nullable=False
+    )
+    value = sqla.Column(sqla.String(100), nullable=False)
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "site": Relation(
+                    kind="one",
+                    other_type="Site",
+                    my_field="site_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
+class BuildingPropertyData(AuthMixin, Base):
+    __tablename__ = "building_property_data"
+    __table_args__ = (sqla.UniqueConstraint("building_id", "building_property_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    building_id = sqla.Column(sqla.ForeignKey("buildings.id"), nullable=False)
+    building_property_id = sqla.Column(
+        sqla.ForeignKey("building_properties.id"), nullable=False
+    )
+    value = sqla.Column(sqla.String(100), nullable=False)
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "building": Relation(
+                    kind="one",
+                    other_type="Building",
+                    my_field="building_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
+class StoreyPropertyData(AuthMixin, Base):
+    __tablename__ = "storey_property_data"
+    __table_args__ = (sqla.UniqueConstraint("storey_id", "storey_property_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    storey_id = sqla.Column(sqla.ForeignKey("storeys.id"), nullable=False)
+    storey_property_id = sqla.Column(
+        sqla.ForeignKey("storey_properties.id"), nullable=False
+    )
+    value = sqla.Column(sqla.String(100), nullable=False)
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "storey": Relation(
+                    kind="one",
+                    other_type="Storey",
+                    my_field="storey_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
+class SpacePropertyData(AuthMixin, Base):
+    __tablename__ = "space_property_data"
+    __table_args__ = (sqla.UniqueConstraint("space_id", "space_property_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    space_id = sqla.Column(sqla.ForeignKey("spaces.id"), nullable=False)
+    space_property_id = sqla.Column(
+        sqla.ForeignKey("space_properties.id"), nullable=False
+    )
+    value = sqla.Column(sqla.String(100), nullable=False)
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "space": Relation(
+                    kind="one",
+                    other_type="Space",
+                    my_field="space_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
+class ZonePropertyData(AuthMixin, Base):
+    __tablename__ = "zone_property_data"
+    __table_args__ = (sqla.UniqueConstraint("zone_id", "zone_property_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    zone_id = sqla.Column(sqla.ForeignKey("zones.id"), nullable=False)
+    zone_property_id = sqla.Column(
+        sqla.ForeignKey("zone_properties.id"), nullable=False
+    )
+    value = sqla.Column(sqla.String(100), nullable=False)
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "zone": Relation(
+                    kind="one",
+                    other_type="Zone",
+                    my_field="zone_id",
+                    other_field="id",
+                ),
+            },
+        )

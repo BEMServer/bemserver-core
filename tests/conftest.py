@@ -462,3 +462,88 @@ def timeseries_by_zones(database, timeseries, zones):
         )
         db.session.commit()
     return (tbz_1, tbz_2)
+
+
+@pytest.fixture
+def site_property_data(database, sites, site_properties):
+    with OpenBar():
+        spd_1 = model.SitePropertyData.new(
+            site_id=sites[0].id,
+            site_property_id=site_properties[0].id,
+            value="12",
+        )
+        spd_2 = model.SitePropertyData.new(
+            site_id=sites[1].id,
+            site_property_id=site_properties[1].id,
+            value="42",
+        )
+        db.session.commit()
+    return (spd_1, spd_2)
+
+
+@pytest.fixture
+def building_property_data(database, buildings, building_properties):
+    with OpenBar():
+        bpd_1 = model.BuildingPropertyData.new(
+            building_id=buildings[0].id,
+            building_property_id=building_properties[0].id,
+            value="12",
+        )
+        bpd_2 = model.BuildingPropertyData.new(
+            building_id=buildings[1].id,
+            building_property_id=building_properties[1].id,
+            value="42",
+        )
+        db.session.commit()
+    return (bpd_1, bpd_2)
+
+
+@pytest.fixture
+def storey_property_data(database, storeys, storey_properties):
+    with OpenBar():
+        spd_1 = model.StoreyPropertyData.new(
+            storey_id=storeys[0].id,
+            storey_property_id=storey_properties[0].id,
+            value="12",
+        )
+        spd_2 = model.StoreyPropertyData.new(
+            storey_id=storeys[1].id,
+            storey_property_id=storey_properties[1].id,
+            value="42",
+        )
+        db.session.commit()
+    return (spd_1, spd_2)
+
+
+@pytest.fixture
+def space_property_data(database, spaces, space_properties):
+    with OpenBar():
+        spd_1 = model.SpacePropertyData.new(
+            space_id=spaces[0].id,
+            space_property_id=space_properties[0].id,
+            value="12",
+        )
+        spd_2 = model.SpacePropertyData.new(
+            space_id=spaces[1].id,
+            space_property_id=space_properties[1].id,
+            value="42",
+        )
+        db.session.commit()
+    return (spd_1, spd_2)
+
+
+@pytest.fixture
+def zone_property_data(database, zones, zone_properties):
+    with OpenBar():
+        zpd_1 = model.ZonePropertyData.new(
+            zone_id=zones[0].id,
+            zone_property_id=zone_properties[0].id,
+            value="12",
+        )
+        zpd_2 = model.ZonePropertyData.new(
+            zone_id=zones[1].id,
+            zone_property_id=zone_properties[1].id,
+            value="42",
+        )
+        db.session.commit()
+    return (zpd_1, zpd_2)
