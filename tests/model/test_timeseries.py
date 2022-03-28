@@ -7,6 +7,11 @@ from bemserver_core.model import (
     Timeseries,
     TimeseriesPropertyData,
     TimeseriesByDataState,
+    TimeseriesBySite,
+    TimeseriesByBuilding,
+    TimeseriesByStorey,
+    TimeseriesBySpace,
+    TimeseriesByZone,
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
@@ -122,29 +127,195 @@ class TestTimeseriesModel:
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
     @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
-    def test_timeseries_filter_by_campaign_or_user(self, users, timeseries, campaigns):
+    @pytest.mark.usefixtures("timeseries_by_sites")
+    @pytest.mark.usefixtures("timeseries_by_buildings")
+    @pytest.mark.usefixtures("timeseries_by_storeys")
+    @pytest.mark.usefixtures("timeseries_by_spaces")
+    @pytest.mark.usefixtures("timeseries_by_zones")
+    def test_timeseries_filters_as_admin(
+        self,
+        users,
+        timeseries,
+        campaigns,
+        campaign_scopes,
+        sites,
+        buildings,
+        storeys,
+        spaces,
+        zones,
+    ):
         admin_user = users[0]
         assert admin_user.is_admin
+        user_1 = users[1]
+        assert not user_1.is_admin
         campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
-        user_1 = users[1]
         ts_1 = timeseries[0]
         ts_2 = timeseries[1]
+        site_1 = sites[0]
+        building_1 = buildings[0]
+        storey_1 = storeys[0]
+        space_1 = spaces[0]
+        zone_1 = zones[0]
 
         with CurrentUser(admin_user):
+
             ts_l = list(Timeseries.get(campaign_id=campaign_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
 
-        with CurrentUser(admin_user):
             ts_l = list(Timeseries.get(user_id=user_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_2
 
-        with CurrentUser(admin_user):
             ts_l = list(Timeseries.get(user_id=user_1.id, campaign_id=campaign_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_2
+
+            ts_l = list(Timeseries.get(site_id=site_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_1
+
+            ts_l = list(Timeseries.get(building_id=building_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_1
+
+            ts_l = list(Timeseries.get(storey_id=storey_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_1
+
+            ts_l = list(Timeseries.get(space_id=space_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_1
+
+            ts_l = list(Timeseries.get(zone_id=zone_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_1
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.usefixtures("timeseries_by_zones")
+    def test_timeseries_filters_as_user(
+        self,
+        users,
+        timeseries,
+        campaigns,
+        campaign_scopes,
+        sites,
+        buildings,
+        storeys,
+        spaces,
+        zones,
+        timeseries_by_sites,
+        timeseries_by_buildings,
+        timeseries_by_storeys,
+        timeseries_by_spaces,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        user_1 = users[1]
+        assert not user_1.is_admin
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
+        cs_1 = campaign_scopes[0]
+        cs_2 = campaign_scopes[1]
+        ts_2 = timeseries[1]
+        site_1 = sites[0]
+        site_2 = sites[1]
+        building_1 = buildings[0]
+        building_2 = buildings[1]
+        storey_1 = storeys[0]
+        storey_2 = storeys[1]
+        space_1 = spaces[0]
+        space_2 = spaces[1]
+        zone_1 = zones[0]
+        zone_2 = zones[1]
+        zone_1 = zones[0]
+        zone_2 = zones[1]
+        tbsi_2 = timeseries_by_sites[1]
+        tbb_2 = timeseries_by_buildings[1]
+        tbst_2 = timeseries_by_storeys[1]
+        tbsp_2 = timeseries_by_spaces[1]
+
+        with CurrentUser(user_1):
+
+            with pytest.raises(BEMServerAuthorizationError):
+                list(Timeseries.get(campaign_id=campaign_1.id))
+            ts_l = list(Timeseries.get(campaign_id=campaign_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_2
+
+            with pytest.raises(BEMServerAuthorizationError):
+                list(Timeseries.get(campaign_scope_id=cs_1.id))
+            ts_l = list(Timeseries.get(campaign_id=cs_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_2
+
+            with pytest.raises(BEMServerAuthorizationError):
+                list(Timeseries.get(user_id=admin_user.id))
+            ts_l = list(Timeseries.get(user_id=user_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_2
+
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_l = list(Timeseries.get(site_id=site_1.id))
+            ts_l = list(Timeseries.get(site_id=site_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_2
+
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_l = list(Timeseries.get(building_id=building_1.id))
+            ts_l = list(Timeseries.get(building_id=building_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_2
+
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_l = list(Timeseries.get(storey_id=storey_1.id))
+            ts_l = list(Timeseries.get(storey_id=storey_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_2
+
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_l = list(Timeseries.get(space_id=space_1.id))
+            ts_l = list(Timeseries.get(space_id=space_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_2
+
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_l = list(Timeseries.get(zone_id=zone_1.id))
+            ts_l = list(Timeseries.get(zone_id=zone_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_2
+
+            db.session.delete(tbst_2)
+            db.session.commit()
+
+            ts_l = list(Timeseries.get(storey_id=storey_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_2
+
+            db.session.delete(tbb_2)
+            db.session.commit()
+
+            ts_l = list(Timeseries.get(building_id=building_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_2
+
+            db.session.delete(tbsi_2)
+            db.session.commit()
+
+            ts_l = list(Timeseries.get(site_id=site_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_2
+
+            db.session.delete(tbsp_2)
+            db.session.commit()
+
+            assert not list(Timeseries.get(space_id=space_2.id))
+            assert not list(Timeseries.get(storey_id=storey_2.id))
+            assert not list(Timeseries.get(building_id=building_2.id))
+            assert not list(Timeseries.get(site_id=site_2.id))
 
     def test_timeseries_authorizations_as_admin(
         self, users, campaigns, campaign_scopes
@@ -337,3 +508,268 @@ class TestTimeseriesByDataStateModel:
                 )
             with pytest.raises(BEMServerAuthorizationError):
                 TimeseriesByDataState.get_by_id(ts_1.id)
+
+
+class TestTimeseriesBySiteModel:
+    def test_timeseries_by_site_authorizations_as_admin(self, users, timeseries, sites):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
+        site_1 = sites[0]
+
+        with CurrentUser(admin_user):
+            tbs_1 = TimeseriesBySite.new(timeseries_id=ts_1.id, site_id=site_1.id)
+            db.session.add(tbs_1)
+            db.session.commit()
+            TimeseriesBySite.get_by_id(tbs_1.id)
+            tbss = list(TimeseriesBySite.get())
+            assert len(tbss) == 1
+            tbs_1.update(timeseries_id=ts_2.id)
+            tbs_1.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.parametrize("timeseries", (4,), indirect=True)
+    def test_timeseries_by_site_authorizations_as_user(
+        self, users, timeseries, sites, timeseries_by_sites
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        ts_2 = timeseries[1]
+        ts_4 = timeseries[3]
+        site_2 = sites[1]
+        tbs_1 = timeseries_by_sites[0]
+        tbs_2 = timeseries_by_sites[1]
+
+        with CurrentUser(user_1):
+            tbs_l = list(TimeseriesBySite.get())
+            assert len(tbs_l) == 1
+            assert tbs_l[0] == tbs_2
+            TimeseriesBySite.get_by_id(tbs_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesBySite.get_by_id(tbs_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesBySite.new(timeseries_id=ts_2.id, site_id=site_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tbs_2.update(timeseries_id=ts_4.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tbs_2.delete()
+
+
+class TestTimeseriesByBuildingModel:
+    def test_timeseries_by_building_authorizations_as_admin(
+        self, users, timeseries, buildings
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
+        building_1 = buildings[0]
+
+        with CurrentUser(admin_user):
+            tbb_1 = TimeseriesByBuilding.new(
+                timeseries_id=ts_1.id, building_id=building_1.id
+            )
+            db.session.add(tbb_1)
+            db.session.commit()
+            TimeseriesByBuilding.get_by_id(tbb_1.id)
+            tbbs = list(TimeseriesByBuilding.get())
+            assert len(tbbs) == 1
+            tbb_1.update(timeseries_id=ts_2.id)
+            tbb_1.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.parametrize("timeseries", (4,), indirect=True)
+    def test_timeseries_by_building_authorizations_as_user(
+        self, users, timeseries, buildings, timeseries_by_buildings
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        ts_2 = timeseries[1]
+        ts_4 = timeseries[3]
+        building_2 = buildings[1]
+        tbb_1 = timeseries_by_buildings[0]
+        tbb_2 = timeseries_by_buildings[1]
+
+        with CurrentUser(user_1):
+            tbb_l = list(TimeseriesByBuilding.get())
+            assert len(tbb_l) == 1
+            assert tbb_l[0] == tbb_2
+            TimeseriesByBuilding.get_by_id(tbb_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesByBuilding.get_by_id(tbb_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesByBuilding.new(
+                    timeseries_id=ts_2.id, building_id=building_2.id
+                )
+            with pytest.raises(BEMServerAuthorizationError):
+                tbb_2.update(timeseries_id=ts_4.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tbb_2.delete()
+
+
+class TestTimeseriesByStoreyModel:
+    def test_timeseries_by_storey_authorizations_as_admin(
+        self, users, timeseries, storeys
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
+        storey_1 = storeys[0]
+
+        with CurrentUser(admin_user):
+            tbs_1 = TimeseriesByStorey.new(timeseries_id=ts_1.id, storey_id=storey_1.id)
+            db.session.add(tbs_1)
+            db.session.commit()
+            TimeseriesByStorey.get_by_id(tbs_1.id)
+            tbss = list(TimeseriesByStorey.get())
+            assert len(tbss) == 1
+            tbs_1.update(timeseries_id=ts_2.id)
+            tbs_1.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.parametrize("timeseries", (4,), indirect=True)
+    def test_timeseries_by_storey_authorizations_as_user(
+        self, users, timeseries, storeys, timeseries_by_storeys
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        ts_2 = timeseries[1]
+        ts_4 = timeseries[3]
+        storey_2 = storeys[1]
+        tbs_1 = timeseries_by_storeys[0]
+        tbs_2 = timeseries_by_storeys[1]
+
+        with CurrentUser(user_1):
+            tbs_l = list(TimeseriesByStorey.get())
+            assert len(tbs_l) == 1
+            assert tbs_l[0] == tbs_2
+            TimeseriesByStorey.get_by_id(tbs_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesByStorey.get_by_id(tbs_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesByStorey.new(timeseries_id=ts_2.id, storey_id=storey_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tbs_2.update(timeseries_id=ts_4.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tbs_2.delete()
+
+
+class TestTimeseriesBySpaceModel:
+    def test_timeseries_by_space_authorizations_as_admin(
+        self, users, timeseries, spaces
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
+        space_1 = spaces[0]
+
+        with CurrentUser(admin_user):
+            tbs_1 = TimeseriesBySpace.new(timeseries_id=ts_1.id, space_id=space_1.id)
+            db.session.add(tbs_1)
+            db.session.commit()
+            TimeseriesBySpace.get_by_id(tbs_1.id)
+            tbss = list(TimeseriesBySpace.get())
+            assert len(tbss) == 1
+            tbs_1.update(timeseries_id=ts_2.id)
+            tbs_1.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.parametrize("timeseries", (4,), indirect=True)
+    def test_timeseries_by_space_authorizations_as_user(
+        self, users, timeseries, spaces, timeseries_by_spaces
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        ts_2 = timeseries[1]
+        ts_4 = timeseries[3]
+        space_2 = spaces[1]
+        tbs_1 = timeseries_by_spaces[0]
+        tbs_2 = timeseries_by_spaces[1]
+
+        with CurrentUser(user_1):
+            tbs_l = list(TimeseriesBySpace.get())
+            assert len(tbs_l) == 1
+            assert tbs_l[0] == tbs_2
+            TimeseriesBySpace.get_by_id(tbs_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesBySpace.get_by_id(tbs_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesBySpace.new(timeseries_id=ts_2.id, space_id=space_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tbs_2.update(timeseries_id=ts_4.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tbs_2.delete()
+
+
+class TestTimeseriesByZoneModel:
+    def test_timeseries_by_zone_authorizations_as_admin(self, users, timeseries, zones):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
+        zone_1 = zones[0]
+
+        with CurrentUser(admin_user):
+            tbz_1 = TimeseriesByZone.new(timeseries_id=ts_1.id, zone_id=zone_1.id)
+            db.session.add(tbz_1)
+            db.session.commit()
+            TimeseriesByZone.get_by_id(tbz_1.id)
+            tbzs = list(TimeseriesByZone.get())
+            assert len(tbzs) == 1
+            tbz_1.update(timeseries_id=ts_2.id)
+            tbz_1.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.parametrize("timeseries", (4,), indirect=True)
+    def test_timeseries_by_zone_authorizations_as_user(
+        self, users, timeseries, zones, timeseries_by_zones
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        ts_2 = timeseries[1]
+        ts_4 = timeseries[3]
+        zone_2 = zones[1]
+        tbz_1 = timeseries_by_zones[0]
+        tbz_2 = timeseries_by_zones[1]
+
+        with CurrentUser(user_1):
+            tbz_l = list(TimeseriesByZone.get())
+            assert len(tbz_l) == 1
+            assert tbz_l[0] == tbz_2
+            TimeseriesByZone.get_by_id(tbz_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesByZone.get_by_id(tbz_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesByZone.new(timeseries_id=ts_2.id, zone_id=zone_2.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tbz_2.update(timeseries_id=ts_4.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tbz_2.delete()

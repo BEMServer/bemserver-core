@@ -199,3 +199,156 @@ has_permission(user: User, "update", event:Event) if
     has_role(user, "cs_member", event.campaign_scope);
 has_permission(user: User, "delete", event:Event) if
     has_role(user, "cs_member", event.campaign_scope);
+
+
+resource StructuralElementProperty{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource SiteProperty{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource BuildingProperty{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource StoreyProperty{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource SpaceProperty{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource ZoneProperty{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource Site {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", site:Site) if
+    has_role(user, "c_member", site.campaign);
+
+resource Building {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", building:Building) if
+    has_permission(user, "read", building.site);
+
+resource Storey {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", storey:Storey) if
+    has_permission(user, "read", storey.building);
+
+resource Space{
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", space:Space) if
+    has_permission(user, "read", space.storey);
+
+resource Zone {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", zone:Zone) if
+    has_role(user, "c_member", zone.campaign);
+
+
+# TODO: Oso issue: checking both site and timeseries involves user x group
+# twice and triggers an error in Oso when building the query:
+# "Type `UserGroup` occurs more than once as the target of a relation"
+# Fortunately, in our case, checking only timeseries is enough because users
+# having access to the timeseries "should" be part of the campaign and
+# therefore should have access to the site.
+
+resource TimeseriesBySite {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", tbs:TimeseriesBySite) if
+    #has_permission(user, "read", tbs.site) and
+    has_permission(user, "read", tbs.timeseries);
+
+resource TimeseriesByBuilding {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", tbb:TimeseriesByBuilding) if
+    #has_permission(user, "read", tbb.building) and
+    has_permission(user, "read", tbb.timeseries);
+
+resource TimeseriesByStorey {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", tbs:TimeseriesByStorey) if
+    #has_permission(user, "read", tbs.storey) and
+    has_permission(user, "read", tbs.timeseries);
+
+resource TimeseriesBySpace {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", tbs:TimeseriesBySpace) if
+    #has_permission(user, "read", tbs.space) and
+    has_permission(user, "read", tbs.timeseries);
+
+resource TimeseriesByZone {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", tbz:TimeseriesByZone) if
+    #has_permission(user, "read", tbz.zone) and
+    has_permission(user, "read", tbz.timeseries);
+
+
+resource SitePropertyData{
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", spd:SitePropertyData) if
+    has_permission(user, "read", spd.site);
+
+resource BuildingPropertyData{
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", bpd:BuildingPropertyData) if
+    has_permission(user, "read", bpd.building);
+
+resource StoreyPropertyData{
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", spd:StoreyPropertyData) if
+    has_permission(user, "read", spd.storey);
+
+resource SpacePropertyData{
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", spd:SpacePropertyData) if
+    has_permission(user, "read", spd.space);
+
+resource ZonePropertyData{
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", zpd:ZonePropertyData) if
+    has_permission(user, "read", zpd.zone);
