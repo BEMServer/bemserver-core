@@ -9,17 +9,17 @@ allow(actor, action, resource) if has_permission(actor, action, resource);
 allow(_actor, _action, _resource) if OpenBarPolarClass.get();
 
 # Admin can do anything
-allow(user: UserActor, _action, _resource) if user.is_admin = true;
+allow(user: User, _action, _resource) if user.is_admin = true;
 
 # User has role "user" on anything
 resource Base {
     roles = ["user"];
 }
 
-has_role(_: UserActor, "user", _: Base);
+has_role(_: User, "user", _: Base);
 
 
-actor UserActor {}
+actor User {}
 
 
 resource User {
@@ -30,7 +30,7 @@ resource User {
     "update" if "self";
 }
 
-has_role(_user: UserActor{id: id}, "self", _user: User{id: id});
+has_role(_user: User{id: id}, "self", _user: User{id: id});
 
 
 resource UserGroup {
@@ -40,9 +40,9 @@ resource UserGroup {
     "read" if "ug_member";
 }
 
-has_role(user: UserActor, "ug_member", ug: UserGroup) if
-    ubug in ug.users_by_user_groups and
-    ubug.user = user;
+has_role(user: User, "ug_member", ug: UserGroup) if
+    ubug in user.users_by_user_groups and
+    ubug.user_group = ug;
 
 
 resource UserByUserGroup {
@@ -52,7 +52,7 @@ resource UserByUserGroup {
     "read" if "ubug_owner";
 }
 
-has_role(user: UserActor, "ubug_owner", ubug: UserByUserGroup) if
+has_role(user: User, "ubug_owner", ubug: UserByUserGroup) if
     user = ubug.user;
 
 
@@ -63,10 +63,10 @@ resource Campaign {
     "read" if "c_member";
 }
 
-has_role(user: UserActor, "c_member", campaign: Campaign) if
+has_role(user: User, "c_member", campaign: Campaign) if
     ugbc in campaign.user_groups_by_campaigns and
-    ubug in ugbc.user_group.users_by_user_groups and
-    user = ubug.user;
+    ubug in user.users_by_user_groups and
+    ubug.user_group = ugbc.user_group;
 
 
 resource UserGroupByCampaign {
@@ -76,7 +76,7 @@ resource UserGroupByCampaign {
     "read" if "ugbc_owner";
 }
 
-has_role(user: UserActor, "ugbc_owner", ugbc: UserGroupByCampaign) if
+has_role(user: User, "ugbc_owner", ugbc: UserGroupByCampaign) if
     has_role(user, "ug_member", ugbc.user_group);
 
 
@@ -87,10 +87,10 @@ resource CampaignScope {
     "read" if "cs_member";
 }
 
-has_role(user: UserActor, "cs_member", cs: CampaignScope) if
+has_role(user: User, "cs_member", cs: CampaignScope) if
     ugbcs in cs.user_groups_by_campaign_scopes and
-    ubug in ugbcs.user_group.users_by_user_groups and
-    user = ubug.user;
+    ubug in user.users_by_user_groups and
+    ubug.user_group = ugbcs.user_group;
 
 
 resource UserGroupByCampaignScope {
@@ -100,7 +100,7 @@ resource UserGroupByCampaignScope {
     "read" if "ugbcs_owner";
 }
 
-has_role(user: UserActor, "ugbcs_owner", ugbcs: UserGroupByCampaignScope) if
+has_role(user: User, "ugbcs_owner", ugbcs: UserGroupByCampaignScope) if
     has_role(user, "ug_member", ugbcs.user_group);
 
 
@@ -191,12 +191,11 @@ resource Event {
     permissions = ["create", "read", "update", "delete"];
 }
 
-has_permission(user: UserActor, "create", event:Event) if
+has_permission(user: User, "create", event:Event) if
     has_role(user, "cs_member", event.campaign_scope);
-has_permission(user: UserActor, "read", event:Event) if
+has_permission(user: User, "read", event:Event) if
     has_role(user, "cs_member", event.campaign_scope);
-has_permission(user: UserActor, "update", event:Event) if
+has_permission(user: User, "update", event:Event) if
     has_role(user, "cs_member", event.campaign_scope);
-has_permission(user: UserActor, "delete", event:Event) if
+has_permission(user: User, "delete", event:Event) if
     has_role(user, "cs_member", event.campaign_scope);
-

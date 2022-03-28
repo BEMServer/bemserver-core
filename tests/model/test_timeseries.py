@@ -121,6 +121,7 @@ class TestTimeseriesModel:
 
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
     def test_timeseries_filter_by_campaign_or_user(self, users, timeseries, campaigns):
         admin_user = users[0]
         assert admin_user.is_admin

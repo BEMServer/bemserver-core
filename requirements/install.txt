@@ -16,7 +16,7 @@ greenlet==1.1.2
     # via sqlalchemy
 numpy==1.22.2
     # via pandas
-oso==0.25.1
+oso==0.26.0
     # via bemserver-core (setup.py)
 pandas==1.4.0
     # via bemserver-core (setup.py)

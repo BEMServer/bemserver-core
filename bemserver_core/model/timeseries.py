@@ -6,7 +6,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from bemserver_core.database import Base
 from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.model.users import UserGroup, UserByUserGroup
-from bemserver_core.model.campaigns import UserGroupByCampaign
+from bemserver_core.model.campaigns import CampaignScope, UserGroupByCampaignScope
 
 
 class TimeseriesProperty(AuthMixin, Base):
@@ -93,12 +93,14 @@ class Timeseries(AuthMixin, Base):
     def get(cls, *, user_id=None, **kwargs):
         query = super().get(**kwargs)
         if user_id:
+            cs = sqla.orm.aliased(CampaignScope)
+            ubug = sqla.orm.aliased(UserByUserGroup)
             query = (
-                query.join(cls.campaign)
-                .join(UserGroupByCampaign)
-                .join(UserGroup)
-                .join(UserByUserGroup)
-                .filter(UserByUserGroup.user_id == user_id)
+                query.join(cs, cls.campaign_scope_id == cs.id)
+                .join(sqla.orm.aliased(UserGroupByCampaignScope))
+                .join(sqla.orm.aliased(UserGroup))
+                .join(ubug)
+                .filter(ubug.user_id == user_id)
             )
         return query
 
