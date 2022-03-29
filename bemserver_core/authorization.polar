@@ -1,7 +1,3 @@
-# TODO: Investigate potential Oso issue
-# We should't have to write "*_member" or "*_owner, Oso should infer which
-# has_role rule matches which resource type.
-
 # General rule
 allow(actor, action, resource) if has_permission(actor, action, resource);
 
@@ -35,35 +31,35 @@ has_role(_user: User{id: id}, "self", _user: User{id: id});
 
 resource UserGroup {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["ug_member"];
+    roles = ["member"];
 
-    "read" if "ug_member";
+    "read" if "member";
 }
 
-has_role(user: User, "ug_member", ug: UserGroup) if
+has_role(user: User, "member", ug: UserGroup) if
     ubug in user.users_by_user_groups and
     ubug.user_group = ug;
 
 
 resource UserByUserGroup {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["ubug_owner"];
+    roles = ["owner"];
 
-    "read" if "ubug_owner";
+    "read" if "owner";
 }
 
-has_role(user: User, "ubug_owner", ubug: UserByUserGroup) if
+has_role(user: User, "owner", ubug: UserByUserGroup) if
     user = ubug.user;
 
 
 resource Campaign {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["c_member"];
+    roles = ["member"];
 
-    "read" if "c_member";
+    "read" if "member";
 }
 
-has_role(user: User, "c_member", campaign: Campaign) if
+has_role(user: User, "member", campaign: Campaign) if
     ugbc in campaign.user_groups_by_campaigns and
     ubug in user.users_by_user_groups and
     ubug.user_group = ugbc.user_group;
@@ -71,23 +67,23 @@ has_role(user: User, "c_member", campaign: Campaign) if
 
 resource UserGroupByCampaign {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["ugbc_owner"];
+    roles = ["owner"];
 
-    "read" if "ugbc_owner";
+    "read" if "owner";
 }
 
-has_role(user: User, "ugbc_owner", ugbc: UserGroupByCampaign) if
-    has_role(user, "ug_member", ugbc.user_group);
+has_role(user: User, "owner", ugbc: UserGroupByCampaign) if
+    has_role(user, "member", ugbc.user_group);
 
 
 resource CampaignScope {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["cs_member"];
+    roles = ["member"];
 
-    "read" if "cs_member";
+    "read" if "member";
 }
 
-has_role(user: User, "cs_member", cs: CampaignScope) if
+has_role(user: User, "member", cs: CampaignScope) if
     ugbcs in cs.user_groups_by_campaign_scopes and
     ubug in user.users_by_user_groups and
     ubug.user_group = ugbcs.user_group;
@@ -95,13 +91,13 @@ has_role(user: User, "cs_member", cs: CampaignScope) if
 
 resource UserGroupByCampaignScope {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["ugbcs_owner"];
+    roles = ["owner"];
 
-    "read" if "ugbcs_owner";
+    "read" if "owner";
 }
 
-has_role(user: User, "ugbcs_owner", ugbcs: UserGroupByCampaignScope) if
-    has_role(user, "ug_member", ugbcs.user_group);
+has_role(user: User, "owner", ugbcs: UserGroupByCampaignScope) if
+    has_role(user, "member", ugbcs.user_group);
 
 
 resource TimeseriesProperty{
@@ -126,9 +122,9 @@ resource Timeseries {
         campaign_scope: CampaignScope
     };
 
-    "read" if "cs_member" on "campaign_scope";
-    "read_data" if "cs_member" on "campaign_scope";
-    "write_data" if "cs_member" on "campaign_scope";
+    "read" if "member" on "campaign_scope";
+    "read_data" if "member" on "campaign_scope";
+    "write_data" if "member" on "campaign_scope";
 }
 
 has_relation(cs: CampaignScope, "campaign_scope", ts: Timeseries) if
@@ -192,13 +188,13 @@ resource Event {
 }
 
 has_permission(user: User, "create", event:Event) if
-    has_role(user, "cs_member", event.campaign_scope);
+    has_role(user, "member", event.campaign_scope);
 has_permission(user: User, "read", event:Event) if
-    has_role(user, "cs_member", event.campaign_scope);
+    has_role(user, "member", event.campaign_scope);
 has_permission(user: User, "update", event:Event) if
-    has_role(user, "cs_member", event.campaign_scope);
+    has_role(user, "member", event.campaign_scope);
 has_permission(user: User, "delete", event:Event) if
-    has_role(user, "cs_member", event.campaign_scope);
+    has_role(user, "member", event.campaign_scope);
 
 
 resource StructuralElementProperty{
@@ -253,7 +249,7 @@ resource Site {
     permissions = ["create", "read", "update", "delete"];
 }
 has_permission(user: User, "read", site:Site) if
-    has_role(user, "c_member", site.campaign);
+    has_role(user, "member", site.campaign);
 
 resource Building {
     permissions = ["create", "read", "update", "delete"];
@@ -277,7 +273,7 @@ resource Zone {
     permissions = ["create", "read", "update", "delete"];
 }
 has_permission(user: User, "read", zone:Zone) if
-    has_role(user, "c_member", zone.campaign);
+    has_role(user, "member", zone.campaign);
 
 
 # TODO: Oso issue: checking both site and timeseries involves user x group
