@@ -102,8 +102,10 @@ class AuthMixin:
 
     @classmethod
     def new(cls, **kwargs):
-        item = super().new(**kwargs)
+        # Override Base.new to avoid adding to the session if auth failed
+        item = cls(**kwargs)
         auth.authorize(get_current_user(), "create", item)
+        db.session.add(item)
         return item
 
     @classmethod
