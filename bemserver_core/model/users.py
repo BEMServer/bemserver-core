@@ -93,7 +93,7 @@ class UserGroup(AuthMixin, Base):
 class UserByUserGroup(AuthMixin, Base):
     """UserGroup x User associations"""
 
-    __tablename__ = "users_groups_by_users"
+    __tablename__ = "users_by_user_groups"
     __table_args__ = (sqla.UniqueConstraint("user_id", "user_group_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
