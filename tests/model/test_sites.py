@@ -18,6 +18,11 @@ from bemserver_core.model import (
     StoreyPropertyData,
     SpacePropertyData,
     ZonePropertyData,
+    TimeseriesBySite,
+    TimeseriesByBuilding,
+    TimeseriesByStorey,
+    TimeseriesBySpace,
+    TimeseriesByZone,
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
@@ -267,6 +272,28 @@ class TestZonePropertyModel:
 
 
 class TestSiteModel:
+    @pytest.mark.usefixtures("spaces")
+    @pytest.mark.usefixtures("site_property_data")
+    @pytest.mark.usefixtures("timeseries_by_sites")
+    def test_site_delete_cascade(self, users, sites):
+        admin_user = users[0]
+        site_1 = sites[0]
+
+        with CurrentUser(admin_user):
+            assert len(list(Building.get())) == 2
+            assert len(list(Storey.get())) == 2
+            assert len(list(Space.get())) == 2
+            assert len(list(SitePropertyData.get())) == 2
+            assert len(list(TimeseriesBySite.get())) == 2
+
+            site_1.delete()
+            db.session.commit()
+            assert len(list(Building.get())) == 1
+            assert len(list(Storey.get())) == 1
+            assert len(list(Space.get())) == 1
+            assert len(list(SitePropertyData.get())) == 1
+            assert len(list(TimeseriesBySite.get())) == 1
+
     def test_site_authorizations_as_admin(self, users, campaigns):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -321,6 +348,26 @@ class TestSiteModel:
 
 
 class TestBuildingModel:
+    @pytest.mark.usefixtures("spaces")
+    @pytest.mark.usefixtures("building_property_data")
+    @pytest.mark.usefixtures("timeseries_by_buildings")
+    def test_building_delete_cascade(self, users, buildings):
+        admin_user = users[0]
+        building_1 = buildings[0]
+
+        with CurrentUser(admin_user):
+            assert len(list(Storey.get())) == 2
+            assert len(list(Space.get())) == 2
+            assert len(list(BuildingPropertyData.get())) == 2
+            assert len(list(TimeseriesByBuilding.get())) == 2
+
+            building_1.delete()
+            db.session.commit()
+            assert len(list(Storey.get())) == 1
+            assert len(list(Space.get())) == 1
+            assert len(list(BuildingPropertyData.get())) == 1
+            assert len(list(TimeseriesByBuilding.get())) == 1
+
     def test_building_authorizations_as_admin(self, users, sites):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -375,6 +422,24 @@ class TestBuildingModel:
 
 
 class TestStoreyModel:
+    @pytest.mark.usefixtures("spaces")
+    @pytest.mark.usefixtures("storey_property_data")
+    @pytest.mark.usefixtures("timeseries_by_storeys")
+    def test_storey_delete_cascade(self, users, storeys):
+        admin_user = users[0]
+        storey_1 = storeys[0]
+
+        with CurrentUser(admin_user):
+            assert len(list(Space.get())) == 2
+            assert len(list(StoreyPropertyData.get())) == 2
+            assert len(list(TimeseriesByStorey.get())) == 2
+
+            storey_1.delete()
+            db.session.commit()
+            assert len(list(Space.get())) == 1
+            assert len(list(StoreyPropertyData.get())) == 1
+            assert len(list(TimeseriesByStorey.get())) == 1
+
     def test_storey_authorizations_as_admin(self, users, buildings):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -429,6 +494,21 @@ class TestStoreyModel:
 
 
 class TestSpaceModel:
+    @pytest.mark.usefixtures("space_property_data")
+    @pytest.mark.usefixtures("timeseries_by_spaces")
+    def test_space_delete_cascade(self, users, spaces):
+        admin_user = users[0]
+        space_1 = spaces[0]
+
+        with CurrentUser(admin_user):
+            assert len(list(SpacePropertyData.get())) == 2
+            assert len(list(TimeseriesBySpace.get())) == 2
+
+            space_1.delete()
+            db.session.commit()
+            assert len(list(SpacePropertyData.get())) == 1
+            assert len(list(TimeseriesBySpace.get())) == 1
+
     def test_space_authorizations_as_admin(self, users, storeys):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -483,6 +563,21 @@ class TestSpaceModel:
 
 
 class TestZoneModel:
+    @pytest.mark.usefixtures("zone_property_data")
+    @pytest.mark.usefixtures("timeseries_by_zones")
+    def test_zone_delete_cascade(self, users, zones):
+        admin_user = users[0]
+        zone_1 = zones[0]
+
+        with CurrentUser(admin_user):
+            assert len(list(ZonePropertyData.get())) == 2
+            assert len(list(TimeseriesByZone.get())) == 2
+
+            zone_1.delete()
+            db.session.commit()
+            assert len(list(ZonePropertyData.get())) == 1
+            assert len(list(TimeseriesByZone.get())) == 1
+
     def test_zone_authorizations_as_admin(self, users, campaigns):
         admin_user = users[0]
         assert admin_user.is_admin

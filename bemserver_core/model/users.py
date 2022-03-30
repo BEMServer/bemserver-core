@@ -100,6 +100,15 @@ class UserByUserGroup(AuthMixin, Base):
     user_id = sqla.Column(sqla.ForeignKey("users.id"), nullable=False)
     user_group_id = sqla.Column(sqla.ForeignKey("user_groups.id"), nullable=False)
 
+    user = sqla.orm.relationship(
+        User,
+        backref=sqla.orm.backref("users_by_user_groups", cascade="all, delete-orphan"),
+    )
+    user_group = sqla.orm.relationship(
+        UserGroup,
+        backref=sqla.orm.backref("users_by_user_groups", cascade="all, delete-orphan"),
+    )
+
     @classmethod
     def register_class(cls):
         auth.register_class(

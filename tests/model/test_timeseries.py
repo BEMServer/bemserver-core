@@ -1,10 +1,13 @@
 """Timeseries tests"""
+import datetime as dt
+
 import pytest
 
 from bemserver_core.model import (
     TimeseriesProperty,
     TimeseriesDataState,
     Timeseries,
+    TimeseriesData,
     TimeseriesPropertyData,
     TimeseriesByDataState,
     TimeseriesBySite,
@@ -53,6 +56,32 @@ class TestTimeseriesPropertyModel:
 
 
 class TestTimeseriesDataStateModel:
+    def test_timeseries_data_state_delete_cascade(
+        self, users, timeseries_by_data_states
+    ):
+        admin_user = users[0]
+        tsbds_1 = timeseries_by_data_states[0]
+
+        with CurrentUser(admin_user):
+
+            ts_data_state_1 = TimeseriesByDataState.get()[0]
+
+            tsd = TimeseriesData(
+                timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+                timeseries_by_data_state_id=tsbds_1.id,
+                value=12,
+            )
+            db.session.add(tsd)
+            db.session.commit()
+
+            assert len(list(TimeseriesByDataState.get())) == 2
+            assert len(list(db.session.query(TimeseriesData))) == 1
+
+            ts_data_state_1.delete()
+            db.session.commit()
+            assert len(list(TimeseriesByDataState.get())) == 1
+            assert len(list(db.session.query(TimeseriesData))) == 0
+
     def test_timeseries_data_state_authorizations_as_admin(self, users):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -89,6 +118,48 @@ class TestTimeseriesDataStateModel:
 
 
 class TestTimeseriesModel:
+    @pytest.mark.usefixtures("timeseries_by_sites")
+    @pytest.mark.usefixtures("timeseries_by_buildings")
+    @pytest.mark.usefixtures("timeseries_by_storeys")
+    @pytest.mark.usefixtures("timeseries_by_spaces")
+    @pytest.mark.usefixtures("timeseries_by_zones")
+    @pytest.mark.usefixtures("timeseries_property_data")
+    def test_timeseries_delete_cascade(
+        self, users, timeseries, timeseries_by_data_states
+    ):
+        admin_user = users[0]
+        ts_1 = timeseries[0]
+        tsbds_1 = timeseries_by_data_states[0]
+
+        with CurrentUser(admin_user):
+            tsd = TimeseriesData(
+                timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+                timeseries_by_data_state_id=tsbds_1.id,
+                value=12,
+            )
+            db.session.add(tsd)
+            db.session.commit()
+
+            assert len(list(TimeseriesBySite.get())) == 2
+            assert len(list(TimeseriesByBuilding.get())) == 2
+            assert len(list(TimeseriesByStorey.get())) == 2
+            assert len(list(TimeseriesBySpace.get())) == 2
+            assert len(list(TimeseriesByZone.get())) == 2
+            assert len(list(TimeseriesPropertyData.get())) == 4
+            assert len(list(TimeseriesByDataState.get())) == 2
+            assert len(list(db.session.query(TimeseriesData))) == 1
+
+            ts_1.delete()
+            db.session.commit()
+            assert len(list(TimeseriesBySite.get())) == 1
+            assert len(list(TimeseriesByBuilding.get())) == 1
+            assert len(list(TimeseriesByStorey.get())) == 1
+            assert len(list(TimeseriesBySpace.get())) == 1
+            assert len(list(TimeseriesByZone.get())) == 1
+            assert len(list(TimeseriesPropertyData.get())) == 2
+            assert len(list(TimeseriesByDataState.get())) == 1
+            assert len(list(db.session.query(TimeseriesData))) == 0
+
     @pytest.mark.usefixtures("as_admin")
     def test_timeseries_read_only_fields(self, campaigns, campaign_scopes):
         """Check campaign and campaign_scope can't be modified after commit
@@ -447,6 +518,27 @@ class TestTimeseriesPropertyDataModel:
 
 
 class TestTimeseriesByDataStateModel:
+    def test_timeseries_by_data_state_delete_cascade(
+        self, users, timeseries_by_data_states
+    ):
+        admin_user = users[0]
+        tsbds_1 = timeseries_by_data_states[0]
+
+        with CurrentUser(admin_user):
+            tsd = TimeseriesData(
+                timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+                timeseries_by_data_state_id=tsbds_1.id,
+                value=12,
+            )
+            db.session.add(tsd)
+            db.session.commit()
+
+            assert len(list(db.session.query(TimeseriesData))) == 1
+
+            tsbds_1.delete()
+            db.session.commit()
+            assert len(list(db.session.query(TimeseriesData))) == 0
+
     def test_timeseries_by_data_state_authorizations_as_admin(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin

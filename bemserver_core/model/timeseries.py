@@ -39,7 +39,6 @@ class Timeseries(AuthMixin, Base):
     unit_symbol = sqla.Column(sqla.String(20))
     campaign = sqla.orm.relationship("Campaign")
     campaign_scope = sqla.orm.relationship("CampaignScope")
-    timeseries_by_data_states = sqla.orm.relationship("TimeseriesByDataState")
 
     # Use getter/setter to prevent modifying campaign / campaign_scope after commit
     @sqlaorm.declared_attr
@@ -73,6 +72,14 @@ class Timeseries(AuthMixin, Base):
         if self.id is not None:
             raise AttributeError("campaign_scope_id cannot be modified")
         self._campaign_scope_id = campaign_scope_id
+
+    campaign = sqla.orm.relationship(
+        "Campaign", backref=sqla.orm.backref("timeseries", cascade="all, delete-orphan")
+    )
+    campaign_scope = sqla.orm.relationship(
+        "CampaignScope",
+        backref=sqla.orm.backref("timeseries", cascade="all, delete-orphan"),
+    )
 
     @classmethod
     def register_class(cls):
@@ -244,6 +251,13 @@ class TimeseriesPropertyData(AuthMixin, Base):
     )
     value = sqla.Column(sqla.Float)
 
+    timeseries = sqla.orm.relationship(
+        "Timeseries",
+        backref=sqla.orm.backref(
+            "timeseries_property_data", cascade="all, delete-orphan"
+        ),
+    )
+
     @classmethod
     def register_class(cls):
         auth.register_class(
@@ -265,13 +279,22 @@ class TimeseriesByDataState(AuthMixin, Base):
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
-    timeseries = sqla.orm.relationship(
-        "Timeseries", back_populates="timeseries_by_data_states"
-    )
     data_state_id = sqla.Column(
         sqla.ForeignKey("timeseries_data_states.id"), nullable=False
     )
-    data_state = sqla.orm.relationship("TimeseriesDataState")
+
+    timeseries = sqla.orm.relationship(
+        "Timeseries",
+        backref=sqla.orm.backref(
+            "timeseries_by_data_states", cascade="all, delete-orphan"
+        ),
+    )
+    data_state = sqla.orm.relationship(
+        "TimeseriesDataState",
+        backref=sqla.orm.backref(
+            "timeseries_by_data_states", cascade="all, delete-orphan"
+        ),
+    )
 
     @classmethod
     def register_class(cls):
@@ -295,6 +318,15 @@ class TimeseriesBySite(AuthMixin, Base):
     id = sqla.Column(sqla.Integer, primary_key=True)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
     site_id = sqla.Column(sqla.ForeignKey("sites.id"), nullable=False)
+
+    site = sqla.orm.relationship(
+        "Site",
+        backref=sqla.orm.backref("timeseries_by_site", cascade="all, delete-orphan"),
+    )
+    timeseries = sqla.orm.relationship(
+        "Timeseries",
+        backref=sqla.orm.backref("timeseries_by_site", cascade="all, delete-orphan"),
+    )
 
     @classmethod
     def register_class(cls):
@@ -325,6 +357,19 @@ class TimeseriesByBuilding(AuthMixin, Base):
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
     building_id = sqla.Column(sqla.ForeignKey("buildings.id"), nullable=False)
 
+    building = sqla.orm.relationship(
+        "Building",
+        backref=sqla.orm.backref(
+            "timeseries_by_building", cascade="all, delete-orphan"
+        ),
+    )
+    timeseries = sqla.orm.relationship(
+        "Timeseries",
+        backref=sqla.orm.backref(
+            "timeseries_by_building", cascade="all, delete-orphan"
+        ),
+    )
+
     @classmethod
     def register_class(cls):
         auth.register_class(
@@ -353,6 +398,15 @@ class TimeseriesByStorey(AuthMixin, Base):
     id = sqla.Column(sqla.Integer, primary_key=True)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
     storey_id = sqla.Column(sqla.ForeignKey("storeys.id"), nullable=False)
+
+    storey = sqla.orm.relationship(
+        "Storey",
+        backref=sqla.orm.backref("timeseries_by_storey", cascade="all, delete-orphan"),
+    )
+    timeseries = sqla.orm.relationship(
+        "Timeseries",
+        backref=sqla.orm.backref("timeseries_by_storey", cascade="all, delete-orphan"),
+    )
 
     @classmethod
     def register_class(cls):
@@ -383,6 +437,15 @@ class TimeseriesBySpace(AuthMixin, Base):
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
     space_id = sqla.Column(sqla.ForeignKey("spaces.id"), nullable=False)
 
+    space = sqla.orm.relationship(
+        "Space",
+        backref=sqla.orm.backref("timeseries_by_space", cascade="all, delete-orphan"),
+    )
+    timeseries = sqla.orm.relationship(
+        "Timeseries",
+        backref=sqla.orm.backref("timeseries_by_space", cascade="all, delete-orphan"),
+    )
+
     @classmethod
     def register_class(cls):
         auth.register_class(
@@ -411,6 +474,15 @@ class TimeseriesByZone(AuthMixin, Base):
     id = sqla.Column(sqla.Integer, primary_key=True)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
     zone_id = sqla.Column(sqla.ForeignKey("zones.id"), nullable=False)
+
+    zone = sqla.orm.relationship(
+        "Zone",
+        backref=sqla.orm.backref("timeseries_by_zone", cascade="all, delete-orphan"),
+    )
+    timeseries = sqla.orm.relationship(
+        "Timeseries",
+        backref=sqla.orm.backref("timeseries_by_zone", cascade="all, delete-orphan"),
+    )
 
     @classmethod
     def register_class(cls):
