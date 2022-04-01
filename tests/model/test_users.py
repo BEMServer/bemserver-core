@@ -1,7 +1,13 @@
 """User tests"""
 import pytest
 
-from bemserver_core.model import User, UserGroup, UserByUserGroup
+from bemserver_core.model import (
+    User,
+    UserGroup,
+    UserByUserGroup,
+    UserGroupByCampaign,
+    UserGroupByCampaignScope,
+)
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
 from bemserver_core.exceptions import BEMServerAuthorizationError
@@ -27,6 +33,18 @@ class TestUserModel:
         assert user.check_password("correct horse battery staple")
         assert not user.check_password("Tr0ub4dor&3")
         assert not user.check_password("rosebud")
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    def test_user_delete_cascade(self, users):
+        admin_user = users[0]
+        user_1 = users[1]
+
+        with CurrentUser(admin_user):
+            assert len(list(UserByUserGroup.get())) == 2
+
+            user_1.delete()
+            db.session.commit()
+            assert len(list(UserByUserGroup.get())) == 1
 
     def test_user_authorizations_as_admin(self, users):
         admin_user = users[0]
@@ -103,6 +121,24 @@ class TestUserModel:
 
 
 class TestUserGroupModel:
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    def test_user_group_delete_cascade(self, users, user_groups):
+        admin_user = users[0]
+        user_group_1 = user_groups[0]
+
+        with CurrentUser(admin_user):
+            assert len(list(UserByUserGroup.get())) == 2
+            assert len(list(UserGroupByCampaign.get())) == 2
+            assert len(list(UserGroupByCampaignScope.get())) == 2
+
+            user_group_1.delete()
+            db.session.commit()
+            assert len(list(UserByUserGroup.get())) == 1
+            assert len(list(UserGroupByCampaign.get())) == 1
+            assert len(list(UserGroupByCampaignScope.get())) == 1
+
     def test_user_group_authorizations_as_admin(self, users):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -177,8 +213,8 @@ class TestUserByUserGroupModel:
 
         with CurrentUser(user_1):
             ubug = UserByUserGroup.get_by_id(ubug_2.id)
-            user_groups = list(UserByUserGroup.get())
-            assert len(user_groups) == 1
+            ubug_l = list(UserByUserGroup.get())
+            assert len(ubug_l) == 1
             with pytest.raises(BEMServerAuthorizationError):
                 UserByUserGroup.get_by_id(ubug_1.id)
             with pytest.raises(BEMServerAuthorizationError):

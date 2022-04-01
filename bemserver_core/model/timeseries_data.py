@@ -16,8 +16,12 @@ class TimeseriesData(Base):
         sqla.ForeignKey("timeseries_by_data_states.id"),
         nullable=False,
     )
-    timeseries_by_data_state = sqla.orm.relationship("TimeseriesByDataState")
     value = sqla.Column(sqla.Float)
+
+    timeseries_by_data_state = sqla.orm.relationship(
+        "TimeseriesByDataState",
+        backref=sqla.orm.backref("timeseries_data", cascade="all, delete-orphan"),
+    )
 
 
 sqla.event.listen(

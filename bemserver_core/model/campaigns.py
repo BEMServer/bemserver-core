@@ -55,6 +55,11 @@ class CampaignScope(AuthMixin, Base):
             raise AttributeError("campaign_id cannot be modified")
         self._campaign_id = campaign_id
 
+    campaigns = sqla.orm.relationship(
+        Campaign,
+        backref=sqla.orm.backref("campaign_scopes", cascade="all, delete-orphan"),
+    )
+
     @classmethod
     def register_class(cls):
         auth.register_class(
@@ -79,6 +84,19 @@ class UserGroupByCampaign(AuthMixin, Base):
     id = sqla.Column(sqla.Integer, primary_key=True)
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
     user_group_id = sqla.Column(sqla.ForeignKey("user_groups.id"), nullable=False)
+
+    campaign = sqla.orm.relationship(
+        Campaign,
+        backref=sqla.orm.backref(
+            "user_groups_by_campaigns", cascade="all, delete-orphan"
+        ),
+    )
+    user_group = sqla.orm.relationship(
+        "UserGroup",
+        backref=sqla.orm.backref(
+            "user_groups_by_campaigns", cascade="all, delete-orphan"
+        ),
+    )
 
     @classmethod
     def register_class(cls):
@@ -106,6 +124,19 @@ class UserGroupByCampaignScope(AuthMixin, Base):
         sqla.ForeignKey("campaign_scopes.id"), nullable=False
     )
     user_group_id = sqla.Column(sqla.ForeignKey("user_groups.id"), nullable=False)
+
+    campaign_scope = sqla.orm.relationship(
+        CampaignScope,
+        backref=sqla.orm.backref(
+            "user_groups_by_campaign_scopes", cascade="all, delete-orphan"
+        ),
+    )
+    user_group = sqla.orm.relationship(
+        "UserGroup",
+        backref=sqla.orm.backref(
+            "user_groups_by_campaign_scopes", cascade="all, delete-orphan"
+        ),
+    )
 
     @classmethod
     def register_class(cls):

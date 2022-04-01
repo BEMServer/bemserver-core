@@ -6,6 +6,12 @@ from bemserver_core.model import (
     CampaignScope,
     UserGroupByCampaign,
     UserGroupByCampaignScope,
+    Site,
+    Building,
+    Storey,
+    Space,
+    Zone,
+    Timeseries,
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
@@ -13,6 +19,36 @@ from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestCampaignModel:
+    @pytest.mark.usefixtures("campaign_scopes")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("spaces")
+    @pytest.mark.usefixtures("zones")
+    @pytest.mark.usefixtures("timeseries")
+    def test_campaign_delete_cascade(self, users, campaigns):
+        admin_user = users[0]
+        campaign_1 = campaigns[0]
+
+        with CurrentUser(admin_user):
+            assert len(list(CampaignScope.get())) == 2
+            assert len(list(UserGroupByCampaign.get())) == 2
+            assert len(list(Site.get())) == 2
+            assert len(list(Building.get())) == 2
+            assert len(list(Storey.get())) == 2
+            assert len(list(Space.get())) == 2
+            assert len(list(Zone.get())) == 2
+            assert len(list(Timeseries.get())) == 2
+
+            campaign_1.delete()
+            db.session.commit()
+            assert len(list(CampaignScope.get())) == 1
+            assert len(list(UserGroupByCampaign.get())) == 1
+            assert len(list(Site.get())) == 1
+            assert len(list(Building.get())) == 1
+            assert len(list(Storey.get())) == 1
+            assert len(list(Space.get())) == 1
+            assert len(list(Zone.get())) == 1
+            assert len(list(Timeseries.get())) == 1
+
     def test_campaign_authorizations_as_admin(self, users):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -118,6 +154,21 @@ class TestUserGroupByCampaignModel:
 
 
 class TestCampaignScopeModel:
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.usefixtures("timeseries")
+    def test_campaign_scope_delete_cascade(self, users, campaign_scopes):
+        admin_user = users[0]
+        cs_1 = campaign_scopes[0]
+
+        with CurrentUser(admin_user):
+            assert len(list(UserGroupByCampaignScope.get())) == 2
+            assert len(list(Timeseries.get())) == 2
+
+            cs_1.delete()
+            db.session.commit()
+            assert len(list(UserGroupByCampaignScope.get())) == 1
+            assert len(list(Timeseries.get())) == 1
+
     @pytest.mark.usefixtures("as_admin")
     def test_campaign_scope_read_only_fields(self, campaigns):
         """Check campaign can't be modified after commit

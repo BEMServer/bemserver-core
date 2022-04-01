@@ -85,6 +85,10 @@ class Site(AuthMixin, Base):
             raise AttributeError("campaign_id cannot be modified")
         self._campaign_id = campaign_id
 
+    campaign = sqla.orm.relationship(
+        "Campaign", backref=sqla.orm.backref("sites", cascade="all, delete-orphan")
+    )
+
     @classmethod
     def register_class(cls):
         auth.register_class(
@@ -122,6 +126,10 @@ class Building(AuthMixin, Base):
         if self.id is not None:
             raise AttributeError("site_id cannot be modified")
         self._site_id = site_id
+
+    site = sqla.orm.relationship(
+        "Site", backref=sqla.orm.backref("buildings", cascade="all, delete-orphan")
+    )
 
     @classmethod
     def register_class(cls):
@@ -163,6 +171,10 @@ class Storey(AuthMixin, Base):
             raise AttributeError("building_id cannot be modified")
         self._building_id = building_id
 
+    building = sqla.orm.relationship(
+        "Building", backref=sqla.orm.backref("storeys", cascade="all, delete-orphan")
+    )
+
     @classmethod
     def register_class(cls):
         auth.register_class(
@@ -200,6 +212,10 @@ class Space(AuthMixin, Base):
         if self.id is not None:
             raise AttributeError("storey_id cannot be modified")
         self._storey_id = storey_id
+
+    storey = sqla.orm.relationship(
+        "Storey", backref=sqla.orm.backref("spaces", cascade="all, delete-orphan")
+    )
 
     @classmethod
     def register_class(cls):
@@ -241,6 +257,10 @@ class Zone(AuthMixin, Base):
             raise AttributeError("campaign_id cannot be modified")
         self._campaign_id = campaign_id
 
+    campaign = sqla.orm.relationship(
+        "Campaign", backref=sqla.orm.backref("zones", cascade="all, delete-orphan")
+    )
+
     @classmethod
     def register_class(cls):
         auth.register_class(
@@ -266,6 +286,11 @@ class SitePropertyData(AuthMixin, Base):
         sqla.ForeignKey("site_properties.id"), nullable=False
     )
     value = sqla.Column(sqla.String(100), nullable=False)
+
+    site = sqla.orm.relationship(
+        "Site",
+        backref=sqla.orm.backref("site_property_data", cascade="all, delete-orphan"),
+    )
 
     @classmethod
     def register_class(cls):
@@ -293,6 +318,13 @@ class BuildingPropertyData(AuthMixin, Base):
     )
     value = sqla.Column(sqla.String(100), nullable=False)
 
+    building = sqla.orm.relationship(
+        "Building",
+        backref=sqla.orm.backref(
+            "building_property_data", cascade="all, delete-orphan"
+        ),
+    )
+
     @classmethod
     def register_class(cls):
         auth.register_class(
@@ -318,6 +350,11 @@ class StoreyPropertyData(AuthMixin, Base):
         sqla.ForeignKey("storey_properties.id"), nullable=False
     )
     value = sqla.Column(sqla.String(100), nullable=False)
+
+    storey = sqla.orm.relationship(
+        "Storey",
+        backref=sqla.orm.backref("storey_property_data", cascade="all, delete-orphan"),
+    )
 
     @classmethod
     def register_class(cls):
@@ -345,6 +382,11 @@ class SpacePropertyData(AuthMixin, Base):
     )
     value = sqla.Column(sqla.String(100), nullable=False)
 
+    space = sqla.orm.relationship(
+        "Space",
+        backref=sqla.orm.backref("space_property_data", cascade="all, delete-orphan"),
+    )
+
     @classmethod
     def register_class(cls):
         auth.register_class(
@@ -370,6 +412,11 @@ class ZonePropertyData(AuthMixin, Base):
         sqla.ForeignKey("zone_properties.id"), nullable=False
     )
     value = sqla.Column(sqla.String(100), nullable=False)
+
+    zone = sqla.orm.relationship(
+        "Zone",
+        backref=sqla.orm.backref("zone_property_data", cascade="all, delete-orphan"),
+    )
 
     @classmethod
     def register_class(cls):
