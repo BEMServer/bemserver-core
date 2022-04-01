@@ -89,13 +89,13 @@ class AuthMixin:
         auth.register_class(cls, *args, **kwargs)
 
     @classmethod
-    def get(cls, **kwargs):
+    def _query(cls, **kwargs):
         user = get_current_user()
         # TODO: Workaround for https://github.com/osohq/oso/issues/1536
         if user.is_admin:
-            query = super().get()
+            query = db.session.query(cls)
         else:
-            query = auth.authorized_query(get_current_user(), "read", cls)
+            query = auth.authorized_query(user, "read", cls)
         for key, val in kwargs.items():
             query = query.filter(getattr(cls, key) == val)
         return query
