@@ -40,9 +40,39 @@ class Base:
         return wrapper
 
     @classmethod
+    def _add_min_max_query_filters(cls, func):
+        """Add min/max query filters feature to query function"""
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Extract min / max filters
+            min_filters = {}
+            max_filters = {}
+            for key in list(kwargs.keys()):
+                if key.endswith("_min"):
+                    min_filters[key[:-4]] = kwargs.pop(key)
+                elif key.endswith("_max"):
+                    max_filters[key[:-4]] = kwargs.pop(key)
+
+            # Base query
+            query = func(*args, **kwargs)
+
+            # Apply min / max filters
+            for key, val in min_filters.items():
+                query = query.filter(getattr(cls, key) >= val)
+            for key, val in max_filters.items():
+                query = query.filter(getattr(cls, key) <= val)
+
+            return query
+
+        return wrapper
+
+    @classmethod
     def get(cls, **kwargs):
         """Get objects"""
-        return cls._add_sort_query_filter(cls._query)(**kwargs)
+        return cls._add_sort_query_filter(cls._add_min_max_query_filters(cls._query))(
+            **kwargs
+        )
 
     @classmethod
     def new(cls, **kwargs):
