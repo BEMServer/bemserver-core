@@ -1,4 +1,4 @@
-"""DB framework related tests"""
+"""Authentication framework related tests"""
 import datetime as dt
 
 import sqlalchemy as sqla
@@ -6,47 +6,21 @@ import sqlalchemy as sqla
 import pytest
 
 from bemserver_core.database import Base, db
+from bemserver_core.authorization import AuthMixin
 
 
-class TestDatabase:
+class TestAuthMixin:
     @pytest.mark.usefixtures("database")
-    def test_database_base_update(self):
-        """Test update method of custom Base class"""
+    def test_auth_mixin_sort(self):
+        """Check AuthMixin doesn't break database sort feature"""
 
-        class Test(Base):
-            __tablename__ = "test_database_base_update"
-
-            id = sqla.Column(sqla.Integer, primary_key=True)
-            test_1 = sqla.Column(sqla.String(80), nullable=True)
-            test_2 = sqla.Column(sqla.String(80), nullable=False)
-
-        test = Test(test_1="test_1", test_2="test_2")
-        assert test.test_1 == "test_1"
-        assert test.test_2 == "test_2"
-
-        test.update(test_1="test_11")
-        assert test.test_1 == "test_11"
-        test.update(test_1=None)
-        assert test.test_1 is None
-
-        # The nullable argument makes no difference here
-        # This will only fail on commit
-        test.update(test_2="test_21")
-        assert test.test_2 == "test_21"
-        test.update(test_2=None)
-        assert test.test_2 is None
-
-    @pytest.mark.usefixtures("database")
-    def test_database_sort(self):
-        """Test sort feature"""
-
-        class Test(Base):
-            __tablename__ = "test_database_sort"
+        class Test(Base, AuthMixin):
+            __tablename__ = "test_auth_mixin_sort"
 
             id = sqla.Column(sqla.Integer, primary_key=True)
             title = sqla.Column(sqla.String())
             severity = sqla.Column(
-                sqla.Enum("Low", "High", "Critical", name="test_db_severity")
+                sqla.Enum("Low", "High", "Critical", name="test_auth_mixin_severity")
             )
 
         Test.__table__.create(bind=db.engine)
@@ -81,11 +55,11 @@ class TestDatabase:
         assert ret == [mes_5, mes_2, mes_3, mes_6, mes_4, mes_1]
 
     @pytest.mark.usefixtures("database")
-    def test_database_min_max(self):
-        """Test min / max feature"""
+    def test_auth_mixin_min_max(self):
+        """Check AuthMixin doesn't break database min/max feature"""
 
-        class Test(Base):
-            __tablename__ = "test_database_min_max"
+        class Test(Base, AuthMixin):
+            __tablename__ = "test_auth_mixin_min_max"
 
             id = sqla.Column(sqla.Integer, primary_key=True)
             note = sqla.Column(sqla.Float())

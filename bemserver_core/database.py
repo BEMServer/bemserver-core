@@ -1,4 +1,6 @@
 """Databases: SQLAlchemy database access"""
+from functools import wraps
+
 import sqlalchemy as sqla
 from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base
 
@@ -7,10 +9,70 @@ class Base:
     """Custom base class"""
 
     @classmethod
+    def _query(cls, **kwargs):
+        return db.session.query(cls).filter_by(**kwargs)
+
+    @classmethod
+    def _add_sort_query_filter(cls, func):
+        """Add sort argument to query function
+
+        sort must be a list of fields to sort upon, by order of priority
+            (the first field is the first sort key). Each field is a field
+            name, optionally prefixed with "+" or "-". No prefix is equivalent
+            to "+", which means "ascending" order.
+        """
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            sort = kwargs.pop("sort", None)
+            query = func(*args, **kwargs)
+            if sort:
+                for field in sort:
+                    if field[0] == "-":
+                        direction = sqla.desc
+                    else:
+                        direction = sqla.asc
+                    if field[0] in {"-", "+"}:
+                        field = field[1:]
+                    query = query.order_by(direction(getattr(cls, field)))
+            return query
+
+        return wrapper
+
+    @classmethod
+    def _add_min_max_query_filters(cls, func):
+        """Add min/max query filters feature to query function"""
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Extract min / max filters
+            min_filters = {}
+            max_filters = {}
+            for key in list(kwargs.keys()):
+                if key.endswith("_min"):
+                    min_filters[key[:-4]] = kwargs.pop(key)
+                elif key.endswith("_max"):
+                    max_filters[key[:-4]] = kwargs.pop(key)
+
+            # Base query
+            query = func(*args, **kwargs)
+
+            # Apply min / max filters
+            for key, val in min_filters.items():
+                query = query.filter(getattr(cls, key) >= val)
+            for key, val in max_filters.items():
+                query = query.filter(getattr(cls, key) <= val)
+
+            return query
+
+        return wrapper
+
+    @classmethod
     def get(cls, **kwargs):
         """Get objects"""
-        query = db.session.query(cls).filter_by(**kwargs)
-        return query
+        return cls._add_sort_query_filter(cls._add_min_max_query_filters(cls._query))(
+            **kwargs
+        )
 
     @classmethod
     def new(cls, **kwargs):
