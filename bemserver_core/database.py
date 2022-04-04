@@ -96,7 +96,7 @@ class Base:
         db.session.delete(self)
 
 
-SESSION_FACTORY = sessionmaker(autocommit=False, autoflush=False)
+SESSION_FACTORY = sessionmaker()
 DB_SESSION = scoped_session(SESSION_FACTORY)
 Base = declarative_base(cls=Base)
 
