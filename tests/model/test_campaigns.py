@@ -171,7 +171,7 @@ class TestCampaignScopeModel:
 
     @pytest.mark.usefixtures("as_admin")
     def test_campaign_scope_read_only_fields(self, campaigns):
-        """Check campaign can't be modified after commit
+        """Check campaign can't be modified
 
         Also check the getter/setter don't get in the way when querying.
         This is kind of a "framework test".
@@ -183,15 +183,14 @@ class TestCampaignScopeModel:
             name="Campaign scope 1",
             campaign_id=campaign_1.id,
         )
-        cs_1.update(campaign_id=campaign_2.id)
-        db.session.commit()
+        db.session.flush()
 
         with pytest.raises(AttributeError):
             cs_1.update(campaign_id=campaign_2.id)
 
-        cs_list = list(CampaignScope.get(campaign_id=2))
-        assert cs_list == [cs_1]
         cs_list = list(CampaignScope.get(campaign_id=1))
+        assert cs_list == [cs_1]
+        cs_list = list(CampaignScope.get(campaign_id=2))
         assert cs_list == []
 
     def test_campaign_scope_authorizations_as_admin(self, users, campaigns):
