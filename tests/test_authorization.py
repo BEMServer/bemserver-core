@@ -31,7 +31,6 @@ class TestAuthMixin:
         db.session.add(mes_1)
         db.session.add(mes_2)
         db.session.add(mes_3)
-        db.session.commit()
 
         ret = Test.get(sort=["severity"]).all()
         assert ret == [mes_1, mes_3, mes_2]
@@ -49,7 +48,6 @@ class TestAuthMixin:
         db.session.add(mes_4)
         db.session.add(mes_5)
         db.session.add(mes_6)
-        db.session.commit()
 
         ret = Test.get(sort=["-severity", "title"]).all()
         assert ret == [mes_5, mes_2, mes_3, mes_6, mes_4, mes_1]
@@ -73,7 +71,6 @@ class TestAuthMixin:
         db.session.add(mes_1)
         db.session.add(mes_2)
         db.session.add(mes_3)
-        db.session.commit()
 
         ret = Test.get(note_min=12).all()
         assert ret == [mes_2, mes_3]
