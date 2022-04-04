@@ -14,7 +14,7 @@ class TestAuthMixin:
     def test_auth_mixin_sort(self):
         """Check AuthMixin doesn't break database sort feature"""
 
-        class Test(Base, AuthMixin):
+        class TestAuthMixinSort(Base, AuthMixin):
             __tablename__ = "test_auth_mixin_sort"
 
             id = sqla.Column(sqla.Integer, primary_key=True)
@@ -22,6 +22,8 @@ class TestAuthMixin:
             severity = sqla.Column(
                 sqla.Enum("Low", "High", "Critical", name="test_auth_mixin_severity")
             )
+
+        Test = TestAuthMixinSort
 
         Test.__table__.create(bind=db.engine)
 
@@ -56,12 +58,14 @@ class TestAuthMixin:
     def test_auth_mixin_min_max(self):
         """Check AuthMixin doesn't break database min/max feature"""
 
-        class Test(Base, AuthMixin):
+        class TestAuthMixinMinMax(Base, AuthMixin):
             __tablename__ = "test_auth_mixin_min_max"
 
             id = sqla.Column(sqla.Integer, primary_key=True)
             note = sqla.Column(sqla.Float())
             date = sqla.Column(sqla.DateTime(timezone=True))
+
+        Test = TestAuthMixinMinMax
 
         Test.__table__.create(bind=db.engine)
 
