@@ -161,6 +161,24 @@ class TestTimeseriesModel:
             assert len(list(db.session.query(TimeseriesData))) == 0
 
     @pytest.mark.usefixtures("as_admin")
+    def test_timeseries_get_timeseries_by_data_states(self, timeseries):
+        """Check timeseries x data_states associations are created if needed"""
+        ts_1 = timeseries[0]
+
+        ts_data_state_1 = TimeseriesDataState.get()[0]
+
+        tsbds_l = list(TimeseriesByDataState.get())
+        assert not tsbds_l
+
+        tsbds_1 = ts_1.get_timeseries_by_data_state(ts_data_state_1)
+        tsbds_l = list(TimeseriesByDataState.get())
+        assert len(tsbds_l) == 1
+
+        assert ts_1.get_timeseries_by_data_state(ts_data_state_1) == tsbds_1
+        tsbds_l = list(TimeseriesByDataState.get())
+        assert len(tsbds_l) == 1
+
+    @pytest.mark.usefixtures("as_admin")
     def test_timeseries_read_only_fields(self, campaigns, campaign_scopes):
         """Check campaign and campaign_scope can't be modified
 

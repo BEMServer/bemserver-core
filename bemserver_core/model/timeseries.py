@@ -227,15 +227,21 @@ class Timeseries(AuthMixin, Base):
             query = query.join(TimeseriesByZone).join(zone).filter(zone.id == zone_id)
         return query
 
-    def get_timeseries_by_data_states(self, data_state):
-        return next(
-            (
-                ts
-                for ts in self.timeseries_by_data_states
-                if ts.data_state == data_state
-            ),
-            None,
-        )
+    def get_timeseries_by_data_state(self, data_state):
+        """Return timeseries x data state association for a given data state
+
+        Create the timeseries x data state association on the fly if needed
+        """
+        try:
+            tsbds = TimeseriesByDataState.get(timeseries=self, data_state=data_state)[0]
+        except IndexError:
+            # Create tsbds on the fly if needed
+            tsbds = TimeseriesByDataState.new(
+                timeseries_id=self.id, data_state=data_state
+            )
+            # Flush to allow the use of tsbds.id right away
+            db.session.flush()
+        return tsbds
 
 
 class TimeseriesPropertyData(AuthMixin, Base):
