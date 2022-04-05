@@ -13,12 +13,14 @@ class TestDatabase:
     def test_database_base_update(self):
         """Test update method of custom Base class"""
 
-        class Test(Base):
+        class TestDatabaseBaseUpdate(Base):
             __tablename__ = "test_database_base_update"
 
             id = sqla.Column(sqla.Integer, primary_key=True)
             test_1 = sqla.Column(sqla.String(80), nullable=True)
             test_2 = sqla.Column(sqla.String(80), nullable=False)
+
+        Test = TestDatabaseBaseUpdate
 
         test = Test(test_1="test_1", test_2="test_2")
         assert test.test_1 == "test_1"
@@ -37,10 +39,10 @@ class TestDatabase:
         assert test.test_2 is None
 
     @pytest.mark.usefixtures("database")
-    def test_database_sort(self):
+    def test_database_base_sort(self):
         """Test sort feature"""
 
-        class Test(Base):
+        class TestDatabaseBaseSort(Base):
             __tablename__ = "test_database_sort"
 
             id = sqla.Column(sqla.Integer, primary_key=True)
@@ -48,6 +50,8 @@ class TestDatabase:
             severity = sqla.Column(
                 sqla.Enum("Low", "High", "Critical", name="test_db_severity")
             )
+
+        Test = TestDatabaseBaseSort
 
         Test.__table__.create(bind=db.engine)
 
@@ -57,7 +61,6 @@ class TestDatabase:
         db.session.add(mes_1)
         db.session.add(mes_2)
         db.session.add(mes_3)
-        db.session.commit()
 
         ret = Test.get(sort=["severity"]).all()
         assert ret == [mes_1, mes_3, mes_2]
@@ -75,21 +78,22 @@ class TestDatabase:
         db.session.add(mes_4)
         db.session.add(mes_5)
         db.session.add(mes_6)
-        db.session.commit()
 
         ret = Test.get(sort=["-severity", "title"]).all()
         assert ret == [mes_5, mes_2, mes_3, mes_6, mes_4, mes_1]
 
     @pytest.mark.usefixtures("database")
-    def test_database_min_max(self):
+    def test_database_base_min_max(self):
         """Test min / max feature"""
 
-        class Test(Base):
+        class TestDatabaseBaseMinMax(Base):
             __tablename__ = "test_database_min_max"
 
             id = sqla.Column(sqla.Integer, primary_key=True)
             note = sqla.Column(sqla.Float())
             date = sqla.Column(sqla.DateTime(timezone=True))
+
+        Test = TestDatabaseBaseMinMax
 
         Test.__table__.create(bind=db.engine)
 
@@ -99,7 +103,6 @@ class TestDatabase:
         db.session.add(mes_1)
         db.session.add(mes_2)
         db.session.add(mes_3)
-        db.session.commit()
 
         ret = Test.get(note_min=12).all()
         assert ret == [mes_2, mes_3]

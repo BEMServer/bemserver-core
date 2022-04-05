@@ -131,7 +131,7 @@ class TestEventCategoryModel:
 class TestEventModel:
     @pytest.mark.usefixtures("as_admin")
     def test_event_read_only_fields(self, campaign_scopes):
-        """Check campaign_scope and timestamp can't be modified after commit
+        """Check campaign_scope and timestamp can't be modified
 
         Also check the getter/setter don't get in the way when querying.
         This is kind of a "framework test".
@@ -150,22 +150,20 @@ class TestEventModel:
             level="ERROR",
             state="NEW",
         )
-        evt_1.update(timestamp=timestamp_2)
-        evt_1.update(campaign_scope_id=campaign_scope_2.id)
-        db.session.commit()
+        db.session.flush()
 
         with pytest.raises(AttributeError):
             evt_1.update(timestamp=timestamp_1)
         with pytest.raises(AttributeError):
             evt_1.update(campaign_scope_id=campaign_scope_2.id)
 
-        tse_list = list(Event.get(campaign_scope_id=2))
-        assert tse_list == [evt_1]
         tse_list = list(Event.get(campaign_scope_id=1))
-        assert tse_list == []
-        tse_list = list(Event.get(timestamp=timestamp_2))
         assert tse_list == [evt_1]
+        tse_list = list(Event.get(campaign_scope_id=2))
+        assert tse_list == []
         tse_list = list(Event.get(timestamp=timestamp_1))
+        assert tse_list == [evt_1]
+        tse_list = list(Event.get(timestamp=timestamp_2))
         assert tse_list == []
 
     def test_event_authorizations_as_admin(
