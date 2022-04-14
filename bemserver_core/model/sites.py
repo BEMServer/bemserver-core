@@ -22,6 +22,7 @@ class SiteProperty(AuthMixin, Base):
     structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
+    structural_element_property = sqla.orm.relationship("StructuralElementProperty")
 
 
 class BuildingProperty(AuthMixin, Base):
@@ -31,6 +32,7 @@ class BuildingProperty(AuthMixin, Base):
     structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
+    structural_element_property = sqla.orm.relationship("StructuralElementProperty")
 
 
 class StoreyProperty(AuthMixin, Base):
@@ -40,6 +42,7 @@ class StoreyProperty(AuthMixin, Base):
     structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
+    structural_element_property = sqla.orm.relationship("StructuralElementProperty")
 
 
 class SpaceProperty(AuthMixin, Base):
@@ -49,6 +52,7 @@ class SpaceProperty(AuthMixin, Base):
     structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
+    structural_element_property = sqla.orm.relationship("StructuralElementProperty")
 
 
 class ZoneProperty(AuthMixin, Base):
@@ -58,6 +62,7 @@ class ZoneProperty(AuthMixin, Base):
     structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
+    structural_element_property = sqla.orm.relationship("StructuralElementProperty")
 
 
 class Site(AuthMixin, Base):
