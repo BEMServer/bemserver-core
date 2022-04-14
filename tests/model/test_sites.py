@@ -368,6 +368,33 @@ class TestBuildingModel:
             assert len(list(BuildingPropertyData.get())) == 1
             assert len(list(TimeseriesByBuilding.get())) == 1
 
+    def test_building_filters_as_admin(self, users, campaigns, buildings):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        building_1 = buildings[0]
+
+        with CurrentUser(admin_user):
+            buildings_l = list(Building.get(campaign_id=campaign_1.id))
+            assert len(buildings_l) == 1
+            assert buildings_l[0] == building_1
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    def test_building_filters_as_user(self, users, campaigns, buildings):
+        user_1 = users[1]
+        assert not user_1.is_admin
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
+        building_2 = buildings[1]
+
+        with CurrentUser(user_1):
+            with pytest.raises(BEMServerAuthorizationError):
+                list(Building.get(campaign_id=campaign_1.id))
+            buildings_l = list(Building.get(campaign_id=campaign_2.id))
+            assert len(buildings_l) == 1
+            assert buildings_l[0] == building_2
+
     def test_building_authorizations_as_admin(self, users, sites):
         admin_user = users[0]
         assert admin_user.is_admin

@@ -4,6 +4,7 @@ import sqlalchemy.orm as sqlaorm
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from bemserver_core.database import Base
+from bemserver_core.model import Campaign
 from bemserver_core.authorization import AuthMixin, auth, Relation
 
 
@@ -135,6 +136,17 @@ class Building(AuthMixin, Base):
     site = sqla.orm.relationship(
         "Site", backref=sqla.orm.backref("buildings", cascade="all, delete-orphan")
     )
+
+    @classmethod
+    def get(cls, *, campaign_id=None, **kwargs):
+        query = super().get(**kwargs)
+        if campaign_id is not None:
+            Campaign.get_by_id(campaign_id)
+            site = sqla.orm.aliased(Site)
+            query = query.join(site, cls.site_id == site.id).filter(
+                site.campaign_id == campaign_id
+            )
+        return query
 
     @classmethod
     def register_class(cls):
