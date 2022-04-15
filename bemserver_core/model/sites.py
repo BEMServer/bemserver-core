@@ -255,6 +255,37 @@ class Space(AuthMixin, Base):
     )
 
     @classmethod
+    def get(cls, *, campaign_id=None, site_id=None, building_id=None, **kwargs):
+        query = super().get(**kwargs)
+        if campaign_id is not None:
+            Campaign.get_by_id(campaign_id)
+            site = sqla.orm.aliased(Site)
+            building = sqla.orm.aliased(Building)
+            storey = sqla.orm.aliased(Storey)
+            query = (
+                query.join(storey, cls.storey_id == storey.id)
+                .join(building, storey.building_id == building.id)
+                .join(site, building.site_id == site.id)
+                .filter(site.campaign_id == campaign_id)
+            )
+        if site_id is not None:
+            Site.get_by_id(site_id)
+            building = sqla.orm.aliased(Building)
+            storey = sqla.orm.aliased(Storey)
+            query = (
+                query.join(storey, cls.storey_id == storey.id)
+                .join(building, storey.building_id == building.id)
+                .filter(building.site_id == site_id)
+            )
+        if building_id is not None:
+            Building.get_by_id(building_id)
+            storey = sqla.orm.aliased(Storey)
+            query = query.join(storey, cls.storey_id == storey.id).filter(
+                storey.building_id == building_id
+            )
+        return query
+
+    @classmethod
     def register_class(cls):
         auth.register_class(
             cls,
