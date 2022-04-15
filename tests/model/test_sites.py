@@ -467,6 +467,44 @@ class TestStoreyModel:
             assert len(list(StoreyPropertyData.get())) == 1
             assert len(list(TimeseriesByStorey.get())) == 1
 
+    def test_storey_filters_as_admin(self, users, campaigns, sites, storeys):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        site_1 = sites[0]
+        storey_1 = storeys[0]
+
+        with CurrentUser(admin_user):
+            storeys_l = list(Storey.get(campaign_id=campaign_1.id))
+            assert len(storeys_l) == 1
+            assert storeys_l[0] == storey_1
+            storeys_l = list(Storey.get(site_id=site_1.id))
+            assert len(storeys_l) == 1
+            assert storeys_l[0] == storey_1
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    def test_storey_filters_as_user(self, users, campaigns, sites, storeys):
+        user_1 = users[1]
+        assert not user_1.is_admin
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
+        site_1 = sites[0]
+        site_2 = sites[1]
+        storey_2 = storeys[1]
+
+        with CurrentUser(user_1):
+            with pytest.raises(BEMServerAuthorizationError):
+                list(Storey.get(campaign_id=campaign_1.id))
+            with pytest.raises(BEMServerAuthorizationError):
+                list(Storey.get(site_id=site_1.id))
+            storeys_l = list(Storey.get(campaign_id=campaign_2.id))
+            assert len(storeys_l) == 1
+            assert storeys_l[0] == storey_2
+            storeys_l = list(Storey.get(site_id=site_2.id))
+            assert len(storeys_l) == 1
+            assert storeys_l[0] == storey_2
+
     def test_storey_authorizations_as_admin(self, users, buildings):
         admin_user = users[0]
         assert admin_user.is_admin

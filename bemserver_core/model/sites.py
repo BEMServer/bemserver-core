@@ -193,6 +193,26 @@ class Storey(AuthMixin, Base):
     )
 
     @classmethod
+    def get(cls, *, campaign_id=None, site_id=None, **kwargs):
+        query = super().get(**kwargs)
+        if campaign_id is not None:
+            Campaign.get_by_id(campaign_id)
+            site = sqla.orm.aliased(Site)
+            building = sqla.orm.aliased(Building)
+            query = (
+                query.join(building, cls.building_id == building.id)
+                .join(site, building.site_id == site.id)
+                .filter(site.campaign_id == campaign_id)
+            )
+        if site_id is not None:
+            Site.get_by_id(site_id)
+            building = sqla.orm.aliased(Building)
+            query = query.join(building, cls.building_id == building.id).filter(
+                building.site_id == site_id
+            )
+        return query
+
+    @classmethod
     def register_class(cls):
         auth.register_class(
             cls,
