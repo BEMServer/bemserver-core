@@ -30,6 +30,47 @@ from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestStructuralElementPropertyModel:
+    @pytest.mark.usefixtures("site_property_data")
+    @pytest.mark.usefixtures("building_property_data")
+    @pytest.mark.usefixtures("storey_property_data")
+    @pytest.mark.usefixtures("space_property_data")
+    @pytest.mark.usefixtures("zone_property_data")
+    def test_structural_element_property_delete_cascade(
+        self, users, structural_element_properties
+    ):
+        """Test property delete cascades to property data
+
+        StructuralElementProperty -> SiteProperty -> SitePropertyData
+        and likewise for BuildingProperty,...
+        """
+        admin_user = users[0]
+        sep_1 = structural_element_properties[0]
+
+        with CurrentUser(admin_user):
+            assert len(list(SiteProperty.get())) == 2
+            assert len(list(SitePropertyData.get())) == 2
+            assert len(list(BuildingProperty.get())) == 2
+            assert len(list(BuildingPropertyData.get())) == 2
+            assert len(list(StoreyProperty.get())) == 2
+            assert len(list(StoreyPropertyData.get())) == 2
+            assert len(list(SpaceProperty.get())) == 2
+            assert len(list(SpacePropertyData.get())) == 2
+            assert len(list(ZoneProperty.get())) == 2
+            assert len(list(ZonePropertyData.get())) == 2
+
+            sep_1.delete()
+            db.session.commit()
+            assert len(list(SiteProperty.get())) == 1
+            assert len(list(SitePropertyData.get())) == 1
+            assert len(list(BuildingProperty.get())) == 1
+            assert len(list(BuildingPropertyData.get())) == 1
+            assert len(list(StoreyProperty.get())) == 1
+            assert len(list(StoreyPropertyData.get())) == 1
+            assert len(list(SpaceProperty.get())) == 1
+            assert len(list(SpacePropertyData.get())) == 1
+            assert len(list(ZoneProperty.get())) == 1
+            assert len(list(ZonePropertyData.get())) == 1
+
     def test_structural_element_property_authorizations_as_admin(self, users):
         admin_user = users[0]
         assert admin_user.is_admin

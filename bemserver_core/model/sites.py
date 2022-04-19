@@ -23,7 +23,10 @@ class SiteProperty(AuthMixin, Base):
     structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
-    structural_element_property = sqla.orm.relationship("StructuralElementProperty")
+    structural_element_property = sqla.orm.relationship(
+        "StructuralElementProperty",
+        backref=sqla.orm.backref("site_properties", cascade="all, delete-orphan"),
+    )
 
 
 class BuildingProperty(AuthMixin, Base):
@@ -33,7 +36,10 @@ class BuildingProperty(AuthMixin, Base):
     structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
-    structural_element_property = sqla.orm.relationship("StructuralElementProperty")
+    structural_element_property = sqla.orm.relationship(
+        "StructuralElementProperty",
+        backref=sqla.orm.backref("building_properties", cascade="all, delete-orphan"),
+    )
 
 
 class StoreyProperty(AuthMixin, Base):
@@ -43,7 +49,10 @@ class StoreyProperty(AuthMixin, Base):
     structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
-    structural_element_property = sqla.orm.relationship("StructuralElementProperty")
+    structural_element_property = sqla.orm.relationship(
+        "StructuralElementProperty",
+        backref=sqla.orm.backref("storey_properties", cascade="all, delete-orphan"),
+    )
 
 
 class SpaceProperty(AuthMixin, Base):
@@ -53,7 +62,10 @@ class SpaceProperty(AuthMixin, Base):
     structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
-    structural_element_property = sqla.orm.relationship("StructuralElementProperty")
+    structural_element_property = sqla.orm.relationship(
+        "StructuralElementProperty",
+        backref=sqla.orm.backref("space_properties", cascade="all, delete-orphan"),
+    )
 
 
 class ZoneProperty(AuthMixin, Base):
@@ -63,7 +75,10 @@ class ZoneProperty(AuthMixin, Base):
     structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
-    structural_element_property = sqla.orm.relationship("StructuralElementProperty")
+    structural_element_property = sqla.orm.relationship(
+        "StructuralElementProperty",
+        backref=sqla.orm.backref("zone_properties", cascade="all, delete-orphan"),
+    )
 
 
 class Site(AuthMixin, Base):
@@ -359,6 +374,10 @@ class SitePropertyData(AuthMixin, Base):
         "Site",
         backref=sqla.orm.backref("site_property_data", cascade="all, delete-orphan"),
     )
+    site_property = sqla.orm.relationship(
+        "SiteProperty",
+        backref=sqla.orm.backref("site_property_data", cascade="all, delete-orphan"),
+    )
 
     @classmethod
     def register_class(cls):
@@ -388,6 +407,12 @@ class BuildingPropertyData(AuthMixin, Base):
 
     building = sqla.orm.relationship(
         "Building",
+        backref=sqla.orm.backref(
+            "building_property_data", cascade="all, delete-orphan"
+        ),
+    )
+    building_property = sqla.orm.relationship(
+        "BuildingProperty",
         backref=sqla.orm.backref(
             "building_property_data", cascade="all, delete-orphan"
         ),
@@ -423,6 +448,10 @@ class StoreyPropertyData(AuthMixin, Base):
         "Storey",
         backref=sqla.orm.backref("storey_property_data", cascade="all, delete-orphan"),
     )
+    storey_property = sqla.orm.relationship(
+        "StoreyProperty",
+        backref=sqla.orm.backref("storey_property_data", cascade="all, delete-orphan"),
+    )
 
     @classmethod
     def register_class(cls):
@@ -454,6 +483,10 @@ class SpacePropertyData(AuthMixin, Base):
         "Space",
         backref=sqla.orm.backref("space_property_data", cascade="all, delete-orphan"),
     )
+    space_property = sqla.orm.relationship(
+        "SpaceProperty",
+        backref=sqla.orm.backref("space_property_data", cascade="all, delete-orphan"),
+    )
 
     @classmethod
     def register_class(cls):
@@ -483,6 +516,10 @@ class ZonePropertyData(AuthMixin, Base):
 
     zone = sqla.orm.relationship(
         "Zone",
+        backref=sqla.orm.backref("zone_property_data", cascade="all, delete-orphan"),
+    )
+    zone_property = sqla.orm.relationship(
+        "ZoneProperty",
         backref=sqla.orm.backref("zone_property_data", cascade="all, delete-orphan"),
     )
 
