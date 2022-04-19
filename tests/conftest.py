@@ -27,8 +27,13 @@ def database(postgresql):
 @pytest.fixture
 def as_admin():
     """Set an admin user for the test"""
-    with OpenBar(), CurrentUser(
-        model.User(name="Chuck", email="chuck@test.com", is_admin=True, is_active=True)
+    with CurrentUser(
+        model.User(
+            name="Chuck",
+            email="chuck@test.com",
+            _is_admin=True,
+            _is_active=True,
+        )
     ):
         yield
 
