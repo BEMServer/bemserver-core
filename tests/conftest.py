@@ -21,7 +21,12 @@ postgresql = ppf.postgresql("postgresql_proc")
 
 @pytest.fixture
 def database(postgresql):
-    yield from setup_db(postgresql)
+    setup_gen = setup_db(postgresql)
+    db = next(setup_gen)
+    db.create_all()
+    yield db
+    # Exhaust setup generator to ensure session cleanup
+    list(setup_gen)
 
 
 @pytest.fixture

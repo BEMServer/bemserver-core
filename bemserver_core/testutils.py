@@ -23,7 +23,6 @@ def setup_db(postgresql):
         session.execute("CREATE EXTENSION IF NOT EXISTS timescaledb;")
         session.commit()
 
-    db.create_all()
     yield db
     db.session.remove()
     # Destroy DB engine, mainly for threaded code (as MQTT service).
