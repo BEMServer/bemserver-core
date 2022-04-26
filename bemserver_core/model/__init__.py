@@ -36,12 +36,16 @@ from .timeseries import (
     TimeseriesBySpace,
     TimeseriesByZone,
 )
-from .timeseries_data import TimeseriesData  # noqa
-from .events import (  # noqa
+from .timeseries_data import TimeseriesData
+from .events import (
     EventCategory,
     EventState,
     EventLevel,
     Event,
+)
+from .processors import (
+    Processor,
+    ProcessorByCampaign,
 )
 
 
@@ -84,6 +88,8 @@ __all__ = [
     "EventState",
     "EventLevel",
     "Event",
+    "Processor",
+    "ProcessorByCampaign",
 ]
 
 
@@ -125,4 +131,6 @@ AUTH_MODEL_CLASSES = [
     EventState,
     EventLevel,
     Event,
+    Processor,
+    ProcessorByCampaign,
 ]
