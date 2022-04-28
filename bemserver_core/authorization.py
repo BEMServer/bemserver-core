@@ -13,6 +13,10 @@ from bemserver_core.exceptions import BEMServerAuthorizationError
 CURRENT_USER = ContextVar("current_user", default=None)
 OPEN_BAR = ContextVar("open_bar", default=False)
 
+AUTH_POLAR_FILES = [
+    Path(__file__).parent / "authorization.polar",
+]
+
 
 class CurrentUser(AbstractContextManager):
     """Set current user for context"""
@@ -59,28 +63,42 @@ class OpenBarPolarClass:
         return OPEN_BAR.get()
 
 
-auth = Oso(
+class OsoProxy:
+    """Oso proxy class
+
+    Provides lazy loading of classes and authorization rules
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.oso = None
+        self.oso_args = args
+        self.oso_kwargs = kwargs
+
+    def __getattr__(self, attr):
+        return getattr(self.oso, attr)
+
+    def init_authorization(self, model_classes, polar_files):
+        """Register model classes and load rules
+
+        Must be done after model classes are imported
+        """
+        self.oso = Oso(*self.oso_args, **self.oso_kwargs)
+        self.set_data_filtering_adapter(SqlAlchemyAdapter(db.session))
+
+        # Register classes
+        self.register_class(OpenBarPolarClass)
+        AuthMixin.register_class(name="Base")
+        for cls in model_classes:
+            cls.register_class()
+
+        # Load authorization policy
+        self.load_files(polar_files)
+
+
+auth = OsoProxy(
     forbidden_error=BEMServerAuthorizationError,
     not_found_error=BEMServerAuthorizationError,
 )
-
-auth.set_data_filtering_adapter(SqlAlchemyAdapter(db.session))
-
-
-def init_authorization(model_classes):
-    """Register model classes and load rules
-
-    Must be done after model classes are imported
-    """
-    AuthMixin.register_class(name="Base")
-
-    for cls in model_classes:
-        cls.register_class()
-
-    auth.register_class(OpenBarPolarClass)
-
-    # Load authorization policy
-    auth.load_files([Path(__file__).parent / "authorization.polar"])
 
 
 class AuthMixin:
