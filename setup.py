@@ -38,6 +38,7 @@ setup(
         "passlib>=1.7.4",
         "argon2_cffi>=20.1.0",
         "oso>=0.26.0,<0.27",
+        "alembic>=1.7.7",
     ],
     packages=find_packages(exclude=["tests*"]),
     include_package_data=True,

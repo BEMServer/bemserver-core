@@ -4,6 +4,8 @@
 #
 #    pip-compile --output-file=requirements/install.txt setup.py
 #
+alembic==1.7.7
+    # via bemserver-core (setup.py)
 argon2-cffi==21.3.0
     # via bemserver-core (setup.py)
 argon2-cffi-bindings==21.2.0
@@ -14,6 +16,10 @@ cffi==1.15.0
     #   oso
 greenlet==1.1.2
     # via sqlalchemy
+mako==1.2.0
+    # via alembic
+markupsafe==2.1.1
+    # via mako
 numpy==1.21.5
     # via pandas
 oso==0.26.0
@@ -33,4 +39,6 @@ pytz==2022.1
 six==1.16.0
     # via python-dateutil
 sqlalchemy==1.4.32
-    # via bemserver-core (setup.py)
+    # via
+    #   alembic
+    #   bemserver-core (setup.py)
