@@ -42,6 +42,14 @@ db.set_db_url(DB_URL)
 config.set_main_option("sqlalchemy.url", str(db.url).replace("%", "%%"))
 target_metadata = Base.metadata
 
+
+def include_name(name, type_, parent_names):
+    if type_ == "table":
+        # Ignore plugin tables
+        return not name.startswith("p_")
+    return True
+
+
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
@@ -99,6 +107,7 @@ def run_migrations_online():
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
+            include_name=include_name,
             process_revision_directives=process_revision_directives,
         )
 
