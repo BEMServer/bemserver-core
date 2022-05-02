@@ -31,7 +31,7 @@ class TimeseriesDataState(AuthMixin, Base):
 
 class Timeseries(AuthMixin, Base):
     __tablename__ = "timeseries"
-    __table_args__ = (sqla.UniqueConstraint("name", "_campaign_id"),)
+    __table_args__ = (sqla.UniqueConstraint("_campaign_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
@@ -313,7 +313,7 @@ class TimeseriesByDataState(AuthMixin, Base):
 
 class TimeseriesBySite(AuthMixin, Base):
     __tablename__ = "timeseries_by_sites"
-    __table_args__ = (sqla.UniqueConstraint("timeseries_id", "site_id"),)
+    __table_args__ = (sqla.UniqueConstraint("site_id", "timeseries_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
@@ -351,7 +351,7 @@ class TimeseriesBySite(AuthMixin, Base):
 
 class TimeseriesByBuilding(AuthMixin, Base):
     __tablename__ = "timeseries_by_buildings"
-    __table_args__ = (sqla.UniqueConstraint("timeseries_id", "building_id"),)
+    __table_args__ = (sqla.UniqueConstraint("building_id", "timeseries_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
@@ -393,7 +393,7 @@ class TimeseriesByBuilding(AuthMixin, Base):
 
 class TimeseriesByStorey(AuthMixin, Base):
     __tablename__ = "timeseries_by_storeys"
-    __table_args__ = (sqla.UniqueConstraint("timeseries_id", "storey_id"),)
+    __table_args__ = (sqla.UniqueConstraint("storey_id", "timeseries_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
@@ -431,7 +431,7 @@ class TimeseriesByStorey(AuthMixin, Base):
 
 class TimeseriesBySpace(AuthMixin, Base):
     __tablename__ = "timeseries_by_spaces"
-    __table_args__ = (sqla.UniqueConstraint("timeseries_id", "space_id"),)
+    __table_args__ = (sqla.UniqueConstraint("space_id", "timeseries_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
@@ -469,7 +469,7 @@ class TimeseriesBySpace(AuthMixin, Base):
 
 class TimeseriesByZone(AuthMixin, Base):
     __tablename__ = "timeseries_by_zones"
-    __table_args__ = (sqla.UniqueConstraint("timeseries_id", "zone_id"),)
+    __table_args__ = (sqla.UniqueConstraint("zone_id", "timeseries_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
