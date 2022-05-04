@@ -92,7 +92,7 @@ class AuthMixin:
     def _query(cls, **kwargs):
         user = get_current_user()
         # TODO: Workaround for https://github.com/osohq/oso/issues/1536
-        if user.is_admin:
+        if OPEN_BAR.get() or user.is_admin:
             query = db.session.query(cls)
         else:
             query = auth.authorized_query(user, "read", cls)
