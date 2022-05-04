@@ -2,6 +2,7 @@
 from bemserver_core.authorization import auth, AUTH_POLAR_FILES
 
 from . import model  # noqa
+from . import processors  # noqa
 from . import database  # noqa
 from . import input_output  # noqa
 from .plugin import BEMServerCorePlugin  # noqa
@@ -14,10 +15,12 @@ class BEMServerCore:
     def __init__(self):
         self.auth_model_classes = list(model.AUTH_MODEL_CLASSES)
         self.auth_polar_files = list(AUTH_POLAR_FILES)
+        self.processor_classes = list(processors.PROCESSOR_CLASSES)
 
     def load_plugin(self, plugin):
         self.auth_model_classes.extend(plugin.AUTH_MODEL_CLASSES)
         self.auth_polar_files.extend(plugin.AUTH_POLAR_FILES)
+        self.processor_classes.extend(plugin.PROCESSOR_CLASSES)
 
     def init_auth(self):
         auth.init_authorization(

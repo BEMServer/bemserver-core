@@ -8,3 +8,5 @@ class BEMServerCorePlugin:
     AUTH_MODEL_CLASSES = []
     #: Polar files to laod for authorizations
     AUTH_POLAR_FILES = []
+    #: BEMServerCoreProcessors
+    PROCESSOR_CLASSES = []

@@ -2,7 +2,7 @@ import os
 
 import click
 
-from bemserver_core import model, database
+from bemserver_core import model, database, processors
 
 
 def _set_db_url():
@@ -29,6 +29,7 @@ def setup_db():
     model.events.init_db_events()
     model.timeseries.init_db_timeseries()
     model.timeseries_data.init_db_timeseries_data()
+    processors.init_db_processors()
 
 
 @click.command()
