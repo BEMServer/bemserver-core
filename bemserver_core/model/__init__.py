@@ -1,6 +1,4 @@
 """Model"""
-from bemserver_core.authorization import init_authorization
-
 from .users import User, UserGroup, UserByUserGroup
 from .campaigns import (
     Campaign,
@@ -89,8 +87,7 @@ __all__ = [
 ]
 
 
-# Register classes for authorization
-auth_model_classes = [
+AUTH_MODEL_CLASSES = [
     User,
     UserGroup,
     UserByUserGroup,
@@ -129,5 +126,3 @@ auth_model_classes = [
     EventLevel,
     Event,
 ]
-
-init_authorization(auth_model_classes)
