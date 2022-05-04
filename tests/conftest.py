@@ -1,6 +1,8 @@
 """ Global conftest"""
 import datetime as dt
 
+import sqlalchemy as sqla
+
 import pytest
 from pytest_postgresql import factories as ppf
 
@@ -8,7 +10,6 @@ from bemserver_core import BEMServerCore
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core import model
-from bemserver_core.testutils import setup_db
 
 
 postgresql_proc = ppf.postgresql_proc(
@@ -20,20 +21,34 @@ postgresql_proc = ppf.postgresql_proc(
 postgresql = ppf.postgresql("postgresql_proc")
 
 
+def _get_db_url(postgresql):
+    return (
+        "postgresql+psycopg2://"
+        f"{postgresql.info.user}:{postgresql.info.password}"
+        f"@{postgresql.info.host}:{postgresql.info.port}/"
+        f"{postgresql.info.dbname}"
+    )
+
+
 @pytest.fixture
-def database(postgresql):
-    setup_gen = setup_db(postgresql)
-    db = next(setup_gen)
-    yield db
-    # Exhaust setup generator to ensure session cleanup
-    list(setup_gen)
+def timescale_db(postgresql):
+    with sqla.create_engine(_get_db_url(postgresql)).connect() as connection:
+        connection.execute("CREATE EXTENSION IF NOT EXISTS timescaledb;")
+    yield postgresql
+
+
+@pytest.fixture
+def database(timescale_db):
+    db.set_db_url(_get_db_url(timescale_db))
+    yield
+    db.session.remove()
 
 
 @pytest.fixture
 def bemservercore(request, database):
     """Create and initialize BEMServerCore with a database"""
     bsc = BEMServerCore()
-    database.create_all()
+    db.create_all()
     bsc.init_auth()
 
 

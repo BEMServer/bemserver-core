@@ -129,9 +129,5 @@ class DBConnection:
         """Create all tables"""
         Base.metadata.create_all(bind=self.engine)
 
-    def dispose(self):
-        self.engine.dispose()
-        self.engine = None
-
 
 db = DBConnection()
