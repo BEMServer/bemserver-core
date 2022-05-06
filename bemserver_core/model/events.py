@@ -4,7 +4,7 @@ import sqlalchemy as sqla
 import sqlalchemy.orm as sqlaorm
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from bemserver_core.database import Base
+from bemserver_core.database import Base, db
 from bemserver_core.authorization import auth, AuthMixin, Relation
 
 
@@ -105,27 +105,21 @@ class Event(AuthMixin, Base):
         )
 
 
-@sqla.event.listens_for(EventLevel.__table__, "after_create")
-def _insert_initial_event_levels(target, connection, **kwargs):
-    # add the 3 default event levels
-    connection.execute(target.insert(), {"id": "INFO", "description": "Information"})
-    connection.execute(target.insert(), {"id": "WARNING", "description": "Warning"})
-    connection.execute(target.insert(), {"id": "ERROR", "description": "Error"})
-    connection.execute(target.insert(), {"id": "CRITICAL", "description": "Critical"})
+def init_db_events():
+    """Create default event levels and states
 
-
-@sqla.event.listens_for(EventState.__table__, "after_create")
-def _insert_initial_event_states(target, connection, **kwargs):
-    # add the 3 default event states
-    connection.execute(
-        target.insert(),
-        {"id": "NEW", "description": "New event"},
+    This function is meant to be used for tests or dev setups after create_all.
+    Production setups should rely on migration scripts.
+    """
+    db.session.add_all(
+        [
+            EventLevel(id="INFO", description="Information"),
+            EventLevel(id="WARNING", description="Warning"),
+            EventLevel(id="ERROR", description="Error"),
+            EventLevel(id="CRITICAL", description="Critical"),
+            EventState(id="NEW", description="New event"),
+            EventState(id="ONGOING", description="Ongoing event"),
+            EventState(id="CLOSED", description="Closed event"),
+        ]
     )
-    connection.execute(
-        target.insert(),
-        {"id": "ONGOING", "description": "Ongoing event"},
-    )
-    connection.execute(
-        target.insert(),
-        {"id": "CLOSED", "description": "Closed event"},
-    )
+    db.session.commit()

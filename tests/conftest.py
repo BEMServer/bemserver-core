@@ -6,7 +6,7 @@ import sqlalchemy as sqla
 import pytest
 from pytest_postgresql import factories as ppf
 
-from bemserver_core import BEMServerCore
+from bemserver_core import BEMServerCore, setup_db
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core import model
@@ -48,7 +48,7 @@ def database(timescale_db):
 def bemservercore(request, database):
     """Create and initialize BEMServerCore with a database"""
     bsc = BEMServerCore()
-    db.create_all()
+    setup_db()
     bsc.init_auth()
 
 

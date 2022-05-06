@@ -3,7 +3,7 @@ import sqlalchemy as sqla
 import sqlalchemy.orm as sqlaorm
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from bemserver_core.database import Base
+from bemserver_core.database import Base, db
 from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.model.users import User, UserGroup, UserByUserGroup
 from bemserver_core.model.campaigns import (
@@ -505,7 +505,16 @@ class TimeseriesByZone(AuthMixin, Base):
         )
 
 
-@sqla.event.listens_for(TimeseriesDataState.__table__, "after_create")
-def _insert_initial_timeseries_data_states(target, connection, **kwargs):
-    connection.execute(target.insert(), {"name": "Raw"})
-    connection.execute(target.insert(), {"name": "Clean"})
+def init_db_timeseries():
+    """Create default timeseries data states
+
+    This function is meant to be used for tests or dev setups after create_all.
+    Production setups should rely on migration scripts.
+    """
+    db.session.add_all(
+        [
+            TimeseriesDataState(name="Raw"),
+            TimeseriesDataState(name="Clean"),
+        ]
+    )
+    db.session.commit()

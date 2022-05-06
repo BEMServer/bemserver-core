@@ -16,3 +16,15 @@ class BEMServerCore:
             self.auth_model_classes,
             self.auth_polar_files,
         )
+
+
+def setup_db():
+    """Create and add initial data to DB
+
+    This method is meant to be used for tests or dev setups.
+    Production setups should rely on migration scripts.
+    """
+    database.db.create_all()
+    model.events.init_db_events()
+    model.timeseries.init_db_timeseries()
+    model.timeseries_data.init_db_timeseries_data()
