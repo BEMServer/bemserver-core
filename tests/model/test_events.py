@@ -96,7 +96,6 @@ class TestEventCategoryModel:
         assert admin_user.is_admin
 
         with CurrentUser(admin_user):
-            nb_event_categories = len(list(EventCategory.get()))
             event_category_1 = EventCategory.new(
                 id="TEST",
                 description="Event category 1",
@@ -105,17 +104,16 @@ class TestEventCategoryModel:
             db.session.commit()
             EventCategory.get_by_id(event_category_1.id)
             event_categories = list(EventCategory.get())
-            assert len(event_categories) == nb_event_categories + 1
+            assert len(event_categories) == 1
             event_category_1.update(name="Super event_category 1")
             event_category_1.delete()
             db.session.commit()
 
-    def test_event_category_authorizations_as_user(self, users):
+    def test_event_category_authorizations_as_user(self, users, event_categories):
         user_1 = users[1]
         assert not user_1.is_admin
 
         with CurrentUser(user_1):
-            event_categories = list(EventCategory.get())
             event_category_1 = EventCategory.get_by_id(event_categories[0].id)
             with pytest.raises(BEMServerAuthorizationError):
                 EventCategory.new(
@@ -130,7 +128,7 @@ class TestEventCategoryModel:
 
 class TestEventModel:
     @pytest.mark.usefixtures("as_admin")
-    def test_event_read_only_fields(self, campaign_scopes):
+    def test_event_read_only_fields(self, campaign_scopes, event_categories):
         """Check campaign_scope and timestamp can't be modified
 
         Also check the getter/setter don't get in the way when querying.
@@ -138,6 +136,7 @@ class TestEventModel:
         """
         campaign_scope_1 = campaign_scopes[0]
         campaign_scope_2 = campaign_scopes[1]
+        ec_1 = event_categories[0]
 
         timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
         timestamp_2 = dt.datetime(2020, 6, 1, tzinfo=dt.timezone.utc)
@@ -145,7 +144,7 @@ class TestEventModel:
         evt_1 = Event.new(
             campaign_scope_id=campaign_scope_1.id,
             timestamp=timestamp_1,
-            category="observation_missing",
+            category=ec_1.id,
             source="src",
             level="ERROR",
             state="NEW",
@@ -171,12 +170,14 @@ class TestEventModel:
         users,
         campaign_scopes,
         events,
+        event_categories,
     ):
         admin_user = users[0]
         assert admin_user.is_admin
         campaign_scope_1 = campaign_scopes[0]
         event_1 = events[0]
         event_2 = events[1]
+        ec_1 = event_categories[0]
 
         with CurrentUser(admin_user):
             events = list(Event.get())
@@ -187,7 +188,7 @@ class TestEventModel:
             Event.new(
                 campaign_scope_id=campaign_scope_1.id,
                 timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
-                category="observation_missing",
+                category=ec_1.id,
                 source="src",
                 level="ERROR",
                 state="NEW",
@@ -200,13 +201,16 @@ class TestEventModel:
 
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
-    def test_event_authorizations_as_user(self, users, campaign_scopes, events):
+    def test_event_authorizations_as_user(
+        self, users, campaign_scopes, events, event_categories
+    ):
         user_1 = users[1]
         assert not user_1.is_admin
         campaign_scope_1 = campaign_scopes[0]
         campaign_scope_2 = campaign_scopes[1]
         event_1 = events[0]
         event_2 = events[1]
+        ec_1 = event_categories[0]
 
         with CurrentUser(user_1):
 
@@ -221,7 +225,7 @@ class TestEventModel:
                 Event.new(
                     campaign_scope_id=campaign_scope_1.id,
                     timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
-                    category="observation_missing",
+                    category=ec_1.id,
                     source="src",
                     level="ERROR",
                     state="NEW",
@@ -235,7 +239,7 @@ class TestEventModel:
             Event.new(
                 campaign_scope_id=campaign_scope_2.id,
                 timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
-                category="observation_missing",
+                category=ec_1.id,
                 source="src",
                 level="ERROR",
                 state="NEW",
