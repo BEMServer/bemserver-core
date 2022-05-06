@@ -6,7 +6,7 @@ import sqlalchemy as sqla
 import pytest
 from pytest_postgresql import factories as ppf
 
-from bemserver_core import BEMServerCore
+from bemserver_core import BEMServerCore, setup_db
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core import model
@@ -48,7 +48,7 @@ def database(timescale_db):
 def bemservercore(request, database):
     """Create and initialize BEMServerCore with a database"""
     bsc = BEMServerCore()
-    db.create_all()
+    setup_db()
     bsc.init_auth()
 
 
@@ -250,12 +250,21 @@ def timeseries_by_data_states(request, bemservercore, timeseries):
 
 
 @pytest.fixture
-def events(bemservercore, campaign_scopes):
+def event_categories(bemservercore):
+    with OpenBar():
+        ec_1 = model.EventCategory.new(id="Missing data")
+        ec_2 = model.EventCategory.new(id="Outlier data")
+        db.session.commit()
+    return (ec_1, ec_2)
+
+
+@pytest.fixture
+def events(bemservercore, campaign_scopes, event_categories):
     with OpenBar():
         ts_event_1 = model.Event.new(
             campaign_scope_id=campaign_scopes[0].id,
             timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
-            category="observation_missing",
+            category=event_categories[0].id,
             source="src",
             level="ERROR",
             state="NEW",
@@ -263,7 +272,7 @@ def events(bemservercore, campaign_scopes):
         ts_event_2 = model.Event.new(
             campaign_scope_id=campaign_scopes[1].id,
             timestamp=dt.datetime(2020, 1, 15, tzinfo=dt.timezone.utc),
-            category="observation_missing",
+            category=event_categories[0].id,
             source="src",
             level="WARNING",
             state="ONGOING",
