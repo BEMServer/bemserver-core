@@ -32,16 +32,21 @@ def _get_db_url(postgresql):
 
 
 @pytest.fixture
-def timescale_db(postgresql):
-    with sqla.create_engine(_get_db_url(postgresql)).connect() as connection:
+def postgresql_db(postgresql):
+    yield _get_db_url(postgresql)
+
+
+@pytest.fixture
+def timescale_db(postgresql_db):
+    with sqla.create_engine(postgresql_db).connect() as connection:
         connection.execute("CREATE EXTENSION IF NOT EXISTS timescaledb;")
-    yield postgresql
+    yield postgresql_db
 
 
 @pytest.fixture
 def database(timescale_db):
-    db.set_db_url(_get_db_url(timescale_db))
-    yield
+    db.set_db_url(timescale_db)
+    yield timescale_db
     db.session.remove()
 
 
