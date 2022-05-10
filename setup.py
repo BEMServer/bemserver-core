@@ -42,4 +42,9 @@ setup(
     ],
     packages=find_packages(exclude=["tests*"]),
     include_package_data=True,
+    entry_points={
+        "console_scripts": [
+            "bemserver_setup_db = bemserver_core.commands:setup_db_cmd",
+        ],
+    },
 )
