@@ -135,12 +135,16 @@ class TestDatabase:
         Test.__table__.create(bind=db.engine)
 
         mes_1 = Test(
-            name="Toto", note=10, date=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc))
+            name="Toto", note=10, date=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        )
         mes_2 = Test(
-            name="Juanito", note=15,
-            date=dt.datetime(2025, 1, 1, tzinfo=dt.timezone.utc))
+            name="Juanito",
+            note=15,
+            date=dt.datetime(2025, 1, 1, tzinfo=dt.timezone.utc),
+        )
         mes_3 = Test(
-            name="Juan", note=18, date=dt.datetime(2015, 1, 1, tzinfo=dt.timezone.utc))
+            name="Juan", note=18, date=dt.datetime(2015, 1, 1, tzinfo=dt.timezone.utc)
+        )
         db.session.add(mes_1)
         db.session.add(mes_2)
         db.session.add(mes_3)
