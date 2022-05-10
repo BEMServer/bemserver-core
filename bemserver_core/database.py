@@ -78,11 +78,40 @@ class Base:
         return wrapper
 
     @classmethod
+    def _add_in_field_search_query_filters(cls, func):
+        """Add "in field search" feature to query function
+
+        This is a "SQL like" filter, used to search if a string is contained in any of
+        the column (field) values, insensitive case.
+        """
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Extract "in field search" filters
+            in_filters = {}
+            for key in list(kwargs.keys()):
+                if key.startswith("in_"):
+                    in_filters[key[3:]] = kwargs.pop(key)
+
+            # Base query
+            query = func(*args, **kwargs)
+
+            # Apply "in field search" filters
+            for key, val in in_filters.items():
+                query = query.filter(getattr(cls, key).ilike(f"%{val}%"))
+
+            return query
+
+        return wrapper
+
+    @classmethod
     def get(cls, **kwargs):
         """Get objects"""
-        return cls._add_sort_query_filter(cls._add_min_max_query_filters(cls._query))(
-            **kwargs
-        )
+        return cls._add_sort_query_filter(
+            cls._add_min_max_query_filters(
+                cls._add_in_field_search_query_filters(cls._query)
+            )
+        )(**kwargs)
 
     @classmethod
     def new(cls, **kwargs):
