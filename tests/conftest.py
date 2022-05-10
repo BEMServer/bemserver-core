@@ -6,10 +6,11 @@ import sqlalchemy as sqla
 import pytest
 from pytest_postgresql import factories as ppf
 
-from bemserver_core import BEMServerCore, setup_db
+from bemserver_core import BEMServerCore
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core import model
+from bemserver_core.commands import setup_db
 
 
 postgresql_proc = ppf.postgresql_proc(
