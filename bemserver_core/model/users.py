@@ -34,7 +34,7 @@ class User(AuthMixin, Base):
     def __repr__(self):
         return (
             f"<User {self.name} <{self.email}>, "
-            f"admin: {self.is_admin}, active: {self.is_active}>"
+            f"admin: {self._is_admin}, active: {self._is_active}>"
         )
 
     @hybrid_property
