@@ -33,9 +33,10 @@ class Campaign(AuthMixin, Base):
 
 class CampaignScope(AuthMixin, Base):
     __tablename__ = "campaign_scopes"
+    __table_args__ = (sqla.UniqueConstraint("_campaign_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
+    name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
 
     # Use getter/setter to prevent modifying campaign after commit
