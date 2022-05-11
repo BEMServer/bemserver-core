@@ -86,7 +86,7 @@ class Site(AuthMixin, Base):
     __table_args__ = (sqla.UniqueConstraint("_campaign_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
+    name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
     ifc_id = sqla.Column(sqla.String(22))
 
@@ -130,7 +130,7 @@ class Building(AuthMixin, Base):
     __table_args__ = (sqla.UniqueConstraint("_site_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
+    name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
     ifc_id = sqla.Column(sqla.String(22))
 
@@ -183,7 +183,7 @@ class Storey(AuthMixin, Base):
     __table_args__ = (sqla.UniqueConstraint("_building_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
+    name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
     ifc_id = sqla.Column(sqla.String(22))
 
@@ -247,7 +247,7 @@ class Space(AuthMixin, Base):
     __table_args__ = (sqla.UniqueConstraint("_storey_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
+    name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
     ifc_id = sqla.Column(sqla.String(22))
 
@@ -320,7 +320,7 @@ class Zone(AuthMixin, Base):
     __table_args__ = (sqla.UniqueConstraint("_campaign_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
+    name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
     ifc_id = sqla.Column(sqla.String(22))
 
