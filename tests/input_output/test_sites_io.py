@@ -3,7 +3,7 @@ import io
 
 import pytest
 
-from bemserver_core.input_output import sdio
+from bemserver_core.input_output import sites_csv_io
 from bemserver_core.database import db
 from bemserver_core.model import (
     Site,
@@ -25,7 +25,7 @@ DUMMY_ID = 69
 DUMMY_NAME = "Dummy name"
 
 
-class TestSiteDataCSVIO:
+class TestSitesCSVIO:
     @pytest.mark.usefixtures("site_properties")
     def test_site_data_io_import_csv(self, users, campaigns):
         admin_user = users[0]
@@ -42,7 +42,7 @@ class TestSiteDataCSVIO:
         csv_file = io.StringIO(csv_file)
 
         with CurrentUser(admin_user):
-            sdio.import_csv(campaign_1, sites_csv=csv_file)
+            sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
 
         sites = db.session.query(Site).all()
         assert len(sites) == 2
@@ -62,7 +62,7 @@ class TestSiteDataCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Missing column: "Description"'):
-                sdio.import_csv(campaign_1, sites_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
 
     def test_site_data_io_import_csv_unknown_property(self, users, campaigns):
         admin_user = users[0]
@@ -76,7 +76,7 @@ class TestSiteDataCSVIO:
         )
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Unknown property: "Surface"'):
-                sdio.import_csv(campaign_1, sites_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
 
     def test_site_data_io_import_csv_already_exists(self, users, campaigns):
         admin_user = users[0]
@@ -87,7 +87,7 @@ class TestSiteDataCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Site "Site 1" already exists.'):
-                sdio.import_csv(campaign_1, sites_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
 
     def test_site_data_io_import_csv_too_many_cols(self, users, campaigns):
         admin_user = users[0]
@@ -142,7 +142,7 @@ class TestSiteDataCSVIO:
         csv_file = io.StringIO(csv_file)
 
         with CurrentUser(admin_user):
-            sdio.import_csv(campaign_1, buildings_csv=csv_file)
+            sites_csv_io.import_csv(campaign_1, buildings_csv=csv_file)
 
         buildings = db.session.query(Building).all()
         assert len(buildings) == 2
@@ -163,7 +163,7 @@ class TestSiteDataCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Missing column: "Description"'):
-                sdio.import_csv(campaign_1, buildings_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, buildings_csv=csv_file)
 
     def test_building_data_io_import_csv_unknown_property(
         self, users, campaigns, sites
@@ -181,7 +181,7 @@ class TestSiteDataCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Unknown property: "Surface"'):
-                sdio.import_csv(campaign_1, buildings_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, buildings_csv=csv_file)
 
     def test_building_data_io_import_csv_already_exists(self, users, campaigns, sites):
         admin_user = users[0]
@@ -199,7 +199,7 @@ class TestSiteDataCSVIO:
             with pytest.raises(
                 SitesCSVIOError, match='Building "Site 1/Building 1" already exists.'
             ):
-                sdio.import_csv(campaign_1, buildings_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, buildings_csv=csv_file)
 
     def test_building_data_io_import_csv_too_many_cols(self, users, campaigns, sites):
         admin_user = users[0]
@@ -268,7 +268,7 @@ class TestSiteDataCSVIO:
         csv_file = io.StringIO(csv_file)
 
         with CurrentUser(admin_user):
-            sdio.import_csv(campaign_1, storeys_csv=csv_file)
+            sites_csv_io.import_csv(campaign_1, storeys_csv=csv_file)
 
         storeys = db.session.query(Storey).all()
         assert len(storeys) == 2
@@ -292,7 +292,7 @@ class TestSiteDataCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Missing column: "Description"'):
-                sdio.import_csv(campaign_1, storeys_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, storeys_csv=csv_file)
 
     def test_storey_data_io_import_csv_unknown_property(
         self, users, campaigns, sites, buildings
@@ -311,7 +311,7 @@ class TestSiteDataCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Unknown property: "Surface"'):
-                sdio.import_csv(campaign_1, storeys_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, storeys_csv=csv_file)
 
     def test_storey_data_io_import_csv_already_exists(
         self, users, campaigns, sites, buildings
@@ -333,7 +333,7 @@ class TestSiteDataCSVIO:
                 SitesCSVIOError,
                 match='Storey "Site 1/Building 1/Storey 1" already exists.',
             ):
-                sdio.import_csv(campaign_1, storeys_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, storeys_csv=csv_file)
 
     def test_storey_data_io_import_csv_too_many_cols(
         self, users, campaigns, sites, buildings
@@ -418,7 +418,7 @@ class TestSiteDataCSVIO:
         csv_file = io.StringIO(csv_file)
 
         with CurrentUser(admin_user):
-            sdio.import_csv(campaign_1, spaces_csv=csv_file)
+            sites_csv_io.import_csv(campaign_1, spaces_csv=csv_file)
 
         spaces = db.session.query(Space).all()
         assert len(spaces) == 2
@@ -446,7 +446,7 @@ class TestSiteDataCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Missing column: "Description"'):
-                sdio.import_csv(campaign_1, spaces_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, spaces_csv=csv_file)
 
     def test_space_data_io_import_csv_unknown_property(
         self, users, campaigns, sites, buildings, storeys
@@ -468,7 +468,7 @@ class TestSiteDataCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Unknown property: "Surface"'):
-                sdio.import_csv(campaign_1, spaces_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, spaces_csv=csv_file)
 
     def test_space_data_io_import_csv_already_exists(
         self, users, campaigns, sites, buildings, storeys
@@ -493,7 +493,7 @@ class TestSiteDataCSVIO:
                 SitesCSVIOError,
                 match='Space "Site 1/Building 1/Storey 1/Space 1" already exists.',
             ):
-                sdio.import_csv(campaign_1, spaces_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, spaces_csv=csv_file)
 
     def test_space_data_io_import_csv_too_many_cols(
         self, users, campaigns, sites, buildings, storeys
@@ -575,7 +575,7 @@ class TestSiteDataCSVIO:
         csv_file = io.StringIO(csv_file)
 
         with CurrentUser(admin_user):
-            sdio.import_csv(campaign_1, zones_csv=csv_file)
+            sites_csv_io.import_csv(campaign_1, zones_csv=csv_file)
 
         zones = db.session.query(Zone).all()
         assert len(zones) == 2
@@ -594,7 +594,7 @@ class TestSiteDataCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Missing column: "Description"'):
-                sdio.import_csv(campaign_1, zones_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, zones_csv=csv_file)
 
     def test_zone_data_io_import_csv_unknown_property(self, users, campaigns):
         admin_user = users[0]
@@ -608,7 +608,7 @@ class TestSiteDataCSVIO:
         )
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Unknown property: "Surface"'):
-                sdio.import_csv(campaign_1, zones_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, zones_csv=csv_file)
 
     def test_zone_data_io_import_csv_already_exists(self, users, campaigns):
         admin_user = users[0]
@@ -619,7 +619,7 @@ class TestSiteDataCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Zone "Zone 1" already exists.'):
-                sdio.import_csv(campaign_1, zones_csv=csv_file)
+                sites_csv_io.import_csv(campaign_1, zones_csv=csv_file)
 
     def test_zone_data_io_import_csv_too_many_cols(self, users, campaigns):
         admin_user = users[0]
@@ -694,7 +694,7 @@ class TestSiteDataCSVIO:
         )
 
         with CurrentUser(admin_user):
-            sdio.import_csv(
+            sites_csv_io.import_csv(
                 campaign_1,
                 sites_csv=sites_csv,
                 buildings_csv=buildings_csv,

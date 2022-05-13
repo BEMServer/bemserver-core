@@ -8,7 +8,7 @@ import pandas as pd
 from bemserver_core.database import db
 from bemserver_core.model import Timeseries, TimeseriesData, TimeseriesDataState
 from bemserver_core.authorization import auth, get_current_user
-from bemserver_core.exceptions import TimeseriesCSVIOError
+from bemserver_core.exceptions import TimeseriesDataCSVIOError
 
 
 AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max")
@@ -33,7 +33,7 @@ class TimeseriesDataIO:
             db.session.commit()
         # TODO: filter server and client errors (constraint violation)
         except sqla.exc.DBAPIError as exc:
-            raise TimeseriesCSVIOError("Error writing to DB") from exc
+            raise TimeseriesDataCSVIOError("Error writing to DB") from exc
 
     @classmethod
     def _get_timeseries_data(cls, start_dt, end_dt, timeseries_ids, data_state_id):
@@ -47,11 +47,11 @@ class TimeseriesDataIO:
         """
         data_state = TimeseriesDataState.get_by_id(data_state_id)
         if data_state is None:
-            raise TimeseriesCSVIOError("Unknown data state ID")
+            raise TimeseriesDataCSVIOError("Unknown data state ID")
 
         ts_l = [db.session.get(Timeseries, ts_id) for ts_id in timeseries_ids]
         if None in ts_l:
-            raise TimeseriesCSVIOError("Unknown timeseries ID")
+            raise TimeseriesDataCSVIOError("Unknown timeseries ID")
 
         # Check permissions
         for ts in ts_l:
@@ -110,11 +110,11 @@ class TimeseriesDataIO:
         """
         data_state = TimeseriesDataState.get_by_id(data_state_id)
         if data_state is None:
-            raise TimeseriesCSVIOError("Unknown data state ID")
+            raise TimeseriesDataCSVIOError("Unknown data state ID")
 
         ts_l = [db.session.get(Timeseries, ts_id) for ts_id in timeseries_ids]
         if None in ts_l:
-            raise TimeseriesCSVIOError("Unknown timeseries ID")
+            raise TimeseriesDataCSVIOError("Unknown timeseries ID")
 
         # Check permissions
         for ts in ts_l:
@@ -171,7 +171,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO):
         """
         data_state = TimeseriesDataState.get_by_id(data_state_id)
         if data_state is None:
-            raise TimeseriesCSVIOError("Unknown data state ID")
+            raise TimeseriesDataCSVIOError("Unknown data state ID")
 
         # If input is not a text stream, then it is a plain string
         # Make it an iterator
@@ -184,12 +184,12 @@ class TimeseriesDataCSVIO(TimeseriesDataIO):
         try:
             header = next(reader)
         except StopIteration as exc:
-            raise TimeseriesCSVIOError("Missing headers line") from exc
+            raise TimeseriesDataCSVIOError("Missing headers line") from exc
         if header[0] != "Datetime":
-            raise TimeseriesCSVIOError('First column must be "Datetime"')
+            raise TimeseriesDataCSVIOError('First column must be "Datetime"')
         ts_l = [db.session.get(Timeseries, col) for col in header[1:]]
         if None in ts_l:
-            raise TimeseriesCSVIOError("Unknown timeseries ID")
+            raise TimeseriesDataCSVIOError("Unknown timeseries ID")
 
         # Check permissions
         for ts in ts_l:
@@ -212,7 +212,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO):
                     ]
                 )
             except IndexError as exc:
-                raise TimeseriesCSVIOError("Missing column") from exc
+                raise TimeseriesDataCSVIOError("Missing column") from exc
 
         # Insert data
         cls._set_timeseries_data(data)

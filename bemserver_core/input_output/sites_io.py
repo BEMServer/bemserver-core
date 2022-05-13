@@ -51,7 +51,7 @@ def _get_storey_by_name(site, building, storey_name):
         ) from exc
 
 
-class SiteDataCSVIO:
+class SitesCSVIO:
     @staticmethod
     def _pop_row_value_for_col(row, col):
         try:
@@ -279,4 +279,4 @@ class SiteDataCSVIO:
         db.session.commit()
 
 
-sdio = SiteDataCSVIO()
+sites_csv_io = SitesCSVIO()

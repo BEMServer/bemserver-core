@@ -8,7 +8,10 @@ from bemserver_core.model import TimeseriesData, TimeseriesByDataState
 from bemserver_core.input_output import tsdcsvio
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
-from bemserver_core.exceptions import TimeseriesCSVIOError, BEMServerAuthorizationError
+from bemserver_core.exceptions import (
+    TimeseriesDataCSVIOError,
+    BEMServerAuthorizationError,
+)
 
 
 class TestTimeseriesCSVIO:
@@ -132,7 +135,7 @@ class TestTimeseriesCSVIO:
         ds_id = 1
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesCSVIOError):
+            with pytest.raises(TimeseriesDataCSVIOError):
                 tsdcsvio.import_csv(io.StringIO(csv_file), ds_id)
 
     @pytest.mark.usefixtures("timeseries")
@@ -151,7 +154,7 @@ class TestTimeseriesCSVIO:
         )
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesCSVIOError):
+            with pytest.raises(TimeseriesDataCSVIOError):
                 tsdcsvio.import_csv(io.StringIO(csv_file), dummy_ds_id)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
@@ -206,7 +209,7 @@ class TestTimeseriesCSVIO:
             )
 
             # Unknown TS ID
-            with pytest.raises(TimeseriesCSVIOError):
+            with pytest.raises(TimeseriesDataCSVIOError):
                 tsdcsvio.export_csv(
                     start_dt, end_dt, (ts_0.id, ts_2.id, ts_4.id, dummy_ts_id), ds_id
                 )
@@ -280,7 +283,7 @@ class TestTimeseriesCSVIO:
         end_dt = start_dt + dt.timedelta(hours=3)
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesCSVIOError):
+            with pytest.raises(TimeseriesDataCSVIOError):
                 tsdcsvio.export_csv(start_dt, end_dt, (ts_0.id,), dummy_ds_id)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
@@ -411,7 +414,7 @@ class TestTimeseriesCSVIO:
                 )
 
             # Unknown TS ID
-            with pytest.raises(TimeseriesCSVIOError):
+            with pytest.raises(TimeseriesDataCSVIOError):
                 tsdcsvio.export_csv_bucket(
                     start_dt,
                     end_dt,
@@ -493,7 +496,7 @@ class TestTimeseriesCSVIO:
         end_dt = start_dt + dt.timedelta(hours=3)
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesCSVIOError):
+            with pytest.raises(TimeseriesDataCSVIOError):
                 tsdcsvio.export_csv_bucket(
                     start_dt, end_dt, (ts_0.id,), dummy_ds_id, "1 day"
                 )
