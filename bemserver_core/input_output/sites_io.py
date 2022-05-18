@@ -25,11 +25,11 @@ def _get_se_properties(model_cls, reader, known_fields):
 
 class SitesCSVIO(BaseCSVIO):
 
-    SITE_FIELDS = {"Name", "Description"}
-    BUILDING_FIELDS = {"Site", "Name", "Description"}
-    STOREY_FIELDS = {"Site", "Building", "Name", "Description"}
-    SPACE_FIELDS = {"Site", "Building", "Storey", "Name", "Description"}
-    ZONE_FIELDS = {"Name", "Description"}
+    SITE_FIELDS = {"Name", "Description", "IFC_ID"}
+    BUILDING_FIELDS = {"Site", "Name", "Description", "IFC_ID"}
+    STOREY_FIELDS = {"Site", "Building", "Name", "Description", "IFC_ID"}
+    SPACE_FIELDS = {"Site", "Building", "Storey", "Name", "Description", "IFC_ID"}
+    ZONE_FIELDS = {"Name", "Description", "IFC_ID"}
     ERROR = SitesCSVIOError
 
     @classmethod
@@ -43,6 +43,7 @@ class SitesCSVIO(BaseCSVIO):
                 campaign_id=campaign.id,
                 name=row.pop("Name"),
                 description=row.pop("Description"),
+                ifc_id=row.pop("IFC_ID"),
             )
             try:
                 db.session.flush()
@@ -80,6 +81,7 @@ class SitesCSVIO(BaseCSVIO):
                 site_id=site.id,
                 name=row.pop("Name"),
                 description=row.pop("Description"),
+                ifc_id=row.pop("IFC_ID"),
             )
             try:
                 db.session.flush()
@@ -123,6 +125,7 @@ class SitesCSVIO(BaseCSVIO):
                 building_id=building.id,
                 name=row.pop("Name"),
                 description=row.pop("Description"),
+                ifc_id=row.pop("IFC_ID"),
             )
             try:
                 db.session.flush()
@@ -169,6 +172,7 @@ class SitesCSVIO(BaseCSVIO):
                 storey_id=storey.id,
                 name=row.pop("Name"),
                 description=row.pop("Description"),
+                ifc_id=row.pop("IFC_ID"),
             )
             try:
                 db.session.flush()
@@ -208,6 +212,7 @@ class SitesCSVIO(BaseCSVIO):
                 campaign_id=campaign.id,
                 name=row.pop("Name"),
                 description=row.pop("Description"),
+                ifc_id=row.pop("IFC_ID"),
             )
             try:
                 db.session.flush()

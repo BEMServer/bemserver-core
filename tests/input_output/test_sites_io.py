@@ -35,9 +35,9 @@ class TestSitesCSVIO:
         assert not db.session.query(Site).all()
 
         csv_file = (
-            "Name,Description,Surface\n"
-            "Site 1,Great site 1,1000\n"
-            "Site 2,Great site 2,\n"
+            "Name,Description,IFC_ID,Surface\n"
+            "Site 1,Great site 1,abcdefghijklmnopqrtsuv,1000\n"
+            "Site 2,Great site 2,,\n"
         )
         csv_file = io.StringIO(csv_file)
 
@@ -70,9 +70,9 @@ class TestSitesCSVIO:
         campaign_1 = campaigns[0]
 
         csv_file = (
-            "Name,Description,Surface\n"
-            "Site 1,Great site 1,1000\n"
-            "Site 2,Great site 2,2000\n"
+            "Name,Description,IFC_ID,Surface\n"
+            "Site 1,Great site 1,,1000\n"
+            "Site 2,Great site 2,,2000\n"
         )
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Unknown property: "Surface"'):
@@ -83,7 +83,9 @@ class TestSitesCSVIO:
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
 
-        csv_file = "Name,Description\nSite 1,Great site 1\nSite 1,Great site 2\n"
+        csv_file = (
+            "Name,Description,IFC_ID\nSite 1,Great site 1,\nSite 1,Great site 2,\n"
+        )
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Site "Site 1" already exists.'):
@@ -94,7 +96,7 @@ class TestSitesCSVIO:
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
 
-        csv_file = "Name,Description\nSite 1,Great site 1,"
+        csv_file = "Name,Description,IFC_ID\nSite 1,Great site 1,,"
 
         with CurrentUser(admin_user):
             sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
@@ -104,7 +106,7 @@ class TestSitesCSVIO:
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
 
-        csv_file = "Name,Description\n" + 100 * "A" + ",Great site 1\n"
+        csv_file = "Name,Description,IFC_ID\n" + 100 * "A" + ",Great site 1,\n"
         with CurrentUser(admin_user):
             with pytest.raises(
                 SitesCSVIOError, match=f"Site \"{100 * 'A'}\" can't be created."
@@ -117,7 +119,9 @@ class TestSitesCSVIO:
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
 
-        csv_file = "Name,Description,Surface\nSite 1,Great site 1," + 200 * "A" + "\n"
+        csv_file = (
+            "Name,Description,IFC_ID,Surface\nSite 1,Great site 1,," + 200 * "A" + "\n"
+        )
         with CurrentUser(admin_user):
             with pytest.raises(
                 SitesCSVIOError,
@@ -135,9 +139,9 @@ class TestSitesCSVIO:
         assert not db.session.query(Building).all()
 
         csv_file = (
-            "Name,Description,Site,Surface\n"
-            f"Building 1,Great building 1,{site_1.name},1000\n"
-            f"Building 2,Great building 2,{site_1.name},\n"
+            "Name,Description,Site,IFC_ID,Surface\n"
+            f"Building 1,Great building 1,{site_1.name},abcdefghijklmnopqrtsuv,1000\n"
+            f"Building 2,Great building 2,{site_1.name},,\n"
         )
         csv_file = io.StringIO(csv_file)
 
@@ -159,7 +163,7 @@ class TestSitesCSVIO:
         campaign_1 = campaigns[0]
         site_1 = sites[0]
 
-        csv_file = f"Name,Site\nBuilding 1,{site_1.name}\n"
+        csv_file = f"Name,Site,IFC_ID\nBuilding 1,{site_1.name}\n"
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match="Missing columns"):
@@ -174,9 +178,9 @@ class TestSitesCSVIO:
         site_1 = sites[0]
 
         csv_file = (
-            "Name,Description,Site,Surface\n"
-            f"Building 1,Great building 1,{site_1.name},1000\n"
-            f"Building 2,Great building 2,{site_1.name},2000\n"
+            "Name,Description,Site,IFC_ID,Surface\n"
+            f"Building 1,Great building 1,{site_1.name},,1000\n"
+            f"Building 2,Great building 2,{site_1.name},,2000\n"
         )
 
         with CurrentUser(admin_user):
@@ -190,9 +194,9 @@ class TestSitesCSVIO:
         site_1 = sites[0]
 
         csv_file = (
-            "Name,Description,Site\n"
-            f"Building 1,Great building 1,{site_1.name}\n"
-            f"Building 1,Great building 2,{site_1.name}\n"
+            "Name,Description,Site,IFC_ID\n"
+            f"Building 1,Great building 1,{site_1.name},\n"
+            f"Building 1,Great building 2,{site_1.name},\n"
         )
 
         with CurrentUser(admin_user):
@@ -208,7 +212,8 @@ class TestSitesCSVIO:
         site_1 = sites[0]
 
         csv_file = (
-            f"Name,Description,Site\nBuilding 1,Great building 1,{site_1.name},\n"
+            "Name,Description,Site,IFC_ID\n"
+            f"Building 1,Great building 1,{site_1.name},,\n"
         )
 
         with CurrentUser(admin_user):
@@ -221,7 +226,9 @@ class TestSitesCSVIO:
         site_1 = sites[0]
 
         csv_file = (
-            "Name,Description,Site\n" + 100 * "A" + f",Great building 1,{site_1.name}\n"
+            "Name,Description,Site,IFC_ID\n"
+            + 100 * "A"
+            + f",Great building 1,{site_1.name},\n"
         )
         with CurrentUser(admin_user):
             with pytest.raises(
@@ -239,9 +246,8 @@ class TestSitesCSVIO:
         site_1 = sites[0]
 
         csv_file = (
-            f"Name,Description,Site,Surface\nBuilding 1,Great building 1,{site_1.name},"
-            + 200 * "A"
-            + "\n"
+            "Name,Description,Site,IFC_ID,Surface\n"
+            f"Building 1,Great building 1,{site_1.name},," + 200 * "A" + "\n"
         )
         with CurrentUser(admin_user):
             with pytest.raises(
@@ -261,9 +267,11 @@ class TestSitesCSVIO:
         assert not db.session.query(Storey).all()
 
         csv_file = (
-            "Name,Description,Site,Building,Surface\n"
-            f"Storey 1,Great storey 1,{site_1.name},{building_1.name},1000\n"
-            f"Storey 2,Great storey 2,{site_1.name},{building_1.name},\n"
+            "Name,Description,Site,Building,IFC_ID,Surface\n"
+            f"Storey 1,Great storey 1,{site_1.name},{building_1.name},"
+            "abcdefghijklmnopqrtsuv,1000\n"
+            f"Storey 2,Great storey 2,{site_1.name},{building_1.name},"
+            ",\n"
         )
         csv_file = io.StringIO(csv_file)
 
@@ -304,9 +312,9 @@ class TestSitesCSVIO:
         building_1 = buildings[0]
 
         csv_file = (
-            "Name,Description,Site,Building,Surface\n"
-            f"Storey 1,Great storey 1,{site_1.name},{building_1.name},1000\n"
-            f"Storey 2,Great storey 2,{site_1.name},{building_1.name},2000\n"
+            "Name,Description,Site,Building,IFC_ID,Surface\n"
+            f"Storey 1,Great storey 1,{site_1.name},{building_1.name},,1000\n"
+            f"Storey 2,Great storey 2,{site_1.name},{building_1.name},,2000\n"
         )
 
         with CurrentUser(admin_user):
@@ -323,9 +331,9 @@ class TestSitesCSVIO:
         building_1 = buildings[0]
 
         csv_file = (
-            "Name,Description,Site,Building\n"
-            f"Storey 1,Great storey 1,{site_1.name},{building_1.name}\n"
-            f"Storey 1,Great storey 2,{site_1.name},{building_1.name}\n"
+            "Name,Description,Site,Building,IFC_ID\n"
+            f"Storey 1,Great storey 1,{site_1.name},{building_1.name},\n"
+            f"Storey 1,Great storey 2,{site_1.name},{building_1.name},\n"
         )
 
         with CurrentUser(admin_user):
@@ -345,8 +353,8 @@ class TestSitesCSVIO:
         building_1 = buildings[0]
 
         csv_file = (
-            "Name,Description,Site,Building\n"
-            f"Storey 1,Great storey 1,{site_1.name},{building_1.name},\n"
+            "Name,Description,Site,Building,IFC_ID\n"
+            f"Storey 1,Great storey 1,{site_1.name},{building_1.name},,\n"
         )
 
         with CurrentUser(admin_user):
@@ -362,9 +370,9 @@ class TestSitesCSVIO:
         building_1 = buildings[0]
 
         csv_file = (
-            "Name,Description,Site,Building\n"
+            "Name,Description,Site,Building,IFC_ID\n"
             + 100 * "A"
-            + f",Great storey 1,{site_1.name},{building_1.name}\n"
+            + f",Great storey 1,{site_1.name},{building_1.name},\n"
         )
         with CurrentUser(admin_user):
             with pytest.raises(
@@ -383,8 +391,8 @@ class TestSitesCSVIO:
         building_1 = buildings[0]
 
         csv_file = (
-            "Name,Description,Site,Building,Surface\n"
-            f"Storey 1,Great storey 1,{site_1.name},{building_1.name},"
+            "Name,Description,Site,Building,IFC_ID,Surface\n"
+            f"Storey 1,Great storey 1,{site_1.name},{building_1.name},,"
             + 200 * "A"
             + "\n"
         )
@@ -409,11 +417,13 @@ class TestSitesCSVIO:
         assert not db.session.query(Space).all()
 
         csv_file = (
-            "Name,Description,Site,Building,Storey,Surface\n"
+            "Name,Description,Site,Building,Storey,IFC_ID,Surface\n"
             "Space 1,Great space 1,"
-            f"{site_1.name},{building_1.name},{storey_1.name},1000\n"
+            f"{site_1.name},{building_1.name},{storey_1.name},"
+            "abcdefghijklmnopqrtsuv,1000\n"
             "Space 2,Great space 2,"
-            f"{site_1.name},{building_1.name},{storey_1.name},\n"
+            f"{site_1.name},{building_1.name},{storey_1.name},"
+            ",\n"
         )
         csv_file = io.StringIO(csv_file)
 
@@ -459,11 +469,11 @@ class TestSitesCSVIO:
         storey_1 = storeys[0]
 
         csv_file = (
-            "Name,Description,Site,Building,Storey,Surface\n"
+            "Name,Description,Site,Building,Storey,IFC_ID,Surface\n"
             "Space 1,Great space 1,"
-            f"{site_1.name},{building_1.name},{storey_1.name},1000\n"
+            f"{site_1.name},{building_1.name},{storey_1.name},,1000\n"
             "Space 2,Great space 2,"
-            f"{site_1.name},{building_1.name},{storey_1.name},2000\n"
+            f"{site_1.name},{building_1.name},{storey_1.name},,2000\n"
         )
 
         with CurrentUser(admin_user):
@@ -481,11 +491,11 @@ class TestSitesCSVIO:
         storey_1 = storeys[0]
 
         csv_file = (
-            "Name,Description,Site,Building,Storey\n"
+            "Name,Description,Site,Building,Storey,IFC_ID\n"
             "Space 1,Great storey 1,"
-            f"{site_1.name},{building_1.name},{storey_1.name}\n"
+            f"{site_1.name},{building_1.name},{storey_1.name},\n"
             "Space 1,Great storey 2,"
-            f"{site_1.name},{building_1.name},{storey_1.name}\n"
+            f"{site_1.name},{building_1.name},{storey_1.name},\n"
         )
 
         with CurrentUser(admin_user):
@@ -506,9 +516,9 @@ class TestSitesCSVIO:
         storey_1 = storeys[0]
 
         csv_file = (
-            "Name,Description,Site,Building,Storey\n"
+            "Name,Description,Site,Building,Storey,IFC_ID\n"
             "Space 1,Great storey 1,"
-            f"{site_1.name},{building_1.name},{storey_1.name},\n"
+            f"{site_1.name},{building_1.name},{storey_1.name},,\n"
         )
 
         with CurrentUser(admin_user):
@@ -525,9 +535,9 @@ class TestSitesCSVIO:
         storey_1 = storeys[0]
 
         csv_file = (
-            "Name,Description,Site,Building,Storey\n"
+            "Name,Description,Site,Building,Storey,IFC_ID\n"
             + 100 * "A"
-            + f",Great space 1,{site_1.name},{building_1.name},{storey_1.name}\n"
+            + f",Great space 1,{site_1.name},{building_1.name},{storey_1.name},\n"
         )
         with CurrentUser(admin_user):
             with pytest.raises(
@@ -547,8 +557,8 @@ class TestSitesCSVIO:
         storey_1 = storeys[0]
 
         csv_file = (
-            "Name,Description,Site,Building,Storey,Surface\n"
-            f"Space 1,Great space 1,{site_1.name},{building_1.name},{storey_1.name},"
+            "Name,Description,Site,Building,Storey,IFC_ID,Surface\n"
+            f"Space 1,Great space 1,{site_1.name},{building_1.name},{storey_1.name},,"
             + 200 * "A"
             + "\n"
         )
@@ -568,9 +578,9 @@ class TestSitesCSVIO:
         assert not db.session.query(Zone).all()
 
         csv_file = (
-            "Name,Description,Surface\n"
-            "Zone 1,Great zone 1,1000\n"
-            "Zone 2,Great zone 2,\n"
+            "Name,Description,IFC_ID,Surface\n"
+            "Zone 1,Great zone 1,abcdefghijklmnopqrtsuv,1000\n"
+            "Zone 2,Great zone 2,,\n"
         )
         csv_file = io.StringIO(csv_file)
 
@@ -602,9 +612,9 @@ class TestSitesCSVIO:
         campaign_1 = campaigns[0]
 
         csv_file = (
-            "Name,Description,Surface\n"
-            "Zone 1,Great zone 1,1000\n"
-            "Zone 2,Great zone 2,2000\n"
+            "Name,Description,IFC_ID,Surface\n"
+            "Zone 1,Great zone 1,,1000\n"
+            "Zone 2,Great zone 2,,2000\n"
         )
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Unknown property: "Surface"'):
@@ -615,7 +625,9 @@ class TestSitesCSVIO:
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
 
-        csv_file = "Name,Description\nZone 1,Great zone 1\nZone 1,Great zone 2\n"
+        csv_file = (
+            "Name,Description,IFC_ID\nZone 1,Great zone 1,\nZone 1,Great zone 2,\n"
+        )
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Zone "Zone 1" already exists.'):
@@ -626,7 +638,7 @@ class TestSitesCSVIO:
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
 
-        csv_file = "Name,Description\nZone 1,Great zone 1,\n"
+        csv_file = "Name,Description,IFC_ID\nZone 1,Great zone 1,,\n"
 
         with CurrentUser(admin_user):
             sites_csv_io.import_csv(campaign_1, zones_csv=csv_file)
@@ -636,7 +648,7 @@ class TestSitesCSVIO:
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
 
-        csv_file = "Name,Description\n" + 100 * "A" + ",Great zone 1\n"
+        csv_file = "Name,Description,IFC_ID\n" + 100 * "A" + ",Great zone 1,\n"
         with CurrentUser(admin_user):
             with pytest.raises(
                 SitesCSVIOError, match=f"Zone \"{100 * 'A'}\" can't be created."
@@ -649,7 +661,9 @@ class TestSitesCSVIO:
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
 
-        csv_file = "Name,Description,Surface\nZone 1,Great zone 1," + 200 * "A" + "\n"
+        csv_file = (
+            "Name,Description,IFC_ID,Surface\nZone 1,Great zone 1,," + 200 * "A" + "\n"
+        )
         with CurrentUser(admin_user):
             with pytest.raises(
                 SitesCSVIOError,
@@ -668,29 +682,31 @@ class TestSitesCSVIO:
         campaign_1 = campaigns[0]
 
         sites_csv = (
-            "Name,Description,Surface\n"
-            "Site 1,Great site 1,1000\n"
-            "Site 2,Great site 2,2000\n"
+            "Name,Description,IFC_ID,Surface\n"
+            "Site 1,Great site 1,abcdefghijklmnopqrtsuv,1000\n"
+            "Site 2,Great site 2,,2000\n"
         )
         buildings_csv = (
-            "Name,Description,Site,Surface\n"
-            "Building 1,Great building 1,Site 1,1000\n"
-            "Building 2,Great building 2,Site 2,2000\n"
+            "Name,Description,Site,IFC_ID,Surface\n"
+            "Building 1,Great building 1,Site 1,bcdefghijklmnopqrtsuvw,,1000\n"
+            "Building 2,Great building 2,Site 2,,2000\n"
         )
         storeys_csv = (
-            "Name,Description,Site,Building,Surface\n"
-            "Storey 1,Great storey 1,Site 1,Building 1,1000\n"
-            "Storey 2,Great storey 2,Site 2,Building 2,2000\n"
+            "Name,Description,Site,Building,IFC_ID,Surface\n"
+            "Storey 1,Great storey 1,Site 1,Building 1,cdefghijklmnopqrtsuvwx,1000\n"
+            "Storey 2,Great storey 2,Site 2,Building 2,,2000\n"
         )
         spaces_csv = (
-            "Name,Description,Site,Building,Storey,Surface\n"
-            "Storey 1,Great storey 1,Site 1,Building 1,Storey 1,1000\n"
-            "Storey 2,Great storey 2,Site 2,Building 2,Storey 2,2000\n"
+            "Name,Description,Site,Building,Storey,IFC_ID,Surface\n"
+            "Storey 1,Great storey 1,Site 1,Building 1,Storey 1,"
+            "defghijklmnopqrtsuvwxy,1000\n"
+            "Storey 2,Great storey 2,Site 2,Building 2,Storey 2,"
+            ",2000\n"
         )
         zones_csv = (
-            "Name,Description,Surface\n"
-            "Zone 1,Great zone 1,1000\n"
-            "Zone 2,Great zone 2,2000\n"
+            "Name,Description,IFC_ID,Surface\n"
+            "Zone 1,Great zone 1,efghijklmnopqrtsuvwxyz,1000\n"
+            "Zone 2,Great zone 2,,2000\n"
         )
 
         with CurrentUser(admin_user):
