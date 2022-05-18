@@ -14,7 +14,7 @@ from bemserver_core.exceptions import (
 )
 
 
-class TestTimeseriesCSVIO:
+class TestTimeseriesDataCSVIO:
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
     @pytest.mark.parametrize("mode", ("str", "textiobase"))
     def test_timeseries_data_io_import_csv_as_admin(self, users, timeseries, mode):

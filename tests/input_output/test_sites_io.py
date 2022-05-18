@@ -61,7 +61,7 @@ class TestSitesCSVIO:
         csv_file = "Name\nTest"
 
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match='Missing column: "Description"'):
+            with pytest.raises(SitesCSVIOError, match="Missing columns"):
                 sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
 
     def test_site_data_io_import_csv_unknown_property(self, users, campaigns):
@@ -162,7 +162,7 @@ class TestSitesCSVIO:
         csv_file = f"Name,Site\nBuilding 1,{site_1.name}\n"
 
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match='Missing column: "Description"'):
+            with pytest.raises(SitesCSVIOError, match="Missing columns"):
                 sites_csv_io.import_csv(campaign_1, buildings_csv=csv_file)
 
     def test_building_data_io_import_csv_unknown_property(
@@ -291,7 +291,7 @@ class TestSitesCSVIO:
         csv_file = f"Name,Site,Building\nStorey 1,{site_1.name},{building_1.name}\n"
 
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match='Missing column: "Description"'):
+            with pytest.raises(SitesCSVIOError, match="Missing columns"):
                 sites_csv_io.import_csv(campaign_1, storeys_csv=csv_file)
 
     def test_storey_data_io_import_csv_unknown_property(
@@ -445,7 +445,7 @@ class TestSitesCSVIO:
         )
 
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match='Missing column: "Description"'):
+            with pytest.raises(SitesCSVIOError, match="Missing columns"):
                 sites_csv_io.import_csv(campaign_1, spaces_csv=csv_file)
 
     def test_space_data_io_import_csv_unknown_property(
@@ -593,7 +593,7 @@ class TestSitesCSVIO:
         csv_file = "Name\nTest"
 
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match='Missing column: "Description"'):
+            with pytest.raises(SitesCSVIOError, match="Missing columns"):
                 sites_csv_io.import_csv(campaign_1, zones_csv=csv_file)
 
     def test_zone_data_io_import_csv_unknown_property(self, users, campaigns):

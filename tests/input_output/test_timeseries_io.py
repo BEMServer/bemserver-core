@@ -74,6 +74,32 @@ class TestTimeseriesCSVIO:
         assert len(timeseries_2_property_data) == 1
         assert math.isclose(timeseries_2_property_data[0].value, 60)
 
+    def test_timeseries_csv_io_import_csv_missing_column(
+        self,
+        users,
+        campaigns,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+
+        timeseries = db.session.query(Timeseries).all()
+        assert not timeseries
+
+        timeseries_csv = (
+            "Name,Unit,Campaign scope,Site,Building,Storey,Space,Zone\n"
+            "Space_1_Temp,°C,Campaign scope 1,Site 1,Building 1,"
+            "Storey 1,Space 1,Zone 1\n"
+        )
+        timeseries_csv = io.StringIO(timeseries_csv)
+
+        with CurrentUser(admin_user):
+            with pytest.raises(TimeseriesCSVIOError, match="Missing columns"):
+                timeseries_csv_io.import_csv(
+                    campaign_1,
+                    timeseries_csv=timeseries_csv,
+                )
+
     @pytest.mark.parametrize("missing", ("site", "building", "storey"))
     def test_timeseries_csv_io_import_csv_missing_parent(
         self,

@@ -1,7 +1,4 @@
 """Timeseries data I/O"""
-import io
-import csv
-
 import sqlalchemy as sqla
 import pandas as pd
 
@@ -9,6 +6,7 @@ from bemserver_core.database import db
 from bemserver_core.model import Timeseries, TimeseriesData, TimeseriesDataState
 from bemserver_core.authorization import auth, get_current_user
 from bemserver_core.exceptions import TimeseriesDataCSVIOError
+from .base import BaseCSVIO
 
 
 AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max")
@@ -162,7 +160,7 @@ class TimeseriesDataIO:
         return data_df
 
 
-class TimeseriesDataCSVIO(TimeseriesDataIO):
+class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
     @classmethod
     def import_csv(cls, csv_file, data_state_id):
         """Import CSV file
@@ -173,12 +171,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO):
         if data_state is None:
             raise TimeseriesDataCSVIOError("Unknown data state ID")
 
-        # If input is not a text stream, then it is a plain string
-        # Make it an iterator
-        if not isinstance(csv_file, io.TextIOBase):
-            csv_file = csv_file.splitlines()
-
-        reader = csv.reader(csv_file)
+        reader = cls.csv_reader(csv_file)
 
         # Read headers
         try:
