@@ -68,35 +68,39 @@ class TimeseriesCSVIO(BaseCSVIO):
                 ) from exc
 
             site_name = row.pop("Site")
+            building_name = row.pop("Building")
+            storey_name = row.pop("Storey")
+            space_name = row.pop("Space")
+            zone_name = row.pop("Zone")
             if site_name:
                 site = cls._get_site_by_name(campaign, site_name)
-                model.TimeseriesBySite.new(
-                    timeseries_id=timeseries.id,
-                    site_id=site.id,
-                )
-            building_name = row.pop("Building")
+                if not building_name:
+                    model.TimeseriesBySite.new(
+                        timeseries_id=timeseries.id,
+                        site_id=site.id,
+                    )
             if building_name:
                 if not site_name:
                     raise TimeseriesCSVIOError(
                         f'Missing site for building "{building_name}"'
                     )
                 building = cls._get_building_by_name(site, building_name)
-                model.TimeseriesByBuilding.new(
-                    timeseries_id=timeseries.id,
-                    building_id=building.id,
-                )
-            storey_name = row.pop("Storey")
+                if not storey_name:
+                    model.TimeseriesByBuilding.new(
+                        timeseries_id=timeseries.id,
+                        building_id=building.id,
+                    )
             if storey_name:
                 if not building_name:
                     raise TimeseriesCSVIOError(
                         f'Missing building for storey "{storey_name}"'
                     )
                 storey = cls._get_storey_by_name(site, building, storey_name)
-                model.TimeseriesByStorey.new(
-                    timeseries_id=timeseries.id,
-                    storey_id=storey.id,
-                )
-            space_name = row.pop("Space")
+                if not space_name:
+                    model.TimeseriesByStorey.new(
+                        timeseries_id=timeseries.id,
+                        storey_id=storey.id,
+                    )
             if space_name:
                 if not storey_name:
                     raise TimeseriesCSVIOError(
@@ -107,7 +111,6 @@ class TimeseriesCSVIO(BaseCSVIO):
                     timeseries_id=timeseries.id,
                     space_id=space.id,
                 )
-            zone_name = row.pop("Zone")
             if zone_name:
                 zone = cls._get_zone_by_name(campaign, zone_name)
                 model.TimeseriesByZone.new(

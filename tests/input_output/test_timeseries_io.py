@@ -6,7 +6,15 @@ import pytest
 
 from bemserver_core.input_output import timeseries_csv_io
 from bemserver_core.database import db
-from bemserver_core.model import Timeseries, TimeseriesPropertyData
+from bemserver_core.model import (
+    Timeseries,
+    TimeseriesPropertyData,
+    TimeseriesBySite,
+    TimeseriesByBuilding,
+    TimeseriesByStorey,
+    TimeseriesBySpace,
+    TimeseriesByZone,
+)
 from bemserver_core.authorization import CurrentUser
 from bemserver_core.exceptions import TimeseriesCSVIOError
 
@@ -44,10 +52,14 @@ class TestTimeseriesCSVIO:
         timeseries_csv = (
             "Name,Description,Unit,Campaign scope,Site,Building,"
             "Storey,Space,Zone,Min,Max\n"
-            f"Space_1_Temp,Temperature,°C,{cs_1.name},{site_1.name},{building_1.name},"
-            f"{storey_1.name},{space_1.name},{zone_1.name},-10,60\n"
-            f"Space_2_Temp,Temperature,°C,{cs_1.name},{site_1.name},{building_1.name},"
+            f"Temp 1,Temperature,°C,{cs_1.name},{site_1.name},{building_1.name},"
+            f"{storey_1.name},{space_1.name},,-10,60\n"
+            f"Temp 2,Temperature,°C,{cs_1.name},{site_1.name},{building_1.name},"
             f"{storey_1.name},,{zone_1.name},,60\n"
+            f"Temp 3,Temperature,°C,{cs_1.name},{site_1.name},{building_1.name},"
+            f",,{zone_1.name},,\n"
+            f"Temp 4,Temperature,°C,{cs_1.name},{site_1.name},,"
+            f",,{zone_1.name},,\n"
         )
         timeseries_csv = io.StringIO(timeseries_csv)
 
@@ -58,14 +70,27 @@ class TestTimeseriesCSVIO:
             )
 
         timeseries = db.session.query(Timeseries).all()
-        assert len(timeseries) == 2
+        assert len(timeseries) == 4
+
+        timeseries = db.session.query(TimeseriesBySite).all()
+        assert len(timeseries) == 1
+
+        timeseries = db.session.query(TimeseriesByBuilding).all()
+        assert len(timeseries) == 1
+
+        timeseries = db.session.query(TimeseriesByStorey).all()
+        assert len(timeseries) == 1
+
+        timeseries = db.session.query(TimeseriesBySpace).all()
+        assert len(timeseries) == 1
+
+        timeseries = db.session.query(TimeseriesByZone).all()
+        assert len(timeseries) == 3
 
         timeseries_property_data = db.session.query(TimeseriesPropertyData).all()
         assert len(timeseries_property_data) == 3
 
-        timeseries_2 = (
-            db.session.query(Timeseries).filter_by(name="Space_2_Temp").first()
-        )
+        timeseries_2 = db.session.query(Timeseries).filter_by(name="Temp 2").first()
         timeseries_2_property_data = (
             db.session.query(TimeseriesPropertyData)
             .filter_by(timeseries_id=timeseries_2.id)
