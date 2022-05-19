@@ -5,16 +5,19 @@ import datetime as dt
 import pytest
 
 from bemserver_core.model import TimeseriesData, TimeseriesByDataState
-from bemserver_core.csv_io import tscsvio
+from bemserver_core.input_output import tsdcsvio
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
-from bemserver_core.exceptions import TimeseriesCSVIOError, BEMServerAuthorizationError
+from bemserver_core.exceptions import (
+    TimeseriesDataCSVIOError,
+    BEMServerAuthorizationError,
+)
 
 
-class TestTimeseriesCSVIO:
+class TestTimeseriesDataCSVIO:
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
     @pytest.mark.parametrize("mode", ("str", "textiobase"))
-    def test_timeseries_csv_io_import_csv_as_admin(self, users, timeseries, mode):
+    def test_timeseries_data_io_import_csv_as_admin(self, users, timeseries, mode):
         admin_user = users[0]
         assert admin_user.is_admin
         ts_0 = timeseries[0]
@@ -36,7 +39,7 @@ class TestTimeseriesCSVIO:
             csv_file = io.StringIO(csv_file)
 
         with CurrentUser(admin_user):
-            tscsvio.import_csv(csv_file, ds_id)
+            tsdcsvio.import_csv(csv_file, ds_id)
 
         # Check TSBDS are correctly auto-created
         tsbds_l = (
@@ -81,7 +84,7 @@ class TestTimeseriesCSVIO:
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
-    def test_timeseries_csv_io_import_csv_as_user(self, users, timeseries):
+    def test_timeseries_data_io_import_csv_as_user(self, users, timeseries):
         user_1 = users[1]
         assert not user_1.is_admin
         ts_0 = timeseries[0]
@@ -101,7 +104,7 @@ class TestTimeseriesCSVIO:
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
-                tscsvio.import_csv(csv_file, ds_id)
+                tsdcsvio.import_csv(csv_file, ds_id)
 
         csv_file = (
             f"Datetime,{ts_1.id}\n"
@@ -112,7 +115,7 @@ class TestTimeseriesCSVIO:
         )
 
         with CurrentUser(user_1):
-            tscsvio.import_csv(csv_file, ds_id)
+            tsdcsvio.import_csv(csv_file, ds_id)
 
     @pytest.mark.parametrize(
         "csv_file",
@@ -126,17 +129,17 @@ class TestTimeseriesCSVIO:
         ),
     )
     @pytest.mark.usefixtures("timeseries")
-    def test_timeseries_csv_io_import_csv_error(self, users, csv_file):
+    def test_timeseries_data_io_import_csv_error(self, users, csv_file):
         admin_user = users[0]
         assert admin_user.is_admin
         ds_id = 1
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesCSVIOError):
-                tscsvio.import_csv(io.StringIO(csv_file), ds_id)
+            with pytest.raises(TimeseriesDataCSVIOError):
+                tsdcsvio.import_csv(io.StringIO(csv_file), ds_id)
 
     @pytest.mark.usefixtures("timeseries")
-    def test_timeseries_csv_io_import_csv_data_state_error(self, users, timeseries):
+    def test_timeseries_data_io_import_csv_data_state_error(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin
         ts_1 = timeseries[1]
@@ -151,12 +154,12 @@ class TestTimeseriesCSVIO:
         )
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesCSVIOError):
-                tscsvio.import_csv(io.StringIO(csv_file), dummy_ds_id)
+            with pytest.raises(TimeseriesDataCSVIOError):
+                tsdcsvio.import_csv(io.StringIO(csv_file), dummy_ds_id)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.parametrize("timeseries_by_data_states", (5,), indirect=True)
-    def test_timeseries_csv_io_export_csv_as_admin(
+    def test_timeseries_data_io_export_csv_as_admin(
         self, users, timeseries, timeseries_by_data_states
     ):
         admin_user = users[0]
@@ -194,7 +197,7 @@ class TestTimeseriesCSVIO:
         db.session.commit()
 
         with CurrentUser(admin_user):
-            data = tscsvio.export_csv(
+            data = tsdcsvio.export_csv(
                 start_dt, end_dt, (ts_0.id, ts_2.id, ts_4.id), ds_id
             )
 
@@ -206,8 +209,8 @@ class TestTimeseriesCSVIO:
             )
 
             # Unknown TS ID
-            with pytest.raises(TimeseriesCSVIOError):
-                tscsvio.export_csv(
+            with pytest.raises(TimeseriesDataCSVIOError):
+                tsdcsvio.export_csv(
                     start_dt, end_dt, (ts_0.id, ts_2.id, ts_4.id, dummy_ts_id), ds_id
                 )
 
@@ -215,7 +218,7 @@ class TestTimeseriesCSVIO:
     @pytest.mark.parametrize("timeseries_by_data_states", (5,), indirect=True)
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
-    def test_timeseries_csv_io_export_csv_as_user(
+    def test_timeseries_data_io_export_csv_as_user(
         self, users, timeseries, timeseries_by_data_states
     ):
         user_1 = users[1]
@@ -255,12 +258,12 @@ class TestTimeseriesCSVIO:
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
-                data = tscsvio.export_csv(
+                data = tsdcsvio.export_csv(
                     start_dt, end_dt, (ts_0.id, ts_2.id, ts_4.id), ds_id
                 )
 
         with CurrentUser(user_1):
-            data = tscsvio.export_csv(start_dt, end_dt, (ts_1.id, ts_3.id), ds_id)
+            data = tsdcsvio.export_csv(start_dt, end_dt, (ts_1.id, ts_3.id), ds_id)
 
             assert data == (
                 f"Datetime,{ts_1.id},{ts_3.id}\n"
@@ -270,7 +273,7 @@ class TestTimeseriesCSVIO:
             )
 
     @pytest.mark.usefixtures("timeseries_by_data_states")
-    def test_timeseries_csv_io_export_csv_data_state_error(self, users, timeseries):
+    def test_timeseries_data_io_export_csv_data_state_error(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin
         ts_0 = timeseries[0]
@@ -280,12 +283,12 @@ class TestTimeseriesCSVIO:
         end_dt = start_dt + dt.timedelta(hours=3)
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesCSVIOError):
-                tscsvio.export_csv(start_dt, end_dt, (ts_0.id,), dummy_ds_id)
+            with pytest.raises(TimeseriesDataCSVIOError):
+                tsdcsvio.export_csv(start_dt, end_dt, (ts_0.id,), dummy_ds_id)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.parametrize("timeseries_by_data_states", (5,), indirect=True)
-    def test_timeseries_csv_io_export_csv_bucket_as_admin(
+    def test_timeseries_data_io_export_csv_bucket_as_admin(
         self, users, timeseries, timeseries_by_data_states
     ):
         admin_user = users[0]
@@ -324,7 +327,7 @@ class TestTimeseriesCSVIO:
 
         with CurrentUser(admin_user):
             # Export CSV: UTC avg
-            data = tscsvio.export_csv_bucket(
+            data = tsdcsvio.export_csv_bucket(
                 start_dt, end_dt, [ts_0.id, ts_2.id, ts_4.id], ds_id, "1 day"
             )
             assert data == (
@@ -335,7 +338,7 @@ class TestTimeseriesCSVIO:
             )
 
             # Export CSV: local TZ avg
-            data = tscsvio.export_csv_bucket(
+            data = tsdcsvio.export_csv_bucket(
                 start_dt,
                 end_dt,
                 (ts_0.id, ts_2.id, ts_4.id),
@@ -352,7 +355,7 @@ class TestTimeseriesCSVIO:
             )
 
             # Export CSV: UTC sum
-            data = tscsvio.export_csv_bucket(
+            data = tsdcsvio.export_csv_bucket(
                 start_dt,
                 end_dt,
                 [ts_0.id, ts_2.id, ts_4.id],
@@ -368,7 +371,7 @@ class TestTimeseriesCSVIO:
             )
 
             # Export CSV: UTC min
-            data = tscsvio.export_csv_bucket(
+            data = tsdcsvio.export_csv_bucket(
                 start_dt,
                 end_dt,
                 [ts_0.id, ts_2.id, ts_4.id],
@@ -384,7 +387,7 @@ class TestTimeseriesCSVIO:
             )
 
             # Export CSV: UTC max
-            data = tscsvio.export_csv_bucket(
+            data = tsdcsvio.export_csv_bucket(
                 start_dt,
                 end_dt,
                 [ts_0.id, ts_2.id, ts_4.id],
@@ -401,7 +404,7 @@ class TestTimeseriesCSVIO:
 
             # Export CSV: invalid aggregation
             with pytest.raises(ValueError):
-                tscsvio.export_csv_bucket(
+                tsdcsvio.export_csv_bucket(
                     start_dt,
                     end_dt,
                     [ts_0.id, ts_2.id, ts_4.id],
@@ -411,8 +414,8 @@ class TestTimeseriesCSVIO:
                 )
 
             # Unknown TS ID
-            with pytest.raises(TimeseriesCSVIOError):
-                tscsvio.export_csv_bucket(
+            with pytest.raises(TimeseriesDataCSVIOError):
+                tsdcsvio.export_csv_bucket(
                     start_dt,
                     end_dt,
                     [ts_0.id, ts_2.id, ts_4.id, dummy_ts_id],
@@ -424,7 +427,7 @@ class TestTimeseriesCSVIO:
     @pytest.mark.parametrize("timeseries_by_data_states", (5,), indirect=True)
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
-    def test_timeseries_csv_io_export_csv_bucket_as_user(
+    def test_timeseries_data_io_export_csv_bucket_as_user(
         self, users, timeseries, timeseries_by_data_states
     ):
         user_1 = users[1]
@@ -464,13 +467,13 @@ class TestTimeseriesCSVIO:
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
-                data = tscsvio.export_csv_bucket(
+                data = tsdcsvio.export_csv_bucket(
                     start_dt, end_dt, [ts_0.id, ts_2.id, ts_4.id], ds_id, "1 day"
                 )
 
         with CurrentUser(user_1):
             # Export CSV: UTC avg
-            data = tscsvio.export_csv_bucket(
+            data = tsdcsvio.export_csv_bucket(
                 start_dt, end_dt, [ts_1.id, ts_3.id], ds_id, "1 day"
             )
             assert data == (
@@ -481,7 +484,7 @@ class TestTimeseriesCSVIO:
             )
 
     @pytest.mark.usefixtures("timeseries_by_data_states")
-    def test_timeseries_csv_io_export_csv_bucket_data_state_error(
+    def test_timeseries_data_io_export_csv_bucket_data_state_error(
         self, users, timeseries
     ):
         admin_user = users[0]
@@ -493,7 +496,7 @@ class TestTimeseriesCSVIO:
         end_dt = start_dt + dt.timedelta(hours=3)
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesCSVIOError):
-                tscsvio.export_csv_bucket(
+            with pytest.raises(TimeseriesDataCSVIOError):
+                tsdcsvio.export_csv_bucket(
                     start_dt, end_dt, (ts_0.id,), dummy_ds_id, "1 day"
                 )

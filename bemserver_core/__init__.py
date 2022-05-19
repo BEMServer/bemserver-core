@@ -3,7 +3,7 @@ from bemserver_core.authorization import auth, AUTH_POLAR_FILES
 
 from . import model  # noqa
 from . import database  # noqa
-from . import csv_io  # noqa
+from . import input_output  # noqa
 
 
 class BEMServerCore:

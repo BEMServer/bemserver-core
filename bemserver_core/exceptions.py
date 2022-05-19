@@ -5,8 +5,16 @@ class BEMServerCoreError(Exception):
     """Base BEMServer Core exception"""
 
 
+class SitesCSVIOError(BEMServerCoreError):
+    """Sites CSV IO error"""
+
+
 class TimeseriesCSVIOError(BEMServerCoreError):
     """Timeseries CSV IO error"""
+
+
+class TimeseriesDataCSVIOError(BEMServerCoreError):
+    """Timeseries data CSV IO error"""
 
 
 class BEMServerAuthorizationError(BEMServerCoreError):
