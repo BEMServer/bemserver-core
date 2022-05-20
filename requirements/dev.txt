@@ -6,6 +6,8 @@
 #
 attrs==21.4.0
     # via pytest
+bump2version==1.0.1
+    # via -r requirements/dev.in
 cfgv==3.3.1
     # via pre-commit
 coverage[toml]==6.3.2

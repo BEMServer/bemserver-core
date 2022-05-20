@@ -6,6 +6,9 @@ from . import database  # noqa
 from . import input_output  # noqa
 
 
+__version__ = "0.0.1"
+
+
 class BEMServerCore:
     def __init__(self):
         self.auth_model_classes = list(model.AUTH_MODEL_CLASSES)
