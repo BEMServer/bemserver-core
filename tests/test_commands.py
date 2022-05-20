@@ -1,8 +1,9 @@
 """Commands tests"""
-import os
-import subprocess
-
 import sqlalchemy as sqla
+
+from click.testing import CliRunner
+
+from bemserver_core.commands import setup_db_cmd
 
 
 class TestCommands:
@@ -11,6 +12,8 @@ class TestCommands:
 
         Also check at least one table is created
         """
+
+        # Check there are no tables in DB
         with sqla.create_engine(timescale_db).connect() as connection:
             assert not list(
                 connection.execute(
@@ -19,10 +22,15 @@ class TestCommands:
                 )
             )
 
-        env = {**os.environ, "SQLALCHEMY_DATABASE_URI": timescale_db}
-        proc = subprocess.run(["bemserver_setup_db"], env=env, stdout=subprocess.PIPE)
-        assert proc.returncode == 0
+        # Run command
+        runner = CliRunner()
+        result = runner.invoke(
+            setup_db_cmd,
+            env={"SQLALCHEMY_DATABASE_URI": timescale_db},
+        )
+        assert result.exit_code == 0
 
+        # Check tables are created
         with sqla.create_engine(timescale_db).connect() as connection:
             assert list(
                 connection.execute(

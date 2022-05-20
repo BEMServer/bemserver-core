@@ -1,5 +1,7 @@
 import os
 
+import click
+
 from bemserver_core import model, database
 
 
@@ -29,6 +31,7 @@ def setup_db():
     model.timeseries_data.init_db_timeseries_data()
 
 
+@click.command()
 def setup_db_cmd():
     """Create tables and initial data in a clean database.
 

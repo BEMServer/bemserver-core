@@ -39,6 +39,7 @@ setup(
         "argon2_cffi>=20.1.0",
         "oso>=0.26.0,<0.27",
         "alembic>=1.7.7",
+        "click>=8.1.3",
     ],
     packages=find_packages(exclude=["tests*"]),
     include_package_data=True,
