@@ -3,6 +3,19 @@ import os
 from bemserver_core import model, database
 
 
+def _set_db_url():
+    # Allow the use of a .env file to store SQLALCHEMY_DATABASE_URI environment variable
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        pass
+    else:
+        load_dotenv()
+
+    db_url = os.getenv("SQLALCHEMY_DATABASE_URI")
+    database.db.set_db_url(db_url)
+
+
 def setup_db():
     """Create initial DB data
 
@@ -22,15 +35,5 @@ def setup_db_cmd():
     This command is meant to be used for dev setups.
     Production setups should rely on migration scripts.
     """
-    # Allow the use of a .env file to store SQLALCHEMY_DATABASE_URI environment variable
-    try:
-        from dotenv import load_dotenv
-    except ImportError:
-        pass
-    else:
-        load_dotenv()
-
-    db_url = os.getenv("SQLALCHEMY_DATABASE_URI")
-    database.db.set_db_url(db_url)
-
+    _set_db_url()
     setup_db()
