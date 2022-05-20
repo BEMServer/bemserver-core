@@ -291,7 +291,7 @@ def events(bemservercore, campaign_scopes, event_categories):
 def structural_element_properties(bemservercore):
     with OpenBar():
         sep_1 = model.StructuralElementProperty.new(
-            name="Surface",
+            name="Area",
         )
         sep_2 = model.StructuralElementProperty.new(
             name="Volume",

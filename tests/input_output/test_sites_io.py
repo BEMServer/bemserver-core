@@ -35,7 +35,7 @@ class TestSitesCSVIO:
         assert not db.session.query(Site).all()
 
         csv_file = (
-            "Name,Description,IFC_ID,Surface\n"
+            "Name,Description,IFC_ID,Area\n"
             "Site 1,Great site 1,abcdefghijklmnopqrtsuv,1000\n"
             "Site 2,Great site 2,,\n"
         )
@@ -70,12 +70,12 @@ class TestSitesCSVIO:
         campaign_1 = campaigns[0]
 
         csv_file = (
-            "Name,Description,IFC_ID,Surface\n"
+            "Name,Description,IFC_ID,Area\n"
             "Site 1,Great site 1,,1000\n"
             "Site 2,Great site 2,,2000\n"
         )
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match='Unknown property: "Surface"'):
+            with pytest.raises(SitesCSVIOError, match='Unknown property: "Area"'):
                 sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
 
     def test_site_data_io_import_csv_already_exists(self, users, campaigns):
@@ -120,12 +120,12 @@ class TestSitesCSVIO:
         campaign_1 = campaigns[0]
 
         csv_file = (
-            "Name,Description,IFC_ID,Surface\nSite 1,Great site 1,," + 200 * "A" + "\n"
+            "Name,Description,IFC_ID,Area\nSite 1,Great site 1,," + 200 * "A" + "\n"
         )
         with CurrentUser(admin_user):
             with pytest.raises(
                 SitesCSVIOError,
-                match='Site "Site 1" property "Surface" can\'t be created.',
+                match='Site "Site 1" property "Area" can\'t be created.',
             ):
                 sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
 
@@ -139,7 +139,7 @@ class TestSitesCSVIO:
         assert not db.session.query(Building).all()
 
         csv_file = (
-            "Name,Description,Site,IFC_ID,Surface\n"
+            "Name,Description,Site,IFC_ID,Area\n"
             f"Building 1,Great building 1,{site_1.name},abcdefghijklmnopqrtsuv,1000\n"
             f"Building 2,Great building 2,{site_1.name},,\n"
         )
@@ -178,13 +178,13 @@ class TestSitesCSVIO:
         site_1 = sites[0]
 
         csv_file = (
-            "Name,Description,Site,IFC_ID,Surface\n"
+            "Name,Description,Site,IFC_ID,Area\n"
             f"Building 1,Great building 1,{site_1.name},,1000\n"
             f"Building 2,Great building 2,{site_1.name},,2000\n"
         )
 
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match='Unknown property: "Surface"'):
+            with pytest.raises(SitesCSVIOError, match='Unknown property: "Area"'):
                 sites_csv_io.import_csv(campaign_1, buildings_csv=csv_file)
 
     def test_building_data_io_import_csv_already_exists(self, users, campaigns, sites):
@@ -246,13 +246,13 @@ class TestSitesCSVIO:
         site_1 = sites[0]
 
         csv_file = (
-            "Name,Description,Site,IFC_ID,Surface\n"
+            "Name,Description,Site,IFC_ID,Area\n"
             f"Building 1,Great building 1,{site_1.name},," + 200 * "A" + "\n"
         )
         with CurrentUser(admin_user):
             with pytest.raises(
                 SitesCSVIOError,
-                match='Building "Building 1" property "Surface" can\'t be created.',
+                match='Building "Building 1" property "Area" can\'t be created.',
             ):
                 sites_csv_io.import_csv(campaign_1, buildings_csv=csv_file)
 
@@ -267,7 +267,7 @@ class TestSitesCSVIO:
         assert not db.session.query(Storey).all()
 
         csv_file = (
-            "Name,Description,Site,Building,IFC_ID,Surface\n"
+            "Name,Description,Site,Building,IFC_ID,Area\n"
             f"Storey 1,Great storey 1,{site_1.name},{building_1.name},"
             "abcdefghijklmnopqrtsuv,1000\n"
             f"Storey 2,Great storey 2,{site_1.name},{building_1.name},"
@@ -312,13 +312,13 @@ class TestSitesCSVIO:
         building_1 = buildings[0]
 
         csv_file = (
-            "Name,Description,Site,Building,IFC_ID,Surface\n"
+            "Name,Description,Site,Building,IFC_ID,Area\n"
             f"Storey 1,Great storey 1,{site_1.name},{building_1.name},,1000\n"
             f"Storey 2,Great storey 2,{site_1.name},{building_1.name},,2000\n"
         )
 
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match='Unknown property: "Surface"'):
+            with pytest.raises(SitesCSVIOError, match='Unknown property: "Area"'):
                 sites_csv_io.import_csv(campaign_1, storeys_csv=csv_file)
 
     def test_storey_data_io_import_csv_already_exists(
@@ -391,7 +391,7 @@ class TestSitesCSVIO:
         building_1 = buildings[0]
 
         csv_file = (
-            "Name,Description,Site,Building,IFC_ID,Surface\n"
+            "Name,Description,Site,Building,IFC_ID,Area\n"
             f"Storey 1,Great storey 1,{site_1.name},{building_1.name},,"
             + 200 * "A"
             + "\n"
@@ -399,7 +399,7 @@ class TestSitesCSVIO:
         with CurrentUser(admin_user):
             with pytest.raises(
                 SitesCSVIOError,
-                match='Storey "Storey 1" property "Surface" can\'t be created.',
+                match='Storey "Storey 1" property "Area" can\'t be created.',
             ):
                 sites_csv_io.import_csv(campaign_1, storeys_csv=csv_file)
 
@@ -417,7 +417,7 @@ class TestSitesCSVIO:
         assert not db.session.query(Space).all()
 
         csv_file = (
-            "Name,Description,Site,Building,Storey,IFC_ID,Surface\n"
+            "Name,Description,Site,Building,Storey,IFC_ID,Area\n"
             "Space 1,Great space 1,"
             f"{site_1.name},{building_1.name},{storey_1.name},"
             "abcdefghijklmnopqrtsuv,1000\n"
@@ -469,7 +469,7 @@ class TestSitesCSVIO:
         storey_1 = storeys[0]
 
         csv_file = (
-            "Name,Description,Site,Building,Storey,IFC_ID,Surface\n"
+            "Name,Description,Site,Building,Storey,IFC_ID,Area\n"
             "Space 1,Great space 1,"
             f"{site_1.name},{building_1.name},{storey_1.name},,1000\n"
             "Space 2,Great space 2,"
@@ -477,7 +477,7 @@ class TestSitesCSVIO:
         )
 
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match='Unknown property: "Surface"'):
+            with pytest.raises(SitesCSVIOError, match='Unknown property: "Area"'):
                 sites_csv_io.import_csv(campaign_1, spaces_csv=csv_file)
 
     def test_space_data_io_import_csv_already_exists(
@@ -557,7 +557,7 @@ class TestSitesCSVIO:
         storey_1 = storeys[0]
 
         csv_file = (
-            "Name,Description,Site,Building,Storey,IFC_ID,Surface\n"
+            "Name,Description,Site,Building,Storey,IFC_ID,Area\n"
             f"Space 1,Great space 1,{site_1.name},{building_1.name},{storey_1.name},,"
             + 200 * "A"
             + "\n"
@@ -565,7 +565,7 @@ class TestSitesCSVIO:
         with CurrentUser(admin_user):
             with pytest.raises(
                 SitesCSVIOError,
-                match='Space "Space 1" property "Surface" can\'t be created.',
+                match='Space "Space 1" property "Area" can\'t be created.',
             ):
                 sites_csv_io.import_csv(campaign_1, spaces_csv=csv_file)
 
@@ -578,7 +578,7 @@ class TestSitesCSVIO:
         assert not db.session.query(Zone).all()
 
         csv_file = (
-            "Name,Description,IFC_ID,Surface\n"
+            "Name,Description,IFC_ID,Area\n"
             "Zone 1,Great zone 1,abcdefghijklmnopqrtsuv,1000\n"
             "Zone 2,Great zone 2,,\n"
         )
@@ -612,12 +612,12 @@ class TestSitesCSVIO:
         campaign_1 = campaigns[0]
 
         csv_file = (
-            "Name,Description,IFC_ID,Surface\n"
+            "Name,Description,IFC_ID,Area\n"
             "Zone 1,Great zone 1,,1000\n"
             "Zone 2,Great zone 2,,2000\n"
         )
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match='Unknown property: "Surface"'):
+            with pytest.raises(SitesCSVIOError, match='Unknown property: "Area"'):
                 sites_csv_io.import_csv(campaign_1, zones_csv=csv_file)
 
     def test_zone_data_io_import_csv_already_exists(self, users, campaigns):
@@ -662,12 +662,12 @@ class TestSitesCSVIO:
         campaign_1 = campaigns[0]
 
         csv_file = (
-            "Name,Description,IFC_ID,Surface\nZone 1,Great zone 1,," + 200 * "A" + "\n"
+            "Name,Description,IFC_ID,Area\nZone 1,Great zone 1,," + 200 * "A" + "\n"
         )
         with CurrentUser(admin_user):
             with pytest.raises(
                 SitesCSVIOError,
-                match='Zone "Zone 1" property "Surface" can\'t be created.',
+                match='Zone "Zone 1" property "Area" can\'t be created.',
             ):
                 sites_csv_io.import_csv(campaign_1, zones_csv=csv_file)
 
@@ -682,29 +682,29 @@ class TestSitesCSVIO:
         campaign_1 = campaigns[0]
 
         sites_csv = (
-            "Name,Description,IFC_ID,Surface\n"
+            "Name,Description,IFC_ID,Area\n"
             "Site 1,Great site 1,abcdefghijklmnopqrtsuv,1000\n"
             "Site 2,Great site 2,,2000\n"
         )
         buildings_csv = (
-            "Name,Description,Site,IFC_ID,Surface\n"
+            "Name,Description,Site,IFC_ID,Area\n"
             "Building 1,Great building 1,Site 1,bcdefghijklmnopqrtsuvw,,1000\n"
             "Building 2,Great building 2,Site 2,,2000\n"
         )
         storeys_csv = (
-            "Name,Description,Site,Building,IFC_ID,Surface\n"
+            "Name,Description,Site,Building,IFC_ID,Area\n"
             "Storey 1,Great storey 1,Site 1,Building 1,cdefghijklmnopqrtsuvwx,1000\n"
             "Storey 2,Great storey 2,Site 2,Building 2,,2000\n"
         )
         spaces_csv = (
-            "Name,Description,Site,Building,Storey,IFC_ID,Surface\n"
+            "Name,Description,Site,Building,Storey,IFC_ID,Area\n"
             "Storey 1,Great storey 1,Site 1,Building 1,Storey 1,"
             "defghijklmnopqrtsuvwxy,1000\n"
             "Storey 2,Great storey 2,Site 2,Building 2,Storey 2,"
             ",2000\n"
         )
         zones_csv = (
-            "Name,Description,IFC_ID,Surface\n"
+            "Name,Description,IFC_ID,Area\n"
             "Zone 1,Great zone 1,efghijklmnopqrtsuvwxyz,1000\n"
             "Zone 2,Great zone 2,,2000\n"
         )

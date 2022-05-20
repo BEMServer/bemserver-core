@@ -76,13 +76,13 @@ class TestStructuralElementPropertyModel:
         assert admin_user.is_admin
 
         with CurrentUser(admin_user):
-            sep_1 = StructuralElementProperty.new(name="Surface")
+            sep_1 = StructuralElementProperty.new(name="Area")
             db.session.add(sep_1)
             db.session.commit()
             StructuralElementProperty.get_by_id(sep_1.id)
             seps = list(StructuralElementProperty.get())
             assert len(seps) == 1
-            sep_1.update(name="Surface")
+            sep_1.update(name="Area")
             sep_1.delete()
             db.session.commit()
 
