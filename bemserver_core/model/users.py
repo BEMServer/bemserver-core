@@ -7,6 +7,10 @@ from bemserver_core.database import Base
 from bemserver_core.authorization import AuthMixin, auth, Relation, get_current_user
 
 
+def hash_password(password):
+    return argon2.hash(password)
+
+
 class User(AuthMixin, Base):
     __tablename__ = "users"
 
@@ -57,7 +61,7 @@ class User(AuthMixin, Base):
 
     def set_password(self, password: str) -> None:
         auth.authorize(get_current_user(), "update", self)
-        self.password = argon2.hash(password)
+        self.password = hash_password(password)
 
     def check_password(self, password: str) -> bool:
         return argon2.verify(password, self.password)
