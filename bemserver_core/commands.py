@@ -25,7 +25,7 @@ def setup_db():
 
     This function assumes DB URI is set.
     """
-    database.db.create_all()
+    database.db.create_all(checkfirst=False)
     model.events.init_db_events()
     model.timeseries.init_db_timeseries()
     model.timeseries_data.init_db_timeseries_data()
