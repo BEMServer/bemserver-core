@@ -1,7 +1,7 @@
 Name,Description,Site,Building,IFC_ID,Area
-Storey 1,,Site 1,Building 1,,250
-Storey 2,,Site 1,Building 1,,250
-Storey 3,,Site 1,Building 1,,250
-Storey 4,,Site 1,Building 1,,250
-Storey 1,,Site 1,Building 2,,1000
-Storey 1,,Site 2,Building 1,,1000
+Ground floor,"Atrium, lab,...",Anglet,Nobatek HQ,,300
+First floor,Offices,Anglet,Nobatek HQ,,300
+Second floor,Offices,Anglet,Nobatek HQ,,300
+Ground floor,,Anglet,BET,,100
+First floor,,Bordeaux,Millenium,,800
+Ground floor,,Talence,Talence lab,,600

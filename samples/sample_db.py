@@ -1,3 +1,7 @@
+"""This script generates data about Nobatek buildings
+
+Most of the data is made up. The point is to fill a demo instance with realistic data.
+"""
 import os
 import sys
 from pathlib import Path
@@ -15,12 +19,13 @@ SAMPLE_FILES = Path(__file__).parent / "csv_files"
 
 
 # Allow the use of a .env file to store SQLALCHEMY_DATABASE_URI environment variable
+DOTENV_FILE = Path(__file__).parent.parent / ".env"
 try:
     from dotenv import load_dotenv
 except ImportError:
     pass
 else:
-    load_dotenv("bemserver-core/.env")
+    load_dotenv(DOTENV_FILE)
 
 logger = logging.getLogger("bemserver-create-sample-db")
 
@@ -38,155 +43,169 @@ with OpenBar():
 
     # Create user groups / users
 
-    user_group_1 = model.UserGroup.new(
-        name="User group 1",
-    )
-    user_group_2 = model.UserGroup.new(
-        name="User group 2",
-    )
+    ug_admins = model.UserGroup.new(name="Admins")
+    ug_owners = model.UserGroup.new(name="Owners")
+    ug_occupants = model.UserGroup.new(name="Occupants")
+    ug_bipv = model.UserGroup.new(name="BIPV maintainers")
+    ug_partners = model.UserGroup.new(name="Partners")
     db.session.flush()
 
-    user_1 = model.User.new(
+    admin_1 = model.User.new(
         name="Chuck",
-        email="chuck@test.com",
+        email="chuck@norris.com",
         is_admin=True,
         is_active=True,
     )
-    user_1.set_password("N0rr1s")
-    user_2 = model.User.new(
+    admin_1.set_password("N0rr1s")
+    occupant_1 = model.User.new(
         name="John",
         email="john@test.com",
         is_admin=False,
         is_active=True,
     )
-    user_2.set_password("D0e")
+    occupant_1.set_password("D0e")
     db.session.flush()
 
-    ubug_1 = model.UserByUserGroup.new(
-        user_id=user_1.id,
-        user_group_id=user_group_1.id,
+    model.UserByUserGroup.new(
+        user_id=admin_1.id,
+        user_group_id=ug_admins.id,
     )
-    ubug_2 = model.UserByUserGroup.new(
-        user_id=user_2.id,
-        user_group_id=user_group_2.id,
+    model.UserByUserGroup.new(
+        user_id=occupant_1.id,
+        user_group_id=ug_occupants.id,
     )
     db.session.flush()
 
     # Create campaigns / campaign scopes
 
     campaign_1 = model.Campaign.new(
-        name="Campaign 1",
+        name="2020 campaign",
         start_time=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+        end_time=dt.datetime(2021, 1, 1, tzinfo=dt.timezone.utc),
     )
     campaign_2 = model.Campaign.new(
-        name="Campaign 2",
+        name="2021 - 2025 campaign",
         start_time=dt.datetime(2021, 1, 1, tzinfo=dt.timezone.utc),
+        end_time=dt.datetime(2026, 1, 1, tzinfo=dt.timezone.utc),
     )
     db.session.flush()
 
     cs_1_1 = model.CampaignScope.new(
-        name="Scope 1",
+        name="Weather",
         campaign_id=campaign_1.id,
     )
     cs_1_2 = model.CampaignScope.new(
-        name="Scope 2",
+        name="Building comfort conditions",
+        campaign_id=campaign_1.id,
+    )
+    cs_1_3 = model.CampaignScope.new(
+        name="Building energy consumptions",
+        campaign_id=campaign_1.id,
+    )
+    cs_1_4 = model.CampaignScope.new(
+        name="BIPV",
         campaign_id=campaign_1.id,
     )
     cs_2_1 = model.CampaignScope.new(
-        name="Scope 1",
+        name="Weather",
         campaign_id=campaign_2.id,
     )
     cs_2_2 = model.CampaignScope.new(
-        name="Scope 2",
+        name="Building comfort conditions",
+        campaign_id=campaign_2.id,
+    )
+    cs_2_3 = model.CampaignScope.new(
+        name="Building energy consumptions",
+        campaign_id=campaign_2.id,
+    )
+    cs_2_4 = model.CampaignScope.new(
+        name="BIPV",
         campaign_id=campaign_2.id,
     )
     db.session.flush()
 
     model.UserGroupByCampaign.new(
-        user_group_id=user_group_1.id,
+        user_group_id=ug_admins.id,
         campaign_id=campaign_1.id,
     )
     model.UserGroupByCampaign.new(
-        user_group_id=user_group_2.id,
+        user_group_id=ug_owners.id,
         campaign_id=campaign_1.id,
     )
     model.UserGroupByCampaign.new(
-        user_group_id=user_group_1.id,
+        user_group_id=ug_occupants.id,
+        campaign_id=campaign_1.id,
+    )
+    model.UserGroupByCampaign.new(
+        user_group_id=ug_bipv.id,
+        campaign_id=campaign_1.id,
+    )
+    model.UserGroupByCampaign.new(
+        user_group_id=ug_partners.id,
+        campaign_id=campaign_1.id,
+    )
+    model.UserGroupByCampaign.new(
+        user_group_id=ug_admins.id,
         campaign_id=campaign_2.id,
     )
     model.UserGroupByCampaign.new(
-        user_group_id=user_group_2.id,
+        user_group_id=ug_owners.id,
+        campaign_id=campaign_2.id,
+    )
+    model.UserGroupByCampaign.new(
+        user_group_id=ug_occupants.id,
+        campaign_id=campaign_2.id,
+    )
+    model.UserGroupByCampaign.new(
+        user_group_id=ug_bipv.id,
+        campaign_id=campaign_2.id,
+    )
+    model.UserGroupByCampaign.new(
+        user_group_id=ug_partners.id,
         campaign_id=campaign_2.id,
     )
     db.session.flush()
 
-    model.UserGroupByCampaignScope.new(
-        user_group_id=user_group_1.id,
-        campaign_scope_id=cs_1_1.id,
-    )
-    model.UserGroupByCampaignScope.new(
-        user_group_id=user_group_1.id,
-        campaign_scope_id=cs_1_2.id,
-    )
-    model.UserGroupByCampaignScope.new(
-        user_group_id=user_group_1.id,
-        campaign_scope_id=cs_2_1.id,
-    )
-    model.UserGroupByCampaignScope.new(
-        user_group_id=user_group_1.id,
-        campaign_scope_id=cs_2_2.id,
-    )
-    model.UserGroupByCampaignScope.new(
-        user_group_id=user_group_2.id,
-        campaign_scope_id=cs_1_1.id,
-    )
-    model.UserGroupByCampaignScope.new(
-        user_group_id=user_group_2.id,
-        campaign_scope_id=cs_1_2.id,
-    )
+    for cs in [cs_1_1, cs_1_2, cs_1_3, cs_1_4, cs_2_1, cs_2_2, cs_2_3, cs_2_4]:
+        model.UserGroupByCampaignScope.new(
+            user_group_id=ug_owners.id,
+            campaign_scope_id=cs.id,
+        )
+    for cs in [cs_1_1, cs_1_2, cs_2_1, cs_2_2]:
+        model.UserGroupByCampaignScope.new(
+            user_group_id=ug_occupants.id,
+            campaign_scope_id=cs.id,
+        )
+    for cs in [cs_1_1, cs_1_4, cs_2_1, cs_2_4]:
+        model.UserGroupByCampaignScope.new(
+            user_group_id=ug_bipv.id,
+            campaign_scope_id=cs.id,
+        )
+    for cs in [cs_1_1, cs_2_1]:
+        model.UserGroupByCampaignScope.new(
+            user_group_id=ug_partners.id,
+            campaign_scope_id=cs.id,
+        )
     db.session.flush()
 
     # Create site properties
 
-    sep_1 = model.StructuralElementProperty.new(
-        name="Area",
-    )
+    sep_1 = model.StructuralElementProperty.new(name="Area")
     db.session.flush()
 
-    site_p_1 = model.SiteProperty.new(
-        structural_element_property_id=sep_1.id,
-    )
-    db.session.flush()
-
-    building_p_1 = model.BuildingProperty.new(
-        structural_element_property_id=sep_1.id,
-    )
-    db.session.flush()
-
-    storey_p_1 = model.StoreyProperty.new(
-        structural_element_property_id=sep_1.id,
-    )
-    db.session.flush()
-
-    space_p_1 = model.SpaceProperty.new(
-        structural_element_property_id=sep_1.id,
-    )
-    db.session.flush()
-
-    zone_p_1 = model.ZoneProperty.new(
-        structural_element_property_id=sep_1.id,
-    )
+    site_p_1 = model.SiteProperty.new(structural_element_property_id=sep_1.id)
+    building_p_1 = model.BuildingProperty.new(structural_element_property_id=sep_1.id)
+    storey_p_1 = model.StoreyProperty.new(structural_element_property_id=sep_1.id)
+    space_p_1 = model.SpaceProperty.new(structural_element_property_id=sep_1.id)
+    zone_p_1 = model.ZoneProperty.new(structural_element_property_id=sep_1.id)
     db.session.flush()
 
     # Create timeseries properties
 
-    ts_p_1 = model.TimeseriesProperty.new(
-        name="Min",
-    )
-    ts_p_2 = model.TimeseriesProperty.new(
-        name="Max",
-    )
+    model.TimeseriesProperty.new(name="Min")
+    model.TimeseriesProperty.new(name="Max")
     db.session.flush()
+
     db.session.commit()
 
     for campaign in (campaign_1, campaign_2):
