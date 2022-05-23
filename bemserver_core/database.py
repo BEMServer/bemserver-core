@@ -165,9 +165,12 @@ class DBConnection:
     def url(self):
         return self.engine.url if self.engine else None
 
-    def create_all(self):
-        """Create all tables"""
-        Base.metadata.create_all(bind=self.engine)
+    def create_all(self, **kwargs):
+        """Create all tables
+
+        :param kwargs: Keyword parameters passed to metadata.create_all
+        """
+        Base.metadata.create_all(bind=self.engine, **kwargs)
 
 
 db = DBConnection()
