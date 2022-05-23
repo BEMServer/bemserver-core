@@ -34,6 +34,7 @@ def _get_db_url(postgresql):
 @pytest.fixture
 def postgresql_db(postgresql):
     yield _get_db_url(postgresql)
+    db.session.remove()
 
 
 @pytest.fixture
@@ -47,7 +48,6 @@ def timescale_db(postgresql_db):
 def database(timescale_db):
     db.set_db_url(timescale_db)
     yield timescale_db
-    db.session.remove()
 
 
 @pytest.fixture

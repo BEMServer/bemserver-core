@@ -39,12 +39,14 @@ setup(
         "argon2_cffi>=20.1.0",
         "oso>=0.26.0,<0.27",
         "alembic>=1.7.7",
+        "click>=8.1.3",
     ],
     packages=find_packages(exclude=["tests*"]),
     include_package_data=True,
     entry_points={
         "console_scripts": [
             "bemserver_setup_db = bemserver_core.commands:setup_db_cmd",
+            "bemserver_create_user = bemserver_core.commands:create_user_cmd",
         ],
     },
 )
