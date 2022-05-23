@@ -40,3 +40,29 @@ def setup_db_cmd():
     """
     _set_db_url()
     setup_db()
+
+
+@click.command()
+@click.option("--name", required=True, help="User name")
+@click.option("--email", required=True, help="User email address")
+@click.option("--admin", is_flag=True, default=False, help="User is admin")
+@click.option("--inactive", is_flag=True, default=False, help="User is inactive")
+@click.option(
+    "--password",
+    prompt=True,
+    hide_input=True,
+    confirmation_prompt=True,
+    required=True,
+    help="User password",
+)
+def create_user_cmd(name, email, admin, inactive, password):
+    _set_db_url()
+    user = model.User(
+        name="Chuck",
+        email="chuck@test.com",
+        _is_admin=admin,
+        _is_active=not inactive,
+        password=model.users.hash_password(password),
+    )
+    database.db.session.add(user)
+    database.db.session.commit()

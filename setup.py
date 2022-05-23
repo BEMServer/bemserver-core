@@ -46,6 +46,7 @@ setup(
     entry_points={
         "console_scripts": [
             "bemserver_setup_db = bemserver_core.commands:setup_db_cmd",
+            "bemserver_create_user = bemserver_core.commands:create_user_cmd",
         ],
     },
 )

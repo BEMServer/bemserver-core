@@ -1,9 +1,8 @@
 """Commands tests"""
 import sqlalchemy as sqla
-
 from click.testing import CliRunner
 
-from bemserver_core.commands import setup_db_cmd
+from bemserver_core.commands import create_user_cmd, setup_db_cmd
 
 
 class TestCommands:
@@ -38,3 +37,30 @@ class TestCommands:
                     "where table_schema='public';"
                 )
             )
+
+    def test_create_user_cmd(self, database, bemservercore):
+
+        # Check there is no user in DB
+        with sqla.create_engine(database).connect() as connection:
+            assert not list(connection.execute("select * from users;"))
+
+        # Run command
+        runner = CliRunner()
+        result = runner.invoke(
+            create_user_cmd,
+            [
+                "--name",
+                "Chuck",
+                "--email",
+                "chuck@test.com",
+                "--admin",
+                "--inactive",
+            ],
+            input="p@ssword\np@ssword\n",
+            env={"SQLALCHEMY_DATABASE_URI": database},
+        )
+        assert result.exit_code == 0
+
+        # Check user is created
+        with sqla.create_engine(database).connect() as connection:
+            assert list(connection.execute("select * from users;"))
