@@ -1,0 +1,11 @@
+Name,Description,Site,Building,Storey,IFC_ID,Area
+Space 1,,Site 1,Building 1,Storey 1,50
+Space 2,,Site 1,Building 1,Storey 1,50
+Space 3,,Site 1,Building 1,Storey 1,50
+Space 4,,Site 1,Building 1,Storey 1,50
+Space 5,,Site 1,Building 1,Storey 1,50
+Space 1,,Site 1,Building 1,Storey 2,250
+Space 1,,Site 1,Building 1,Storey 3,250
+Space 1,,Site 1,Building 1,Storey 4,250
+Space 1,,Site 1,Building 2,Storey 1,1000
+Space 1,,Site 2,Building 1,Storey 1,1000

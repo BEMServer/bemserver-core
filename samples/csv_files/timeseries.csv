@@ -1,0 +1,5 @@
+Name,Description,Unit,Campaign scope,Site,Building,Storey,Space,Zone,Min,Max
+Air temp space 1,Air temperature of space 1,°C,Scope 1,Site 1,Building 1,Storey 1,Space 1,,-10,60
+Air temp space 2,Air temperature of space 2,°C,Scope 1,Site 1,Building 1,Storey 1,Space 2,,-10,60
+Elec power cons Building 1,Electric power consumption of Building 1,W,Scope 2,Site 1,Building 1,,,,0,1000000
+Elec power cons Building 2,Electric power consumption of Building 2,W,Scope 2,Site 1,Building 2,,,,0,1000000
