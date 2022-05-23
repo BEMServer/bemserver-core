@@ -15,7 +15,7 @@ class User(AuthMixin, Base):
     __tablename__ = "users"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
+    name = sqla.Column(sqla.String(80), nullable=False)
     email = sqla.Column(sqla.String(80), unique=True, nullable=False)
     password = sqla.Column(sqla.String(200), nullable=False)
     _is_admin = sqla.Column(sqla.Boolean(), nullable=False)
