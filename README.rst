@@ -49,3 +49,11 @@ Use alembic to manage initial setup and migrations::
 $ alembic upgrade head
 
 Please refer to alembic documentation for more information about the migration commands.
+
+
+User creation
+-------------
+
+Create an admin user::
+
+$ bemserver_create_user --name chuck --email chuck@norris.com --admin
