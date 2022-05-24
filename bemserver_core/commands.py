@@ -1,8 +1,13 @@
+"""Commands
+
+This module provides commands made available as CLI commands.
+"""
 import os
 
 import click
 
 from bemserver_core import model, database
+from bemserver_core.exceptions import BEMServerCoreError
 
 
 def _set_db_url():
@@ -15,6 +20,8 @@ def _set_db_url():
         load_dotenv()
 
     db_url = os.getenv("SQLALCHEMY_DATABASE_URI")
+    if db_url is None:
+        raise BEMServerCoreError("SQLALCHEMY_DATABASE_URI environment variable not set")
     database.db.set_db_url(db_url)
 
 
