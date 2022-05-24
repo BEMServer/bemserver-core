@@ -1,0 +1,7 @@
+Name,Description,Unit,Campaign scope,Site,Building,Storey,Space,Zone,Min,Max
+Cell_1_Air_temp,Air temperature in Cell 1,°C,BET Cell 1,Anglet,BET,Ground floor,Cell 1,,-10,60
+Cell_1_RH,Relative humidity in Cell 1,,BET Cell 1,Anglet,BET,Ground floor,Cell 1,,0,100
+Hall_Air_temp,Air temperature in Hallway,°C,BET Cell 1,Anglet,BET,Ground floor,Hallway,,-10,60
+Hall_RH,Relative humidity in hallway,,BET Cell 1,Anglet,BET,Ground floor,Hallway,,0,100
+DNI,Direct normal irradiance,W/m2,Weather,Anglet,BET,,,,0,2000
+GHI,Global horizontal irradiance,W/m2,Weather,Anglet,BET,,,,0,2000

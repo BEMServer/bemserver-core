@@ -2,9 +2,5 @@ Name,Description,Site,Building,Storey,IFC_ID,Area
 Ground,Common space for ground floor,Anglet,Nobatek HQ,Ground floor,,300
 Offices,,Anglet,Nobatek HQ,First floor,,300
 Offices,,Anglet,Nobatek HQ,Second floor,,300
-Hallway,,Anglet,BET,Ground floor,,40
-Cell 1,,Anglet,BET,Ground floor,,20
-Cell 2,,Anglet,BET,Ground floor,,20
-Cell 3,,Anglet,BET,Ground floor,,20
 Offices,,Bordeaux,Millenium,First floor,,800
 Lab,,Talence,Talence lab,Ground floor,,600

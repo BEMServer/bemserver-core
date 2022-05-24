@@ -43,10 +43,11 @@ with OpenBar():
 
     # Create user groups / users
 
-    ug_admins = model.UserGroup.new(name="Admins")
-    ug_owners = model.UserGroup.new(name="Owners")
+    ug_admins = model.UserGroup.new(name="BEMServer admins")
+    ug_owners = model.UserGroup.new(name="Building owners")
     ug_occupants = model.UserGroup.new(name="Occupants")
     ug_bipv = model.UserGroup.new(name="BIPV maintainers")
+    ug_bet = model.UserGroup.new(name="BET maintainers")
     ug_partners = model.UserGroup.new(name="Partners")
     db.session.flush()
 
@@ -57,9 +58,16 @@ with OpenBar():
         is_active=True,
     )
     admin_1.set_password("N0rr1s")
+    bet_1 = model.User.new(
+        name="Jane",
+        email="jane@doe.com",
+        is_admin=False,
+        is_active=True,
+    )
+    bet_1.set_password("D0e")
     occupant_1 = model.User.new(
         name="John",
-        email="john@test.com",
+        email="john@doe.com",
         is_admin=False,
         is_active=True,
     )
@@ -71,6 +79,10 @@ with OpenBar():
         user_group_id=ug_admins.id,
     )
     model.UserByUserGroup.new(
+        user_id=bet_1.id,
+        user_group_id=ug_bet.id,
+    )
+    model.UserByUserGroup.new(
         user_id=occupant_1.id,
         user_group_id=ug_occupants.id,
     )
@@ -78,110 +90,105 @@ with OpenBar():
 
     # Create campaigns / campaign scopes
 
-    campaign_1 = model.Campaign.new(
-        name="2020 campaign",
+    campaign_epc = model.Campaign.new(
+        name="Nobatek offices EPC",
+        description="Nobatek buildings energy performance contracting",
         start_time=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
-        end_time=dt.datetime(2021, 1, 1, tzinfo=dt.timezone.utc),
     )
-    campaign_2 = model.Campaign.new(
-        name="2021 - 2025 campaign",
-        start_time=dt.datetime(2021, 1, 1, tzinfo=dt.timezone.utc),
-        end_time=dt.datetime(2026, 1, 1, tzinfo=dt.timezone.utc),
+    campaign_bet = model.Campaign.new(
+        name="BET windows tests",
+        description="Innovative windows assessment",
+        start_time=dt.datetime(2021, 6, 1, tzinfo=dt.timezone.utc),
+        end_time=dt.datetime(2022, 7, 1, tzinfo=dt.timezone.utc),
     )
     db.session.flush()
 
-    cs_1_1 = model.CampaignScope.new(
+    cs_1_weather = model.CampaignScope.new(
         name="Weather",
-        campaign_id=campaign_1.id,
+        campaign_id=campaign_epc.id,
     )
-    cs_1_2 = model.CampaignScope.new(
+    cs_1_comfort = model.CampaignScope.new(
         name="Building comfort conditions",
-        campaign_id=campaign_1.id,
+        campaign_id=campaign_epc.id,
     )
-    cs_1_3 = model.CampaignScope.new(
+    cs_1_energy = model.CampaignScope.new(
         name="Building energy consumptions",
-        campaign_id=campaign_1.id,
+        campaign_id=campaign_epc.id,
     )
-    cs_1_4 = model.CampaignScope.new(
+    cs_1_bipv = model.CampaignScope.new(
         name="BIPV",
-        campaign_id=campaign_1.id,
+        campaign_id=campaign_epc.id,
     )
-    cs_2_1 = model.CampaignScope.new(
+
+    cs_2_weather = model.CampaignScope.new(
         name="Weather",
-        campaign_id=campaign_2.id,
+        campaign_id=campaign_bet.id,
     )
-    cs_2_2 = model.CampaignScope.new(
-        name="Building comfort conditions",
-        campaign_id=campaign_2.id,
+    cs_2_bet_hall = model.CampaignScope.new(
+        name="BET Hallway",
+        campaign_id=campaign_bet.id,
     )
-    cs_2_3 = model.CampaignScope.new(
-        name="Building energy consumptions",
-        campaign_id=campaign_2.id,
+    cs_2_bet_cell_1 = model.CampaignScope.new(
+        name="BET Cell 1",
+        campaign_id=campaign_bet.id,
     )
-    cs_2_4 = model.CampaignScope.new(
-        name="BIPV",
-        campaign_id=campaign_2.id,
+    cs_2_bet_cell_2 = model.CampaignScope.new(
+        name="BET Cell 2",
+        campaign_id=campaign_bet.id,
     )
     db.session.flush()
 
     model.UserGroupByCampaign.new(
         user_group_id=ug_admins.id,
-        campaign_id=campaign_1.id,
+        campaign_id=campaign_epc.id,
     )
     model.UserGroupByCampaign.new(
         user_group_id=ug_owners.id,
-        campaign_id=campaign_1.id,
+        campaign_id=campaign_epc.id,
     )
     model.UserGroupByCampaign.new(
         user_group_id=ug_occupants.id,
-        campaign_id=campaign_1.id,
+        campaign_id=campaign_epc.id,
     )
     model.UserGroupByCampaign.new(
         user_group_id=ug_bipv.id,
-        campaign_id=campaign_1.id,
-    )
-    model.UserGroupByCampaign.new(
-        user_group_id=ug_partners.id,
-        campaign_id=campaign_1.id,
+        campaign_id=campaign_epc.id,
     )
     model.UserGroupByCampaign.new(
         user_group_id=ug_admins.id,
-        campaign_id=campaign_2.id,
+        campaign_id=campaign_bet.id,
     )
     model.UserGroupByCampaign.new(
-        user_group_id=ug_owners.id,
-        campaign_id=campaign_2.id,
-    )
-    model.UserGroupByCampaign.new(
-        user_group_id=ug_occupants.id,
-        campaign_id=campaign_2.id,
-    )
-    model.UserGroupByCampaign.new(
-        user_group_id=ug_bipv.id,
-        campaign_id=campaign_2.id,
+        user_group_id=ug_bet.id,
+        campaign_id=campaign_bet.id,
     )
     model.UserGroupByCampaign.new(
         user_group_id=ug_partners.id,
-        campaign_id=campaign_2.id,
+        campaign_id=campaign_bet.id,
     )
     db.session.flush()
 
-    for cs in [cs_1_1, cs_1_2, cs_1_3, cs_1_4, cs_2_1, cs_2_2, cs_2_3, cs_2_4]:
+    for cs in [cs_1_weather, cs_1_comfort, cs_1_energy, cs_1_bipv]:
         model.UserGroupByCampaignScope.new(
             user_group_id=ug_owners.id,
             campaign_scope_id=cs.id,
         )
-    for cs in [cs_1_1, cs_1_2, cs_2_1, cs_2_2]:
+    for cs in [cs_1_weather, cs_1_comfort]:
         model.UserGroupByCampaignScope.new(
             user_group_id=ug_occupants.id,
             campaign_scope_id=cs.id,
         )
-    for cs in [cs_1_1, cs_1_4, cs_2_1, cs_2_4]:
+    for cs in [cs_1_weather, cs_1_bipv]:
         model.UserGroupByCampaignScope.new(
             user_group_id=ug_bipv.id,
             campaign_scope_id=cs.id,
         )
-    for cs in [cs_1_1, cs_2_1]:
+    for cs in [cs_2_weather, cs_2_bet_hall, cs_2_bet_cell_1, cs_2_bet_cell_2]:
+        model.UserGroupByCampaignScope.new(
+            user_group_id=ug_bet.id,
+            campaign_scope_id=cs.id,
+        )
+    for cs in [cs_2_weather, cs_2_bet_hall, cs_2_bet_cell_1]:
         model.UserGroupByCampaignScope.new(
             user_group_id=ug_partners.id,
             campaign_scope_id=cs.id,
@@ -208,13 +215,13 @@ with OpenBar():
 
     db.session.commit()
 
-    for campaign in (campaign_1, campaign_2):
+    for campaign, subdir in {campaign_epc: "epc", campaign_bet: "bet"}.items():
         with (
-            open(SAMPLE_FILES / "sites.csv") as sites_csv,
-            open(SAMPLE_FILES / "buildings.csv") as buildings_csv,
-            open(SAMPLE_FILES / "storeys.csv") as storeys_csv,
-            open(SAMPLE_FILES / "spaces.csv") as spaces_csv,
-            open(SAMPLE_FILES / "zones.csv") as zones_csv,
+            open(SAMPLE_FILES / subdir / "sites.csv") as sites_csv,
+            open(SAMPLE_FILES / subdir / "buildings.csv") as buildings_csv,
+            open(SAMPLE_FILES / subdir / "storeys.csv") as storeys_csv,
+            open(SAMPLE_FILES / subdir / "spaces.csv") as spaces_csv,
+            open(SAMPLE_FILES / subdir / "zones.csv") as zones_csv,
         ):
             sites_csv_io.import_csv(
                 campaign,
@@ -224,5 +231,5 @@ with OpenBar():
                 spaces_csv=spaces_csv,
             )
 
-        with open(SAMPLE_FILES / "timeseries.csv") as timeseries_csv:
+        with open(SAMPLE_FILES / subdir / "timeseries.csv") as timeseries_csv:
             timeseries_csv_io.import_csv(campaign, timeseries_csv)
