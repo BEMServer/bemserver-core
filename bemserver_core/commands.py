@@ -56,10 +56,11 @@ def setup_db_cmd():
     help="User password",
 )
 def create_user_cmd(name, email, admin, inactive, password):
+    """Create a new user"""
     _set_db_url()
     user = model.User(
-        name="Chuck",
-        email="chuck@test.com",
+        name=name,
+        email=email,
         _is_admin=admin,
         _is_active=not inactive,
         password=model.users.hash_password(password),
