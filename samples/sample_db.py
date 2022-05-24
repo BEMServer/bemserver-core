@@ -51,33 +51,22 @@ with OpenBar():
     ug_partners = model.UserGroup.new(name="Partners")
     db.session.flush()
 
-    admin_1 = model.User.new(
-        name="Chuck",
-        email="chuck@norris.com",
-        is_admin=True,
-        is_active=True,
-    )
-    admin_1.set_password("N0rr1s")
     bet_1 = model.User.new(
         name="Jane",
         email="jane@doe.com",
         is_admin=False,
-        is_active=True,
+        is_active=False,
     )
     bet_1.set_password("D0e")
     occupant_1 = model.User.new(
         name="John",
         email="john@doe.com",
         is_admin=False,
-        is_active=True,
+        is_active=False,
     )
     occupant_1.set_password("D0e")
     db.session.flush()
 
-    model.UserByUserGroup.new(
-        user_id=admin_1.id,
-        user_group_id=ug_admins.id,
-    )
     model.UserByUserGroup.new(
         user_id=bet_1.id,
         user_group_id=ug_bet.id,
