@@ -232,12 +232,15 @@ class Timeseries(AuthMixin, Base):
 
         Create the timeseries x data state association on the fly if needed
         """
-        try:
-            tsbds = TimeseriesByDataState.get(timeseries=self, data_state=data_state)[0]
-        except IndexError:
+        tsbds = TimeseriesByDataState.get(
+            timeseries=self,
+            data_state=data_state,
+        ).first()
+        if tsbds is None:
             # Create tsbds on the fly if needed
             tsbds = TimeseriesByDataState.new(
-                timeseries_id=self.id, data_state=data_state
+                timeseries_id=self.id,
+                data_state_id=data_state.id,
             )
             # Flush to allow the use of tsbds.id right away
             db.session.flush()

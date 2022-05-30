@@ -3,7 +3,12 @@ import sqlalchemy as sqla
 import pandas as pd
 
 from bemserver_core.database import db
-from bemserver_core.model import Timeseries, TimeseriesData, TimeseriesDataState
+from bemserver_core.model import (
+    Timeseries,
+    TimeseriesData,
+    TimeseriesDataState,
+    TimeseriesByDataState,
+)
 from bemserver_core.authorization import auth, get_current_user
 from bemserver_core.exceptions import TimeseriesDataCSVIOError
 from .base import BaseCSVIO
@@ -62,8 +67,12 @@ class TimeseriesDataIO:
         data = db.session.execute(
             sqla.select(
                 TimeseriesData.timestamp,
-                TimeseriesData.timeseries_by_data_state_id,
+                Timeseries.id,
                 TimeseriesData.value,
+            )
+            .where(Timeseries.id == TimeseriesByDataState.timeseries_id)
+            .where(
+                TimeseriesData.timeseries_by_data_state_id == TimeseriesByDataState.id
             )
             .filter(TimeseriesData.timeseries_by_data_state_id.in_(tsbds_ids))
             .filter(start_dt <= TimeseriesData.timestamp)
@@ -128,11 +137,14 @@ class TimeseriesDataIO:
         query = sqla.text(
             "SELECT time_bucket("
             " :bucket_width, timestamp AT TIME ZONE :timezone)"
-            f"  AS bucket, timeseries_by_data_state_id, {aggregation}(value) "
-            "FROM timeseries_data "
-            "WHERE timeseries_by_data_state_id IN :timeseries_by_data_state_ids "
+            f"  AS bucket, timeseries.id, {aggregation}(value) "
+            "FROM timeseries_data, timeseries, timeseries_by_data_states "
+            "WHERE timeseries.id = timeseries_by_data_states.timeseries_id "
+            "  AND timeseries_data.timeseries_by_data_state_id = "
+            "      timeseries_by_data_states.id "
+            "  AND timeseries_by_data_state_id IN :timeseries_by_data_state_ids "
             "  AND timestamp >= :start_dt AND timestamp < :end_dt "
-            "GROUP BY bucket, timeseries_by_data_state_id "
+            "GROUP BY bucket, timeseries.id "
             "ORDER BY bucket;"
         )
         params = {

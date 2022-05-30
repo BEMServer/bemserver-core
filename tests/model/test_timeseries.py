@@ -578,13 +578,13 @@ class TestTimeseriesByDataStateModel:
             tsbds.delete()
             db.session.commit()
 
+    @pytest.mark.usefixtures("timeseries_by_data_states")
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
     def test_timeseries_by_data_state_authorizations_as_user(
         self,
         users,
         timeseries,
-        timeseries_by_data_states,
     ):
         user_1 = users[1]
         assert not user_1.is_admin
