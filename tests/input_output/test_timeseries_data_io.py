@@ -272,7 +272,6 @@ class TestTimeseriesDataCSVIO:
                 "2020-01-01T02:00:00+0000,2.0,\n"
             )
 
-    @pytest.mark.usefixtures("timeseries_by_data_states")
     def test_timeseries_data_io_export_csv_data_state_error(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -483,7 +482,6 @@ class TestTimeseriesDataCSVIO:
                 "2020-01-03T00:00:00+0000,59.5,\n"
             )
 
-    @pytest.mark.usefixtures("timeseries_by_data_states")
     def test_timeseries_data_io_export_csv_bucket_data_state_error(
         self, users, timeseries
     ):
