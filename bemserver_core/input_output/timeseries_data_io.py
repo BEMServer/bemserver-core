@@ -125,7 +125,7 @@ class TimeseriesDataIO:
 
         # Check permissions
         for ts in ts_l:
-            auth.authorize(get_current_user(), "write_data", ts)
+            auth.authorize(get_current_user(), "read_data", ts)
 
         if aggregation not in AGGREGATION_FUNCTIONS:
             raise ValueError(f'Invalid aggregation method "{aggregation}"')
