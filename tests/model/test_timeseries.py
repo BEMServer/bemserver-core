@@ -179,6 +179,15 @@ class TestTimeseriesModel:
         assert len(tsbds_l) == 1
 
     @pytest.mark.usefixtures("as_admin")
+    def test_timeseries_get_by_name(self, campaigns, timeseries):
+        campaign_1 = campaigns[0]
+        ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
+
+        assert Timeseries.get_by_name(campaign_1, ts_1.name) == ts_1
+        assert Timeseries.get_by_name(campaign_1, ts_2.name) is None
+
+    @pytest.mark.usefixtures("as_admin")
     def test_timeseries_read_only_fields(self, campaigns, campaign_scopes):
         """Check campaign and campaign_scope can't be modified
 
