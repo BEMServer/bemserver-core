@@ -13,8 +13,11 @@ from bemserver_core.input_output import tsdcsvio
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.exceptions import (
-    TimeseriesDataCSVIOError,
     BEMServerAuthorizationError,
+    TimeseriesDataIOUnknownDataStateError,
+    TimeseriesDataIOUnknownTimeseriesError,
+    TimeseriesDataIOInvalidAggregationError,
+    TimeseriesDataCSVIOError,
 )
 
 
@@ -146,25 +149,48 @@ class TestTimeseriesDataCSVIO:
             tsdcsvio.import_csv(csv_file, ds_id, campaign)
 
     @pytest.mark.parametrize(
-        "csv_file",
+        "file_error",
         (
-            "",
-            "Dummy,\n",
-            "Datetime,1324564",
-            "Datetime,1\n2020-01-01T00:00:00+00:00",
-            "Datetime,1\n2020-01-01T00:00:00+00:00,",
-            "Datetime,1\n2020-01-01T00:00:00+00:00,a",
+            ("", TimeseriesDataCSVIOError),
+            ("Dummy,\n", TimeseriesDataCSVIOError),
+            ("Datetime,1324564", TimeseriesDataIOUnknownTimeseriesError),
         ),
     )
-    @pytest.mark.usefixtures("timeseries")
     @pytest.mark.parametrize("for_campaign", (True, False))
-    def test_timeseries_data_io_import_csv_error(
-        self, users, campaigns, for_campaign, csv_file
+    def test_timeseries_data_io_import_error(
+        self, users, campaigns, for_campaign, file_error
     ):
         admin_user = users[0]
         assert admin_user.is_admin
         campaign = campaigns[0] if for_campaign else None
         ds_id = 1
+        csv_file, exc_cls = file_error
+
+        with CurrentUser(admin_user):
+            with pytest.raises(exc_cls):
+                tsdcsvio.import_csv(io.StringIO(csv_file), ds_id, campaign)
+
+    @pytest.mark.parametrize(
+        "row",
+        (
+            "2020-01-01T00:00:00+00:00",
+            "2020-01-01T00:00:00+00:00,",
+            "2020-01-01T00:00:00+00:00,a",
+            "dummy,1",
+        ),
+    )
+    @pytest.mark.usefixtures("timeseries")
+    @pytest.mark.parametrize("for_campaign", (True, False))
+    def test_timeseries_data_io_import_csv_error(
+        self, users, campaigns, for_campaign, row
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign = campaigns[0] if for_campaign else None
+        ds_id = 1
+
+        header = "Datetime,Timeseries 0\n" if for_campaign else "Datetime,1\n"
+        csv_file = header + row
 
         with CurrentUser(admin_user):
             with pytest.raises(TimeseriesDataCSVIOError):
@@ -194,7 +220,7 @@ class TestTimeseriesDataCSVIO:
         )
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesDataCSVIOError):
+            with pytest.raises(TimeseriesDataIOUnknownDataStateError):
                 tsdcsvio.import_csv(io.StringIO(csv_file), dummy_ds_id, campaign)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
@@ -262,7 +288,7 @@ class TestTimeseriesDataCSVIO:
                 ts_l = (ts_0.id, ts_2.id, ts_4.id, dummy_ts_id)
 
             # Unknown TS ID
-            with pytest.raises(TimeseriesDataCSVIOError):
+            with pytest.raises(TimeseriesDataIOUnknownTimeseriesError):
                 tsdcsvio.export_csv(
                     start_dt,
                     end_dt,
@@ -368,7 +394,7 @@ class TestTimeseriesDataCSVIO:
             ts_l = (ts_1.id,)
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesDataCSVIOError):
+            with pytest.raises(TimeseriesDataIOUnknownDataStateError):
                 tsdcsvio.export_csv(
                     start_dt, end_dt, ts_l, dummy_ds_id, campaign=campaign
                 )
@@ -498,7 +524,7 @@ class TestTimeseriesDataCSVIO:
             )
 
             # Export CSV: invalid aggregation
-            with pytest.raises(ValueError):
+            with pytest.raises(TimeseriesDataIOInvalidAggregationError):
                 tsdcsvio.export_csv_bucket(
                     start_dt,
                     end_dt,
@@ -516,7 +542,7 @@ class TestTimeseriesDataCSVIO:
             else:
                 ts_l = (ts_0.id, ts_2.id, ts_4.id, dummy_ts_id)
 
-            with pytest.raises(TimeseriesDataCSVIOError):
+            with pytest.raises(TimeseriesDataIOUnknownTimeseriesError):
                 tsdcsvio.export_csv_bucket(
                     start_dt,
                     end_dt,
@@ -624,7 +650,7 @@ class TestTimeseriesDataCSVIO:
             ts_l = (ts_1.id,)
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesDataCSVIOError):
+            with pytest.raises(TimeseriesDataIOUnknownDataStateError):
                 tsdcsvio.export_csv_bucket(
                     start_dt, end_dt, ts_l, dummy_ds_id, "1 day", campaign=campaign
                 )

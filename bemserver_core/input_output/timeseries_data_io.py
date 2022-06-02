@@ -1,4 +1,6 @@
 """Timeseries data I/O"""
+import re
+
 import sqlalchemy as sqla
 import pandas as pd
 
@@ -10,24 +12,36 @@ from bemserver_core.model import (
     TimeseriesByDataState,
 )
 from bemserver_core.authorization import auth, get_current_user
-from bemserver_core.exceptions import TimeseriesDataCSVIOError
+from bemserver_core.exceptions import (
+    TimeseriesDataIOUnknownDataStateError,
+    TimeseriesDataIOUnknownTimeseriesError,
+    TimeseriesDataIOInvalidAggregationError,
+    TimeseriesDataIOWriteError,
+    TimeseriesDataCSVIOError,
+)
+
 from .base import BaseCSVIO
 
 
 AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max")
 
+# Copied from Django
+ISO8601_DATETIME_RE = re.compile(
+    r"(?P<year>\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2})"
+    r"[T ](?P<hour>\d{1,2}):(?P<minute>\d{1,2})"
+    r"(?::(?P<second>\d{1,2})(?:\.(?P<microsecond>\d{1,6})\d{0,6})?)?"
+    r"(?P<tzinfo>Z|[+-]\d{2}(?::?\d{2})?)?$"
+)
+
 
 class TimeseriesDataIO:
     """Base class for TimeseriesData IO classes"""
-
-    #: Exception to raise on I/O errors
-    ERROR = None
 
     @classmethod
     def _get_timeseries_data_state(cls, data_state_id):
         data_state = TimeseriesDataState.get_by_id(data_state_id)
         if data_state is None:
-            raise cls.ERROR("Unknown data state ID")
+            raise TimeseriesDataIOUnknownDataStateError("Unknown data state ID")
         return data_state
 
     @classmethod
@@ -39,7 +53,9 @@ class TimeseriesDataIO:
         else:
             ts_l = [Timeseries.get_by_name(campaign, col) for col in timeseries]
         if None in ts_l:
-            raise cls.ERROR(f'Unknown timeseries {"name" if campaign else "ID"}')
+            raise TimeseriesDataIOUnknownTimeseriesError(
+                f'Unknown timeseries {"name" if campaign else "ID"}'
+            )
         return ts_l
 
     @classmethod
@@ -58,9 +74,8 @@ class TimeseriesDataIO:
         try:
             db.session.execute(query)
             db.session.commit()
-        # TODO: filter server and client errors (constraint violation)
         except sqla.exc.DBAPIError as exc:
-            raise cls.ERROR("Error writing to DB") from exc
+            raise TimeseriesDataIOWriteError("Error writing to DB") from exc
 
     @staticmethod
     def _fill_missing_columns(data_df, ts_l, attr):
@@ -162,7 +177,7 @@ class TimeseriesDataIO:
             auth.authorize(get_current_user(), "read_data", ts)
 
         if aggregation not in AGGREGATION_FUNCTIONS:
-            raise ValueError(f'Invalid aggregation method "{aggregation}"')
+            raise TimeseriesDataIOInvalidAggregationError("Invalid aggregation method")
 
         # Get timeseries x data states ids
         tsbds_ids = [ts.get_timeseries_by_data_state(data_state).id for ts in ts_l]
@@ -207,9 +222,6 @@ class TimeseriesDataIO:
 
 
 class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
-
-    ERROR = TimeseriesDataCSVIOError
-
     @classmethod
     def import_csv(cls, csv_file, data_state_id, campaign=None):
         """Import CSV file
@@ -229,9 +241,9 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         try:
             header = next(reader)
         except StopIteration as exc:
-            raise cls.ERROR("Missing headers line") from exc
+            raise TimeseriesDataCSVIOError("Missing headers line") from exc
         if header[0] != "Datetime":
-            raise cls.ERROR('First column must be "Datetime"')
+            raise TimeseriesDataCSVIOError('First column must be "Datetime"')
         ts_l = cls._get_timeseries(header[1:], campaign=campaign)
 
         # Check permissions
@@ -242,20 +254,30 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         tsbds_ids = [ts.get_timeseries_by_data_state(data_state).id for ts in ts_l]
 
         data = []
-        for row in reader:
-            try:
-                data.extend(
-                    [
-                        {
-                            "timestamp": row[0],
-                            "timeseries_by_data_state_id": tsbds_id,
-                            "value": row[col + 1],
-                        }
-                        for col, tsbds_id in enumerate(tsbds_ids)
-                    ]
+        for irow, row in enumerate(reader):
+            irow += 1
+            timestamp = row[0]
+            if not ISO8601_DATETIME_RE.match(timestamp):
+                raise TimeseriesDataCSVIOError(f"Invalid timestamp row {irow}")
+            for icol, tsbds_id in enumerate(tsbds_ids):
+                icol += 1
+                try:
+                    value = float(row[icol])
+                except IndexError as exc:
+                    raise TimeseriesDataCSVIOError(
+                        f"Missing column row {irow}"
+                    ) from exc
+                except ValueError as exc:
+                    raise TimeseriesDataCSVIOError(
+                        f"Invalid value row {irow} col {icol}"
+                    ) from exc
+                data.append(
+                    {
+                        "timestamp": timestamp,
+                        "timeseries_by_data_state_id": tsbds_id,
+                        "value": value,
+                    }
                 )
-            except IndexError as exc:
-                raise cls.ERROR("Missing column") from exc
 
         # Insert data
         cls._set_timeseries_data(data)
