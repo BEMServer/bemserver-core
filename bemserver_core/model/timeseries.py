@@ -246,6 +246,15 @@ class Timeseries(AuthMixin, Base):
             db.session.flush()
         return tsbds
 
+    @classmethod
+    def get_by_name(cls, campaign, name):
+        """Get timeseries by name for a given campaign
+
+        :param Campaign campaign: Timeseries campaign
+        :param str name: Timeseries name
+        """
+        return Timeseries.get(name=name, campaign_id=campaign.id).first()
+
 
 class TimeseriesPropertyData(AuthMixin, Base):
     """Timeseries property data"""
