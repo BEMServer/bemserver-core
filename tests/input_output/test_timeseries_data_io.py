@@ -197,6 +197,18 @@ class TestTimeseriesDataCSVIO:
                 tsdcsvio.import_csv(io.StringIO(csv_file), ds_id, campaign)
 
     @pytest.mark.usefixtures("timeseries")
+    def test_timeseries_data_io_import_invalid_ts_id(self, users):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        ds_id = 1
+
+        csv_file = "Datetime,Timeseries 0\n2020-01-01T00:00:00+00:00,1"
+
+        with CurrentUser(admin_user):
+            with pytest.raises(TimeseriesDataCSVIOError):
+                tsdcsvio.import_csv(io.StringIO(csv_file), ds_id)
+
+    @pytest.mark.usefixtures("timeseries")
     @pytest.mark.parametrize("for_campaign", (True, False))
     def test_timeseries_data_io_import_csv_data_state_error(
         self, users, timeseries, campaigns, for_campaign
