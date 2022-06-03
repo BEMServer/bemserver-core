@@ -18,7 +18,11 @@ from bemserver_core.model import (
     ZonePropertyData,
 )
 from bemserver_core.authorization import CurrentUser
-from bemserver_core.exceptions import SitesCSVIOError
+from bemserver_core.exceptions import (
+    BEMServerCoreIOError,
+    BEMServerCoreCSVIOError,
+    SitesCSVIOError,
+)
 
 
 DUMMY_ID = 69
@@ -61,7 +65,7 @@ class TestSitesCSVIO:
         csv_file = "Name\nTest"
 
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match="Missing columns"):
+            with pytest.raises(BEMServerCoreCSVIOError, match="Missing columns"):
                 sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
 
     def test_site_data_io_import_csv_unknown_property(self, users, campaigns):
@@ -166,7 +170,7 @@ class TestSitesCSVIO:
         csv_file = f"Name,Site,IFC_ID\nBuilding 1,{site_1.name}\n"
 
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match="Missing columns"):
+            with pytest.raises(BEMServerCoreCSVIOError, match="Missing columns"):
                 sites_csv_io.import_csv(campaign_1, buildings_csv=csv_file)
 
     def test_building_data_io_import_csv_unknown_property(
@@ -185,6 +189,21 @@ class TestSitesCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Unknown property: "Area"'):
+                sites_csv_io.import_csv(campaign_1, buildings_csv=csv_file)
+
+    def test_building_data_io_import_csv_unknown_site(self, users, campaigns):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+
+        csv_file = (
+            "Name,Description,Site,IFC_ID\n"
+            "Building 1,Great building 1,Dummy,\n"
+            "Building 2,Great building 2,Dummy,\n"
+        )
+
+        with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreIOError, match='Unknown site: "Dummy"'):
                 sites_csv_io.import_csv(campaign_1, buildings_csv=csv_file)
 
     def test_building_data_io_import_csv_already_exists(self, users, campaigns, sites):
@@ -299,7 +318,7 @@ class TestSitesCSVIO:
         csv_file = f"Name,Site,Building\nStorey 1,{site_1.name},{building_1.name}\n"
 
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match="Missing columns"):
+            with pytest.raises(BEMServerCoreCSVIOError, match="Missing columns"):
                 sites_csv_io.import_csv(campaign_1, storeys_csv=csv_file)
 
     def test_storey_data_io_import_csv_unknown_property(
@@ -319,6 +338,24 @@ class TestSitesCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Unknown property: "Area"'):
+                sites_csv_io.import_csv(campaign_1, storeys_csv=csv_file)
+
+    def test_storey_data_io_import_csv_unknown_building(self, users, campaigns, sites):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        site_1 = sites[0]
+
+        csv_file = (
+            "Name,Description,Site,Building,IFC_ID\n"
+            f"Storey 1,Great storey 1,{site_1.name},Dummy,\n"
+            f"Storey 2,Great storey 2,{site_1.name},Dummy,\n"
+        )
+
+        with CurrentUser(admin_user):
+            with pytest.raises(
+                BEMServerCoreIOError, match='Unknown building: "Site 1/Dummy"'
+            ):
                 sites_csv_io.import_csv(campaign_1, storeys_csv=csv_file)
 
     def test_storey_data_io_import_csv_already_exists(
@@ -455,7 +492,7 @@ class TestSitesCSVIO:
         )
 
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match="Missing columns"):
+            with pytest.raises(BEMServerCoreCSVIOError, match="Missing columns"):
                 sites_csv_io.import_csv(campaign_1, spaces_csv=csv_file)
 
     def test_space_data_io_import_csv_unknown_property(
@@ -478,6 +515,27 @@ class TestSitesCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Unknown property: "Area"'):
+                sites_csv_io.import_csv(campaign_1, spaces_csv=csv_file)
+
+    def test_space_data_io_import_csv_unknown_storey(
+        self, users, campaigns, sites, buildings
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        site_1 = sites[0]
+        building_1 = buildings[0]
+
+        csv_file = (
+            "Name,Description,Site,Building,Storey,IFC_ID\n"
+            f"Storey 1,Great space 1,{site_1.name},{building_1.name},Dummy,\n"
+            f"Storey 2,Great space 2,{site_1.name},{building_1.name},Dummy,\n"
+        )
+
+        with CurrentUser(admin_user):
+            with pytest.raises(
+                BEMServerCoreIOError, match='Unknown storey: "Site 1/Building 1/Dummy"'
+            ):
                 sites_csv_io.import_csv(campaign_1, spaces_csv=csv_file)
 
     def test_space_data_io_import_csv_already_exists(
@@ -603,7 +661,7 @@ class TestSitesCSVIO:
         csv_file = "Name\nTest"
 
         with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match="Missing columns"):
+            with pytest.raises(BEMServerCoreCSVIOError, match="Missing columns"):
                 sites_csv_io.import_csv(campaign_1, zones_csv=csv_file)
 
     def test_zone_data_io_import_csv_unknown_property(self, users, campaigns):

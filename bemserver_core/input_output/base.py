@@ -1,8 +1,10 @@
+"""Base I/O classes"""
 import io
 import csv
 
 from bemserver_core.database import db
 from bemserver_core import model
+from bemserver_core.exceptions import BEMServerCoreIOError, BEMServerCoreCSVIOError
 
 
 def enforce_iterator(csv_file):
@@ -16,9 +18,6 @@ def enforce_iterator(csv_file):
 class BaseIO:
     """Base class for IO classes"""
 
-    #: Exception to raise on I/O errors
-    ERROR = None
-
     @classmethod
     def _get_campaign_scope_by_name(cls, campaign, campaign_scope_name):
         try:
@@ -26,7 +25,9 @@ class BaseIO:
                 campaign_id=campaign.id, name=campaign_scope_name
             )[0]
         except IndexError as exc:
-            raise cls.ERROR(f'Unknown campaign scope: "{campaign_scope_name}"') from exc
+            raise BEMServerCoreIOError(
+                f'Unknown campaign scope: "{campaign_scope_name}"'
+            ) from exc
 
     @classmethod
     def _get_site_by_name(cls, campaign, site_name):
@@ -35,7 +36,7 @@ class BaseIO:
                 campaign_id=campaign.id, name=site_name
             )[0]
         except IndexError as exc:
-            raise cls.ERROR(f'Unknown site: "{site_name}"') from exc
+            raise BEMServerCoreIOError(f'Unknown site: "{site_name}"') from exc
 
     @classmethod
     def _get_building_by_name(cls, site, building_name):
@@ -44,7 +45,9 @@ class BaseIO:
                 site_id=site.id, name=building_name
             )[0]
         except IndexError as exc:
-            raise cls.ERROR(f'Unknown building: "{site.name}/{building_name}"') from exc
+            raise BEMServerCoreIOError(
+                f'Unknown building: "{site.name}/{building_name}"'
+            ) from exc
 
     @classmethod
     def _get_storey_by_name(cls, site, building, storey_name):
@@ -53,7 +56,7 @@ class BaseIO:
                 building_id=building.id, name=storey_name
             )[0]
         except IndexError as exc:
-            raise cls.ERROR(
+            raise BEMServerCoreIOError(
                 f'Unknown storey: "{site.name}/{building.name}/{storey_name}"'
             ) from exc
 
@@ -64,7 +67,7 @@ class BaseIO:
                 storey_id=storey.id, name=space_name
             )[0]
         except IndexError as exc:
-            raise cls.ERROR(
+            raise BEMServerCoreIOError(
                 "Unknown space: "
                 f'"{site.name}/{building.name}/{storey.name}/{space_name}"'
             ) from exc
@@ -76,7 +79,7 @@ class BaseIO:
                 campaign_id=campaign.id, name=zone_name
             )[0]
         except IndexError as exc:
-            raise cls.ERROR(f'Unknown zone: "{zone_name}"') from exc
+            raise BEMServerCoreIOError(f'Unknown zone: "{zone_name}"') from exc
 
 
 class BaseCSVIO(BaseIO):
@@ -100,4 +103,4 @@ class BaseCSVIO(BaseIO):
         """
         missing_fields = required_field_names - set(reader.fieldnames)
         if missing_fields:
-            raise cls.ERROR(f"Missing columns: {list(missing_fields)}")
+            raise BEMServerCoreCSVIOError(f"Missing columns: {list(missing_fields)}")
