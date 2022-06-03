@@ -244,7 +244,15 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             raise TimeseriesDataCSVIOError("Missing headers line") from exc
         if header[0] != "Datetime":
             raise TimeseriesDataCSVIOError('First column must be "Datetime"')
-        ts_l = cls._get_timeseries(header[1:], campaign=campaign)
+        timeseries = header[1:]
+        if campaign is None:
+            # Check all timeseries IDs are integers to prevent crash in _get_timeseries
+            invalid_timseries = [ts for ts in timeseries if not ts.isdecimal()]
+            if invalid_timseries:
+                raise TimeseriesDataCSVIOError(
+                    "Invalid timeseries IDs: {invalid_timeseries}"
+                )
+        ts_l = cls._get_timeseries(timeseries, campaign=campaign)
 
         # Check permissions
         for ts in ts_l:
