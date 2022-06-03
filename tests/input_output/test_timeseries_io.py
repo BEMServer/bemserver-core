@@ -16,7 +16,11 @@ from bemserver_core.model import (
     TimeseriesByZone,
 )
 from bemserver_core.authorization import CurrentUser
-from bemserver_core.exceptions import TimeseriesCSVIOError
+from bemserver_core.exceptions import (
+    BEMServerCoreIOError,
+    BEMServerCoreCSVIOError,
+    TimeseriesCSVIOError,
+)
 
 
 DUMMY_ID = 69
@@ -119,7 +123,7 @@ class TestTimeseriesCSVIO:
         timeseries_csv = io.StringIO(timeseries_csv)
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesCSVIOError, match="Missing columns"):
+            with pytest.raises(BEMServerCoreCSVIOError, match="Missing columns"):
                 timeseries_csv_io.import_csv(
                     campaign_1,
                     timeseries_csv=timeseries_csv,
@@ -265,7 +269,7 @@ class TestTimeseriesCSVIO:
         )
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesCSVIOError, match=f"Unknown {unknown}"):
+            with pytest.raises(BEMServerCoreIOError, match=f"Unknown {unknown}"):
                 timeseries_csv_io.import_csv(
                     campaign_1,
                     timeseries_csv=timeseries_csv,

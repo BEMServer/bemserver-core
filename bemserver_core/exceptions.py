@@ -5,15 +5,19 @@ class BEMServerCoreError(Exception):
     """Base BEMServer Core exception"""
 
 
-class SitesCSVIOError(BEMServerCoreError):
-    """Sites CSV IO error"""
-
-
 class BEMServerCoreIOError(BEMServerCoreError):
     """Base IO error"""
 
 
-class TimeseriesCSVIOError(BEMServerCoreIOError):
+class BEMServerCoreCSVIOError(BEMServerCoreIOError):
+    """CSV IO error"""
+
+
+class SitesCSVIOError(BEMServerCoreCSVIOError):
+    """Sites CSV IO error"""
+
+
+class TimeseriesCSVIOError(BEMServerCoreCSVIOError):
     """Timeseries CSV IO error"""
 
 
@@ -37,7 +41,7 @@ class TimeseriesDataIOInvalidAggregationError(TimeseriesDataIOError):
     """Timeseries data IO invalid aggregation error"""
 
 
-class TimeseriesDataCSVIOError(TimeseriesDataIOError):
+class TimeseriesDataCSVIOError(BEMServerCoreCSVIOError, TimeseriesDataIOError):
     """Timeseries data CSV IO error"""
 
 
