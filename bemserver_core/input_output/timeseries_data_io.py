@@ -48,15 +48,15 @@ class TimeseriesDataIO:
     def _get_timeseries(cls, timeseries, campaign=None):
         # If campaign is None, expect TS IDs
         if campaign is None:
-            ts_l = [Timeseries.get_by_id(col) for col in timeseries]
+            ts_d = {col: Timeseries.get_by_id(col) for col in timeseries}
         # Otherwise, expect TS names
         else:
-            ts_l = [Timeseries.get_by_name(campaign, col) for col in timeseries]
-        if None in ts_l:
+            ts_d = {col: Timeseries.get_by_name(campaign, col) for col in timeseries}
+        if None in ts_d.values():
             raise TimeseriesDataIOUnknownTimeseriesError(
-                f'Unknown timeseries {"name" if campaign else "ID"}'
+                f"Unknown timeseries: {[k for k in ts_d.keys() if ts_d[k] is None]}"
             )
-        return ts_l
+        return ts_d.values()
 
     @classmethod
     def _set_timeseries_data(cls, data):
