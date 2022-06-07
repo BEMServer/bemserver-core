@@ -220,6 +220,44 @@ class TimeseriesDataIO:
 
         return data_df
 
+    @classmethod
+    def delete(cls, start_dt, end_dt, timeseries, data_state_id, campaign=None):
+        """Delete timeseries data
+
+        :param datetime start_dt: Time interval lower bound (tz-aware)
+        :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
+        :param list timeseries: List of timeseries IDs or names
+        :param int data_state_id: Data state ID
+        :param Campaign campaign: Campaign
+
+        If campaign is None, the CSV header is expected to contain timeseries IDs.
+        Otherwise, timeseries names are expected.
+        """
+        ts_l = cls._get_timeseries(timeseries, campaign)
+        data_state = cls._get_timeseries_data_state(data_state_id)
+
+        # Check permissions
+        for ts in ts_l:
+            auth.authorize(get_current_user(), "write_data", ts)
+
+        # Get timeseries x data states ids
+        tsbds_ids = [ts.get_timeseries_by_data_state(data_state).id for ts in ts_l]
+
+        # Delete timeseries data
+        db.session.query(TimeseriesData).where(
+            Timeseries.id == TimeseriesByDataState.timeseries_id
+        ).where(
+            TimeseriesData.timeseries_by_data_state_id == TimeseriesByDataState.id
+        ).filter(
+            TimeseriesData.timeseries_by_data_state_id.in_(tsbds_ids)
+        ).filter(
+            start_dt <= TimeseriesData.timestamp
+        ).filter(
+            TimeseriesData.timestamp < end_dt
+        ).delete(
+            synchronize_session=False
+        )
+
 
 class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
     @classmethod
