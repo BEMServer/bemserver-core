@@ -27,12 +27,12 @@ class TestTimeseriesPropertyModel:
         assert admin_user.is_admin
 
         with CurrentUser(admin_user):
-            assert not list(TimeseriesProperty.get())
+            nb_ts_properties = len(list(TimeseriesProperty.get()))
             ts_property_1 = TimeseriesProperty.new(name="Min")
             db.session.add(ts_property_1)
             db.session.commit()
             assert TimeseriesProperty.get_by_id(ts_property_1.id) == ts_property_1
-            assert len(list(TimeseriesProperty.get())) == 1
+            assert len(list(TimeseriesProperty.get())) == nb_ts_properties + 1
             ts_property_1.update(name="Max")
             ts_property_1.delete()
             db.session.commit()
