@@ -14,7 +14,6 @@ from bemserver_core.model import (
 from bemserver_core.authorization import auth, get_current_user
 from bemserver_core.exceptions import (
     TimeseriesDataIOUnknownDataStateError,
-    TimeseriesDataIOUnknownTimeseriesError,
     TimeseriesDataIOInvalidAggregationError,
     TimeseriesDataIOWriteError,
     TimeseriesDataCSVIOError,
@@ -43,20 +42,6 @@ class TimeseriesDataIO:
         if data_state is None:
             raise TimeseriesDataIOUnknownDataStateError("Unknown data state ID")
         return data_state
-
-    @classmethod
-    def _get_timeseries(cls, timeseries, campaign=None):
-        # If campaign is None, expect TS IDs
-        if campaign is None:
-            ts_d = {col: Timeseries.get_by_id(col) for col in timeseries}
-        # Otherwise, expect TS names
-        else:
-            ts_d = {col: Timeseries.get_by_name(campaign, col) for col in timeseries}
-        if None in ts_d.values():
-            raise TimeseriesDataIOUnknownTimeseriesError(
-                f"Unknown timeseries: {[k for k in ts_d.keys() if ts_d[k] is None]}"
-            )
-        return ts_d.values()
 
     @classmethod
     def _set_timeseries_data(cls, data):
@@ -101,7 +86,7 @@ class TimeseriesDataIO:
 
         Returns a dataframe.
         """
-        ts_l = cls._get_timeseries(timeseries, campaign)
+        ts_l = Timeseries.get_many(timeseries, campaign)
         data_state = cls._get_timeseries_data_state(data_state_id)
 
         # Check permissions
@@ -169,7 +154,7 @@ class TimeseriesDataIO:
 
         Returns csv as a string.
         """
-        ts_l = cls._get_timeseries(timeseries, campaign)
+        ts_l = Timeseries.get_many(timeseries, campaign)
         data_state = cls._get_timeseries_data_state(data_state_id)
 
         # Check permissions
@@ -233,7 +218,7 @@ class TimeseriesDataIO:
         If campaign is None, the CSV header is expected to contain timeseries IDs.
         Otherwise, timeseries names are expected.
         """
-        ts_l = cls._get_timeseries(timeseries, campaign)
+        ts_l = Timeseries.get_many(timeseries, campaign)
         data_state = cls._get_timeseries_data_state(data_state_id)
 
         # Check permissions
@@ -291,7 +276,9 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
                 raise TimeseriesDataCSVIOError(
                     "Invalid timeseries IDs: {invalid_timeseries}"
                 )
-        ts_l = cls._get_timeseries(timeseries, campaign=campaign)
+            ts_l = Timeseries.get_many_by_id(timeseries)
+        else:
+            ts_l = Timeseries.get_many_by_name(campaign, timeseries)
 
         # Check permissions
         for ts in ts_l:
