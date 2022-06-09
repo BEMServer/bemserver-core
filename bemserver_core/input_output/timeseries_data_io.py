@@ -8,12 +8,10 @@ from bemserver_core.database import db
 from bemserver_core.model import (
     Timeseries,
     TimeseriesData,
-    TimeseriesDataState,
     TimeseriesByDataState,
 )
 from bemserver_core.authorization import auth, get_current_user
 from bemserver_core.exceptions import (
-    TimeseriesDataIOUnknownDataStateError,
     TimeseriesDataIOInvalidAggregationError,
     TimeseriesDataIOWriteError,
     TimeseriesDataCSVIOError,
@@ -35,13 +33,6 @@ ISO8601_DATETIME_RE = re.compile(
 
 class TimeseriesDataIO:
     """Base class for TimeseriesData IO classes"""
-
-    @classmethod
-    def _get_timeseries_data_state(cls, data_state_id):
-        data_state = TimeseriesDataState.get_by_id(data_state_id)
-        if data_state is None:
-            raise TimeseriesDataIOUnknownDataStateError("Unknown data state ID")
-        return data_state
 
     @classmethod
     def _set_timeseries_data(cls, data):
@@ -72,29 +63,27 @@ class TimeseriesDataIO:
 
     @classmethod
     def _get_timeseries_data(
-        cls, start_dt, end_dt, timeseries, data_state_id, campaign=None
+        cls, start_dt, end_dt, timeseries, data_state, campaign=None
     ):
         """Export timeseries data
 
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
-        :param list timeseries: List of timeseries IDs or names
+        :param list timeseries: List of timeseries
+        :param TimeseriesDataState data_state: Timeseries data state
         :param Campaign campaign: Campaign
-
-        If campaign is None, timeseries list is expected to contain timeseries IDs.
-        Otherwise, timeseries names are expected.
 
         Returns a dataframe.
         """
-        ts_l = Timeseries.get_many(timeseries, campaign)
-        data_state = cls._get_timeseries_data_state(data_state_id)
-
         # Check permissions
-        for ts in ts_l:
+        for ts in timeseries:
             auth.authorize(get_current_user(), "read_data", ts)
 
         # Get timeseries x data states ids
-        tsbds_ids = [ts.get_timeseries_by_data_state(data_state).id for ts in ts_l]
+        # TODO: integrate to query below
+        tsbds_ids = [
+            ts.get_timeseries_by_data_state(data_state).id for ts in timeseries
+        ]
 
         # Get timeseries data
         data = db.session.execute(
@@ -122,7 +111,9 @@ class TimeseriesDataIO:
             values="value",
         )
 
-        cls._fill_missing_columns(data_df, ts_l, "id" if campaign is None else "name")
+        cls._fill_missing_columns(
+            data_df, timeseries, "id" if campaign is None else "name"
+        )
 
         return data_df
 
@@ -132,7 +123,7 @@ class TimeseriesDataIO:
         start_dt,
         end_dt,
         timeseries,
-        data_state_id,
+        data_state,
         bucket_width,
         timezone="UTC",
         aggregation="avg",
@@ -142,30 +133,28 @@ class TimeseriesDataIO:
 
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
-        :param list timeseries: List of timeseries IDs or names
+        :param list timeseries: List of timeseries
+        :param TimeseriesDataState data_state: Timeseries data state
         :param str bucket_width: Bucket width (ISO 8601 or PostgreSQL interval)
         :param str timezone: IANA timezone
         :param str aggreagation: Aggregation function. Must be one of
             "avg", "sum", "min" and "max".
         :param Campaign campaign: Campaign
 
-        If campaign is None, timeseries list is expected to contain timeseries IDs.
-        Otherwise, timeseries names are expected.
-
         Returns csv as a string.
         """
-        ts_l = Timeseries.get_many(timeseries, campaign)
-        data_state = cls._get_timeseries_data_state(data_state_id)
-
-        # Check permissions
-        for ts in ts_l:
-            auth.authorize(get_current_user(), "read_data", ts)
-
         if aggregation not in AGGREGATION_FUNCTIONS:
             raise TimeseriesDataIOInvalidAggregationError("Invalid aggregation method")
 
+        # Check permissions
+        for ts in timeseries:
+            auth.authorize(get_current_user(), "read_data", ts)
+
         # Get timeseries x data states ids
-        tsbds_ids = [ts.get_timeseries_by_data_state(data_state).id for ts in ts_l]
+        # TODO: integrate to query below
+        tsbds_ids = [
+            ts.get_timeseries_by_data_state(data_state).id for ts in timeseries
+        ]
 
         # Get timeseries data
         query = sqla.text(
@@ -201,32 +190,30 @@ class TimeseriesDataIO:
             values="value",
         )
 
-        cls._fill_missing_columns(data_df, ts_l, "id" if campaign is None else "name")
+        cls._fill_missing_columns(
+            data_df, timeseries, "id" if campaign is None else "name"
+        )
 
         return data_df
 
     @classmethod
-    def delete(cls, start_dt, end_dt, timeseries, data_state_id, campaign=None):
+    def delete(cls, start_dt, end_dt, timeseries, data_state):
         """Delete timeseries data
 
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
         :param list timeseries: List of timeseries IDs or names
-        :param int data_state_id: Data state ID
-        :param Campaign campaign: Campaign
-
-        If campaign is None, the CSV header is expected to contain timeseries IDs.
-        Otherwise, timeseries names are expected.
+        :param TimeseriesDataState data_state: Timeseries data state
         """
-        ts_l = Timeseries.get_many(timeseries, campaign)
-        data_state = cls._get_timeseries_data_state(data_state_id)
-
         # Check permissions
-        for ts in ts_l:
+        for ts in timeseries:
             auth.authorize(get_current_user(), "write_data", ts)
 
         # Get timeseries x data states ids
-        tsbds_ids = [ts.get_timeseries_by_data_state(data_state).id for ts in ts_l]
+        # TODO: integrate to query below
+        tsbds_ids = [
+            ts.get_timeseries_by_data_state(data_state).id for ts in timeseries
+        ]
 
         # Delete timeseries data
         db.session.query(TimeseriesData).where(
@@ -247,18 +234,16 @@ class TimeseriesDataIO:
 
 class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
     @classmethod
-    def import_csv(cls, csv_file, data_state_id, campaign=None):
+    def import_csv(cls, csv_file, data_state, campaign=None):
         """Import CSV file
 
         :param srt|TextIOBase csv_file: CSV as string or text stream
-        :param int data_state_id: Data state ID
+        :param TimeseriesDataState data_state: Timeseries data state
         :param Campaign campaign: Campaign
 
         If campaign is None, the CSV header is expected to contain timeseries IDs.
         Otherwise, timeseries names are expected.
         """
-        data_state = cls._get_timeseries_data_state(data_state_id)
-
         reader = cls.csv_reader(csv_file)
 
         # Read headers
@@ -271,21 +256,23 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         timeseries = header[1:]
         if campaign is None:
             # Check all timeseries IDs are integers to prevent crash in _get_timeseries
-            invalid_timseries = [ts for ts in timeseries if not ts.isdecimal()]
-            if invalid_timseries:
+            invalid_timeseries = [ts for ts in timeseries if not ts.isdecimal()]
+            if invalid_timeseries:
                 raise TimeseriesDataCSVIOError(
                     "Invalid timeseries IDs: {invalid_timeseries}"
                 )
-            ts_l = Timeseries.get_many_by_id(timeseries)
+            timeseries = Timeseries.get_many_by_id(timeseries)
         else:
-            ts_l = Timeseries.get_many_by_name(campaign, timeseries)
+            timeseries = Timeseries.get_many_by_name(campaign, timeseries)
 
         # Check permissions
-        for ts in ts_l:
+        for ts in timeseries:
             auth.authorize(get_current_user(), "write_data", ts)
 
         # Get timeseries x data states ids
-        tsbds_ids = [ts.get_timeseries_by_data_state(data_state).id for ts in ts_l]
+        tsbds_ids = [
+            ts.get_timeseries_by_data_state(data_state).id for ts in timeseries
+        ]
 
         data = []
         for irow, row in enumerate(reader):
@@ -317,16 +304,14 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         cls._set_timeseries_data(data)
 
     @classmethod
-    def export_csv(cls, start_dt, end_dt, timeseries, data_state_id, campaign=None):
+    def export_csv(cls, start_dt, end_dt, timeseries, data_state, campaign=None):
         """Export timeseries data as CSV file
 
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
-        :param list timeseries: List of timeseries IDs or names
+        :param list timeseries: List of timeseries
+        :param TimeseriesDataState data_state: Timeseries data state
         :param Campaign campaign: Campaign
-
-        If campaign is None, timeseries list is expected to contain timeseries IDs.
-        Otherwise, timeseries names are expected.
 
         Returns csv as a string.
         """
@@ -334,7 +319,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             start_dt,
             end_dt,
             timeseries,
-            data_state_id,
+            data_state,
             campaign=campaign,
         )
 
@@ -348,7 +333,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         start_dt,
         end_dt,
         timeseries,
-        data_state_id,
+        data_state,
         bucket_width,
         timezone="UTC",
         aggregation="avg",
@@ -359,14 +344,12 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
         :param list timeseries: List of timeseries
+        :param TimeseriesDataState data_state: Timeseries data state
         :param str bucket_width: Bucket width (ISO 8601 or PostgreSQL interval)
         :param str timezone: IANA timezone
         :param str aggreagation: Aggregation function. Must be one of
             "avg", "sum", "min" and "max".
         :param Campaign campaign: Campaign
-
-        If campaign is None, timeseries list is expected to contain timeseries IDs.
-        Otherwise, timeseries names are expected.
 
         Returns csv as a string.
         """
@@ -374,7 +357,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             start_dt,
             end_dt,
             timeseries,
-            data_state_id,
+            data_state,
             bucket_width,
             timezone=timezone,
             aggregation=aggregation,

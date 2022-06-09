@@ -29,10 +29,6 @@ class TimeseriesDataIOError(BEMServerCoreIOError):
     """Timeseries data IO error"""
 
 
-class TimeseriesDataIOUnknownDataStateError(TimeseriesDataIOError):
-    """Timeseries data IO unknown data state error"""
-
-
 class TimeseriesDataIOWriteError(TimeseriesDataIOError):
     """Timeseries data IO write error"""
 
