@@ -63,7 +63,7 @@ class TimeseriesDataIO:
 
     @classmethod
     def _get_timeseries_data(
-        cls, start_dt, end_dt, timeseries, data_state, campaign=None
+        cls, start_dt, end_dt, timeseries, data_state, col_label="id"
     ):
         """Export timeseries data
 
@@ -71,7 +71,8 @@ class TimeseriesDataIO:
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
         :param list timeseries: List of timeseries
         :param TimeseriesDataState data_state: Timeseries data state
-        :param Campaign campaign: Campaign
+        :param string col_label: Timeseries attribute to use for column header.
+            Should be "id" or "name". Default: "id".
 
         Returns a dataframe.
         """
@@ -103,17 +104,13 @@ class TimeseriesDataIO:
         ).all()
 
         data_df = pd.DataFrame(
-            data, columns=("Datetime", "tsid", "tsname", "value")
+            data, columns=("Datetime", "id", "name", "value")
         ).set_index("Datetime")
         data_df.index = pd.DatetimeIndex(data_df.index)
-        data_df = data_df.pivot(
-            columns="tsid" if campaign is None else "tsname",
-            values="value",
-        )
 
-        cls._fill_missing_columns(
-            data_df, timeseries, "id" if campaign is None else "name"
-        )
+        data_df = data_df.pivot(columns=col_label, values="value")
+
+        cls._fill_missing_columns(data_df, timeseries, col_label)
 
         return data_df
 
@@ -127,7 +124,7 @@ class TimeseriesDataIO:
         bucket_width,
         timezone="UTC",
         aggregation="avg",
-        campaign=None,
+        col_label="id",
     ):
         """Bucket timeseries data and export
 
@@ -139,7 +136,8 @@ class TimeseriesDataIO:
         :param str timezone: IANA timezone
         :param str aggreagation: Aggregation function. Must be one of
             "avg", "sum", "min" and "max".
-        :param Campaign campaign: Campaign
+        :param string col_label: Timeseries attribute to use for column header.
+            Should be "id" or "name". Default: "id".
 
         Returns csv as a string.
         """
@@ -180,19 +178,14 @@ class TimeseriesDataIO:
         data = db.session.execute(query, params)
 
         data_df = pd.DataFrame(
-            data, columns=("Datetime", "tsid", "tsname", "value")
+            data, columns=("Datetime", "id", "name", "value")
         ).set_index("Datetime")
         data_df.index = (
             pd.DatetimeIndex(data_df.index).tz_localize(timezone).tz_convert("UTC")
         )
-        data_df = data_df.pivot(
-            columns="tsid" if campaign is None else "tsname",
-            values="value",
-        )
+        data_df = data_df.pivot(columns=col_label, values="value")
 
-        cls._fill_missing_columns(
-            data_df, timeseries, "id" if campaign is None else "name"
-        )
+        cls._fill_missing_columns(data_df, timeseries, col_label)
 
         return data_df
 
@@ -304,14 +297,15 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         cls._set_timeseries_data(data)
 
     @classmethod
-    def export_csv(cls, start_dt, end_dt, timeseries, data_state, campaign=None):
+    def export_csv(cls, start_dt, end_dt, timeseries, data_state, col_label="id"):
         """Export timeseries data as CSV file
 
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
         :param list timeseries: List of timeseries
         :param TimeseriesDataState data_state: Timeseries data state
-        :param Campaign campaign: Campaign
+        :param string col_label: Timeseries attribute to use for column header.
+            Should be "id" or "name". Default: "id".
 
         Returns csv as a string.
         """
@@ -320,7 +314,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             end_dt,
             timeseries,
             data_state,
-            campaign=campaign,
+            col_label=col_label,
         )
 
         # Specify ISO 8601 manually
@@ -337,7 +331,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         bucket_width,
         timezone="UTC",
         aggregation="avg",
-        campaign=None,
+        col_label="id",
     ):
         """Bucket timeseries data and export as CSV file
 
@@ -349,7 +343,8 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         :param str timezone: IANA timezone
         :param str aggreagation: Aggregation function. Must be one of
             "avg", "sum", "min" and "max".
-        :param Campaign campaign: Campaign
+        :param string col_label: Timeseries attribute to use for column header.
+            Should be "id" or "name". Default: "id".
 
         Returns csv as a string.
         """
@@ -361,7 +356,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             bucket_width,
             timezone=timezone,
             aggregation=aggregation,
-            campaign=campaign,
+            col_label=col_label,
         )
 
         # Specify ISO 8601 manually
