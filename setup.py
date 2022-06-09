@@ -21,8 +21,6 @@ setup(
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Topic :: Scientific/Engineering",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         (
@@ -30,7 +28,7 @@ setup(
             "GNU Affero General Public License v3 or later (AGPLv3+)"
         ),
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.9",
     install_requires=[
         "psycopg2>=2.8.0",
         "sqlalchemy>=1.4.0",
