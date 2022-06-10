@@ -29,10 +29,6 @@ class TimeseriesDataIOError(BEMServerCoreIOError):
     """Timeseries data IO error"""
 
 
-class TimeseriesDataIOWriteError(TimeseriesDataIOError):
-    """Timeseries data IO write error"""
-
-
 class TimeseriesDataIOInvalidAggregationError(TimeseriesDataIOError):
     """Timeseries data IO invalid aggregation error"""
 

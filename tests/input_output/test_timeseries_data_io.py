@@ -154,13 +154,16 @@ class TestTimeseriesDataCSVIO:
     @pytest.mark.parametrize(
         "file_error",
         (
+            # Empty file
             ("", TimeseriesDataCSVIOError),
-            ("Dummy,\n", TimeseriesDataCSVIOError),
+            # Empty TS name
+            ("Datetime,1,\n", TimeseriesDataCSVIOError),
+            # Unknown TS
             ("Datetime,1324564", TimeseriesNotFoundError),
         ),
     )
     @pytest.mark.parametrize("for_campaign", (True, False))
-    def test_timeseries_data_io_import_error(
+    def test_timeseries_data_io_import_csv_file_error(
         self, users, campaigns, for_campaign, file_error
     ):
         admin_user = users[0]
@@ -178,15 +181,13 @@ class TestTimeseriesDataCSVIO:
     @pytest.mark.parametrize(
         "row",
         (
-            "2020-01-01T00:00:00+00:00",
-            "2020-01-01T00:00:00+00:00,",
             "2020-01-01T00:00:00+00:00,a",
             "dummy,1",
         ),
     )
     @pytest.mark.usefixtures("timeseries")
     @pytest.mark.parametrize("for_campaign", (True, False))
-    def test_timeseries_data_io_import_csv_error(
+    def test_timeseries_data_io_import_csv_row_error(
         self, users, campaigns, for_campaign, row
     ):
         admin_user = users[0]

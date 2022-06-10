@@ -153,7 +153,8 @@ class DBConnection:
             db_url,
             # Set UTC for all connections
             connect_args={"options": "-c timezone=utc"},
-            future=True,
+            # https://github.com/pandas-dev/pandas/issues/40686
+            # future=True,
         )
         SESSION_FACTORY.configure(bind=self.engine)
 

@@ -7,14 +7,6 @@ from bemserver_core import model
 from bemserver_core.exceptions import BEMServerCoreIOError, BEMServerCoreCSVIOError
 
 
-def enforce_iterator(csv_file):
-    # If input is not a text stream, then it is a plain string
-    # Make it an iterator
-    if not isinstance(csv_file, io.TextIOBase):
-        csv_file = csv_file.splitlines()
-    return csv_file
-
-
 class BaseIO:
     """Base class for IO classes"""
 
@@ -86,13 +78,15 @@ class BaseCSVIO(BaseIO):
     """Base class for CSV IO classes"""
 
     @staticmethod
-    def csv_reader(csv_file):
-        csv_file = enforce_iterator(csv_file)
-        return csv.reader(csv_file)
+    def _enforce_iterator(csv_file):
+        # If input is not a text stream, then it is a plain string
+        if not isinstance(csv_file, io.TextIOBase):
+            csv_file = io.StringIO(csv_file)
+        return csv_file
 
-    @staticmethod
-    def csv_dict_reader(csv_file):
-        csv_file = enforce_iterator(csv_file)
+    @classmethod
+    def csv_dict_reader(cls, csv_file):
+        csv_file = cls._enforce_iterator(csv_file)
         return csv.DictReader(csv_file)
 
     @classmethod

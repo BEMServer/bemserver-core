@@ -1,8 +1,11 @@
 """Timeseries data I/O"""
+import copy
 import re
+import csv
 
 import sqlalchemy as sqla
 import pandas as pd
+import dateutil
 
 from bemserver_core.database import db
 from bemserver_core.model import (
@@ -13,7 +16,6 @@ from bemserver_core.model import (
 from bemserver_core.authorization import auth, get_current_user
 from bemserver_core.exceptions import (
     TimeseriesDataIOInvalidAggregationError,
-    TimeseriesDataIOWriteError,
     TimeseriesDataCSVIOError,
 )
 
@@ -35,23 +37,48 @@ class TimeseriesDataIO:
     """Base class for TimeseriesData IO classes"""
 
     @classmethod
-    def _set_timeseries_data(cls, data):
+    def _set_timeseries_data(cls, data_df, data_state, campaign):
         """Insert timeseries data
 
-        :param list data: List of dicts, each dict containing a timestamp, a
-        timeseries x data state association ID and a value.
+        :param DataFrame data_df: Input timeseries data
+        :param TimeseriesDataState data_state: Timeseries data state
+        :param Campaign campaign: Campaign
         """
-        query = (
-            sqla.dialects.postgresql.insert(TimeseriesData)
-            .values(data)
-            .on_conflict_do_nothing()
+        timeseries = data_df.columns
+        if campaign is None:
+            # Check all timeseries IDs are integers to prevent crash in _get_timeseries
+            invalid_timeseries = [ts for ts in timeseries if not ts.isdecimal()]
+            if invalid_timeseries:
+                raise TimeseriesDataCSVIOError(
+                    f"Invalid timeseries IDs: {invalid_timeseries}"
+                )
+            timeseries = Timeseries.get_many_by_id(timeseries)
+        else:
+            timeseries = Timeseries.get_many_by_name(campaign, timeseries)
+
+        # Check permissions
+        for ts in timeseries:
+            auth.authorize(get_current_user(), "write_data", ts)
+
+        # Get timeseries x data states ids
+        tsbds_ids = [
+            ts.get_timeseries_by_data_state(data_state).id for ts in timeseries
+        ]
+
+        data_df.columns = tsbds_ids
+
+        data_df = data_df.melt(
+            value_vars=data_df.columns,
+            var_name="timeseries_by_data_state_id",
+            ignore_index=False,
         )
 
-        try:
-            db.session.execute(query)
-            db.session.commit()
-        except sqla.exc.DBAPIError as exc:
-            raise TimeseriesDataIOWriteError("Error writing to DB") from exc
+        data_df.to_sql(
+            TimeseriesData.__tablename__,
+            db.session.connection(),
+            if_exists="append",
+            index=True,
+        )
 
     @staticmethod
     def _fill_missing_columns(data_df, ts_l, attr):
@@ -237,64 +264,36 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         If campaign is None, the CSV header is expected to contain timeseries IDs.
         Otherwise, timeseries names are expected.
         """
-        reader = cls.csv_reader(csv_file)
+        csv_file = cls._enforce_iterator(csv_file)
 
-        # Read headers
+        # Check header first. Some errors are hard to catch in or after pandas read_csv
+        # Use a copy to avoid consuming the file before passing it to pandas
+        reader = csv.reader(copy.copy(csv_file))
         try:
             header = next(reader)
         except StopIteration as exc:
             raise TimeseriesDataCSVIOError("Missing headers line") from exc
-        if header[0] != "Datetime":
-            raise TimeseriesDataCSVIOError('First column must be "Datetime"')
-        timeseries = header[1:]
-        if campaign is None:
-            # Check all timeseries IDs are integers to prevent crash in _get_timeseries
-            invalid_timeseries = [ts for ts in timeseries if not ts.isdecimal()]
-            if invalid_timeseries:
-                raise TimeseriesDataCSVIOError(
-                    "Invalid timeseries IDs: {invalid_timeseries}"
-                )
-            timeseries = Timeseries.get_many_by_id(timeseries)
-        else:
-            timeseries = Timeseries.get_many_by_name(campaign, timeseries)
+        if "" in header:
+            raise TimeseriesDataCSVIOError("Empty timeseries name or trailing comma")
+        try:
+            data_df = pd.read_csv(csv_file, index_col=0)
+        except pd.errors.EmptyDataError as exc:
+            raise TimeseriesDataCSVIOError("Empty file") from exc
 
-        # Check permissions
-        for ts in timeseries:
-            auth.authorize(get_current_user(), "write_data", ts)
+        # Index
+        try:
+            data_df.index = pd.DatetimeIndex(data_df.index, name="timestamp")
+        except dateutil.parser._parser.ParserError as exc:
+            raise TimeseriesDataCSVIOError("Invalid timestamp") from exc
 
-        # Get timeseries x data states ids
-        tsbds_ids = [
-            ts.get_timeseries_by_data_state(data_state).id for ts in timeseries
-        ]
-
-        data = []
-        for irow, row in enumerate(reader):
-            irow += 1
-            timestamp = row[0]
-            if not ISO8601_DATETIME_RE.match(timestamp):
-                raise TimeseriesDataCSVIOError(f"Invalid timestamp row {irow}")
-            for icol, tsbds_id in enumerate(tsbds_ids):
-                icol += 1
-                try:
-                    value = float(row[icol])
-                except IndexError as exc:
-                    raise TimeseriesDataCSVIOError(
-                        f"Missing column row {irow}"
-                    ) from exc
-                except ValueError as exc:
-                    raise TimeseriesDataCSVIOError(
-                        f"Invalid value row {irow} col {icol}"
-                    ) from exc
-                data.append(
-                    {
-                        "timestamp": timestamp,
-                        "timeseries_by_data_state_id": tsbds_id,
-                        "value": value,
-                    }
-                )
+        # Values
+        try:
+            data_df = data_df.astype(float)
+        except ValueError as exc:
+            raise TimeseriesDataCSVIOError("Invalid values") from exc
 
         # Insert data
-        cls._set_timeseries_data(data)
+        cls._set_timeseries_data(data_df, data_state=data_state, campaign=campaign)
 
     @classmethod
     def export_csv(cls, start_dt, end_dt, timeseries, data_state, col_label="id"):
