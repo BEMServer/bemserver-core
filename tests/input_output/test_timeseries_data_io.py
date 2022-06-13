@@ -12,8 +12,7 @@ from bemserver_core.model import (
     TimeseriesDataState,
     TimeseriesByDataState,
 )
-from bemserver_core.input_output import tsdcsvio
-from bemserver_core.input_output.timeseries_data_io import TimeseriesDataIO
+from bemserver_core.input_output import tsdio, tsdcsvio
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.exceptions import (
@@ -62,7 +61,7 @@ class TestTimeseriesDataIO:
         )
 
         with CurrentUser(admin_user):
-            TimeseriesDataIO().set_timeseries_data(data_df, ds_1, campaign)
+            tsdio.set_timeseries_data(data_df, ds_1, campaign)
 
         # Check TSBDS are correctly auto-created
         tsbds_l = (
@@ -150,7 +149,7 @@ class TestTimeseriesDataIO:
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesDataIO().set_timeseries_data(data_df, ds_1, campaign)
+                tsdio.set_timeseries_data(data_df, ds_1, campaign)
 
         data_df = pd.DataFrame(
             {
@@ -165,7 +164,7 @@ class TestTimeseriesDataIO:
             campaign = None
 
         with CurrentUser(user_1):
-            TimeseriesDataIO().set_timeseries_data(data_df, ds_1, campaign)
+            tsdio.set_timeseries_data(data_df, ds_1, campaign)
 
     @pytest.mark.parametrize("for_campaign", (True, False))
     def test_timeseries_data_io_import_set_timeseries_data_timeseries_error(
@@ -196,7 +195,7 @@ class TestTimeseriesDataIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(TimeseriesNotFoundError):
-                TimeseriesDataIO().set_timeseries_data(data_df, ds_1, campaign)
+                tsdio.set_timeseries_data(data_df, ds_1, campaign)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.parametrize("col_label", ("id", "name"))
@@ -240,9 +239,7 @@ class TestTimeseriesDataIO:
         with CurrentUser(admin_user):
 
             ts_l = (ts_0, ts_2, ts_4)
-            data_df = TimeseriesDataIO().get_timeseries_data(
-                start_dt, end_dt, ts_l, ds_1, col_label
-            )
+            data_df = tsdio.get_timeseries_data(start_dt, end_dt, ts_l, ds_1, col_label)
 
         index = pd.DatetimeIndex(
             [
@@ -314,12 +311,12 @@ class TestTimeseriesDataIO:
             ts_l = (ts_0, ts_2, ts_4)
 
             with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesDataIO().get_timeseries_data(
+                tsdio.get_timeseries_data(
                     start_dt, end_dt, ts_l, ds_1, col_label=col_label
                 )
 
             ts_l = (ts_1, ts_3)
-            data_df = TimeseriesDataIO().get_timeseries_data(
+            data_df = tsdio.get_timeseries_data(
                 start_dt, end_dt, ts_l, ds_1, col_label=col_label
             )
 
@@ -384,7 +381,7 @@ class TestTimeseriesDataIO:
             ts_l = (ts_0, ts_2, ts_4)
 
             # Export CSV: UTC avg
-            data_df = TimeseriesDataIO().get_timeseries_buckets_data(
+            data_df = tsdio.get_timeseries_buckets_data(
                 start_dt, end_dt, ts_l, ds_1, "1 day", col_label=col_label
             )
 
@@ -410,7 +407,7 @@ class TestTimeseriesDataIO:
             assert data_df.equals(expected_data_df)
 
             # Export CSV: local TZ avg
-            data_df = TimeseriesDataIO().get_timeseries_buckets_data(
+            data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 end_dt,
                 ts_l,
@@ -447,7 +444,7 @@ class TestTimeseriesDataIO:
             assert data_df.equals(expected_data_df)
 
             # Export CSV: UTC sum
-            data_df = TimeseriesDataIO().get_timeseries_buckets_data(
+            data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 end_dt,
                 ts_l,
@@ -483,7 +480,7 @@ class TestTimeseriesDataIO:
             assert data_df.equals(expected_data_df)
 
             # Export CSV: UTC min
-            data_df = TimeseriesDataIO().get_timeseries_buckets_data(
+            data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 end_dt,
                 ts_l,
@@ -515,7 +512,7 @@ class TestTimeseriesDataIO:
             assert data_df.equals(expected_data_df)
 
             # Export CSV: UTC max
-            data_df = TimeseriesDataIO().get_timeseries_buckets_data(
+            data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 end_dt,
                 ts_l,
@@ -550,7 +547,7 @@ class TestTimeseriesDataIO:
 
             # Export CSV: invalid aggregation
             with pytest.raises(TimeseriesDataIOInvalidAggregationError):
-                TimeseriesDataIO().get_timeseries_buckets_data(
+                tsdio.get_timeseries_buckets_data(
                     start_dt,
                     end_dt,
                     ts_l,
@@ -609,7 +606,7 @@ class TestTimeseriesDataIO:
             ts_l = (ts_0, ts_2, ts_4)
 
             with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesDataIO().get_timeseries_buckets_data(
+                tsdio.get_timeseries_buckets_data(
                     start_dt, end_dt, ts_l, ds_1, "1 day", col_label=col_label
                 )
 
@@ -617,7 +614,7 @@ class TestTimeseriesDataIO:
 
             ts_l = (ts_1, ts_3)
 
-            data_df = TimeseriesDataIO().get_timeseries_buckets_data(
+            data_df = tsdio.get_timeseries_buckets_data(
                 start_dt, end_dt, ts_l, ds_1, "1 day", col_label=col_label
             )
 
@@ -673,7 +670,7 @@ class TestTimeseriesDataIO:
         ts_l = (ts_0, ts_2)
 
         with CurrentUser(admin_user):
-            TimeseriesDataIO().delete(start_dt, end_dt, ts_l, ds_1)
+            tsdio.delete(start_dt, end_dt, ts_l, ds_1)
             # Rollback then query to ensure data is actually deleted
             db.session.rollback()
             assert not db.session.query(TimeseriesData).all()
@@ -722,12 +719,12 @@ class TestTimeseriesDataIO:
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
-                TimeseriesDataIO().delete(start_dt, end_dt, ts_l, ds_1)
+                tsdio.delete(start_dt, end_dt, ts_l, ds_1)
 
         ts_l = (ts_1, ts_3)
 
         with CurrentUser(user_1):
-            TimeseriesDataIO().delete(start_dt, end_dt, ts_l, ds_1)
+            tsdio.delete(start_dt, end_dt, ts_l, ds_1)
             # Rollback then query to ensure data is actually deleted
             db.session.rollback()
             assert (

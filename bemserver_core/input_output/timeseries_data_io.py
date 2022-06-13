@@ -371,4 +371,5 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         return data_df.to_csv(date_format="%Y-%m-%dT%H:%M:%S%z")
 
 
+tsdio = TimeseriesDataIO()
 tsdcsvio = TimeseriesDataCSVIO()
