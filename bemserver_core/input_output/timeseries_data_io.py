@@ -163,7 +163,7 @@ class TimeseriesDataIO:
         :param string col_label: Timeseries attribute to use for column header.
             Should be "id" or "name". Default: "id".
 
-        Returns csv as a string.
+        Returns a dataframe.
         """
         if aggregation not in AGGREGATION_FUNCTIONS:
             raise TimeseriesDataIOInvalidAggregationError("Invalid aggregation method")
