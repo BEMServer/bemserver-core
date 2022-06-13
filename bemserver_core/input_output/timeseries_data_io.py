@@ -72,13 +72,15 @@ class TimeseriesDataIO:
             var_name="timeseries_by_data_state_id",
             ignore_index=False,
         )
+        data_dict = data_df.reset_index().to_dict(orient="records")
 
-        data_df.to_sql(
-            TimeseriesData.__tablename__,
-            db.session.connection(),
-            if_exists="append",
-            index=True,
+        query = (
+            sqla.dialects.postgresql.insert(TimeseriesData)
+            .values(data_dict)
+            .on_conflict_do_nothing()
         )
+        db.session.execute(query)
+        db.session.commit()
 
     @staticmethod
     def _fill_missing_columns(data_df, ts_l, attr):
