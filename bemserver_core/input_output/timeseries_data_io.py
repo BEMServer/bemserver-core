@@ -4,6 +4,7 @@ import re
 import csv
 
 import sqlalchemy as sqla
+import numpy as np
 import pandas as pd
 import dateutil
 
@@ -37,7 +38,7 @@ class TimeseriesDataIO:
     """Base class for TimeseriesData IO classes"""
 
     @classmethod
-    def _set_timeseries_data(cls, data_df, data_state, campaign):
+    def set_timeseries_data(cls, data_df, data_state, campaign):
         """Insert timeseries data
 
         :param DataFrame data_df: Input timeseries data
@@ -46,12 +47,6 @@ class TimeseriesDataIO:
         """
         timeseries = data_df.columns
         if campaign is None:
-            # Check all timeseries IDs are integers to prevent crash in _get_timeseries
-            invalid_timeseries = [ts for ts in timeseries if not ts.isdecimal()]
-            if invalid_timeseries:
-                raise TimeseriesDataCSVIOError(
-                    f"Invalid timeseries IDs: {invalid_timeseries}"
-                )
             timeseries = Timeseries.get_many_by_id(timeseries)
         else:
             timeseries = Timeseries.get_many_by_name(campaign, timeseries)
@@ -88,10 +83,10 @@ class TimeseriesDataIO:
         for idx, ts in enumerate(ts_l):
             val = getattr(ts, attr)
             if val not in data_df:
-                data_df.insert(idx, val, None)
+                data_df.insert(idx, val, np.nan)
 
     @classmethod
-    def _get_timeseries_data(
+    def get_timeseries_data(
         cls, start_dt, end_dt, timeseries, data_state, col_label="id"
     ):
         """Export timeseries data
@@ -133,8 +128,8 @@ class TimeseriesDataIO:
         ).all()
 
         data_df = pd.DataFrame(
-            data, columns=("Datetime", "id", "name", "value")
-        ).set_index("Datetime")
+            data, columns=("timestamp", "id", "name", "value")
+        ).set_index("timestamp")
         data_df.index = pd.DatetimeIndex(data_df.index)
 
         data_df = data_df.pivot(columns=col_label, values="value")
@@ -144,7 +139,7 @@ class TimeseriesDataIO:
         return data_df
 
     @classmethod
-    def _get_timeseries_buckets_data(
+    def get_timeseries_buckets_data(
         cls,
         start_dt,
         end_dt,
@@ -207,8 +202,8 @@ class TimeseriesDataIO:
         data = db.session.execute(query, params)
 
         data_df = pd.DataFrame(
-            data, columns=("Datetime", "id", "name", "value")
-        ).set_index("Datetime")
+            data, columns=("timestamp", "id", "name", "value")
+        ).set_index("timestamp")
         data_df.index = (
             pd.DatetimeIndex(data_df.index).tz_localize(timezone).tz_convert("UTC")
         )
@@ -294,8 +289,17 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         except ValueError as exc:
             raise TimeseriesDataCSVIOError("Invalid values") from exc
 
+        # Cast timeseries ID to int if needed
+        if campaign is None:
+            invalid_timeseries = [ts for ts in data_df.columns if not ts.isdecimal()]
+            if invalid_timeseries:
+                raise TimeseriesDataCSVIOError(
+                    f"Invalid timeseries IDs: {invalid_timeseries}"
+                )
+            data_df.columns = [int(col_name) for col_name in data_df.columns]
+
         # Insert data
-        cls._set_timeseries_data(data_df, data_state=data_state, campaign=campaign)
+        cls.set_timeseries_data(data_df, data_state=data_state, campaign=campaign)
 
     @classmethod
     def export_csv(cls, start_dt, end_dt, timeseries, data_state, col_label="id"):
@@ -310,13 +314,14 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
 
         Returns csv as a string.
         """
-        data_df = cls._get_timeseries_data(
+        data_df = cls.get_timeseries_data(
             start_dt,
             end_dt,
             timeseries,
             data_state,
             col_label=col_label,
         )
+        data_df.index.name = "Datetime"
 
         # Specify ISO 8601 manually
         # https://github.com/pandas-dev/pandas/issues/27328
@@ -349,7 +354,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
 
         Returns csv as a string.
         """
-        data_df = cls._get_timeseries_buckets_data(
+        data_df = cls.get_timeseries_buckets_data(
             start_dt,
             end_dt,
             timeseries,
@@ -359,6 +364,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             aggregation=aggregation,
             col_label=col_label,
         )
+        data_df.index.name = "Datetime"
 
         # Specify ISO 8601 manually
         # https://github.com/pandas-dev/pandas/issues/27328
