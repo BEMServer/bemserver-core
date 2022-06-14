@@ -705,6 +705,8 @@ class TestTimeseriesDataCSVIO:
 
         with CurrentUser(admin_user):
             tsdcsvio.delete(start_dt, end_dt, ts_l, ds_1.id, campaign)
+            # Rollback then query to ensure data is actually deleted
+            db.session.rollback()
             assert not db.session.query(TimeseriesData).all()
 
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
@@ -770,6 +772,8 @@ class TestTimeseriesDataCSVIO:
 
         with CurrentUser(user_1):
             tsdcsvio.delete(start_dt, end_dt, ts_l, ds_1.id, campaign)
+            # Rollback then query to ensure data is actually deleted
+            db.session.rollback()
             assert (
                 not db.session.query(TimeseriesData)
                 .filter_by(timeseries_by_data_state_id=tsbds_1.id)

@@ -257,6 +257,7 @@ class TimeseriesDataIO:
         ).delete(
             synchronize_session=False
         )
+        db.session.commit()
 
 
 class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
