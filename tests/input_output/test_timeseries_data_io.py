@@ -63,6 +63,9 @@ class TestTimeseriesDataIO:
         with CurrentUser(admin_user):
             tsdio.set_timeseries_data(data_df, ds_1, campaign)
 
+        # Rollback then query to ensure data is actually written
+        db.session.rollback()
+
         # Check TSBDS are correctly auto-created
         tsbds_l = (
             db.session.query(TimeseriesByDataState)
