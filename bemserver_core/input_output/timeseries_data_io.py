@@ -1,5 +1,4 @@
 """Timeseries data I/O"""
-import copy
 import re
 import csv
 
@@ -264,14 +263,16 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         csv_file = cls._enforce_iterator(csv_file)
 
         # Check header first. Some errors are hard to catch in or after pandas read_csv
-        # Use a copy to avoid consuming the file before passing it to pandas
-        reader = csv.reader(copy.copy(csv_file))
+        reader = csv.reader(csv_file)
         try:
             header = next(reader)
         except StopIteration as exc:
             raise TimeseriesDataCSVIOError("Missing headers line") from exc
         if "" in header:
             raise TimeseriesDataCSVIOError("Empty timeseries name or trailing comma")
+
+        # Rewind cursor, otherwise header is alreay consumed and not passed to read_csv
+        csv_file.seek(0)
         try:
             data_df = pd.read_csv(csv_file, index_col=0)
         except pd.errors.EmptyDataError as exc:
