@@ -18,7 +18,10 @@ from bemserver_core.model import (
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
-from bemserver_core.exceptions import BEMServerAuthorizationError
+from bemserver_core.exceptions import (
+    BEMServerAuthorizationError,
+    TimeseriesNotFoundError,
+)
 
 
 class TestTimeseriesPropertyModel:
@@ -27,12 +30,12 @@ class TestTimeseriesPropertyModel:
         assert admin_user.is_admin
 
         with CurrentUser(admin_user):
-            assert not list(TimeseriesProperty.get())
+            nb_ts_properties = len(list(TimeseriesProperty.get()))
             ts_property_1 = TimeseriesProperty.new(name="Min")
             db.session.add(ts_property_1)
             db.session.commit()
             assert TimeseriesProperty.get_by_id(ts_property_1.id) == ts_property_1
-            assert len(list(TimeseriesProperty.get())) == 1
+            assert len(list(TimeseriesProperty.get())) == nb_ts_properties + 1
             ts_property_1.update(name="Max")
             ts_property_1.delete()
             db.session.commit()
@@ -186,6 +189,37 @@ class TestTimeseriesModel:
 
         assert Timeseries.get_by_name(campaign_1, ts_1.name) == ts_1
         assert Timeseries.get_by_name(campaign_1, ts_2.name) is None
+
+    @pytest.mark.usefixtures("as_admin")
+    def test_timeseries_get_many_by_id(self, timeseries):
+        ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
+        dummy_id = 69
+
+        assert set(Timeseries.get_many_by_id([ts_1.id, ts_2.id])) == {ts_1, ts_2}
+        assert set(Timeseries.get_many_by_id([ts_1.id])) == {ts_1}
+
+        with pytest.raises(TimeseriesNotFoundError):
+            Timeseries.get_many_by_id([ts_1.id, ts_2.id, dummy_id])
+
+    @pytest.mark.usefixtures("as_admin")
+    def test_timeseries_get_many_by_name(self, campaigns, timeseries):
+        campaign_1 = campaigns[0]
+        ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
+        dummy_name = "dummy_name"
+
+        assert set(
+            Timeseries.get_many_by_name(
+                campaign_1,
+                [
+                    ts_1.name,
+                ],
+            )
+        ) == {ts_1}
+
+        with pytest.raises(TimeseriesNotFoundError):
+            Timeseries.get_many_by_name(campaign_1, [ts_1.name, ts_2.name, dummy_name])
 
     @pytest.mark.usefixtures("as_admin")
     def test_timeseries_read_only_fields(self, campaigns, campaign_scopes):

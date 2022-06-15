@@ -12,6 +12,7 @@ from bemserver_core.model.campaigns import (
     UserGroupByCampaignScope,
 )
 from bemserver_core.model.sites import Site, Building, Storey, Space, Zone
+from bemserver_core.exceptions import TimeseriesNotFoundError
 
 
 class TimeseriesProperty(AuthMixin, Base):
@@ -111,7 +112,7 @@ class Timeseries(AuthMixin, Base):
         storey_id=None,
         space_id=None,
         zone_id=None,
-        **kwargs
+        **kwargs,
     ):
         if "campaign_id" in kwargs:
             Campaign.get_by_id(kwargs["campaign_id"])
@@ -254,6 +255,33 @@ class Timeseries(AuthMixin, Base):
         :param str name: Timeseries name
         """
         return Timeseries.get(name=name, campaign_id=campaign.id).first()
+
+    @classmethod
+    def get_many_by_id(cls, timeseries):
+        """Get a list of timeseries by ID
+
+        :param list timeseries: List of timeseries IDs
+        """
+        ts_d = {col: Timeseries.get_by_id(col) for col in timeseries}
+        if None in ts_d.values():
+            raise TimeseriesNotFoundError(
+                f"Unknown timeseries: {[k for k in ts_d.keys() if ts_d[k] is None]}"
+            )
+        return ts_d.values()
+
+    @classmethod
+    def get_many_by_name(cls, campaign, timeseries):
+        """Get a list of timeseries by name for a given campaign
+
+        :param list timeseries: List of timeseries names
+        :param Campaign campaign: Campaign
+        """
+        ts_d = {col: Timeseries.get_by_name(campaign, col) for col in timeseries}
+        if None in ts_d.values():
+            raise TimeseriesNotFoundError(
+                f"Unknown timeseries: {[k for k in ts_d.keys() if ts_d[k] is None]}"
+            )
+        return ts_d.values()
 
 
 class TimeseriesPropertyData(AuthMixin, Base):

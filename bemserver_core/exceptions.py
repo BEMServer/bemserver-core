@@ -5,6 +5,10 @@ class BEMServerCoreError(Exception):
     """Base BEMServer Core exception"""
 
 
+class TimeseriesNotFoundError(BEMServerCoreError):
+    """Timeseries not found"""
+
+
 class BEMServerCoreIOError(BEMServerCoreError):
     """Base IO error"""
 
@@ -23,18 +27,6 @@ class TimeseriesCSVIOError(BEMServerCoreCSVIOError):
 
 class TimeseriesDataIOError(BEMServerCoreIOError):
     """Timeseries data IO error"""
-
-
-class TimeseriesDataIOUnknownDataStateError(TimeseriesDataIOError):
-    """Timeseries data IO unknown data state error"""
-
-
-class TimeseriesDataIOUnknownTimeseriesError(TimeseriesDataIOError):
-    """Timeseries data IO unknown timeseries error"""
-
-
-class TimeseriesDataIOWriteError(TimeseriesDataIOError):
-    """Timeseries data IO write error"""
 
 
 class TimeseriesDataIOInvalidAggregationError(TimeseriesDataIOError):

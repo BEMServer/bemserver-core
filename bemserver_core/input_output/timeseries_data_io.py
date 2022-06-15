@@ -1,22 +1,21 @@
 """Timeseries data I/O"""
 import re
+import csv
 
 import sqlalchemy as sqla
+import numpy as np
 import pandas as pd
+import dateutil
 
 from bemserver_core.database import db
 from bemserver_core.model import (
     Timeseries,
     TimeseriesData,
-    TimeseriesDataState,
     TimeseriesByDataState,
 )
 from bemserver_core.authorization import auth, get_current_user
 from bemserver_core.exceptions import (
-    TimeseriesDataIOUnknownDataStateError,
-    TimeseriesDataIOUnknownTimeseriesError,
     TimeseriesDataIOInvalidAggregationError,
-    TimeseriesDataIOWriteError,
     TimeseriesDataCSVIOError,
 )
 
@@ -38,44 +37,44 @@ class TimeseriesDataIO:
     """Base class for TimeseriesData IO classes"""
 
     @classmethod
-    def _get_timeseries_data_state(cls, data_state_id):
-        data_state = TimeseriesDataState.get_by_id(data_state_id)
-        if data_state is None:
-            raise TimeseriesDataIOUnknownDataStateError("Unknown data state ID")
-        return data_state
-
-    @classmethod
-    def _get_timeseries(cls, timeseries, campaign=None):
-        # If campaign is None, expect TS IDs
-        if campaign is None:
-            ts_d = {col: Timeseries.get_by_id(col) for col in timeseries}
-        # Otherwise, expect TS names
-        else:
-            ts_d = {col: Timeseries.get_by_name(campaign, col) for col in timeseries}
-        if None in ts_d.values():
-            raise TimeseriesDataIOUnknownTimeseriesError(
-                f"Unknown timeseries: {[k for k in ts_d.keys() if ts_d[k] is None]}"
-            )
-        return ts_d.values()
-
-    @classmethod
-    def _set_timeseries_data(cls, data):
+    def set_timeseries_data(cls, data_df, data_state, campaign):
         """Insert timeseries data
 
-        :param list data: List of dicts, each dict containing a timestamp, a
-        timeseries x data state association ID and a value.
+        :param DataFrame data_df: Input timeseries data
+        :param TimeseriesDataState data_state: Timeseries data state
+        :param Campaign campaign: Campaign
         """
+        timeseries = data_df.columns
+        if campaign is None:
+            timeseries = Timeseries.get_many_by_id(timeseries)
+        else:
+            timeseries = Timeseries.get_many_by_name(campaign, timeseries)
+
+        # Check permissions
+        for ts in timeseries:
+            auth.authorize(get_current_user(), "write_data", ts)
+
+        # Get timeseries x data states ids
+        tsbds_ids = [
+            ts.get_timeseries_by_data_state(data_state).id for ts in timeseries
+        ]
+
+        data_df.columns = tsbds_ids
+
+        data_df = data_df.melt(
+            value_vars=data_df.columns,
+            var_name="timeseries_by_data_state_id",
+            ignore_index=False,
+        )
+        data_dict = data_df.reset_index().to_dict(orient="records")
+
         query = (
             sqla.dialects.postgresql.insert(TimeseriesData)
-            .values(data)
+            .values(data_dict)
             .on_conflict_do_nothing()
         )
-
-        try:
-            db.session.execute(query)
-            db.session.commit()
-        except sqla.exc.DBAPIError as exc:
-            raise TimeseriesDataIOWriteError("Error writing to DB") from exc
+        db.session.execute(query)
+        db.session.commit()
 
     @staticmethod
     def _fill_missing_columns(data_df, ts_l, attr):
@@ -83,33 +82,26 @@ class TimeseriesDataIO:
         for idx, ts in enumerate(ts_l):
             val = getattr(ts, attr)
             if val not in data_df:
-                data_df.insert(idx, val, None)
+                data_df.insert(idx, val, np.nan)
 
     @classmethod
-    def _get_timeseries_data(
-        cls, start_dt, end_dt, timeseries, data_state_id, campaign=None
+    def get_timeseries_data(
+        cls, start_dt, end_dt, timeseries, data_state, col_label="id"
     ):
         """Export timeseries data
 
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
-        :param list timeseries: List of timeseries IDs or names
-        :param Campaign campaign: Campaign
-
-        If campaign is None, timeseries list is expected to contain timeseries IDs.
-        Otherwise, timeseries names are expected.
+        :param list timeseries: List of timeseries
+        :param TimeseriesDataState data_state: Timeseries data state
+        :param string col_label: Timeseries attribute to use for column header.
+            Should be "id" or "name". Default: "id".
 
         Returns a dataframe.
         """
-        ts_l = cls._get_timeseries(timeseries, campaign)
-        data_state = cls._get_timeseries_data_state(data_state_id)
-
         # Check permissions
-        for ts in ts_l:
+        for ts in timeseries:
             auth.authorize(get_current_user(), "read_data", ts)
-
-        # Get timeseries x data states ids
-        tsbds_ids = [ts.get_timeseries_by_data_state(data_state).id for ts in ts_l]
 
         # Get timeseries data
         data = db.session.execute(
@@ -119,68 +111,60 @@ class TimeseriesDataIO:
                 Timeseries.name,
                 TimeseriesData.value,
             )
-            .where(Timeseries.id == TimeseriesByDataState.timeseries_id)
-            .where(
+            .filter(
                 TimeseriesData.timeseries_by_data_state_id == TimeseriesByDataState.id
             )
-            .filter(TimeseriesData.timeseries_by_data_state_id.in_(tsbds_ids))
+            .filter(TimeseriesByDataState.data_state_id == data_state.id)
+            .filter(TimeseriesByDataState.timeseries_id == Timeseries.id)
+            .filter(Timeseries.id.in_(ts.id for ts in timeseries))
             .filter(start_dt <= TimeseriesData.timestamp)
             .filter(TimeseriesData.timestamp < end_dt)
         ).all()
 
         data_df = pd.DataFrame(
-            data, columns=("Datetime", "tsid", "tsname", "value")
-        ).set_index("Datetime")
+            data, columns=("timestamp", "id", "name", "value")
+        ).set_index("timestamp")
         data_df.index = pd.DatetimeIndex(data_df.index)
-        data_df = data_df.pivot(
-            columns="tsid" if campaign is None else "tsname",
-            values="value",
-        )
 
-        cls._fill_missing_columns(data_df, ts_l, "id" if campaign is None else "name")
+        data_df = data_df.pivot(columns=col_label, values="value")
+
+        cls._fill_missing_columns(data_df, timeseries, col_label)
 
         return data_df
 
     @classmethod
-    def _get_timeseries_buckets_data(
+    def get_timeseries_buckets_data(
         cls,
         start_dt,
         end_dt,
         timeseries,
-        data_state_id,
+        data_state,
         bucket_width,
         timezone="UTC",
         aggregation="avg",
-        campaign=None,
+        col_label="id",
     ):
         """Bucket timeseries data and export
 
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
-        :param list timeseries: List of timeseries IDs or names
+        :param list timeseries: List of timeseries
+        :param TimeseriesDataState data_state: Timeseries data state
         :param str bucket_width: Bucket width (ISO 8601 or PostgreSQL interval)
         :param str timezone: IANA timezone
         :param str aggreagation: Aggregation function. Must be one of
             "avg", "sum", "min" and "max".
-        :param Campaign campaign: Campaign
+        :param string col_label: Timeseries attribute to use for column header.
+            Should be "id" or "name". Default: "id".
 
-        If campaign is None, timeseries list is expected to contain timeseries IDs.
-        Otherwise, timeseries names are expected.
-
-        Returns csv as a string.
+        Returns a dataframe.
         """
-        ts_l = cls._get_timeseries(timeseries, campaign)
-        data_state = cls._get_timeseries_data_state(data_state_id)
-
-        # Check permissions
-        for ts in ts_l:
-            auth.authorize(get_current_user(), "read_data", ts)
-
         if aggregation not in AGGREGATION_FUNCTIONS:
             raise TimeseriesDataIOInvalidAggregationError("Invalid aggregation method")
 
-        # Get timeseries x data states ids
-        tsbds_ids = [ts.get_timeseries_by_data_state(data_state).id for ts in ts_l]
+        # Check permissions
+        for ts in timeseries:
+            auth.authorize(get_current_user(), "read_data", ts)
 
         # Get timeseries data
         query = sqla.text(
@@ -188,10 +172,11 @@ class TimeseriesDataIO:
             " :bucket_width, timestamp AT TIME ZONE :timezone)"
             f"  AS bucket, timeseries.id, timeseries.name, {aggregation}(value) "
             "FROM timeseries_data, timeseries, timeseries_by_data_states "
-            "WHERE timeseries.id = timeseries_by_data_states.timeseries_id "
-            "  AND timeseries_data.timeseries_by_data_state_id = "
+            "WHERE timeseries_data.timeseries_by_data_state_id = "
             "      timeseries_by_data_states.id "
-            "  AND timeseries_by_data_state_id IN :timeseries_by_data_state_ids "
+            "  AND timeseries_by_data_states.data_state_id = :data_state_id "
+            "  AND timeseries_by_data_states.timeseries_id = timeseries.id "
+            "  AND timeseries_id IN :timeseries_ids "
             "  AND timestamp >= :start_dt AND timestamp < :end_dt "
             "GROUP BY bucket, timeseries.id "
             "ORDER BY bucket;"
@@ -199,157 +184,129 @@ class TimeseriesDataIO:
         params = {
             "bucket_width": bucket_width,
             "timezone": timezone,
-            "timeseries_by_data_state_ids": tuple(tsbds_ids),
+            "timeseries_ids": tuple(ts.id for ts in timeseries),
+            "data_state_id": data_state.id,
             "start_dt": start_dt,
             "end_dt": end_dt,
         }
         data = db.session.execute(query, params)
 
         data_df = pd.DataFrame(
-            data, columns=("Datetime", "tsid", "tsname", "value")
-        ).set_index("Datetime")
+            data, columns=("timestamp", "id", "name", "value")
+        ).set_index("timestamp")
         data_df.index = (
             pd.DatetimeIndex(data_df.index).tz_localize(timezone).tz_convert("UTC")
         )
-        data_df = data_df.pivot(
-            columns="tsid" if campaign is None else "tsname",
-            values="value",
-        )
+        data_df = data_df.pivot(columns=col_label, values="value")
 
-        cls._fill_missing_columns(data_df, ts_l, "id" if campaign is None else "name")
+        cls._fill_missing_columns(data_df, timeseries, col_label)
 
         return data_df
 
     @classmethod
-    def delete(cls, start_dt, end_dt, timeseries, data_state_id, campaign=None):
+    def delete(cls, start_dt, end_dt, timeseries, data_state):
         """Delete timeseries data
 
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
         :param list timeseries: List of timeseries IDs or names
-        :param int data_state_id: Data state ID
-        :param Campaign campaign: Campaign
-
-        If campaign is None, the CSV header is expected to contain timeseries IDs.
-        Otherwise, timeseries names are expected.
+        :param TimeseriesDataState data_state: Timeseries data state
         """
-        ts_l = cls._get_timeseries(timeseries, campaign)
-        data_state = cls._get_timeseries_data_state(data_state_id)
-
         # Check permissions
-        for ts in ts_l:
+        for ts in timeseries:
             auth.authorize(get_current_user(), "write_data", ts)
 
-        # Get timeseries x data states ids
-        tsbds_ids = [ts.get_timeseries_by_data_state(data_state).id for ts in ts_l]
-
         # Delete timeseries data
-        db.session.query(TimeseriesData).where(
-            Timeseries.id == TimeseriesByDataState.timeseries_id
-        ).where(
-            TimeseriesData.timeseries_by_data_state_id == TimeseriesByDataState.id
-        ).filter(
-            TimeseriesData.timeseries_by_data_state_id.in_(tsbds_ids)
-        ).filter(
-            start_dt <= TimeseriesData.timestamp
-        ).filter(
-            TimeseriesData.timestamp < end_dt
-        ).delete(
-            synchronize_session=False
+        (
+            db.session.query(TimeseriesData)
+            .filter(
+                TimeseriesData.timeseries_by_data_state_id == TimeseriesByDataState.id
+            )
+            .filter(TimeseriesByDataState.data_state_id == data_state.id)
+            .filter(TimeseriesByDataState.timeseries_id == Timeseries.id)
+            .filter(Timeseries.id.in_(ts.id for ts in timeseries))
+            .filter(start_dt <= TimeseriesData.timestamp)
+            .filter(TimeseriesData.timestamp < end_dt)
+            .delete(synchronize_session=False)
         )
         db.session.commit()
 
 
 class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
     @classmethod
-    def import_csv(cls, csv_file, data_state_id, campaign=None):
+    def import_csv(cls, csv_file, data_state, campaign=None):
         """Import CSV file
 
         :param srt|TextIOBase csv_file: CSV as string or text stream
-        :param int data_state_id: Data state ID
+        :param TimeseriesDataState data_state: Timeseries data state
         :param Campaign campaign: Campaign
 
         If campaign is None, the CSV header is expected to contain timeseries IDs.
         Otherwise, timeseries names are expected.
         """
-        data_state = cls._get_timeseries_data_state(data_state_id)
+        csv_file = cls._enforce_iterator(csv_file)
 
-        reader = cls.csv_reader(csv_file)
-
-        # Read headers
+        # Check header first. Some errors are hard to catch in or after pandas read_csv
+        reader = csv.reader(csv_file)
         try:
             header = next(reader)
         except StopIteration as exc:
             raise TimeseriesDataCSVIOError("Missing headers line") from exc
-        if header[0] != "Datetime":
-            raise TimeseriesDataCSVIOError('First column must be "Datetime"')
-        timeseries = header[1:]
+        if "" in header:
+            raise TimeseriesDataCSVIOError("Empty timeseries name or trailing comma")
+
+        # Rewind cursor, otherwise header is alreay consumed and not passed to read_csv
+        csv_file.seek(0)
+        try:
+            data_df = pd.read_csv(csv_file, index_col=0)
+        except pd.errors.EmptyDataError as exc:
+            raise TimeseriesDataCSVIOError("Empty file") from exc
+
+        # Index
+        try:
+            data_df.index = pd.DatetimeIndex(data_df.index, name="timestamp")
+        except dateutil.parser._parser.ParserError as exc:
+            raise TimeseriesDataCSVIOError("Invalid timestamp") from exc
+
+        # Values
+        try:
+            data_df = data_df.astype(float)
+        except ValueError as exc:
+            raise TimeseriesDataCSVIOError("Invalid values") from exc
+
+        # Cast timeseries ID to int if needed
         if campaign is None:
-            # Check all timeseries IDs are integers to prevent crash in _get_timeseries
-            invalid_timseries = [ts for ts in timeseries if not ts.isdecimal()]
-            if invalid_timseries:
+            invalid_timeseries = [ts for ts in data_df.columns if not ts.isdecimal()]
+            if invalid_timeseries:
                 raise TimeseriesDataCSVIOError(
-                    "Invalid timeseries IDs: {invalid_timeseries}"
+                    f"Invalid timeseries IDs: {invalid_timeseries}"
                 )
-        ts_l = cls._get_timeseries(timeseries, campaign=campaign)
-
-        # Check permissions
-        for ts in ts_l:
-            auth.authorize(get_current_user(), "write_data", ts)
-
-        # Get timeseries x data states ids
-        tsbds_ids = [ts.get_timeseries_by_data_state(data_state).id for ts in ts_l]
-
-        data = []
-        for irow, row in enumerate(reader):
-            irow += 1
-            timestamp = row[0]
-            if not ISO8601_DATETIME_RE.match(timestamp):
-                raise TimeseriesDataCSVIOError(f"Invalid timestamp row {irow}")
-            for icol, tsbds_id in enumerate(tsbds_ids):
-                icol += 1
-                try:
-                    value = float(row[icol])
-                except IndexError as exc:
-                    raise TimeseriesDataCSVIOError(
-                        f"Missing column row {irow}"
-                    ) from exc
-                except ValueError as exc:
-                    raise TimeseriesDataCSVIOError(
-                        f"Invalid value row {irow} col {icol}"
-                    ) from exc
-                data.append(
-                    {
-                        "timestamp": timestamp,
-                        "timeseries_by_data_state_id": tsbds_id,
-                        "value": value,
-                    }
-                )
+            data_df.columns = [int(col_name) for col_name in data_df.columns]
 
         # Insert data
-        cls._set_timeseries_data(data)
+        cls.set_timeseries_data(data_df, data_state=data_state, campaign=campaign)
 
     @classmethod
-    def export_csv(cls, start_dt, end_dt, timeseries, data_state_id, campaign=None):
+    def export_csv(cls, start_dt, end_dt, timeseries, data_state, col_label="id"):
         """Export timeseries data as CSV file
 
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
-        :param list timeseries: List of timeseries IDs or names
-        :param Campaign campaign: Campaign
-
-        If campaign is None, timeseries list is expected to contain timeseries IDs.
-        Otherwise, timeseries names are expected.
+        :param list timeseries: List of timeseries
+        :param TimeseriesDataState data_state: Timeseries data state
+        :param string col_label: Timeseries attribute to use for column header.
+            Should be "id" or "name". Default: "id".
 
         Returns csv as a string.
         """
-        data_df = cls._get_timeseries_data(
+        data_df = cls.get_timeseries_data(
             start_dt,
             end_dt,
             timeseries,
-            data_state_id,
-            campaign=campaign,
+            data_state,
+            col_label=col_label,
         )
+        data_df.index.name = "Datetime"
 
         # Specify ISO 8601 manually
         # https://github.com/pandas-dev/pandas/issues/27328
@@ -361,42 +318,43 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         start_dt,
         end_dt,
         timeseries,
-        data_state_id,
+        data_state,
         bucket_width,
         timezone="UTC",
         aggregation="avg",
-        campaign=None,
+        col_label="id",
     ):
         """Bucket timeseries data and export as CSV file
 
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
         :param list timeseries: List of timeseries
+        :param TimeseriesDataState data_state: Timeseries data state
         :param str bucket_width: Bucket width (ISO 8601 or PostgreSQL interval)
         :param str timezone: IANA timezone
         :param str aggreagation: Aggregation function. Must be one of
             "avg", "sum", "min" and "max".
-        :param Campaign campaign: Campaign
-
-        If campaign is None, timeseries list is expected to contain timeseries IDs.
-        Otherwise, timeseries names are expected.
+        :param string col_label: Timeseries attribute to use for column header.
+            Should be "id" or "name". Default: "id".
 
         Returns csv as a string.
         """
-        data_df = cls._get_timeseries_buckets_data(
+        data_df = cls.get_timeseries_buckets_data(
             start_dt,
             end_dt,
             timeseries,
-            data_state_id,
+            data_state,
             bucket_width,
             timezone=timezone,
             aggregation=aggregation,
-            campaign=campaign,
+            col_label=col_label,
         )
+        data_df.index.name = "Datetime"
 
         # Specify ISO 8601 manually
         # https://github.com/pandas-dev/pandas/issues/27328
         return data_df.to_csv(date_format="%Y-%m-%dT%H:%M:%S%z")
 
 
+tsdio = TimeseriesDataIO()
 tsdcsvio = TimeseriesDataCSVIO()
