@@ -103,12 +103,6 @@ class TimeseriesDataIO:
         for ts in timeseries:
             auth.authorize(get_current_user(), "read_data", ts)
 
-        # Get timeseries x data states ids
-        # TODO: integrate to query below
-        tsbds_ids = [
-            ts.get_timeseries_by_data_state(data_state).id for ts in timeseries
-        ]
-
         # Get timeseries data
         data = db.session.execute(
             sqla.select(
@@ -117,11 +111,12 @@ class TimeseriesDataIO:
                 Timeseries.name,
                 TimeseriesData.value,
             )
-            .where(Timeseries.id == TimeseriesByDataState.timeseries_id)
-            .where(
+            .filter(
                 TimeseriesData.timeseries_by_data_state_id == TimeseriesByDataState.id
             )
-            .filter(TimeseriesData.timeseries_by_data_state_id.in_(tsbds_ids))
+            .filter(TimeseriesByDataState.data_state_id == data_state.id)
+            .filter(TimeseriesByDataState.timeseries_id == Timeseries.id)
+            .filter(Timeseries.id.in_(ts.id for ts in timeseries))
             .filter(start_dt <= TimeseriesData.timestamp)
             .filter(TimeseriesData.timestamp < end_dt)
         ).all()
@@ -171,22 +166,17 @@ class TimeseriesDataIO:
         for ts in timeseries:
             auth.authorize(get_current_user(), "read_data", ts)
 
-        # Get timeseries x data states ids
-        # TODO: integrate to query below
-        tsbds_ids = [
-            ts.get_timeseries_by_data_state(data_state).id for ts in timeseries
-        ]
-
         # Get timeseries data
         query = sqla.text(
             "SELECT time_bucket("
             " :bucket_width, timestamp AT TIME ZONE :timezone)"
             f"  AS bucket, timeseries.id, timeseries.name, {aggregation}(value) "
             "FROM timeseries_data, timeseries, timeseries_by_data_states "
-            "WHERE timeseries.id = timeseries_by_data_states.timeseries_id "
-            "  AND timeseries_data.timeseries_by_data_state_id = "
+            "WHERE timeseries_data.timeseries_by_data_state_id = "
             "      timeseries_by_data_states.id "
-            "  AND timeseries_by_data_state_id IN :timeseries_by_data_state_ids "
+            "  AND timeseries_by_data_states.data_state_id = :data_state_id "
+            "  AND timeseries_by_data_states.timeseries_id = timeseries.id "
+            "  AND timeseries_id IN :timeseries_ids "
             "  AND timestamp >= :start_dt AND timestamp < :end_dt "
             "GROUP BY bucket, timeseries.id "
             "ORDER BY bucket;"
@@ -194,7 +184,8 @@ class TimeseriesDataIO:
         params = {
             "bucket_width": bucket_width,
             "timezone": timezone,
-            "timeseries_by_data_state_ids": tuple(tsbds_ids),
+            "timeseries_ids": tuple(ts.id for ts in timeseries),
+            "data_state_id": data_state.id,
             "start_dt": start_dt,
             "end_dt": end_dt,
         }
@@ -225,25 +216,18 @@ class TimeseriesDataIO:
         for ts in timeseries:
             auth.authorize(get_current_user(), "write_data", ts)
 
-        # Get timeseries x data states ids
-        # TODO: integrate to query below
-        tsbds_ids = [
-            ts.get_timeseries_by_data_state(data_state).id for ts in timeseries
-        ]
-
         # Delete timeseries data
-        db.session.query(TimeseriesData).where(
-            Timeseries.id == TimeseriesByDataState.timeseries_id
-        ).where(
-            TimeseriesData.timeseries_by_data_state_id == TimeseriesByDataState.id
-        ).filter(
-            TimeseriesData.timeseries_by_data_state_id.in_(tsbds_ids)
-        ).filter(
-            start_dt <= TimeseriesData.timestamp
-        ).filter(
-            TimeseriesData.timestamp < end_dt
-        ).delete(
-            synchronize_session=False
+        (
+            db.session.query(TimeseriesData)
+            .filter(
+                TimeseriesData.timeseries_by_data_state_id == TimeseriesByDataState.id
+            )
+            .filter(TimeseriesByDataState.data_state_id == data_state.id)
+            .filter(TimeseriesByDataState.timeseries_id == Timeseries.id)
+            .filter(Timeseries.id.in_(ts.id for ts in timeseries))
+            .filter(start_dt <= TimeseriesData.timestamp)
+            .filter(TimeseriesData.timestamp < end_dt)
+            .delete(synchronize_session=False)
         )
         db.session.commit()
 
