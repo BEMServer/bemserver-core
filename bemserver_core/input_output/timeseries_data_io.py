@@ -21,7 +21,7 @@ from bemserver_core.exceptions import (
 from .base import BaseCSVIO
 
 
-AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max")
+AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max", "count")
 
 
 class TimeseriesDataIO:
@@ -144,7 +144,7 @@ class TimeseriesDataIO:
         :param str bucket_width: Bucket width (ISO 8601 or PostgreSQL interval)
         :param str timezone: IANA timezone
         :param str aggreagation: Aggregation function. Must be one of
-            "avg", "sum", "min" and "max".
+            "avg", "sum", "min", "max" and "count".
         :param string col_label: Timeseries attribute to use for column header.
             Should be "id" or "name". Default: "id".
 

@@ -548,6 +548,38 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
+            # Export CSV: UTC count
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                "1 day",
+                aggregation="count",
+                col_label=col_label,
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00+0000",
+                    "2020-01-02T00:00:00+0000",
+                    "2020-01-03T00:00:00+0000",
+                ],
+                name="timestamp",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name if col_label == "name" else ts_0.id: [24.0, 24.0, 24.0],
+                    ts_2.name
+                    if col_label == "name"
+                    else ts_2.id: [np.nan, np.nan, np.nan],
+                    ts_4.name if col_label == "name" else ts_4.id: [24.0, 24.0, np.nan],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
             # Export CSV: invalid aggregation
             with pytest.raises(TimeseriesDataIOInvalidAggregationError):
                 tsdio.get_timeseries_buckets_data(
