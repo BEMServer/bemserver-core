@@ -185,9 +185,7 @@ class TimeseriesDataIO:
         data_df = pd.DataFrame(
             data, columns=("timestamp", "id", "name", "value")
         ).set_index("timestamp")
-        data_df.index = (
-            pd.DatetimeIndex(data_df.index).tz_localize(timezone).tz_convert("UTC")
-        )
+        data_df.index = pd.DatetimeIndex(data_df.index).tz_localize(timezone)
         data_df = data_df.pivot(columns=col_label, values="value")
 
         cls._fill_missing_columns(data_df, timeseries, col_label)

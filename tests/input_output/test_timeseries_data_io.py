@@ -390,11 +390,12 @@ class TestTimeseriesDataIO:
 
             index = pd.DatetimeIndex(
                 [
-                    "2020-01-01T00:00:00+00:00",
-                    "2020-01-02T00:00:00+00:00",
-                    "2020-01-03T00:00:00+00:00",
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
                 ],
                 name="timestamp",
+                tz="UTC",
             )
             expected_data_df = pd.DataFrame(
                 {
@@ -422,12 +423,13 @@ class TestTimeseriesDataIO:
 
             index = pd.DatetimeIndex(
                 [
-                    "2019-12-31T23:00:00+0000",
-                    "2020-01-01T23:00:00+0000",
-                    "2020-01-02T23:00:00+0000",
-                    "2020-01-03T23:00:00+0000",
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
+                    "2020-01-04T00:00:00",
                 ],
                 name="timestamp",
+                tz="Europe/Paris",
             )
             expected_data_df = pd.DataFrame(
                 {
@@ -459,11 +461,12 @@ class TestTimeseriesDataIO:
 
             index = pd.DatetimeIndex(
                 [
-                    "2020-01-01T00:00:00+0000",
-                    "2020-01-02T00:00:00+0000",
-                    "2020-01-03T00:00:00+0000",
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
                 ],
                 name="timestamp",
+                tz="UTC",
             )
             expected_data_df = pd.DataFrame(
                 {
@@ -495,11 +498,12 @@ class TestTimeseriesDataIO:
 
             index = pd.DatetimeIndex(
                 [
-                    "2020-01-01T00:00:00+0000",
-                    "2020-01-02T00:00:00+0000",
-                    "2020-01-03T00:00:00+0000",
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
                 ],
                 name="timestamp",
+                tz="UTC",
             )
             expected_data_df = pd.DataFrame(
                 {
@@ -527,11 +531,12 @@ class TestTimeseriesDataIO:
 
             index = pd.DatetimeIndex(
                 [
-                    "2020-01-01T00:00:00+0000",
-                    "2020-01-02T00:00:00+0000",
-                    "2020-01-03T00:00:00+0000",
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
                 ],
                 name="timestamp",
+                tz="UTC",
             )
             expected_data_df = pd.DataFrame(
                 {
@@ -655,11 +660,12 @@ class TestTimeseriesDataIO:
 
             index = pd.DatetimeIndex(
                 [
-                    "2020-01-01T00:00:00+0000",
-                    "2020-01-02T00:00:00+0000",
-                    "2020-01-03T00:00:00+0000",
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
                 ],
                 name="timestamp",
+                tz="UTC",
             )
             expected_data_df = pd.DataFrame(
                 {
@@ -1158,10 +1164,10 @@ class TestTimeseriesDataCSVIO:
                 col_label=col_label,
             )
             assert data == header + (
-                "2019-12-31T23:00:00+0000,11.0,,32.0\n"
-                "2020-01-01T23:00:00+0000,34.5,,79.0\n"
-                "2020-01-02T23:00:00+0000,58.5,,104.0\n"
-                "2020-01-03T23:00:00+0000,71.0,,\n"
+                "2020-01-01T00:00:00+0100,11.0,,32.0\n"
+                "2020-01-02T00:00:00+0100,34.5,,79.0\n"
+                "2020-01-03T00:00:00+0100,58.5,,104.0\n"
+                "2020-01-04T00:00:00+0100,71.0,,\n"
             )
 
             # Export CSV: UTC sum
