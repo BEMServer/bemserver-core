@@ -141,7 +141,10 @@ class TimeseriesDataIO:
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
         :param list timeseries: List of timeseries
         :param TimeseriesDataState data_state: Timeseries data state
-        :param str bucket_width: Bucket width (ISO 8601 or PostgreSQL interval)
+        :param str bucket_width: Bucket width of the form "value unit" where
+            value is an int and unit a string in
+            {"second", "minute", "hour", "day", "week", "month", "year"}
+            E.g.: "1 day", "3 year"
         :param str timezone: IANA timezone
         :param str aggreagation: Aggregation function. Must be one of
             "avg", "sum", "min", "max" and "count".
@@ -319,7 +322,10 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
         :param list timeseries: List of timeseries
         :param TimeseriesDataState data_state: Timeseries data state
-        :param str bucket_width: Bucket width (ISO 8601 or PostgreSQL interval)
+        :param str bucket_width: Bucket width of the form "value unit" where
+            value is an int and unit a string in
+            {"second", "minute", "hour", "day", "week", "month", "year"}
+            E.g.: "1 day", "3 year"
         :param str timezone: IANA timezone
         :param str aggreagation: Aggregation function. Must be one of
             "avg", "sum", "min" and "max".

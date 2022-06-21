@@ -419,7 +419,7 @@ class TestTimeseriesDataIO:
                 end_dt,
                 ts_l,
                 ds_1,
-                "P1D",
+                "1 day",
                 timezone="Europe/Paris",
                 col_label=col_label,
             )
@@ -1142,7 +1142,7 @@ class TestTimeseriesDataCSVIO:
                 end_dt,
                 ts_l,
                 ds_1,
-                "P1D",
+                "1 day",
                 timezone="Europe/Paris",
                 col_label=col_label,
             )
