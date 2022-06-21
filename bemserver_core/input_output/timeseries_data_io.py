@@ -22,6 +22,20 @@ from .base import BaseCSVIO
 
 
 AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max", "count")
+FIXED_SIZE_INTERVAL_UNITS = ("second", "minute", "hour", "day", "week")
+VARIABLE_SIZE_INTERVAL_UNITS = ("month", "year")
+INTERVAL_UNITS = FIXED_SIZE_INTERVAL_UNITS + VARIABLE_SIZE_INTERVAL_UNITS
+PANDAS_RESAMPLE_UNIT_MAPPING = {
+    "month": "MS",
+    "year": "YS",
+}
+PANDAS_AGGREG_FUNC_MAPPING = {
+    "avg": "mean",
+    "min": "min",
+    "max": "max",
+    "sum": "sum",
+    "count": "sum",
+}
 
 
 class TimeseriesDataIO:
@@ -132,8 +146,9 @@ class TimeseriesDataIO:
         timeseries,
         data_state,
         bucket_width,
-        timezone="UTC",
         aggregation="avg",
+        *,
+        timezone="UTC",
         col_label="id",
     ):
         """Bucket timeseries data and export
@@ -146,9 +161,9 @@ class TimeseriesDataIO:
             value is an int and unit a string in
             {"second", "minute", "hour", "day", "week", "month", "year"}
             E.g.: "1 day", "3 year"
-        :param str timezone: IANA timezone
         :param str aggreagation: Aggregation function. Must be one of
             "avg", "sum", "min", "max" and "count".
+        :param str timezone: IANA timezone
         :param string col_label: Timeseries attribute to use for column header.
             Should be "id" or "name". Default: "id".
 
@@ -161,11 +176,43 @@ class TimeseriesDataIO:
         for ts in timeseries:
             auth.authorize(get_current_user(), "read_data", ts)
 
-        # Get timeseries data
-        query = sqla.text(
-            "SELECT time_bucket("
-            " :bucket_width, timestamp AT TIME ZONE :timezone)"
-            f"  AS bucket, timeseries.id, timeseries.name, {aggregation}(value) "
+        fill_value = 0 if aggregation == "count" else np.nan
+        dtype = int if aggregation == "count" else float
+
+        params = {
+            "bucket_width": bucket_width,
+            "timezone": timezone,
+            "timeseries_ids": tuple(ts.id for ts in timeseries),
+            "data_state_id": data_state.id,
+            "start_dt": start_dt,
+            "end_dt": end_dt,
+        }
+
+        bw_val, bw_unit = bucket_width.split()
+
+        if bw_unit in VARIABLE_SIZE_INTERVAL_UNITS:
+            # At this stage, date_trunc can only aggregate by 1 x unit.
+            # For a N x month/year bucket size, the remaining aggregation is
+            # done in Pandas below.
+            # Also, for a yearly aggregation not starting in january, date_trunc
+            # can only aggregate by month. The rest is done below.
+            year_with_offset = bw_unit == "year" and start_dt.month != 1
+            params["bw_unit"] = "month" if year_with_offset else bw_unit
+            query = (
+                "SELECT date_trunc(:bw_unit, timestamp AT TIME ZONE :timezone)"
+                f"  AS bucket, timeseries.id, timeseries.name, {aggregation}(value) "
+            )
+        else:
+            # TODO: replace with PostgreSQL date_bin when dropping PostgreSQL < 14
+            # Use start_dt as origin to ensure buckets start on start date
+            params["origin"] = start_dt
+            query = (
+                "SELECT time_bucket("
+                ":bucket_width, timestamp AT TIME ZONE :timezone, origin => :origin)"
+                f"  AS bucket, timeseries.id, timeseries.name, {aggregation}(value) "
+            )
+
+        query += (
             "FROM timeseries_data, timeseries, timeseries_by_data_states "
             "WHERE timeseries_data.timeseries_by_data_state_id = "
             "      timeseries_by_data_states.id "
@@ -176,23 +223,60 @@ class TimeseriesDataIO:
             "GROUP BY bucket, timeseries.id "
             "ORDER BY bucket;"
         )
-        params = {
-            "bucket_width": bucket_width,
-            "timezone": timezone,
-            "timeseries_ids": tuple(ts.id for ts in timeseries),
-            "data_state_id": data_state.id,
-            "start_dt": start_dt,
-            "end_dt": end_dt,
-        }
+        query = sqla.text(query)
+
         data = db.session.execute(query, params)
 
         data_df = pd.DataFrame(
             data, columns=("timestamp", "id", "name", "value")
         ).set_index("timestamp")
-        data_df.index = pd.DatetimeIndex(data_df.index).tz_localize(timezone)
-        data_df = data_df.pivot(columns=col_label, values="value")
 
-        cls._fill_missing_columns(data_df, timeseries, col_label)
+        data_df.index = (
+            pd.DatetimeIndex(data_df.index)
+            # For some reason, due to origin being TZ-aware, the timestamps
+            # in the query results sometimes have a (wrong) UTC timezone
+            # Remove UTC timezone before setting timezone
+            .tz_localize(None).tz_localize(timezone)
+        )
+
+        data_df = pd.pivot_table(
+            data_df,
+            index="timestamp",
+            columns=col_label,
+            values="value",
+            aggfunc="sum",
+            fill_value=fill_value,
+        )
+
+        # Variable size intervals are aggregated to 1 x unit due to date_trunc
+        # Further aggregation is achieved here in pandas
+        if bw_unit in VARIABLE_SIZE_INTERVAL_UNITS:
+            func = PANDAS_AGGREG_FUNC_MAPPING[aggregation]
+            # Special case for year not starting on January
+            if year_with_offset:
+                # Inspired by https://stackoverflow.com/questions/60545752/
+                data_df["custom_year"] = data_df.index.year - (
+                    data_df.index.month < start_dt.month
+                ).astype(int)
+                data_df = data_df.groupby("custom_year").agg(func)
+                data_df.index = pd.DatetimeIndex(
+                    pd.to_datetime(
+                        {"year": data_df.index, "month": start_dt.month, "day": 1}
+                    ),
+                    name="timestamp",
+                ).tz_localize(timezone)
+            else:
+                unit = PANDAS_RESAMPLE_UNIT_MAPPING[bw_unit]
+                data_df = data_df.resample(f"{bw_val}{unit}", origin=start_dt).agg(func)
+
+        cls._fill_missing_columns(
+            data_df,
+            timeseries,
+            col_label,
+            fill_value=fill_value,
+        )
+
+        data_df = data_df.astype(dtype)
 
         return data_df
 
