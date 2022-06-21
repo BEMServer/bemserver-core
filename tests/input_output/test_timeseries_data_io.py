@@ -382,6 +382,11 @@ class TestTimeseriesDataIO:
         with CurrentUser(admin_user):
 
             ts_l = (ts_0, ts_2, ts_4)
+            ts_id_l = (
+                ts_0.name if col_label == "name" else ts_0.id,
+                ts_2.name if col_label == "name" else ts_2.id,
+                ts_4.name if col_label == "name" else ts_4.id,
+            )
 
             # Export CSV: UTC avg
             data_df = tsdio.get_timeseries_buckets_data(
@@ -399,11 +404,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name if col_label == "name" else ts_0.id: [11.5, 35.5, 59.5],
-                    ts_2.name
-                    if col_label == "name"
-                    else ts_2.id: [np.nan, np.nan, np.nan],
-                    ts_4.name if col_label == "name" else ts_4.id: [33.0, 81.0, np.nan],
+                    ts_id_l[0]: [11.5, 35.5, 59.5],
+                    ts_id_l[1]: [np.nan, np.nan, np.nan],
+                    ts_id_l[2]: [33.0, 81.0, np.nan],
                 },
                 index=index,
             )
@@ -433,15 +436,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name
-                    if col_label == "name"
-                    else ts_0.id: [11.0, 34.5, 58.5, 71.0],
-                    ts_2.name
-                    if col_label == "name"
-                    else ts_2.id: [np.nan, np.nan, np.nan, np.nan],
-                    ts_4.name
-                    if col_label == "name"
-                    else ts_4.id: [32.0, 79.0, 104.0, np.nan],
+                    ts_id_l[0]: [11.0, 34.5, 58.5, 71.0],
+                    ts_id_l[1]: [np.nan, np.nan, np.nan, np.nan],
+                    ts_id_l[2]: [32.0, 79.0, 104.0, np.nan],
                 },
                 index=index,
             )
@@ -470,15 +467,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name
-                    if col_label == "name"
-                    else ts_0.id: [276.0, 852.0, 1428.0],
-                    ts_2.name
-                    if col_label == "name"
-                    else ts_2.id: [np.nan, np.nan, np.nan],
-                    ts_4.name
-                    if col_label == "name"
-                    else ts_4.id: [792.0, 1944.0, np.nan],
+                    ts_id_l[0]: [276.0, 852.0, 1428.0],
+                    ts_id_l[1]: [np.nan, np.nan, np.nan],
+                    ts_id_l[2]: [792.0, 1944.0, np.nan],
                 },
                 index=index,
             )
@@ -507,11 +498,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name if col_label == "name" else ts_0.id: [0.0, 24.0, 48.0],
-                    ts_2.name
-                    if col_label == "name"
-                    else ts_2.id: [np.nan, np.nan, np.nan],
-                    ts_4.name if col_label == "name" else ts_4.id: [10.0, 58.0, np.nan],
+                    ts_id_l[0]: [0.0, 24.0, 48.0],
+                    ts_id_l[1]: [np.nan, np.nan, np.nan],
+                    ts_id_l[2]: [10.0, 58.0, np.nan],
                 },
                 index=index,
             )
@@ -540,13 +529,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name if col_label == "name" else ts_0.id: [23.0, 47.0, 71.0],
-                    ts_2.name
-                    if col_label == "name"
-                    else ts_2.id: [np.nan, np.nan, np.nan],
-                    ts_4.name
-                    if col_label == "name"
-                    else ts_4.id: [56.0, 104.0, np.nan],
+                    ts_id_l[0]: [23.0, 47.0, 71.0],
+                    ts_id_l[1]: [np.nan, np.nan, np.nan],
+                    ts_id_l[2]: [56.0, 104.0, np.nan],
                 },
                 index=index,
             )
@@ -574,11 +559,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name if col_label == "name" else ts_0.id: [24.0, 24.0, 24.0],
-                    ts_2.name
-                    if col_label == "name"
-                    else ts_2.id: [np.nan, np.nan, np.nan],
-                    ts_4.name if col_label == "name" else ts_4.id: [24.0, 24.0, np.nan],
+                    ts_id_l[0]: [24.0, 24.0, 24.0],
+                    ts_id_l[1]: [np.nan, np.nan, np.nan],
+                    ts_id_l[2]: [24.0, 24.0, np.nan],
                 },
                 index=index,
             )
