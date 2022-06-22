@@ -51,7 +51,7 @@ class TestTimeseriesDataIO:
             name="timestamp",
         )
         val_0 = [0, 1, 2, 3]
-        val_2 = [10, 11, 12, 13]
+        val_2 = [10, 11, 12, np.nan]
         data_df = pd.DataFrame(
             {
                 ts_0.name if for_campaign else ts_0.id: val_0,
@@ -101,7 +101,7 @@ class TestTimeseriesDataIO:
             for idx, timestamp in enumerate(timestamps)
         ] + [
             (timestamp, tsbds_2.id, float(idx) + 10)
-            for idx, timestamp in enumerate(timestamps)
+            for idx, timestamp in enumerate(timestamps[:-1])
         ]
 
         assert data == expected

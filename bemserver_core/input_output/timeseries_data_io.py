@@ -57,11 +57,14 @@ class TimeseriesDataIO:
             var_name="timeseries_by_data_state_id",
             ignore_index=False,
         )
-        data_dict = data_df.reset_index().to_dict(orient="records")
-
+        data_rows = [
+            row
+            for row in data_df.reset_index().to_dict(orient="records")
+            if pd.notna(row["value"])
+        ]
         query = (
             sqla.dialects.postgresql.insert(TimeseriesData)
-            .values(data_dict)
+            .values(data_rows)
             .on_conflict_do_nothing()
         )
         db.session.execute(query)
