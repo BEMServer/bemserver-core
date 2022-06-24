@@ -68,12 +68,12 @@ class TimeseriesDataIO:
         db.session.commit()
 
     @staticmethod
-    def _fill_missing_columns(data_df, ts_l, attr):
+    def _fill_missing_columns(data_df, ts_l, attr, fill_value=np.nan):
         """Add missing columns, in query order"""
         for idx, ts in enumerate(ts_l):
             val = getattr(ts, attr)
             if val not in data_df:
-                data_df.insert(idx, val, np.nan)
+                data_df.insert(idx, val, fill_value)
 
     @classmethod
     def get_timeseries_data(
