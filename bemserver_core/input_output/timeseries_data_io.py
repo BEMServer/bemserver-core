@@ -115,6 +115,7 @@ class TimeseriesDataIO:
         data_df = pd.DataFrame(
             data, columns=("timestamp", "id", "name", "value")
         ).set_index("timestamp")
+        data_df["value"] = data_df["value"].astype(float)
         data_df.index = pd.DatetimeIndex(data_df.index)
 
         data_df = data_df.pivot(columns=col_label, values="value")
