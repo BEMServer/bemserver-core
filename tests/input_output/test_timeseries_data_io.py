@@ -1636,7 +1636,7 @@ class TestTimeseriesDataCSVIO:
                 ts_l,
                 ds_1,
                 "1 day",
-                aggregation="sum",
+                "sum",
                 col_label=col_label,
             )
             assert data == header + (
@@ -1652,7 +1652,7 @@ class TestTimeseriesDataCSVIO:
                 ts_l,
                 ds_1,
                 "1 day",
-                aggregation="min",
+                "min",
                 col_label=col_label,
             )
             assert data == header + (
@@ -1668,7 +1668,7 @@ class TestTimeseriesDataCSVIO:
                 ts_l,
                 ds_1,
                 "1 day",
-                aggregation="max",
+                "max",
                 col_label=col_label,
             )
             assert data == header + (
@@ -1685,7 +1685,7 @@ class TestTimeseriesDataCSVIO:
                     ts_l,
                     ds_1,
                     "1 day",
-                    aggregation="lol",
+                    "lol",
                     col_label=col_label,
                 )
 

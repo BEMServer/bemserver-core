@@ -397,8 +397,9 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         timeseries,
         data_state,
         bucket_width,
-        timezone="UTC",
         aggregation="avg",
+        *,
+        timezone="UTC",
         col_label="id",
     ):
         """Bucket timeseries data and export as CSV file
@@ -411,9 +412,9 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             value is an int and unit a string in
             {"second", "minute", "hour", "day", "week", "month", "year"}
             E.g.: "1 day", "3 year"
-        :param str timezone: IANA timezone
         :param str aggreagation: Aggregation function. Must be one of
             "avg", "sum", "min" and "max".
+        :param str timezone: IANA timezone
         :param string col_label: Timeseries attribute to use for column header.
             Should be "id" or "name". Default: "id".
 
@@ -425,8 +426,8 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             timeseries,
             data_state,
             bucket_width,
+            aggregation,
             timezone=timezone,
-            aggregation=aggregation,
             col_label=col_label,
         )
         data_df.index.name = "Datetime"
