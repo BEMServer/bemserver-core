@@ -344,9 +344,8 @@ class TestTimeseriesDataIO:
         assert data_df.equals(expected_data_df)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
-    @pytest.mark.parametrize("col_label", ("id", "name"))
     def test_timeseries_data_io_get_timeseries_buckets_data_fixed_size_as_admin(
-        self, users, timeseries, col_label
+        self, users, timeseries
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -383,11 +382,6 @@ class TestTimeseriesDataIO:
         with CurrentUser(admin_user):
 
             ts_l = (ts_0, ts_2, ts_4)
-            ts_id_l = (
-                ts_0.name if col_label == "name" else ts_0.id,
-                ts_2.name if col_label == "name" else ts_2.id,
-                ts_4.name if col_label == "name" else ts_4.id,
-            )
 
             # Export CSV: UTC count 1 day
             data_df = tsdio.get_timeseries_buckets_data(
@@ -397,7 +391,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "1 day",
                 "count",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -411,9 +405,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [24, 24, 24],
-                    ts_id_l[1]: [0, 0, 0],
-                    ts_id_l[2]: [24, 24, 0],
+                    ts_0.name: [24, 24, 24],
+                    ts_2.name: [0, 0, 0],
+                    ts_4.name: [24, 24, 0],
                 },
                 index=index,
             )
@@ -427,7 +421,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "2 day",
                 "count",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -440,9 +434,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [48, 24],
-                    ts_id_l[1]: [0, 0],
-                    ts_id_l[2]: [48, 0],
+                    ts_0.name: [48, 24],
+                    ts_2.name: [0, 0],
+                    ts_4.name: [48, 0],
                 },
                 index=index,
             )
@@ -457,7 +451,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "1 week",
                 "count",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -470,9 +464,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [24, 48],
-                    ts_id_l[1]: [0, 0],
-                    ts_id_l[2]: [24, 24],
+                    ts_0.name: [24, 48],
+                    ts_2.name: [0, 0],
+                    ts_4.name: [24, 24],
                 },
                 index=index,
             )
@@ -487,7 +481,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "12 hour",
                 "count",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -504,9 +498,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: 6 * [12],
-                    ts_id_l[1]: 6 * [0],
-                    ts_id_l[2]: 4 * [12] + 2 * [0],
+                    ts_0.name: 6 * [12],
+                    ts_2.name: 6 * [0],
+                    ts_4.name: 4 * [12] + 2 * [0],
                 },
                 index=index,
             )
@@ -520,7 +514,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "1 day",
                 timezone="Europe/Paris",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -535,9 +529,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [11.0, 34.5, 58.5, 71.0],
-                    ts_id_l[1]: [np.nan, np.nan, np.nan, np.nan],
-                    ts_id_l[2]: [32.0, 79.0, 104.0, np.nan],
+                    ts_0.name: [11.0, 34.5, 58.5, 71.0],
+                    ts_2.name: [np.nan, np.nan, np.nan, np.nan],
+                    ts_4.name: [32.0, 79.0, 104.0, np.nan],
                 },
                 index=index,
             )
@@ -552,7 +546,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "1 day",
                 "sum",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -566,9 +560,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [276.0, 852.0, 1428.0],
-                    ts_id_l[1]: [np.nan, np.nan, np.nan],
-                    ts_id_l[2]: [792.0, 1944.0, np.nan],
+                    ts_0.name: [276.0, 852.0, 1428.0],
+                    ts_2.name: [np.nan, np.nan, np.nan],
+                    ts_4.name: [792.0, 1944.0, np.nan],
                 },
                 index=index,
             )
@@ -583,7 +577,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "1 day",
                 "min",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -597,9 +591,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [0.0, 24.0, 48.0],
-                    ts_id_l[1]: [np.nan, np.nan, np.nan],
-                    ts_id_l[2]: [10.0, 58.0, np.nan],
+                    ts_0.name: [0.0, 24.0, 48.0],
+                    ts_2.name: [np.nan, np.nan, np.nan],
+                    ts_4.name: [10.0, 58.0, np.nan],
                 },
                 index=index,
             )
@@ -614,7 +608,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "1 day",
                 "max",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -628,13 +622,43 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [23.0, 47.0, 71.0],
-                    ts_id_l[1]: [np.nan, np.nan, np.nan],
-                    ts_id_l[2]: [56.0, 104.0, np.nan],
+                    ts_0.name: [23.0, 47.0, 71.0],
+                    ts_2.name: [np.nan, np.nan, np.nan],
+                    ts_4.name: [56.0, 104.0, np.nan],
                 },
                 index=index,
             )
 
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC count 1 day by ID
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                "1 day",
+                "count",
+                col_label="id",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.id: [24, 24, 24],
+                    ts_2.id: [0, 0, 0],
+                    ts_4.id: [24, 24, 0],
+                },
+                index=index,
+            )
             assert data_df.equals(expected_data_df)
 
             # Export CSV: invalid aggregation
@@ -646,13 +670,11 @@ class TestTimeseriesDataIO:
                     ds_1,
                     "1 day",
                     "lol",
-                    col_label=col_label,
                 )
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
-    @pytest.mark.parametrize("col_label", ("id", "name"))
     def test_timeseries_data_io_get_timeseries_buckets_data_variable_size_as_admin(
-        self, users, timeseries, col_label
+        self, users, timeseries
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -704,15 +726,10 @@ class TestTimeseriesDataIO:
         with CurrentUser(admin_user):
 
             ts_l = (ts_0, ts_2, ts_4)
-            ts_id_l = (
-                ts_0.name if col_label == "name" else ts_0.id,
-                ts_2.name if col_label == "name" else ts_2.id,
-                ts_4.name if col_label == "name" else ts_4.id,
-            )
 
             # Export CSV: UTC count year
             data_df = tsdio.get_timeseries_buckets_data(
-                start_dt, end_dt, ts_l, ds_1, "1 year", "count", col_label=col_label
+                start_dt, end_dt, ts_l, ds_1, "1 year", "count", col_label="name"
             )
 
             index = pd.DatetimeIndex(
@@ -725,9 +742,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [24 * 366, 24 * 365],
-                    ts_id_l[1]: [0, 0],
-                    ts_id_l[2]: [24 * 366, 0],
+                    ts_0.name: [24 * 366, 24 * 365],
+                    ts_2.name: [0, 0],
+                    ts_4.name: [24 * 366, 0],
                 },
                 index=index,
             )
@@ -736,7 +753,7 @@ class TestTimeseriesDataIO:
 
             # Export CSV: UTC count 2 year
             data_df = tsdio.get_timeseries_buckets_data(
-                start_dt, end_dt, ts_l, ds_1, "2 year", "count", col_label=col_label
+                start_dt, end_dt, ts_l, ds_1, "2 year", "count", col_label="name"
             )
 
             index = pd.DatetimeIndex(
@@ -748,9 +765,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [24 * 366 + 24 * 365],
-                    ts_id_l[1]: [0],
-                    ts_id_l[2]: [24 * 366],
+                    ts_0.name: [24 * 366 + 24 * 365],
+                    ts_2.name: [0],
+                    ts_4.name: [24 * 366],
                 },
                 index=index,
             )
@@ -765,7 +782,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "1 year",
                 "count",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -778,14 +795,14 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [
+                    ts_0.name: [
                         # April 2020 -> April 2021
                         24 * 365,
                         # April 2021 -> Jan 2022
                         24 * (365 - (31 + 28 + 31)),
                     ],
-                    ts_id_l[1]: [0, 0],
-                    ts_id_l[2]: [
+                    ts_2.name: [0, 0],
+                    ts_4.name: [
                         # April 2020 -> Jan 2021
                         24 * (365 - (31 + 28 + 31)),
                         0,
@@ -806,7 +823,7 @@ class TestTimeseriesDataIO:
                 "1 year",
                 "count",
                 timezone="Europe/Paris",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -819,14 +836,14 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [
+                    ts_0.name: [
                         # April 2020 UTC -> April 2021 UTC+2
                         24 * 365 - 2,
                         # April 2021 UTC +2 -> Jan 2022 UTC
                         24 * (365 - (31 + 28 + 31)) + 2,
                     ],
-                    ts_id_l[1]: [0, 0],
-                    ts_id_l[2]: [
+                    ts_2.name: [0, 0],
+                    ts_4.name: [
                         # April 2020 UTC -> Jan 2021 UTC
                         24 * (365 - (31 + 28 + 31)),
                         0,
@@ -845,7 +862,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "1 month",
                 "avg",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -859,9 +876,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [371.5, 1091.5, 1811.5],
-                    ts_id_l[1]: [np.nan, np.nan, np.nan],
-                    ts_id_l[2]: [753.0, 2193.0, 3633.0],
+                    ts_0.name: [371.5, 1091.5, 1811.5],
+                    ts_2.name: [np.nan, np.nan, np.nan],
+                    ts_4.name: [753.0, 2193.0, 3633.0],
                 },
                 index=index,
             )
@@ -877,7 +894,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "1 month",
                 "avg",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -891,9 +908,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [407.5, 1091.5, 1811.5],
-                    ts_id_l[1]: [np.nan, np.nan, np.nan],
-                    ts_id_l[2]: [825.0, 2193.0, 3633.0],
+                    ts_0.name: [407.5, 1091.5, 1811.5],
+                    ts_2.name: [np.nan, np.nan, np.nan],
+                    ts_4.name: [825.0, 2193.0, 3633.0],
                 },
                 index=index,
             )
@@ -908,7 +925,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "2 month",
                 "avg",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -921,9 +938,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [731.5, 1811.5],
-                    ts_id_l[1]: [np.nan, np.nan],
-                    ts_id_l[2]: [1473.0, 3633.0],
+                    ts_0.name: [731.5, 1811.5],
+                    ts_2.name: [np.nan, np.nan],
+                    ts_4.name: [1473.0, 3633.0],
                 },
                 index=index,
             )
@@ -939,7 +956,7 @@ class TestTimeseriesDataIO:
                 "1 month",
                 "avg",
                 timezone="Europe/Paris",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -954,9 +971,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [371.0, 1090.5, 1810.0, 2182.5],
-                    ts_id_l[1]: [np.nan, np.nan, np.nan, np.nan],
-                    ts_id_l[2]: [752.0, 2191.0, 3630.0, 4375.0],
+                    ts_0.name: [371.0, 1090.5, 1810.0, 2182.5],
+                    ts_2.name: [np.nan, np.nan, np.nan, np.nan],
+                    ts_4.name: [752.0, 2191.0, 3630.0, 4375.0],
                 },
                 index=index,
             )
@@ -971,7 +988,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "1 month",
                 "sum",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -985,9 +1002,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [276396.0, 759684.0, 1347756.0],
-                    ts_id_l[1]: [np.nan, np.nan, np.nan],
-                    ts_id_l[2]: [560232.0, 1526328.0, 2702952.0],
+                    ts_0.name: [276396.0, 759684.0, 1347756.0],
+                    ts_2.name: [np.nan, np.nan, np.nan],
+                    ts_4.name: [560232.0, 1526328.0, 2702952.0],
                 },
                 index=index,
             )
@@ -1002,7 +1019,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "1 month",
                 "min",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -1016,9 +1033,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [0.0, 744.0, 1440.0],
-                    ts_id_l[1]: [np.nan, np.nan, np.nan],
-                    ts_id_l[2]: [10.0, 1498.0, 2890.0],
+                    ts_0.name: [0.0, 744.0, 1440.0],
+                    ts_2.name: [np.nan, np.nan, np.nan],
+                    ts_4.name: [10.0, 1498.0, 2890.0],
                 },
                 index=index,
             )
@@ -1033,7 +1050,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 "1 month",
                 "max",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
@@ -1047,9 +1064,33 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_id_l[0]: [743.0, 1439.0, 2183.0],
-                    ts_id_l[1]: [np.nan, np.nan, np.nan],
-                    ts_id_l[2]: [1496.0, 2888.0, 4376.0],
+                    ts_0.name: [743.0, 1439.0, 2183.0],
+                    ts_2.name: [np.nan, np.nan, np.nan],
+                    ts_4.name: [1496.0, 2888.0, 4376.0],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC count year by ID
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt, end_dt, ts_l, ds_1, "1 year", "count", col_label="id"
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2021-01-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.id: [24 * 366, 24 * 365],
+                    ts_2.id: [0, 0],
+                    ts_4.id: [24 * 366, 0],
                 },
                 index=index,
             )
