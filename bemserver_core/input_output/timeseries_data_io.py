@@ -437,12 +437,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
     def export_csv(cls, start_dt, end_dt, timeseries, data_state, col_label="id"):
         """Export timeseries data as CSV file
 
-        :param datetime start_dt: Time interval lower bound (tz-aware)
-        :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
-        :param list timeseries: List of timeseries
-        :param TimeseriesDataState data_state: Timeseries data state
-        :param string col_label: Timeseries attribute to use for column header.
-            Should be "id" or "name". Default: "id".
+        See ``TimeseriesDataIO.get_timeseries_data``.
 
         Returns csv as a string.
         """
@@ -474,19 +469,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
     ):
         """Bucket timeseries data and export as CSV file
 
-        :param datetime start_dt: Time interval lower bound (tz-aware)
-        :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
-        :param list timeseries: List of timeseries
-        :param TimeseriesDataState data_state: Timeseries data state
-        :param str bucket_width: Bucket width of the form "value unit" where
-            value is an int and unit a string in
-            {"second", "minute", "hour", "day", "week", "month", "year"}
-            E.g.: "1 day", "3 year"
-        :param str aggreagation: Aggregation function. Must be one of
-            "avg", "sum", "min" and "max".
-        :param str timezone: IANA timezone
-        :param string col_label: Timeseries attribute to use for column header.
-            Should be "id" or "name". Default: "id".
+        See ``TimeseriesDataIO.get_timeseries_buckets_data``.
 
         Returns csv as a string.
         """
