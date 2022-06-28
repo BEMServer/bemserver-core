@@ -1,10 +1,13 @@
 """Timeseries data I/O"""
+import datetime as dt
+from zoneinfo import ZoneInfo
 import csv
 
 import sqlalchemy as sqla
 import numpy as np
 import pandas as pd
 import dateutil
+import pytz
 
 from bemserver_core.database import db
 from bemserver_core.model import (
@@ -20,14 +23,20 @@ from bemserver_core.exceptions import (
 
 from .base import BaseCSVIO
 
-
+WEEK_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "SEP", "OCT", "NOV", "DEC"]
 AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max", "count")
 FIXED_SIZE_INTERVAL_UNITS = ("second", "minute", "hour", "day", "week")
 VARIABLE_SIZE_INTERVAL_UNITS = ("month", "year")
 INTERVAL_UNITS = FIXED_SIZE_INTERVAL_UNITS + VARIABLE_SIZE_INTERVAL_UNITS
-PANDAS_RESAMPLE_UNIT_MAPPING = {
+PANDAS_OFFSET_ALIASES = {
+    "second": "S",
+    "minute": "T",
+    "hour": "H",
+    "day": "D",
+    "week": "W",
     "month": "MS",
-    "year": "YS",
+    "year": "AS",
 }
 PANDAS_AGGREG_FUNC_MAPPING = {
     "avg": "mean",
@@ -167,6 +176,18 @@ class TimeseriesDataIO:
         :param string col_label: Timeseries attribute to use for column header.
             Should be "id" or "name". Default: "id".
 
+        The time alignment of the bucket depends on the bucket width unit.
+        - For a size bucket width unit of day or smaller, the aggregation is
+        time-aligned with start_dt.
+        - For week, it is aligned with 00:00 in timezone, same day as start_dt.
+        - For month, it is aligned with 00:00 in timezone, first day of month.
+        - For year,  it is aligned with 00:00 in timezone, first day of month,
+        same month as start_dt.
+
+        Note: ``start_dt`` and ``end_dt`` may have timezones that don't match
+        ``timezone`` parameter. The conversion is done internally. In practice,
+        though, it might not be the most intuitive way to use this function.
+
         Returns a dataframe.
         """
         if aggregation not in AGGREGATION_FUNCTIONS:
@@ -189,6 +210,9 @@ class TimeseriesDataIO:
         }
 
         bw_val, bw_unit = bucket_width.split()
+        pd_unit = PANDAS_OFFSET_ALIASES[bw_unit]
+        pd_freq = f"{bw_val}{pd_unit}"
+        origin_date = start_dt.astimezone(ZoneInfo(timezone)).date()
 
         if bw_unit in VARIABLE_SIZE_INTERVAL_UNITS:
             # At this stage, date_trunc can only aggregate by 1 x unit.
@@ -197,15 +221,27 @@ class TimeseriesDataIO:
             # Also, for a yearly aggregation not starting in january, date_trunc
             # can only aggregate by month. The rest is done below.
             year_with_offset = bw_unit == "year" and start_dt.month != 1
-            params["bw_unit"] = "month" if year_with_offset else bw_unit
+            if year_with_offset:
+                params["bw_unit"] = "month"
+                suffix = MONTHS[origin_date.month - 1]
+                pd_freq = f"{pd_freq}-{suffix}"
+            else:
+                params["bw_unit"] = bw_unit
             query = (
                 "SELECT date_trunc(:bw_unit, timestamp AT TIME ZONE :timezone)"
                 f"  AS bucket, timeseries.id, timeseries.name, {aggregation}(value) "
             )
         else:
             # TODO: replace with PostgreSQL date_bin when dropping PostgreSQL < 14
-            # Use start_dt as origin to ensure buckets start on start date
-            params["origin"] = start_dt
+            if bw_unit == "week":
+                # Set origin to match start_dt day of week
+                params["origin"] = origin_date
+                suffix = WEEK_DAYS[origin_date.weekday()]
+                pd_freq = f"{pd_freq}-{suffix}"
+            else:
+                params["origin"] = start_dt.astimezone(ZoneInfo(timezone)).replace(
+                    tzinfo=None
+                )
             query = (
                 "SELECT time_bucket("
                 ":bucket_width, timestamp AT TIME ZONE :timezone, origin => :origin)"
@@ -266,9 +302,43 @@ class TimeseriesDataIO:
                     name="timestamp",
                 ).tz_localize(timezone)
             else:
-                unit = PANDAS_RESAMPLE_UNIT_MAPPING[bw_unit]
-                data_df = data_df.resample(f"{bw_val}{unit}", origin=start_dt).agg(func)
+                # Pandas docs say origin TZ must match dataframe index TZ
+                origin = start_dt.astimezone(data_df.index.tzinfo)
+                data_df = data_df.resample(
+                    pd_freq, origin=origin, closed="left", label="left"
+                ).agg(func)
 
+        # Fill gaps: create expected index for gapless data then reindex
+        # TODO: Drop pytz for ZoneInfo when pandas supports ZoneInfo (pandas 1.5+)
+        tz = pytz.timezone(timezone)
+        # Ensure start TZ, end TZ and timezone match to avoid date_range crash
+        # pytz related issue: use localize, don't pass TZ in datetime constructor
+        # https://stackoverflow.com/a/57526282/4653485
+        if bw_unit in VARIABLE_SIZE_INTERVAL_UNITS:
+            # Month / Year: date range aligned on month start
+            range_start = tz.localize(
+                dt.datetime(origin_date.year, origin_date.month, 1)
+            )
+        elif bw_unit == "week":
+            # Week: date range aligned on day
+            range_start = tz.localize(
+                dt.datetime(origin_date.year, origin_date.month, origin_date.day)
+            )
+        else:
+            # Second / Minute / Hour / Day: date range aligned on exact second
+            range_start = start_dt.astimezone(tz)
+        range_end = end_dt.astimezone(tz)
+        complete_index = pd.date_range(
+            range_start,
+            range_end,
+            freq=pd_freq,
+            tz=tz,
+            name="timestamp",
+            inclusive="left",
+        )
+        data_df = data_df.reindex(complete_index, fill_value=fill_value)
+
+        # Fill missing columns
         cls._fill_missing_columns(
             data_df,
             timeseries,
