@@ -507,10 +507,10 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC count 1 week, start on thursday 26th, local TZ
+            # Export CSV: local TZ count 1 week
             data_df = tsdio.get_timeseries_buckets_data(
                 # Check start_dt TZ doesn't change alignment to 00:00 local TZ
-                dt.datetime(2019, 12, 26, tzinfo=dt.timezone.utc),
+                dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
                 dt.datetime(2020, 1, 9, tzinfo=ZoneInfo("Europe/Paris")),
                 ts_l,
                 ds_1,
@@ -522,17 +522,17 @@ class TestTimeseriesDataIO:
 
             index = pd.DatetimeIndex(
                 [
-                    "2019-12-26T00:00:00",
-                    "2020-01-02T00:00:00",
+                    "2019-12-30T00:00:00",
+                    "2020-01-06T00:00:00",
                 ],
                 name="timestamp",
                 tz="Europe/Paris",
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name: [23, 49],
+                    ts_0.name: [72, 0],
                     ts_2.name: [0, 0],
-                    ts_4.name: [23, 25],
+                    ts_4.name: [48, 0],
                 },
                 index=index,
             )

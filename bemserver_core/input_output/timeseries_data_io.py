@@ -23,7 +23,6 @@ from bemserver_core.exceptions import (
 
 from .base import BaseCSVIO
 
-WEEK_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
 AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max", "count")
 FIXED_SIZE_INTERVAL_UNITS = ("second", "minute", "hour", "day", "week")
 VARIABLE_SIZE_INTERVAL_UNITS = ("month", "year")
@@ -33,7 +32,7 @@ PANDAS_OFFSET_ALIASES = {
     "minute": "T",
     "hour": "H",
     "day": "D",
-    "week": "W",
+    "week": "W-MON",
     "month": "MS",
     "year": "AS",
 }
@@ -178,7 +177,7 @@ class TimeseriesDataIO:
         The time alignment of the bucket depends on the bucket width unit.
         - For a size bucket width unit of day or smaller, the aggregation is
         time-aligned on start_dt.
-        - For week, it is aligned on 00:00 in timezone, same day as start_dt.
+        - For week, it is aligned on 00:00 in timezone, monday.
         - For month, it is aligned on 00:00 in timezone, first day of month.
         - For year,  it is aligned on 00:00 in timezone, first day of year.
 
@@ -210,7 +209,6 @@ class TimeseriesDataIO:
         bw_val, bw_unit = bucket_width.split()
         pd_unit = PANDAS_OFFSET_ALIASES[bw_unit]
         pd_freq = f"{bw_val}{pd_unit}"
-        origin_date = start_dt.astimezone(ZoneInfo(timezone)).date()
 
         if bw_unit in VARIABLE_SIZE_INTERVAL_UNITS:
             # At this stage, date_trunc can only aggregate by 1 x unit.
@@ -224,10 +222,8 @@ class TimeseriesDataIO:
         else:
             # TODO: replace with PostgreSQL date_bin when dropping PostgreSQL < 14
             if bw_unit == "week":
-                # Set origin to match start_dt day of week
-                params["origin"] = origin_date
-                suffix = WEEK_DAYS[origin_date.weekday()]
-                pd_freq = f"{pd_freq}-{suffix}"
+                # Align on monday (2018-01-01 is a monday)
+                params["origin"] = "2018-01-01"
             else:
                 params["origin"] = start_dt.astimezone(ZoneInfo(timezone)).replace(
                     tzinfo=None
@@ -290,6 +286,7 @@ class TimeseriesDataIO:
         # Ensure start TZ, end TZ and timezone match to avoid date_range crash
         # pytz related issue: use localize, don't pass TZ in datetime constructor
         # https://stackoverflow.com/a/57526282/4653485
+        origin_date = start_dt.astimezone(ZoneInfo(timezone)).date()
         if bw_unit == "year":
             # Month: date range aligned on month start
             range_start = tz.localize(dt.datetime(origin_date.year, 1, 1))
@@ -299,9 +296,10 @@ class TimeseriesDataIO:
                 dt.datetime(origin_date.year, origin_date.month, 1)
             )
         elif bw_unit == "week":
-            # Week: date range aligned on day
+            # Week: date range aligned on monday (range start may be before start_dt)
             range_start = tz.localize(
                 dt.datetime(origin_date.year, origin_date.month, origin_date.day)
+                - dt.timedelta(days=origin_date.weekday())
             )
         else:
             # Second / Minute / Hour / Day: date range aligned on exact second
