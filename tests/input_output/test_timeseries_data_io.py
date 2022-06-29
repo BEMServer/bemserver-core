@@ -244,7 +244,9 @@ class TestTimeseriesDataIO:
         with CurrentUser(admin_user):
 
             ts_l = (ts_0, ts_2, ts_4)
-            data_df = tsdio.get_timeseries_data(start_dt, end_dt, ts_l, ds_1, col_label)
+            data_df = tsdio.get_timeseries_data(
+                start_dt, end_dt, ts_l, ds_1, col_label=col_label
+            )
 
         index = pd.DatetimeIndex(
             [
