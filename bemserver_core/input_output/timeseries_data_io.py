@@ -24,7 +24,6 @@ from bemserver_core.exceptions import (
 from .base import BaseCSVIO
 
 WEEK_DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
-MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "SEP", "OCT", "NOV", "DEC"]
 AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max", "count")
 FIXED_SIZE_INTERVAL_UNITS = ("second", "minute", "hour", "day", "week")
 VARIABLE_SIZE_INTERVAL_UNITS = ("month", "year")
@@ -178,11 +177,10 @@ class TimeseriesDataIO:
 
         The time alignment of the bucket depends on the bucket width unit.
         - For a size bucket width unit of day or smaller, the aggregation is
-        time-aligned with start_dt.
-        - For week, it is aligned with 00:00 in timezone, same day as start_dt.
-        - For month, it is aligned with 00:00 in timezone, first day of month.
-        - For year,  it is aligned with 00:00 in timezone, first day of month,
-        same month as start_dt.
+        time-aligned on start_dt.
+        - For week, it is aligned on 00:00 in timezone, same day as start_dt.
+        - For month, it is aligned on 00:00 in timezone, first day of month.
+        - For year,  it is aligned on 00:00 in timezone, first day of year.
 
         Note: ``start_dt`` and ``end_dt`` may have timezones that don't match
         ``timezone`` parameter. The conversion is done internally. In practice,
@@ -218,15 +216,7 @@ class TimeseriesDataIO:
             # At this stage, date_trunc can only aggregate by 1 x unit.
             # For a N x month/year bucket size, the remaining aggregation is
             # done in Pandas below.
-            # Also, for a yearly aggregation not starting in january, date_trunc
-            # can only aggregate by month. The rest is done below.
-            year_with_offset = bw_unit == "year" and start_dt.month != 1
-            if year_with_offset:
-                params["bw_unit"] = "month"
-                suffix = MONTHS[origin_date.month - 1]
-                pd_freq = f"{pd_freq}-{suffix}"
-            else:
-                params["bw_unit"] = bw_unit
+            params["bw_unit"] = bw_unit
             query = (
                 "SELECT date_trunc(:bw_unit, timestamp AT TIME ZONE :timezone)"
                 f"  AS bucket, timeseries.id, timeseries.name, {aggregation}(value) "
@@ -288,25 +278,11 @@ class TimeseriesDataIO:
         # Further aggregation is achieved here in pandas
         if bw_unit in VARIABLE_SIZE_INTERVAL_UNITS:
             func = PANDAS_AGGREG_FUNC_MAPPING[aggregation]
-            # Special case for year not starting on January
-            if year_with_offset:
-                # Inspired by https://stackoverflow.com/questions/60545752/
-                data_df["custom_year"] = data_df.index.year - (
-                    data_df.index.month < start_dt.month
-                ).astype(int)
-                data_df = data_df.groupby("custom_year").agg(func)
-                data_df.index = pd.DatetimeIndex(
-                    pd.to_datetime(
-                        {"year": data_df.index, "month": start_dt.month, "day": 1}
-                    ),
-                    name="timestamp",
-                ).tz_localize(timezone)
-            else:
-                # Pandas docs say origin TZ must match dataframe index TZ
-                origin = start_dt.astimezone(data_df.index.tzinfo)
-                data_df = data_df.resample(
-                    pd_freq, origin=origin, closed="left", label="left"
-                ).agg(func)
+            # Pandas docs say origin TZ must match dataframe index TZ
+            origin = start_dt.astimezone(data_df.index.tzinfo)
+            data_df = data_df.resample(
+                pd_freq, origin=origin, closed="left", label="left"
+            ).agg(func)
 
         # Fill gaps: create expected index for gapless data then reindex
         # TODO: Drop pytz for ZoneInfo when pandas supports ZoneInfo (pandas 1.5+)
@@ -314,8 +290,11 @@ class TimeseriesDataIO:
         # Ensure start TZ, end TZ and timezone match to avoid date_range crash
         # pytz related issue: use localize, don't pass TZ in datetime constructor
         # https://stackoverflow.com/a/57526282/4653485
-        if bw_unit in VARIABLE_SIZE_INTERVAL_UNITS:
-            # Month / Year: date range aligned on month start
+        if bw_unit == "year":
+            # Month: date range aligned on month start
+            range_start = tz.localize(dt.datetime(origin_date.year, 1, 1))
+        elif bw_unit == "month":
+            # Month: date range aligned on month start
             range_start = tz.localize(
                 dt.datetime(origin_date.year, origin_date.month, 1)
             )

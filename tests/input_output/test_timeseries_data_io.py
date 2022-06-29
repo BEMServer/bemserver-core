@@ -873,50 +873,10 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC count year with offset
+            # Export CSV: local TZ count year (first bucket incomplete)
             data_df = tsdio.get_timeseries_buckets_data(
-                start_dt_plus_3_months,
-                end_dt,
-                ts_l,
-                ds_1,
-                "1 year",
-                "count",
-                col_label="name",
-            )
-
-            index = pd.DatetimeIndex(
-                [
-                    "2020-04-01T00:00:00",
-                    "2021-04-01T00:00:00",
-                ],
-                name="timestamp",
-                tz="UTC",
-            )
-            expected_data_df = pd.DataFrame(
-                {
-                    ts_0.name: [
-                        # April 2020 -> April 2021
-                        24 * 365,
-                        # April 2021 -> Jan 2022
-                        24 * (365 - (31 + 28 + 31)),
-                    ],
-                    ts_2.name: [0, 0],
-                    ts_4.name: [
-                        # April 2020 -> Jan 2021
-                        24 * (365 - (31 + 28 + 31)),
-                        0,
-                    ],
-                },
-                index=index,
-            )
-
-            assert data_df.equals(expected_data_df)
-
-            # Export CSV: local TZ count year with offset
-            # Start date is UTC so first bucket is incomplete
-            data_df = tsdio.get_timeseries_buckets_data(
-                start_dt_plus_3_months,
-                end_dt,
+                start_dt_plus_3_months.replace(tzinfo=ZoneInfo("Europe/Paris")),
+                end_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
                 ts_l,
                 ds_1,
                 "1 year",
@@ -927,8 +887,8 @@ class TestTimeseriesDataIO:
 
             index = pd.DatetimeIndex(
                 [
-                    "2020-04-01T00:00:00",
-                    "2021-04-01T00:00:00",
+                    "2020-01-01T00:00:00",
+                    "2021-01-01T00:00:00",
                 ],
                 name="timestamp",
                 tz="Europe/Paris",
@@ -936,16 +896,17 @@ class TestTimeseriesDataIO:
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [
-                        # April 2020 UTC -> April 2021 UTC+2
-                        24 * 365 - 2,
-                        # April 2021 UTC +2 -> Jan 2022 UTC
-                        24 * (365 - (31 + 28 + 31)) + 2,
+                        # Apr 2020 UTC+2 -> Jan 2021 UTC+1
+                        24 * (30 + 31 + 30 + 31 + 31 + 30 + 31 + 30 + 31) + 1,
+                        # Apr 2021 UTC+2 -> Jan 2022 UTC+1
+                        24 * 365,
                     ],
                     ts_2.name: [0, 0],
                     ts_4.name: [
-                        # April 2020 UTC -> Jan 2021 UTC
-                        24 * (365 - (31 + 28 + 31)),
-                        0,
+                        # Apr 2020 UTC+2 -> Jan 2021 UTC+1
+                        24 * (30 + 31 + 30 + 31 + 31 + 30 + 31 + 30 + 31) + 1,
+                        # Jan 2021 UTC+1 -> Jan 2022 UTC
+                        1,
                     ],
                 },
                 index=index,
