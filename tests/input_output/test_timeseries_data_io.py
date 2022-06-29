@@ -1,7 +1,9 @@
 """Timeseries CSV I/O tests"""
 import io
 import datetime as dt
+from zoneinfo import ZoneInfo
 
+import sqlalchemy as sqla
 import pandas as pd
 import numpy as np
 
@@ -242,7 +244,9 @@ class TestTimeseriesDataIO:
         with CurrentUser(admin_user):
 
             ts_l = (ts_0, ts_2, ts_4)
-            data_df = tsdio.get_timeseries_data(start_dt, end_dt, ts_l, ds_1, col_label)
+            data_df = tsdio.get_timeseries_data(
+                start_dt, end_dt, ts_l, ds_1, col_label=col_label
+            )
 
         index = pd.DatetimeIndex(
             [
@@ -343,9 +347,8 @@ class TestTimeseriesDataIO:
         assert data_df.equals(expected_data_df)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
-    @pytest.mark.parametrize("col_label", ("id", "name"))
-    def test_timeseries_data_io_get_timeseries_buckets_data_as_admin(
-        self, users, timeseries, col_label
+    def test_timeseries_data_io_get_timeseries_buckets_data_fixed_size_as_admin(
+        self, users, timeseries
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -383,169 +386,349 @@ class TestTimeseriesDataIO:
 
             ts_l = (ts_0, ts_2, ts_4)
 
-            # Export CSV: UTC avg
+            # Export CSV: UTC count 1 day
             data_df = tsdio.get_timeseries_buckets_data(
-                start_dt, end_dt, ts_l, ds_1, "1 day", col_label=col_label
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                "1 day",
+                "count",
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
                 [
-                    "2020-01-01T00:00:00+00:00",
-                    "2020-01-02T00:00:00+00:00",
-                    "2020-01-03T00:00:00+00:00",
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
                 ],
                 name="timestamp",
+                tz="UTC",
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name if col_label == "name" else ts_0.id: [11.5, 35.5, 59.5],
-                    ts_2.name
-                    if col_label == "name"
-                    else ts_2.id: [np.nan, np.nan, np.nan],
-                    ts_4.name if col_label == "name" else ts_4.id: [33.0, 81.0, np.nan],
+                    ts_0.name: [24, 24, 24],
+                    ts_2.name: [0, 0, 0],
+                    ts_4.name: [24, 24, 0],
+                },
+                index=index,
+            )
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC count 2 days
+            data_df = tsdio.get_timeseries_buckets_data(
+                # Also check that start_dt TZ doesn't matter
+                start_dt.astimezone(dt.timezone(dt.timedelta(hours=12))),
+                end_dt,
+                ts_l,
+                ds_1,
+                "2 day",
+                "count",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2020-01-03T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [48, 24],
+                    ts_2.name: [0, 0],
+                    ts_4.name: [48, 0],
                 },
                 index=index,
             )
 
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC count 2 days with gapfill
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                end_dt + dt.timedelta(days=3),
+                ts_l,
+                ds_1,
+                "2 day",
+                "count",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2020-01-03T00:00:00",
+                    "2020-01-05T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [48, 24, 0],
+                    ts_2.name: [0, 0, 0],
+                    ts_4.name: [48, 0, 0],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC count 1 day, 3 hour (and a half) offset
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt + dt.timedelta(hours=3, minutes=30),
+                end_dt,
+                ts_l,
+                ds_1,
+                "1 day",
+                "count",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T03:30:00",
+                    "2020-01-02T03:30:00",
+                    "2020-01-03T03:30:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [24, 24, 20],
+                    ts_2.name: [0, 0, 0],
+                    ts_4.name: [24, 20, 0],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: local TZ count 1 week
+            data_df = tsdio.get_timeseries_buckets_data(
+                # Check start_dt TZ doesn't change alignment to 00:00 local TZ
+                dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+                dt.datetime(2020, 1, 9, tzinfo=ZoneInfo("Europe/Paris")),
+                ts_l,
+                ds_1,
+                "1 week",
+                "count",
+                col_label="name",
+                timezone="Europe/Paris",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2019-12-30T00:00:00",
+                    "2020-01-06T00:00:00",
+                ],
+                name="timestamp",
+                tz="Europe/Paris",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [72, 0],
+                    ts_2.name: [0, 0],
+                    ts_4.name: [48, 0],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC count 12 hours
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                "12 hour",
+                "count",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2020-01-01T12:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-02T12:00:00",
+                    "2020-01-03T00:00:00",
+                    "2020-01-03T12:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: 6 * [12],
+                    ts_2.name: 6 * [0],
+                    ts_4.name: 4 * [12] + 2 * [0],
+                },
+                index=index,
+            )
             assert data_df.equals(expected_data_df)
 
             # Export CSV: local TZ avg
             data_df = tsdio.get_timeseries_buckets_data(
-                start_dt,
-                end_dt,
+                start_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
+                end_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
                 ts_l,
                 ds_1,
-                "P1D",
+                "1 day",
                 timezone="Europe/Paris",
-                col_label=col_label,
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
                 [
-                    "2019-12-31T23:00:00+0000",
-                    "2020-01-01T23:00:00+0000",
-                    "2020-01-02T23:00:00+0000",
-                    "2020-01-03T23:00:00+0000",
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
                 ],
                 name="timestamp",
+                tz="Europe/Paris",
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name
-                    if col_label == "name"
-                    else ts_0.id: [11.0, 34.5, 58.5, 71.0],
-                    ts_2.name
-                    if col_label == "name"
-                    else ts_2.id: [np.nan, np.nan, np.nan, np.nan],
-                    ts_4.name
-                    if col_label == "name"
-                    else ts_4.id: [32.0, 79.0, 104.0, np.nan],
+                    ts_0.name: [11.0, 34.5, 58.5],
+                    ts_2.name: [np.nan, np.nan, np.nan],
+                    ts_4.name: [32.0, 79.0, 104.0],
                 },
                 index=index,
             )
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC sum
+            # Export CSV: UTC sum, with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
-                end_dt,
+                end_dt + dt.timedelta(days=1),
                 ts_l,
                 ds_1,
                 "1 day",
-                aggregation="sum",
-                col_label=col_label,
+                "sum",
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
                 [
-                    "2020-01-01T00:00:00+0000",
-                    "2020-01-02T00:00:00+0000",
-                    "2020-01-03T00:00:00+0000",
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
+                    "2020-01-04T00:00:00",
                 ],
                 name="timestamp",
+                tz="UTC",
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name
-                    if col_label == "name"
-                    else ts_0.id: [276.0, 852.0, 1428.0],
-                    ts_2.name
-                    if col_label == "name"
-                    else ts_2.id: [np.nan, np.nan, np.nan],
-                    ts_4.name
-                    if col_label == "name"
-                    else ts_4.id: [792.0, 1944.0, np.nan],
+                    ts_0.name: [276.0, 852.0, 1428.0, np.nan],
+                    ts_2.name: [np.nan, np.nan, np.nan, np.nan],
+                    ts_4.name: [792.0, 1944.0, np.nan, np.nan],
                 },
                 index=index,
             )
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC min
+            # Export CSV: UTC min, with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
-                end_dt,
+                end_dt + dt.timedelta(days=1),
                 ts_l,
                 ds_1,
                 "1 day",
-                aggregation="min",
-                col_label=col_label,
+                "min",
+                col_label="name",
             )
 
             index = pd.DatetimeIndex(
                 [
-                    "2020-01-01T00:00:00+0000",
-                    "2020-01-02T00:00:00+0000",
-                    "2020-01-03T00:00:00+0000",
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
+                    "2020-01-04T00:00:00",
                 ],
                 name="timestamp",
+                tz="UTC",
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name if col_label == "name" else ts_0.id: [0.0, 24.0, 48.0],
-                    ts_2.name
-                    if col_label == "name"
-                    else ts_2.id: [np.nan, np.nan, np.nan],
-                    ts_4.name if col_label == "name" else ts_4.id: [10.0, 58.0, np.nan],
+                    ts_0.name: [0.0, 24.0, 48.0, np.nan],
+                    ts_2.name: [np.nan, np.nan, np.nan, np.nan],
+                    ts_4.name: [10.0, 58.0, np.nan, np.nan],
                 },
                 index=index,
             )
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC max
+            # Export CSV: UTC max, with gapfill
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                end_dt + dt.timedelta(days=1),
+                ts_l,
+                ds_1,
+                "1 day",
+                "max",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
+                    "2020-01-04T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [23.0, 47.0, 71.0, np.nan],
+                    ts_2.name: [np.nan, np.nan, np.nan, np.nan],
+                    ts_4.name: [56.0, 104.0, np.nan, np.nan],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC count 1 day by ID
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 end_dt,
                 ts_l,
                 ds_1,
                 "1 day",
-                aggregation="max",
-                col_label=col_label,
+                "count",
+                col_label="id",
             )
 
             index = pd.DatetimeIndex(
                 [
-                    "2020-01-01T00:00:00+0000",
-                    "2020-01-02T00:00:00+0000",
-                    "2020-01-03T00:00:00+0000",
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
                 ],
                 name="timestamp",
+                tz="UTC",
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name if col_label == "name" else ts_0.id: [23.0, 47.0, 71.0],
-                    ts_2.name
-                    if col_label == "name"
-                    else ts_2.id: [np.nan, np.nan, np.nan],
-                    ts_4.name
-                    if col_label == "name"
-                    else ts_4.id: [56.0, 104.0, np.nan],
+                    ts_0.id: [24, 24, 24],
+                    ts_2.id: [0, 0, 0],
+                    ts_4.id: [24, 24, 0],
                 },
                 index=index,
             )
-
             assert data_df.equals(expected_data_df)
 
             # Export CSV: invalid aggregation
@@ -556,9 +739,498 @@ class TestTimeseriesDataIO:
                     ts_l,
                     ds_1,
                     "1 day",
-                    aggregation="lol",
-                    col_label=col_label,
+                    "lol",
                 )
+
+    def test_timeseries_data_io_get_timeseries_buckets_data_fixed_size_dst_as_admin(
+        self, users, timeseries
+    ):
+        """Check bucketing in local TZ correctly handles DST"""
+        admin_user = users[0]
+        assert admin_user.is_admin
+        ts_0 = timeseries[0]
+
+        # Use UTC for start_dt otherwise start_dt + timedelta does surprising things
+        # https://blog.ganssle.io/articles/2018/02/aware-datetime-arithmetic.html
+        start_dt_1 = dt.datetime(
+            2020, 3, 28, tzinfo=ZoneInfo("Europe/Paris")
+        ).astimezone(dt.timezone.utc)
+        end_dt_1 = dt.datetime(2020, 3, 30, tzinfo=ZoneInfo("Europe/Paris"))
+        start_dt_2 = dt.datetime(
+            2020, 10, 24, tzinfo=ZoneInfo("Europe/Paris")
+        ).astimezone(dt.timezone.utc)
+        end_dt_2 = dt.datetime(2020, 10, 26, tzinfo=ZoneInfo("Europe/Paris"))
+
+        # Create DB data
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+            tsbds_0 = ts_0.get_timeseries_by_data_state(ds_1)
+        for i in range(24 * 3):
+            timestamp_1 = start_dt_1 + dt.timedelta(hours=i)
+            db.session.add(
+                TimeseriesData(
+                    timestamp=timestamp_1,
+                    timeseries_by_data_state_id=tsbds_0.id,
+                    value=i,
+                )
+            )
+            timestamp_2 = start_dt_2 + dt.timedelta(hours=i)
+            db.session.add(
+                TimeseriesData(
+                    timestamp=timestamp_2,
+                    timeseries_by_data_state_id=tsbds_0.id,
+                    value=i,
+                )
+            )
+        db.session.commit()
+
+        with CurrentUser(admin_user):
+
+            args = [(ts_0,), ds_1, "1 day", "count"]
+            kwargs = {"timezone": "Europe/Paris", "col_label": "name"}
+
+            # local TZ count 1 day - Spring forward
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt_1, end_dt_1, *args, **kwargs
+            )
+            index = pd.DatetimeIndex(
+                ["2020-03-28T00:00:00", "2020-03-29T00:00:00"],
+                name="timestamp",
+                tz="Europe/Paris",
+            )
+            expected_data_df = pd.DataFrame({ts_0.name: [24, 23]}, index=index)
+            assert data_df.equals(expected_data_df)
+
+            # local TZ count 1 day - Fall back
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt_2, end_dt_2, *args, **kwargs
+            )
+            index = pd.DatetimeIndex(
+                ["2020-10-24T00:00:00", "2020-10-25T00:00:00"],
+                name="timestamp",
+                tz="Europe/Paris",
+            )
+            expected_data_df = pd.DataFrame({ts_0.name: [24, 25]}, index=index)
+            assert data_df.equals(expected_data_df)
+
+    @pytest.mark.parametrize("timeseries", (5,), indirect=True)
+    def test_timeseries_data_io_get_timeseries_buckets_data_variable_size_as_admin(
+        self, users, timeseries
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        ts_0 = timeseries[0]
+        ts_2 = timeseries[2]
+        ts_4 = timeseries[4]
+
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt_plus_3_months = dt.datetime(2020, 4, 1, tzinfo=dt.timezone.utc)
+        end_dt = start_dt + dt.timedelta(days=366 + 365)
+
+        # Create DB data
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+            tsbds_0 = ts_0.get_timeseries_by_data_state(ds_1)
+            tsbds_4 = ts_4.get_timeseries_by_data_state(ds_1)
+
+            timestamps = pd.date_range(
+                start=start_dt, end=end_dt, inclusive="left", freq="H"
+            )
+            values = range(24 * (366 + 365))
+            in_df = pd.DataFrame(
+                {
+                    tsbds_0.id: values,
+                    tsbds_4.id: values,
+                },
+                index=pd.DatetimeIndex(timestamps, name="timestamp"),
+            )
+            in_df[tsbds_4.id] = 10 + 2 * in_df[tsbds_4.id]
+            in_df.loc[in_df.index.year != 2020, tsbds_4.id] = np.nan
+            in_df = in_df.melt(
+                value_vars=in_df.columns,
+                var_name="timeseries_by_data_state_id",
+                ignore_index=False,
+            )
+            data_rows = [
+                row
+                for row in in_df.reset_index().to_dict(orient="records")
+                if pd.notna(row["value"])
+            ]
+            query = (
+                sqla.dialects.postgresql.insert(TimeseriesData)
+                .values(data_rows)
+                .on_conflict_do_nothing()
+            )
+            db.session.execute(query)
+            db.session.commit()
+
+        with CurrentUser(admin_user):
+
+            ts_l = (ts_0, ts_2, ts_4)
+
+            # Export CSV: UTC count year
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt, end_dt, ts_l, ds_1, "1 year", "count", col_label="name"
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2021-01-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [24 * 366, 24 * 365],
+                    ts_2.name: [0, 0],
+                    ts_4.name: [24 * 366, 0],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC count year, with gapfill
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                end_dt + dt.timedelta(days=100),
+                ts_l,
+                ds_1,
+                "1 year",
+                "count",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2021-01-01T00:00:00",
+                    "2022-01-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [24 * 366, 24 * 365, 0],
+                    ts_2.name: [0, 0, 0],
+                    ts_4.name: [24 * 366, 0, 0],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC count 2 year
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt, end_dt, ts_l, ds_1, "2 year", "count", col_label="name"
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [24 * 366 + 24 * 365],
+                    ts_2.name: [0],
+                    ts_4.name: [24 * 366],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: local TZ count year (first bucket incomplete)
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt_plus_3_months.replace(tzinfo=ZoneInfo("Europe/Paris")),
+                end_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
+                ts_l,
+                ds_1,
+                "1 year",
+                "count",
+                timezone="Europe/Paris",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2021-01-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="Europe/Paris",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [
+                        # Apr 2020 UTC+2 -> Jan 2021 UTC+1
+                        24 * (30 + 31 + 30 + 31 + 31 + 30 + 31 + 30 + 31) + 1,
+                        # Apr 2021 UTC+2 -> Jan 2022 UTC+1
+                        24 * 365,
+                    ],
+                    ts_2.name: [0, 0],
+                    ts_4.name: [
+                        # Apr 2020 UTC+2 -> Jan 2021 UTC+1
+                        24 * (30 + 31 + 30 + 31 + 31 + 30 + 31 + 30 + 31) + 1,
+                        # Jan 2021 UTC+1 -> Jan 2022 UTC
+                        1,
+                    ],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC avg month, with gapfill
+            data_df = tsdio.get_timeseries_buckets_data(
+                # Exact start day does not matter, data is aligned to month
+                start_dt - dt.timedelta(days=20),
+                start_dt_plus_3_months,
+                ts_l,
+                ds_1,
+                "1 month",
+                "avg",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2019-12-01T00:00:00",
+                    "2020-01-01T00:00:00",
+                    "2020-02-01T00:00:00",
+                    "2020-03-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [np.nan, 371.5, 1091.5, 1811.5],
+                    ts_2.name: [np.nan, np.nan, np.nan, np.nan],
+                    ts_4.name: [np.nan, 753.0, 2193.0, 3633.0],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC avg month with start offset
+            # Bins are aligned to month, only first bin differs
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt + dt.timedelta(days=3),
+                start_dt_plus_3_months,
+                ts_l,
+                ds_1,
+                "1 month",
+                "avg",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2020-02-01T00:00:00",
+                    "2020-03-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [407.5, 1091.5, 1811.5],
+                    ts_2.name: [np.nan, np.nan, np.nan],
+                    ts_4.name: [825.0, 2193.0, 3633.0],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC avg 2 month
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                start_dt_plus_3_months,
+                ts_l,
+                ds_1,
+                "2 month",
+                "avg",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2020-03-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [731.5, 1811.5],
+                    ts_2.name: [np.nan, np.nan],
+                    ts_4.name: [1473.0, 3633.0],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: local TZ avg month
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                start_dt_plus_3_months,
+                ts_l,
+                ds_1,
+                "1 month",
+                "avg",
+                timezone="Europe/Paris",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2020-02-01T00:00:00",
+                    "2020-03-01T00:00:00",
+                    "2020-04-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="Europe/Paris",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [371.0, 1090.5, 1810.0, 2182.5],
+                    ts_2.name: [np.nan, np.nan, np.nan, np.nan],
+                    ts_4.name: [752.0, 2191.0, 3630.0, 4375.0],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC sum month
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                start_dt_plus_3_months,
+                ts_l,
+                ds_1,
+                "1 month",
+                "sum",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2020-02-01T00:00:00",
+                    "2020-03-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [276396.0, 759684.0, 1347756.0],
+                    ts_2.name: [np.nan, np.nan, np.nan],
+                    ts_4.name: [560232.0, 1526328.0, 2702952.0],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC min month
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                start_dt_plus_3_months,
+                ts_l,
+                ds_1,
+                "1 month",
+                "min",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2020-02-01T00:00:00",
+                    "2020-03-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [0.0, 744.0, 1440.0],
+                    ts_2.name: [np.nan, np.nan, np.nan],
+                    ts_4.name: [10.0, 1498.0, 2890.0],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC max month
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                start_dt_plus_3_months,
+                ts_l,
+                ds_1,
+                "1 month",
+                "max",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2020-02-01T00:00:00",
+                    "2020-03-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name: [743.0, 1439.0, 2183.0],
+                    ts_2.name: [np.nan, np.nan, np.nan],
+                    ts_4.name: [1496.0, 2888.0, 4376.0],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
+
+            # Export CSV: UTC count year by ID
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt, end_dt, ts_l, ds_1, "1 year", "count", col_label="id"
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2021-01-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.id: [24 * 366, 24 * 365],
+                    ts_2.id: [0, 0],
+                    ts_4.id: [24 * 366, 0],
+                },
+                index=index,
+            )
+
+            assert data_df.equals(expected_data_df)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.usefixtures("users_by_user_groups")
@@ -623,11 +1295,12 @@ class TestTimeseriesDataIO:
 
             index = pd.DatetimeIndex(
                 [
-                    "2020-01-01T00:00:00+0000",
-                    "2020-01-02T00:00:00+0000",
-                    "2020-01-03T00:00:00+0000",
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
                 ],
                 name="timestamp",
+                tz="UTC",
             )
             expected_data_df = pd.DataFrame(
                 {
@@ -1117,19 +1790,18 @@ class TestTimeseriesDataCSVIO:
 
             # Export CSV: local TZ avg
             data = tsdcsvio.export_csv_bucket(
-                start_dt,
-                end_dt,
+                start_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
+                end_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
                 ts_l,
                 ds_1,
-                "P1D",
+                "1 day",
                 timezone="Europe/Paris",
                 col_label=col_label,
             )
             assert data == header + (
-                "2019-12-31T23:00:00+0000,11.0,,32.0\n"
-                "2020-01-01T23:00:00+0000,34.5,,79.0\n"
-                "2020-01-02T23:00:00+0000,58.5,,104.0\n"
-                "2020-01-03T23:00:00+0000,71.0,,\n"
+                "2020-01-01T00:00:00+0100,11.0,,32.0\n"
+                "2020-01-02T00:00:00+0100,34.5,,79.0\n"
+                "2020-01-03T00:00:00+0100,58.5,,104.0\n"
             )
 
             # Export CSV: UTC sum
@@ -1139,7 +1811,7 @@ class TestTimeseriesDataCSVIO:
                 ts_l,
                 ds_1,
                 "1 day",
-                aggregation="sum",
+                "sum",
                 col_label=col_label,
             )
             assert data == header + (
@@ -1155,7 +1827,7 @@ class TestTimeseriesDataCSVIO:
                 ts_l,
                 ds_1,
                 "1 day",
-                aggregation="min",
+                "min",
                 col_label=col_label,
             )
             assert data == header + (
@@ -1171,7 +1843,7 @@ class TestTimeseriesDataCSVIO:
                 ts_l,
                 ds_1,
                 "1 day",
-                aggregation="max",
+                "max",
                 col_label=col_label,
             )
             assert data == header + (
@@ -1188,7 +1860,7 @@ class TestTimeseriesDataCSVIO:
                     ts_l,
                     ds_1,
                     "1 day",
-                    aggregation="lol",
+                    "lol",
                     col_label=col_label,
                 )
 
