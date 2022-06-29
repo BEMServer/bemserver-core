@@ -740,6 +740,77 @@ class TestTimeseriesDataIO:
                     "lol",
                 )
 
+    def test_timeseries_data_io_get_timeseries_buckets_data_fixed_size_dst_as_admin(
+        self, users, timeseries
+    ):
+        """Check bucketing in local TZ correctly handles DST"""
+        admin_user = users[0]
+        assert admin_user.is_admin
+        ts_0 = timeseries[0]
+
+        # Use UTC for start_dt otherwise start_dt + timedelta does surprising things
+        # https://blog.ganssle.io/articles/2018/02/aware-datetime-arithmetic.html
+        start_dt_1 = dt.datetime(
+            2020, 3, 28, tzinfo=ZoneInfo("Europe/Paris")
+        ).astimezone(dt.timezone.utc)
+        end_dt_1 = dt.datetime(2020, 3, 30, tzinfo=ZoneInfo("Europe/Paris"))
+        start_dt_2 = dt.datetime(
+            2020, 10, 24, tzinfo=ZoneInfo("Europe/Paris")
+        ).astimezone(dt.timezone.utc)
+        end_dt_2 = dt.datetime(2020, 10, 26, tzinfo=ZoneInfo("Europe/Paris"))
+
+        # Create DB data
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+            tsbds_0 = ts_0.get_timeseries_by_data_state(ds_1)
+        for i in range(24 * 3):
+            timestamp_1 = start_dt_1 + dt.timedelta(hours=i)
+            db.session.add(
+                TimeseriesData(
+                    timestamp=timestamp_1,
+                    timeseries_by_data_state_id=tsbds_0.id,
+                    value=i,
+                )
+            )
+            timestamp_2 = start_dt_2 + dt.timedelta(hours=i)
+            db.session.add(
+                TimeseriesData(
+                    timestamp=timestamp_2,
+                    timeseries_by_data_state_id=tsbds_0.id,
+                    value=i,
+                )
+            )
+        db.session.commit()
+
+        with CurrentUser(admin_user):
+
+            args = [(ts_0,), ds_1, "1 day", "count"]
+            kwargs = {"timezone": "Europe/Paris", "col_label": "name"}
+
+            # local TZ count 1 day - Spring forward
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt_1, end_dt_1, *args, **kwargs
+            )
+            index = pd.DatetimeIndex(
+                ["2020-03-28T00:00:00", "2020-03-29T00:00:00"],
+                name="timestamp",
+                tz="Europe/Paris",
+            )
+            expected_data_df = pd.DataFrame({ts_0.name: [24, 23]}, index=index)
+            assert data_df.equals(expected_data_df)
+
+            # local TZ count 1 day - Fall back
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt_2, end_dt_2, *args, **kwargs
+            )
+            index = pd.DatetimeIndex(
+                ["2020-10-24T00:00:00", "2020-10-25T00:00:00"],
+                name="timestamp",
+                tz="Europe/Paris",
+            )
+            expected_data_df = pd.DataFrame({ts_0.name: [24, 25]}, index=index)
+            assert data_df.equals(expected_data_df)
+
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     def test_timeseries_data_io_get_timeseries_buckets_data_variable_size_as_admin(
         self, users, timeseries
