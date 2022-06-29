@@ -36,7 +36,8 @@ PANDAS_OFFSET_ALIASES = {
     "month": "MS",
     "year": "AS",
 }
-PANDAS_AGGREG_FUNC_MAPPING = {
+# Function to use to re-aggregate in pandas after SQL aggregation
+PANDAS_RE_AGGREG_FUNC_MAPPING = {
     "avg": "mean",
     "min": "min",
     "max": "max",
@@ -273,7 +274,7 @@ class TimeseriesDataIO:
         # Variable size intervals are aggregated to 1 x unit due to date_trunc
         # Further aggregation is achieved here in pandas
         if bw_unit in VARIABLE_SIZE_INTERVAL_UNITS:
-            func = PANDAS_AGGREG_FUNC_MAPPING[aggregation]
+            func = PANDAS_RE_AGGREG_FUNC_MAPPING[aggregation]
             # Pandas docs say origin TZ must match dataframe index TZ
             origin = start_dt.astimezone(data_df.index.tzinfo)
             data_df = data_df.resample(
