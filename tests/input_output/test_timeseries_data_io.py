@@ -3,11 +3,11 @@ import io
 import datetime as dt
 from zoneinfo import ZoneInfo
 
-import sqlalchemy as sqla
 import pandas as pd
 import numpy as np
 
 import pytest
+from tests.utils import create_timeseries_data
 
 from bemserver_core.model import (
     TimeseriesData,
@@ -213,33 +213,19 @@ class TestTimeseriesDataIO:
         ts_2 = timeseries[2]
         ts_4 = timeseries[4]
 
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=3)
 
-        # Create DB data
-        with OpenBar():
-            ds_1 = TimeseriesDataState.get(name="Raw").first()
-            tsbds_0 = ts_0.get_timeseries_by_data_state(ds_1)
-            tsbds_4 = ts_4.get_timeseries_by_data_state(ds_1)
-            for i in range(3):
-                timestamp = start_dt + dt.timedelta(hours=i)
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_0.id,
-                        value=i,
-                    )
-                )
-            for i in range(2):
-                timestamp = start_dt + dt.timedelta(hours=i)
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_4.id,
-                        value=10 + 2 * i,
-                    )
-                )
-            db.session.commit()
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values_1 = range(3)
+        create_timeseries_data(ts_0, ds_1, timestamps, values_1)
+        values_2 = [10 + 2 * i for i in range(2)]
+        create_timeseries_data(ts_4, ds_1, timestamps[:2], values_2)
 
         with CurrentUser(admin_user):
 
@@ -285,33 +271,19 @@ class TestTimeseriesDataIO:
         ts_3 = timeseries[3]
         ts_4 = timeseries[4]
 
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=3)
 
-        # Create DB data
-        with OpenBar():
-            ds_1 = TimeseriesDataState.get(name="Raw").first()
-            tsbds_1 = ts_1.get_timeseries_by_data_state(ds_1)
-            tsbds_3 = ts_3.get_timeseries_by_data_state(ds_1)
-            for i in range(3):
-                timestamp = start_dt + dt.timedelta(hours=i)
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_1.id,
-                        value=i,
-                    )
-                )
-            for i in range(2):
-                timestamp = start_dt + dt.timedelta(hours=i)
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_3.id,
-                        value=10 + 2 * i,
-                    )
-                )
-            db.session.commit()
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values_1 = range(3)
+        create_timeseries_data(ts_1, ds_1, timestamps, values_1)
+        values_2 = [10 + 2 * i for i in range(2)]
+        create_timeseries_data(ts_3, ds_1, timestamps[:2], values_2)
 
         with CurrentUser(user_1):
 
@@ -356,31 +328,19 @@ class TestTimeseriesDataIO:
         ts_2 = timeseries[2]
         ts_4 = timeseries[4]
 
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
-        # Create DB data
-        with OpenBar():
-            ds_1 = TimeseriesDataState.get(name="Raw").first()
-            tsbds_0 = ts_0.get_timeseries_by_data_state(ds_1)
-            tsbds_4 = ts_4.get_timeseries_by_data_state(ds_1)
-        for i in range(24 * 3):
-            timestamp = start_dt + dt.timedelta(hours=i)
-            db.session.add(
-                TimeseriesData(
-                    timestamp=timestamp, timeseries_by_data_state_id=tsbds_0.id, value=i
-                )
-            )
-        for i in range(24 * 2):
-            timestamp = start_dt + dt.timedelta(hours=i)
-            db.session.add(
-                TimeseriesData(
-                    timestamp=timestamp,
-                    timeseries_by_data_state_id=tsbds_4.id,
-                    value=10 + 2 * i,
-                )
-            )
-        db.session.commit()
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values_1 = range(24 * 3)
+        create_timeseries_data(ts_0, ds_1, timestamps, values_1)
+        values_2 = [10 + 2 * i for i in range(24 * 2)]
+        create_timeseries_data(ts_4, ds_1, timestamps[: 24 * 2], values_2)
 
         with CurrentUser(admin_user):
 
@@ -750,39 +710,35 @@ class TestTimeseriesDataIO:
         assert admin_user.is_admin
         ts_0 = timeseries[0]
 
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
         # Use UTC for start_dt otherwise start_dt + timedelta does surprising things
         # https://blog.ganssle.io/articles/2018/02/aware-datetime-arithmetic.html
+        # In fact, use UTC for all for date_range
         start_dt_1 = dt.datetime(
             2020, 3, 28, tzinfo=ZoneInfo("Europe/Paris")
         ).astimezone(dt.timezone.utc)
-        end_dt_1 = dt.datetime(2020, 3, 30, tzinfo=ZoneInfo("Europe/Paris"))
+        end_dt_1 = dt.datetime(2020, 3, 30, tzinfo=ZoneInfo("Europe/Paris")).astimezone(
+            dt.timezone.utc
+        )
         start_dt_2 = dt.datetime(
             2020, 10, 24, tzinfo=ZoneInfo("Europe/Paris")
         ).astimezone(dt.timezone.utc)
-        end_dt_2 = dt.datetime(2020, 10, 26, tzinfo=ZoneInfo("Europe/Paris"))
+        end_dt_2 = dt.datetime(
+            2020, 10, 26, tzinfo=ZoneInfo("Europe/Paris")
+        ).astimezone(dt.timezone.utc)
 
-        # Create DB data
-        with OpenBar():
-            ds_1 = TimeseriesDataState.get(name="Raw").first()
-            tsbds_0 = ts_0.get_timeseries_by_data_state(ds_1)
-        for i in range(24 * 3):
-            timestamp_1 = start_dt_1 + dt.timedelta(hours=i)
-            db.session.add(
-                TimeseriesData(
-                    timestamp=timestamp_1,
-                    timeseries_by_data_state_id=tsbds_0.id,
-                    value=i,
-                )
-            )
-            timestamp_2 = start_dt_2 + dt.timedelta(hours=i)
-            db.session.add(
-                TimeseriesData(
-                    timestamp=timestamp_2,
-                    timeseries_by_data_state_id=tsbds_0.id,
-                    value=i,
-                )
-            )
-        db.session.commit()
+        timestamps_1 = pd.date_range(
+            start=start_dt_1, end=end_dt_1, inclusive="left", freq="H"
+        )
+        values_1 = range(len(timestamps_1))
+        create_timeseries_data(ts_0, ds_1, timestamps_1, values_1)
+        timestamps_2 = pd.date_range(
+            start=start_dt_2, end=end_dt_2, inclusive="left", freq="H"
+        )
+        values_2 = [10 + 2 * i for i in range(len(timestamps_2))]
+        create_timeseries_data(ts_0, ds_1, timestamps_2, values_2)
 
         with CurrentUser(admin_user):
 
@@ -823,46 +779,20 @@ class TestTimeseriesDataIO:
         ts_2 = timeseries[2]
         ts_4 = timeseries[4]
 
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         start_dt_plus_3_months = dt.datetime(2020, 4, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(days=366 + 365)
 
-        # Create DB data
-        with OpenBar():
-            ds_1 = TimeseriesDataState.get(name="Raw").first()
-            tsbds_0 = ts_0.get_timeseries_by_data_state(ds_1)
-            tsbds_4 = ts_4.get_timeseries_by_data_state(ds_1)
-
-            timestamps = pd.date_range(
-                start=start_dt, end=end_dt, inclusive="left", freq="H"
-            )
-            values = range(24 * (366 + 365))
-            in_df = pd.DataFrame(
-                {
-                    tsbds_0.id: values,
-                    tsbds_4.id: values,
-                },
-                index=pd.DatetimeIndex(timestamps, name="timestamp"),
-            )
-            in_df[tsbds_4.id] = 10 + 2 * in_df[tsbds_4.id]
-            in_df.loc[in_df.index.year != 2020, tsbds_4.id] = np.nan
-            in_df = in_df.melt(
-                value_vars=in_df.columns,
-                var_name="timeseries_by_data_state_id",
-                ignore_index=False,
-            )
-            data_rows = [
-                row
-                for row in in_df.reset_index().to_dict(orient="records")
-                if pd.notna(row["value"])
-            ]
-            query = (
-                sqla.dialects.postgresql.insert(TimeseriesData)
-                .values(data_rows)
-                .on_conflict_do_nothing()
-            )
-            db.session.execute(query)
-            db.session.commit()
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values_1 = range(24 * (366 + 365))
+        create_timeseries_data(ts_0, ds_1, timestamps, values_1)
+        values_2 = [10 + 2 * i for i in range(24 * 366)]
+        create_timeseries_data(ts_4, ds_1, timestamps[: 24 * 366], values_2)
 
         with CurrentUser(admin_user):
 
@@ -1248,33 +1178,19 @@ class TestTimeseriesDataIO:
         ts_3 = timeseries[3]
         ts_4 = timeseries[4]
 
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
-        # Create DB data
-        with OpenBar():
-            ds_1 = TimeseriesDataState.get(name="Raw").first()
-            tsbds_1 = ts_1.get_timeseries_by_data_state(ds_1)
-            tsbds_3 = ts_3.get_timeseries_by_data_state(ds_1)
-            for i in range(24 * 3):
-                timestamp = start_dt + dt.timedelta(hours=i)
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_1.id,
-                        value=i,
-                    )
-                )
-            for i in range(24 * 2):
-                timestamp = start_dt + dt.timedelta(hours=i)
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_3.id,
-                        value=10 + 2 * i,
-                    )
-                )
-            db.session.commit()
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values_1 = range(24 * 3)
+        create_timeseries_data(ts_1, ds_1, timestamps, values_1)
+        values_2 = [10 + 2 * i for i in range(24 * 2)]
+        create_timeseries_data(ts_3, ds_1, timestamps[: 24 * 2], values_2)
 
         with CurrentUser(user_1):
 
@@ -1323,25 +1239,19 @@ class TestTimeseriesDataIO:
         ts_0 = timeseries[0]
         ts_2 = timeseries[2]
 
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=3)
 
-        # Create DB data
-        with OpenBar():
-            ds_1 = TimeseriesDataState.get(name="Raw").first()
-            tsbds_0 = ts_0.get_timeseries_by_data_state(ds_1)
-            for i in range(3):
-                timestamp = start_dt + dt.timedelta(hours=i)
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_0.id,
-                        value=i,
-                    )
-                )
-            db.session.commit()
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values = range(3)
+        create_timeseries_data(ts_0, ds_1, timestamps, values)
 
-            assert db.session.query(TimeseriesData).all()
+        assert db.session.query(TimeseriesData).all()
 
         ts_l = (ts_0, ts_2)
 
@@ -1363,33 +1273,21 @@ class TestTimeseriesDataIO:
         ts_2 = timeseries[2]
         ts_3 = timeseries[3]
 
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+            tsbds_1 = ts_1.get_timeseries_by_data_state(ds_1)
+
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=3)
 
-        # Create DB data
-        with OpenBar():
-            ds_1 = TimeseriesDataState.get(name="Raw").first()
-            tsbds_0 = ts_0.get_timeseries_by_data_state(ds_1)
-            tsbds_1 = ts_1.get_timeseries_by_data_state(ds_1)
-            for i in range(3):
-                timestamp = start_dt + dt.timedelta(hours=i)
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_0.id,
-                        value=i,
-                    )
-                )
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_1.id,
-                        value=i,
-                    )
-                )
-            db.session.commit()
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values = range(3)
+        create_timeseries_data(ts_0, ds_1, timestamps, values)
+        create_timeseries_data(ts_1, ds_1, timestamps, values)
 
-            assert db.session.query(TimeseriesData).all()
+        assert db.session.query(TimeseriesData).all()
 
         ts_l = (ts_0, ts_2)
 
@@ -1618,33 +1516,19 @@ class TestTimeseriesDataCSVIO:
         ts_2 = timeseries[2]
         ts_4 = timeseries[4]
 
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=3)
 
-        # Create DB data
-        with OpenBar():
-            ds_1 = TimeseriesDataState.get(name="Raw").first()
-            tsbds_0 = ts_0.get_timeseries_by_data_state(ds_1)
-            tsbds_4 = ts_4.get_timeseries_by_data_state(ds_1)
-            for i in range(3):
-                timestamp = start_dt + dt.timedelta(hours=i)
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_0.id,
-                        value=i,
-                    )
-                )
-            for i in range(2):
-                timestamp = start_dt + dt.timedelta(hours=i)
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_4.id,
-                        value=10 + 2 * i,
-                    )
-                )
-            db.session.commit()
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values_1 = range(3)
+        create_timeseries_data(ts_0, ds_1, timestamps, values_1)
+        values_2 = [10 + 2 * i for i in range(2)]
+        create_timeseries_data(ts_4, ds_1, timestamps[:2], values_2)
 
         with CurrentUser(admin_user):
 
@@ -1677,33 +1561,19 @@ class TestTimeseriesDataCSVIO:
         ts_3 = timeseries[3]
         ts_4 = timeseries[4]
 
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=3)
 
-        # Create DB data
-        with OpenBar():
-            ds_1 = TimeseriesDataState.get(name="Raw").first()
-            tsbds_1 = ts_1.get_timeseries_by_data_state(ds_1)
-            tsbds_3 = ts_3.get_timeseries_by_data_state(ds_1)
-            for i in range(3):
-                timestamp = start_dt + dt.timedelta(hours=i)
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_1.id,
-                        value=i,
-                    )
-                )
-            for i in range(2):
-                timestamp = start_dt + dt.timedelta(hours=i)
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_3.id,
-                        value=10 + 2 * i,
-                    )
-                )
-            db.session.commit()
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values_1 = range(3)
+        create_timeseries_data(ts_1, ds_1, timestamps, values_1)
+        values_2 = [10 + 2 * i for i in range(2)]
+        create_timeseries_data(ts_3, ds_1, timestamps[:2], values_2)
 
         with CurrentUser(user_1):
 
@@ -1743,31 +1613,19 @@ class TestTimeseriesDataCSVIO:
         ts_2 = timeseries[2]
         ts_4 = timeseries[4]
 
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
-        # Create DB data
-        with OpenBar():
-            ds_1 = TimeseriesDataState.get(name="Raw").first()
-            tsbds_0 = ts_0.get_timeseries_by_data_state(ds_1)
-            tsbds_4 = ts_4.get_timeseries_by_data_state(ds_1)
-        for i in range(24 * 3):
-            timestamp = start_dt + dt.timedelta(hours=i)
-            db.session.add(
-                TimeseriesData(
-                    timestamp=timestamp, timeseries_by_data_state_id=tsbds_0.id, value=i
-                )
-            )
-        for i in range(24 * 2):
-            timestamp = start_dt + dt.timedelta(hours=i)
-            db.session.add(
-                TimeseriesData(
-                    timestamp=timestamp,
-                    timeseries_by_data_state_id=tsbds_4.id,
-                    value=10 + 2 * i,
-                )
-            )
-        db.session.commit()
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values_1 = range(24 * 3)
+        create_timeseries_data(ts_0, ds_1, timestamps, values_1)
+        values_2 = [10 + 2 * i for i in range(24 * 2)]
+        create_timeseries_data(ts_4, ds_1, timestamps[: 24 * 2], values_2)
 
         with CurrentUser(admin_user):
 
@@ -1880,33 +1738,19 @@ class TestTimeseriesDataCSVIO:
         ts_3 = timeseries[3]
         ts_4 = timeseries[4]
 
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
-        # Create DB data
-        with OpenBar():
-            ds_1 = TimeseriesDataState.get(name="Raw").first()
-            tsbds_1 = ts_1.get_timeseries_by_data_state(ds_1)
-            tsbds_3 = ts_3.get_timeseries_by_data_state(ds_1)
-            for i in range(24 * 3):
-                timestamp = start_dt + dt.timedelta(hours=i)
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_1.id,
-                        value=i,
-                    )
-                )
-            for i in range(24 * 2):
-                timestamp = start_dt + dt.timedelta(hours=i)
-                db.session.add(
-                    TimeseriesData(
-                        timestamp=timestamp,
-                        timeseries_by_data_state_id=tsbds_3.id,
-                        value=10 + 2 * i,
-                    )
-                )
-            db.session.commit()
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values_1 = range(24 * 3)
+        create_timeseries_data(ts_1, ds_1, timestamps, values_1)
+        values_2 = [10 + 2 * i for i in range(24 * 2)]
+        create_timeseries_data(ts_3, ds_1, timestamps[: 24 * 2], values_2)
 
         with CurrentUser(user_1):
 
