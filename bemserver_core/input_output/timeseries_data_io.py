@@ -169,7 +169,7 @@ class TimeseriesDataIO:
         :param list timeseries: List of timeseries
         :param TimeseriesDataState data_state: Timeseries data state
         :param str bucket_width: Bucket width of the form "value unit" where
-            value is an int and unit a string in
+            value is an integer greater than 0 and unit is a string in
             {"second", "minute", "hour", "day", "week", "month", "year"}
             E.g.: "1 day", "3 year"
         :param str aggreagation: Aggregation function. Must be one of
@@ -276,13 +276,9 @@ class TimeseriesDataIO:
 
         # Variable size intervals are aggregated to 1 x unit due to date_trunc
         # Further aggregation is achieved here in pandas
-        if bw_unit in VARIABLE_SIZE_INTERVAL_UNITS:
+        if bw_unit in VARIABLE_SIZE_INTERVAL_UNITS and bw_val != 1:
             func = PANDAS_RE_AGGREG_FUNC_MAPPING[aggregation]
-            # Pandas docs say origin TZ must match dataframe index TZ
-            origin = start_dt.astimezone(data_df.index.tzinfo)
-            data_df = data_df.resample(
-                pd_freq, origin=origin, closed="left", label="left"
-            ).agg(func)
+            data_df = data_df.resample(pd_freq, closed="left", label="left").agg(func)
 
         # Fill gaps: create expected index for gapless data then reindex
         # TODO: Drop pytz for ZoneInfo when pandas supports ZoneInfo (pandas 1.5+)
