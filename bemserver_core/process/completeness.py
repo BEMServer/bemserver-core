@@ -89,12 +89,12 @@ def compute_completeness(
             col: {
                 "count": counts_df[col].to_list(),
                 "ratio": ratios_df[col].to_list(),
-                "total count": total_counts_df[col],
-                "avg count": avg_counts_df[col],
-                "avg ratio": avg_ratios_df[col],
+                "total_count": total_counts_df[col],
+                "avg_count": avg_counts_df[col],
+                "avg_ratio": avg_ratios_df[col],
                 "interval": intervals[idx],
-                "undefined interval": undefined_intervals[idx],
-                "expected count": expected_counts_df[col].to_list(),
+                "undefined_interval": undefined_intervals[idx],
+                "expected_count": expected_counts_df[col].to_list(),
             }
             for idx, col in enumerate(ratios_df.columns)
         },
