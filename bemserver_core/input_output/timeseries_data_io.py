@@ -46,6 +46,45 @@ PANDAS_RE_AGGREG_FUNC_MAPPING = {
 }
 
 
+def gen_date_range(start_dt, end_dt, bucket_width, timezone="UTC"):
+    """Generate a complete index for a given time period and bucket width"""
+
+    bw_val, bw_unit = bucket_width.split()
+    pd_freq = f"{bw_val}{PANDAS_OFFSET_ALIASES[bw_unit]}"
+
+    # TODO: Drop pytz for ZoneInfo when pandas supports ZoneInfo (pandas 1.5+)
+    tz = pytz.timezone(timezone)
+    # Ensure start TZ, end TZ and timezone match to avoid date_range crash
+    # pytz related issue: use localize, don't pass TZ in datetime constructor
+    # https://stackoverflow.com/a/57526282/4653485
+    origin_date = start_dt.astimezone(ZoneInfo(timezone)).date()
+    if bw_unit == "year":
+        # Month: date range aligned on month start
+        range_start = tz.localize(dt.datetime(origin_date.year, 1, 1))
+    elif bw_unit == "month":
+        # Month: date range aligned on month start
+        range_start = tz.localize(dt.datetime(origin_date.year, origin_date.month, 1))
+    elif bw_unit == "week":
+        # Week: date range aligned on monday (range start may be before start_dt)
+        range_start = tz.localize(
+            dt.datetime(origin_date.year, origin_date.month, origin_date.day)
+            - dt.timedelta(days=origin_date.weekday())
+        )
+    else:
+        # Second / Minute / Hour / Day: date range aligned on exact second
+        range_start = start_dt.astimezone(tz)
+    range_end = end_dt.astimezone(tz)
+
+    return pd.date_range(
+        range_start,
+        range_end,
+        freq=pd_freq,
+        tz=tz,
+        name="timestamp",
+        inclusive="left",
+    )
+
+
 class TimeseriesDataIO:
     """Base class for TimeseriesData IO classes"""
 
@@ -211,8 +250,7 @@ class TimeseriesDataIO:
         }
 
         bw_val, bw_unit = bucket_width.split()
-        pd_unit = PANDAS_OFFSET_ALIASES[bw_unit]
-        pd_freq = f"{bw_val}{pd_unit}"
+        pd_freq = f"{bw_val}{PANDAS_OFFSET_ALIASES[bw_unit]}"
 
         if bw_unit in VARIABLE_SIZE_INTERVAL_UNITS:
             # At this stage, date_trunc can only aggregate by 1 x unit.
@@ -281,39 +319,8 @@ class TimeseriesDataIO:
             data_df = data_df.resample(pd_freq, closed="left", label="left").agg(func)
 
         # Fill gaps: create expected index for gapless data then reindex
-        # TODO: Drop pytz for ZoneInfo when pandas supports ZoneInfo (pandas 1.5+)
-        tz = pytz.timezone(timezone)
-        # Ensure start TZ, end TZ and timezone match to avoid date_range crash
-        # pytz related issue: use localize, don't pass TZ in datetime constructor
-        # https://stackoverflow.com/a/57526282/4653485
-        origin_date = start_dt.astimezone(ZoneInfo(timezone)).date()
-        if bw_unit == "year":
-            # Month: date range aligned on month start
-            range_start = tz.localize(dt.datetime(origin_date.year, 1, 1))
-        elif bw_unit == "month":
-            # Month: date range aligned on month start
-            range_start = tz.localize(
-                dt.datetime(origin_date.year, origin_date.month, 1)
-            )
-        elif bw_unit == "week":
-            # Week: date range aligned on monday (range start may be before start_dt)
-            range_start = tz.localize(
-                dt.datetime(origin_date.year, origin_date.month, origin_date.day)
-                - dt.timedelta(days=origin_date.weekday())
-            )
-        else:
-            # Second / Minute / Hour / Day: date range aligned on exact second
-            range_start = start_dt.astimezone(tz)
-        range_end = end_dt.astimezone(tz)
-        complete_index = pd.date_range(
-            range_start,
-            range_end,
-            freq=pd_freq,
-            tz=tz,
-            name="timestamp",
-            inclusive="left",
-        )
-        data_df = data_df.reindex(complete_index, fill_value=fill_value)
+        complete_idx = gen_date_range(start_dt, end_dt, bucket_width, timezone)
+        data_df = data_df.reindex(complete_idx, fill_value=fill_value)
 
         # Fill missing columns
         cls._fill_missing_columns(

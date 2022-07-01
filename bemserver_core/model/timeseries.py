@@ -559,6 +559,7 @@ def init_db_timeseries():
     """
     db.session.add_all(
         [
+            TimeseriesProperty(name="Interval", description="Expected interval (s)"),
             TimeseriesDataState(name="Raw"),
             TimeseriesDataState(name="Clean"),
         ]
