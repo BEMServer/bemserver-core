@@ -1,8 +1,11 @@
-"""Completeness"""
+"""Completeness
+
+Compute indicators/stats about data completness
+"""
 import numpy as np
 import pandas as pd
 
-from bemserver_core.model import TimeseriesDataState, TimeseriesPropertyData
+from bemserver_core.model import TimeseriesProperty, TimeseriesPropertyData
 from bemserver_core.input_output import tsdio
 from bemserver_core.input_output.timeseries_data_io import (
     gen_date_range,
@@ -42,13 +45,15 @@ def compute_completeness(
     rates_df = counts_df.div(nb_s_per_bucket, axis=0)
 
     # Get interval for each TS, guess from max ratio if interval undefined
-    interval_property = TimeseriesDataState.get(name="Raw").first()
     intervals = [
-        i_prop.value
+        interval.value
         if (
-            i_prop := TimeseriesPropertyData.get(
-                timeseries_id=ts.id, property_id=interval_property.id
-            ).first()
+            interval := (
+                TimeseriesPropertyData.get(timeseries_id=ts.id)
+                .join(TimeseriesProperty)
+                .filter(TimeseriesProperty.name == "Interval")
+                .first()
+            )
         )
         is not None
         else None
