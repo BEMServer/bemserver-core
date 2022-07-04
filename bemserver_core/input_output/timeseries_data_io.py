@@ -363,6 +363,17 @@ class TimeseriesDataIO:
         db.session.commit()
 
 
+def to_aware_datetime(timestamp_str):
+    """Create UTC datetime from timezone aware datetime as string"""
+    timestamp_dt = pd.to_datetime(timestamp_str)
+    try:
+        return timestamp_dt.astimezone(dt.timezone.utc)
+    except TypeError as exc:
+        if timestamp_dt.tzinfo is None:
+            raise TimeseriesDataCSVIOError("Timestamps must be TZ-aware") from exc
+        raise
+
+
 class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
     @classmethod
     def import_csv(cls, csv_file, data_state, campaign=None):
@@ -385,9 +396,10 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             raise TimeseriesDataCSVIOError("Missing headers line") from exc
         if "" in header:
             raise TimeseriesDataCSVIOError("Empty timeseries name or trailing comma")
-
         # Rewind cursor, otherwise header is alreay consumed and not passed to read_csv
         csv_file.seek(0)
+
+        # Load CSV into DataFrame
         try:
             data_df = pd.read_csv(csv_file, index_col=0)
         except pd.errors.EmptyDataError as exc:
@@ -395,9 +407,10 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
 
         # Index
         try:
-            data_df.index = pd.DatetimeIndex(data_df.index, name="timestamp")
+            index = pd.Series(data_df.index).apply(to_aware_datetime)
         except dateutil.parser._parser.ParserError as exc:
             raise TimeseriesDataCSVIOError("Invalid timestamp") from exc
+        data_df.index = pd.DatetimeIndex(index, name="timestamp")
 
         # Values
         try:

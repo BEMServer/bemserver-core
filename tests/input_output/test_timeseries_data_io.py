@@ -1336,7 +1336,8 @@ class TestTimeseriesDataCSVIO:
             "2020-01-01T00:00:00+00:00,0,10\n"
             "2020-01-01T01:00:00+00:00,1,11\n"
             "2020-01-01T02:00:00+00:00,2,12\n"
-            "2020-01-01T03:00:00+00:00,3,13\n"
+            # Test TZ mix
+            "2020-01-01T04:00:00+01:00,3,13\n"
         )
 
         if mode == "textiobase":
@@ -1469,7 +1470,11 @@ class TestTimeseriesDataCSVIO:
     @pytest.mark.parametrize(
         "row",
         (
+            # Value not float
             "2020-01-01T00:00:00+00:00,a",
+            # Naive datetime
+            "2020-01-01T00:00:00,12",
+            # Invalid timestamp
             "dummy,1",
         ),
     )
