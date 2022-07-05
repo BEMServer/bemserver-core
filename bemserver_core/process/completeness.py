@@ -1,8 +1,13 @@
-"""Completeness"""
+"""Completeness
+
+Compute indicators/stats about data completness
+"""
+import sqlalchemy as sqla
 import numpy as np
 import pandas as pd
 
-from bemserver_core.model import TimeseriesDataState, TimeseriesPropertyData
+from bemserver_core.database import db
+from bemserver_core.model import Timeseries, TimeseriesProperty, TimeseriesPropertyData
 from bemserver_core.input_output import tsdio
 from bemserver_core.input_output.timeseries_data_io import (
     gen_date_range,
@@ -41,20 +46,24 @@ def compute_completeness(
     # Compute data rate (count / second)
     rates_df = counts_df.div(nb_s_per_bucket, axis=0)
 
-    # Get interval for each TS, guess from max ratio if interval undefined
-    interval_property = TimeseriesDataState.get(name="Raw").first()
-    intervals = [
-        i_prop.value
-        if (
-            i_prop := TimeseriesPropertyData.get(
-                timeseries_id=ts.id, property_id=interval_property.id
-            ).first()
-        )
-        is not None
-        else None
-        for ts in timeseries
-    ]
+    # Get interval property value for each TS
+    subq = (
+        sqla.select(TimeseriesPropertyData)
+        .join(TimeseriesProperty)
+        .filter(TimeseriesProperty.name == "Interval")
+    ).subquery()
+    stmt = (
+        sqla.select(Timeseries.id, subq.c.value)
+        .outerjoin(subq)
+        .filter(Timeseries.id.in_(ts.id for ts in timeseries))
+    )
+    # Thanks to the outer join, the query produces a list of of (TS.id, interval) tuples
+    # where interval is None if not defined
+    # intervals list is of the form [(ts_1, 300), (ts_2, None), ..., (ts_N, 600)]
+    ts_interval = dict(list(db.session.execute(stmt)))
+    intervals = [ts_interval[ts.id] for ts in timeseries]
     undefined_intervals = [i is None for i in intervals]
+    # Guess interval from max ratio if undefined
     intervals = [
         # Use interval, if defined
         i if i is not None
