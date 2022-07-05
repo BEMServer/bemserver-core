@@ -17,8 +17,11 @@ from bemserver_core.process.completeness import compute_completeness
 
 
 class TestCompleteness:
+    @pytest.mark.usefixtures("timeseries_property_data")
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     def test_completeness(self, users, timeseries):
+        # Note: timeseries_property_data fixture ensures the query for interval
+        # properties doesn't get mixed-up with other properties
         admin_user = users[0]
         assert admin_user.is_admin
         # 10 min, full
