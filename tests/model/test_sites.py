@@ -1008,6 +1008,31 @@ class TestSitePropertyDataModel:
                 db.session.commit()
                 assert site_pd_4.value == exp_res
 
+    def test_site_property_data_cannot_change_type(self, users, sites, site_properties):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        site_1 = sites[0]
+        site_p_1 = site_properties[0]
+        site_p_2 = site_properties[1]
+
+        with CurrentUser(admin_user):
+            spd = SitePropertyData(
+                site_id=site_1.id,
+                site_property_id=site_p_1.id,
+                value=12,
+            )
+            assert spd.id is None
+            spd.site_property_id = site_p_2.id
+            db.session.add(spd)
+            db.session.commit()
+            assert spd.id is not None
+            with pytest.raises(
+                AttributeError,
+                match="site_property_id cannot be modified",
+            ):
+                spd.site_property_id = site_p_1.id
+
 
 class TestBuildingPropertyDataModel:
     def test_building_property_data_authorizations_as_admin(
@@ -1165,6 +1190,33 @@ class TestBuildingPropertyDataModel:
                 db.session.add(building_pd_4)
                 db.session.commit()
                 assert building_pd_4.value == exp_res
+
+    def test_building_property_data_cannot_change_type(
+        self, users, buildings, building_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        building_1 = buildings[0]
+        building_p_1 = building_properties[0]
+        building_p_2 = building_properties[1]
+
+        with CurrentUser(admin_user):
+            bpd = BuildingPropertyData(
+                building_id=building_1.id,
+                building_property_id=building_p_1.id,
+                value=12,
+            )
+            assert bpd.id is None
+            bpd.building_property_id = building_p_2.id
+            db.session.add(bpd)
+            db.session.commit()
+            assert bpd.id is not None
+            with pytest.raises(
+                AttributeError,
+                match="building_property_id cannot be modified",
+            ):
+                bpd.building_property_id = building_p_1.id
 
 
 class TestStoreyPropertyDataModel:
@@ -1324,6 +1376,33 @@ class TestStoreyPropertyDataModel:
                 db.session.commit()
                 assert storey_pd_4.value == exp_res
 
+    def test_storey_property_data_cannot_change_type(
+        self, users, storeys, storey_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        storey_1 = storeys[0]
+        storey_p_1 = storey_properties[0]
+        storey_p_2 = storey_properties[1]
+
+        with CurrentUser(admin_user):
+            spd = StoreyPropertyData(
+                storey_id=storey_1.id,
+                storey_property_id=storey_p_1.id,
+                value=12,
+            )
+            assert spd.id is None
+            spd.storey_property_id = storey_p_2.id
+            db.session.add(spd)
+            db.session.commit()
+            assert spd.id is not None
+            with pytest.raises(
+                AttributeError,
+                match="storey_property_id cannot be modified",
+            ):
+                spd.storey_property_id = storey_p_1.id
+
 
 class TestSpacePropertyDataModel:
     def test_space_property_data_authorizations_as_admin(
@@ -1482,6 +1561,33 @@ class TestSpacePropertyDataModel:
                 db.session.commit()
                 assert space_pd_4.value == exp_res
 
+    def test_space_property_data_cannot_change_type(
+        self, users, spaces, space_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        space_1 = spaces[0]
+        space_p_1 = space_properties[0]
+        space_p_2 = space_properties[1]
+
+        with CurrentUser(admin_user):
+            spd = SpacePropertyData(
+                space_id=space_1.id,
+                space_property_id=space_p_1.id,
+                value=12,
+            )
+            assert spd.id is None
+            spd.space_property_id = space_p_2.id
+            db.session.add(spd)
+            db.session.commit()
+            assert spd.id is not None
+            with pytest.raises(
+                AttributeError,
+                match="space_property_id cannot be modified",
+            ):
+                spd.space_property_id = space_p_1.id
+
 
 class TestZonePropertyDataModel:
     def test_zone_property_data_authorizations_as_admin(
@@ -1639,3 +1745,28 @@ class TestZonePropertyDataModel:
                 db.session.add(zone_pd_4)
                 db.session.commit()
                 assert zone_pd_4.value == exp_res
+
+    def test_zone_property_data_cannot_change_type(self, users, zones, zone_properties):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        zone_1 = zones[0]
+        zone_p_1 = zone_properties[0]
+        zone_p_2 = zone_properties[1]
+
+        with CurrentUser(admin_user):
+            zpd = ZonePropertyData(
+                zone_id=zone_1.id,
+                zone_property_id=zone_p_1.id,
+                value=12,
+            )
+            assert zpd.id is None
+            zpd.zone_property_id = zone_p_2.id
+            db.session.add(zpd)
+            db.session.commit()
+            assert zpd.id is not None
+            with pytest.raises(
+                AttributeError,
+                match="zone_property_id cannot be modified",
+            ):
+                zpd.zone_property_id = zone_p_1.id

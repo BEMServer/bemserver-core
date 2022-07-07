@@ -381,17 +381,26 @@ class Zone(AuthMixin, Base):
         )
 
 
-# TODO: make site_property_id read-only when created (see Site.campaign_id)
 class SitePropertyData(AuthMixin, Base):
     __tablename__ = "site_property_data"
-    __table_args__ = (sqla.UniqueConstraint("site_id", "site_property_id"),)
+    __table_args__ = (sqla.UniqueConstraint("site_id", "_site_property_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     site_id = sqla.Column(sqla.ForeignKey("sites.id"), nullable=False)
-    site_property_id = sqla.Column(
+    _site_property_id = sqla.Column(
         sqla.ForeignKey("site_properties.id"), nullable=False
     )
     value = sqla.Column(sqla.String(100), nullable=False)
+
+    @hybrid_property
+    def site_property_id(self):
+        return self._site_property_id
+
+    @site_property_id.setter
+    def site_property_id(self, site_property_id):
+        if self.id is not None:
+            raise AttributeError("site_property_id cannot be modified")
+        self._site_property_id = site_property_id
 
     site = sqla.orm.relationship(
         "Site",
@@ -432,17 +441,26 @@ class SitePropertyData(AuthMixin, Base):
                 ) from exc
 
 
-# TODO: make building_property_id read-only when created (see Building.campaign_id)
 class BuildingPropertyData(AuthMixin, Base):
     __tablename__ = "building_property_data"
-    __table_args__ = (sqla.UniqueConstraint("building_id", "building_property_id"),)
+    __table_args__ = (sqla.UniqueConstraint("building_id", "_building_property_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     building_id = sqla.Column(sqla.ForeignKey("buildings.id"), nullable=False)
-    building_property_id = sqla.Column(
+    _building_property_id = sqla.Column(
         sqla.ForeignKey("building_properties.id"), nullable=False
     )
     value = sqla.Column(sqla.String(100), nullable=False)
+
+    @hybrid_property
+    def building_property_id(self):
+        return self._building_property_id
+
+    @building_property_id.setter
+    def building_property_id(self, building_property_id):
+        if self.id is not None:
+            raise AttributeError("building_property_id cannot be modified")
+        self._building_property_id = building_property_id
 
     building = sqla.orm.relationship(
         "Building",
@@ -487,17 +505,26 @@ class BuildingPropertyData(AuthMixin, Base):
                 ) from exc
 
 
-# TODO: make storey_property_id read-only when created (see Storey.campaign_id)
 class StoreyPropertyData(AuthMixin, Base):
     __tablename__ = "storey_property_data"
-    __table_args__ = (sqla.UniqueConstraint("storey_id", "storey_property_id"),)
+    __table_args__ = (sqla.UniqueConstraint("storey_id", "_storey_property_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     storey_id = sqla.Column(sqla.ForeignKey("storeys.id"), nullable=False)
-    storey_property_id = sqla.Column(
+    _storey_property_id = sqla.Column(
         sqla.ForeignKey("storey_properties.id"), nullable=False
     )
     value = sqla.Column(sqla.String(100), nullable=False)
+
+    @hybrid_property
+    def storey_property_id(self):
+        return self._storey_property_id
+
+    @storey_property_id.setter
+    def storey_property_id(self, storey_property_id):
+        if self.id is not None:
+            raise AttributeError("storey_property_id cannot be modified")
+        self._storey_property_id = storey_property_id
 
     storey = sqla.orm.relationship(
         "Storey",
@@ -538,17 +565,26 @@ class StoreyPropertyData(AuthMixin, Base):
                 ) from exc
 
 
-# TODO: make space_property_id read-only when created (see Space.campaign_id)
 class SpacePropertyData(AuthMixin, Base):
     __tablename__ = "space_property_data"
-    __table_args__ = (sqla.UniqueConstraint("space_id", "space_property_id"),)
+    __table_args__ = (sqla.UniqueConstraint("space_id", "_space_property_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     space_id = sqla.Column(sqla.ForeignKey("spaces.id"), nullable=False)
-    space_property_id = sqla.Column(
+    _space_property_id = sqla.Column(
         sqla.ForeignKey("space_properties.id"), nullable=False
     )
     value = sqla.Column(sqla.String(100), nullable=False)
+
+    @hybrid_property
+    def space_property_id(self):
+        return self._space_property_id
+
+    @space_property_id.setter
+    def space_property_id(self, space_property_id):
+        if self.id is not None:
+            raise AttributeError("space_property_id cannot be modified")
+        self._space_property_id = space_property_id
 
     space = sqla.orm.relationship(
         "Space",
@@ -589,17 +625,26 @@ class SpacePropertyData(AuthMixin, Base):
                 ) from exc
 
 
-# TODO: make zone_property_id read-only when created (see Zone.campaign_id)
 class ZonePropertyData(AuthMixin, Base):
     __tablename__ = "zone_property_data"
-    __table_args__ = (sqla.UniqueConstraint("zone_id", "zone_property_id"),)
+    __table_args__ = (sqla.UniqueConstraint("zone_id", "_zone_property_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     zone_id = sqla.Column(sqla.ForeignKey("zones.id"), nullable=False)
-    zone_property_id = sqla.Column(
+    _zone_property_id = sqla.Column(
         sqla.ForeignKey("zone_properties.id"), nullable=False
     )
     value = sqla.Column(sqla.String(100), nullable=False)
+
+    @hybrid_property
+    def zone_property_id(self):
+        return self._zone_property_id
+
+    @zone_property_id.setter
+    def zone_property_id(self, zone_property_id):
+        if self.id is not None:
+            raise AttributeError("zone_property_id cannot be modified")
+        self._zone_property_id = zone_property_id
 
     zone = sqla.orm.relationship(
         "Zone",
