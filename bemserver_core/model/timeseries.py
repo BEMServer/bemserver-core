@@ -262,12 +262,12 @@ class Timeseries(AuthMixin, Base):
 
         :param list timeseries: List of timeseries IDs
         """
-        ts_d = {col: Timeseries.get_by_id(col) for col in timeseries}
+        ts_d = {ts_id: Timeseries.get_by_id(ts_id) for ts_id in timeseries}
         if None in ts_d.values():
             raise TimeseriesNotFoundError(
                 f"Unknown timeseries: {[k for k in ts_d.keys() if ts_d[k] is None]}"
             )
-        return ts_d.values()
+        return list(ts_d.values())
 
     @classmethod
     def get_many_by_name(cls, campaign, timeseries):
@@ -276,12 +276,12 @@ class Timeseries(AuthMixin, Base):
         :param list timeseries: List of timeseries names
         :param Campaign campaign: Campaign
         """
-        ts_d = {col: Timeseries.get_by_name(campaign, col) for col in timeseries}
+        ts_d = {ts_id: Timeseries.get_by_name(campaign, ts_id) for ts_id in timeseries}
         if None in ts_d.values():
             raise TimeseriesNotFoundError(
                 f"Unknown timeseries: {[k for k in ts_d.keys() if ts_d[k] is None]}"
             )
-        return ts_d.values()
+        return list(ts_d.values())
 
 
 class TimeseriesPropertyData(AuthMixin, Base):
