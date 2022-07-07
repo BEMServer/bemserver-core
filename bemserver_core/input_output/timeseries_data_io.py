@@ -141,7 +141,7 @@ class TimeseriesDataIO:
 
     @classmethod
     def get_timeseries_data(
-        cls, start_dt, end_dt, timeseries, data_state, *, col_label="name"
+        cls, start_dt, end_dt, timeseries, data_state, *, col_label="id"
     ):
         """Export timeseries data
 
@@ -150,7 +150,7 @@ class TimeseriesDataIO:
         :param list timeseries: List of timeseries
         :param TimeseriesDataState data_state: Timeseries data state
         :param string col_label: Timeseries attribute to use for column header.
-            Should be "id" or "name". Default: "name".
+            Should be "id" or "name". Default: "id".
 
         Returns a dataframe.
         """
@@ -199,7 +199,7 @@ class TimeseriesDataIO:
         aggregation="avg",
         *,
         timezone="UTC",
-        col_label="name",
+        col_label="id",
     ):
         """Bucket timeseries data and export
 
@@ -215,7 +215,7 @@ class TimeseriesDataIO:
             "avg", "sum", "min", "max" and "count".
         :param str timezone: IANA timezone
         :param string col_label: Timeseries attribute to use for column header.
-            Should be "id" or "name". Default: "name".
+            Should be "id" or "name". Default: "id".
 
         The time alignment of the bucket depends on the bucket width unit.
         - For a size bucket width unit of day or smaller, the aggregation is
