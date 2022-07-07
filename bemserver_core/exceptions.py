@@ -29,6 +29,10 @@ class TimeseriesDataIOError(BEMServerCoreIOError):
     """Timeseries data IO error"""
 
 
+class TimeseriesDataIOInvalidBucketWidthError(TimeseriesDataIOError):
+    """Timeseries data IO invalid bucket width error"""
+
+
 class TimeseriesDataIOInvalidAggregationError(TimeseriesDataIOError):
     """Timeseries data IO invalid aggregation error"""
 

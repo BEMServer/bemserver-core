@@ -16,13 +16,18 @@ from bemserver_core.input_output.timeseries_data_io import (
 
 
 def compute_completeness(
-    start_dt, end_dt, timeseries, data_state, bucket_width, timezone="UTC"
+    start_dt,
+    end_dt,
+    timeseries,
+    data_state,
+    bucket_width_value,
+    bucket_width_unit,
+    timezone="UTC",
 ):
-    bw_val, bw_unit = bucket_width.split()
-    pd_freq = f"{bw_val}{PANDAS_OFFSET_ALIASES[bw_unit]}"
+    pd_freq = f"{bucket_width_value}{PANDAS_OFFSET_ALIASES[bucket_width_unit]}"
 
     # Generate seconds per bucket (may not be constant due to variable size buckets)
-    seconds = gen_date_range(start_dt, end_dt, "1 second", timezone)
+    seconds = gen_date_range(start_dt, end_dt, 1, "second", timezone)
     nb_s_per_bucket = (
         pd.DataFrame({"count": 1}, index=seconds)
         .resample(pd_freq, closed="left", label="left")
@@ -35,10 +40,10 @@ def compute_completeness(
         end_dt,
         timeseries,
         data_state,
-        bucket_width,
+        bucket_width_value,
+        bucket_width_unit,
         "count",
         timezone=timezone,
-        col_label="name",
     )
     avg_counts_df = counts_df.mean()
     total_counts_df = counts_df.sum()
@@ -96,6 +101,7 @@ def compute_completeness(
         "timestamps": ratios_df.index.to_list(),
         "timeseries": {
             col: {
+                "name": timeseries[idx].name,
                 "count": counts_df[col].to_list(),
                 "ratio": ratios_df[col].to_list(),
                 "total_count": total_counts_df[col],

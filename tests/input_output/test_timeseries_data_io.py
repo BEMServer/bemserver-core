@@ -19,6 +19,7 @@ from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
+    TimeseriesDataIOInvalidBucketWidthError,
     TimeseriesDataIOInvalidAggregationError,
     TimeseriesDataCSVIOError,
     TimeseriesNotFoundError,
@@ -352,7 +353,8 @@ class TestTimeseriesDataIO:
                 end_dt,
                 ts_l,
                 ds_1,
-                "1 day",
+                1,
+                "day",
                 "count",
                 col_label="name",
             )
@@ -383,7 +385,8 @@ class TestTimeseriesDataIO:
                 end_dt,
                 ts_l,
                 ds_1,
-                "2 day",
+                2,
+                "day",
                 "count",
                 col_label="name",
             )
@@ -413,7 +416,8 @@ class TestTimeseriesDataIO:
                 end_dt + dt.timedelta(days=3),
                 ts_l,
                 ds_1,
-                "2 day",
+                2,
+                "day",
                 "count",
                 col_label="name",
             )
@@ -444,7 +448,8 @@ class TestTimeseriesDataIO:
                 end_dt,
                 ts_l,
                 ds_1,
-                "1 day",
+                1,
+                "day",
                 "count",
                 col_label="name",
             )
@@ -476,7 +481,8 @@ class TestTimeseriesDataIO:
                 dt.datetime(2020, 1, 9, tzinfo=ZoneInfo("Europe/Paris")),
                 ts_l,
                 ds_1,
-                "1 week",
+                1,
+                "week",
                 "count",
                 col_label="name",
                 timezone="Europe/Paris",
@@ -507,7 +513,8 @@ class TestTimeseriesDataIO:
                 end_dt,
                 ts_l,
                 ds_1,
-                "12 hour",
+                12,
+                "hour",
                 "count",
                 col_label="name",
             )
@@ -540,7 +547,8 @@ class TestTimeseriesDataIO:
                 end_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
                 ts_l,
                 ds_1,
-                "1 day",
+                1,
+                "day",
                 timezone="Europe/Paris",
                 col_label="name",
             )
@@ -571,7 +579,8 @@ class TestTimeseriesDataIO:
                 end_dt + dt.timedelta(days=1),
                 ts_l,
                 ds_1,
-                "1 day",
+                1,
+                "day",
                 "sum",
                 col_label="name",
             )
@@ -603,7 +612,8 @@ class TestTimeseriesDataIO:
                 end_dt + dt.timedelta(days=1),
                 ts_l,
                 ds_1,
-                "1 day",
+                1,
+                "day",
                 "min",
                 col_label="name",
             )
@@ -635,7 +645,8 @@ class TestTimeseriesDataIO:
                 end_dt + dt.timedelta(days=1),
                 ts_l,
                 ds_1,
-                "1 day",
+                1,
+                "day",
                 "max",
                 col_label="name",
             )
@@ -667,7 +678,8 @@ class TestTimeseriesDataIO:
                 end_dt,
                 ts_l,
                 ds_1,
-                "1 day",
+                1,
+                "day",
                 "count",
                 col_label="id",
             )
@@ -698,8 +710,31 @@ class TestTimeseriesDataIO:
                     end_dt,
                     ts_l,
                     ds_1,
-                    "1 day",
-                    "lol",
+                    1,
+                    "day",
+                    "dummy",
+                )
+
+            with pytest.raises(TimeseriesDataIOInvalidBucketWidthError):
+                tsdio.get_timeseries_buckets_data(
+                    start_dt,
+                    end_dt,
+                    ts_l,
+                    ds_1,
+                    -1,
+                    "day",
+                    "avg",
+                )
+
+            with pytest.raises(TimeseriesDataIOInvalidBucketWidthError):
+                tsdio.get_timeseries_buckets_data(
+                    start_dt,
+                    end_dt,
+                    ts_l,
+                    ds_1,
+                    1,
+                    "dummy",
+                    "avg",
                 )
 
     def test_timeseries_data_io_get_timeseries_buckets_data_fixed_size_dst_as_admin(
@@ -742,7 +777,7 @@ class TestTimeseriesDataIO:
 
         with CurrentUser(admin_user):
 
-            args = [(ts_0,), ds_1, "1 day", "count"]
+            args = [(ts_0,), ds_1, 1, "day", "count"]
             kwargs = {"timezone": "Europe/Paris", "col_label": "name"}
 
             # local TZ count 1 day - Spring forward
@@ -800,7 +835,7 @@ class TestTimeseriesDataIO:
 
             # Export CSV: UTC count year
             data_df = tsdio.get_timeseries_buckets_data(
-                start_dt, end_dt, ts_l, ds_1, "1 year", "count", col_label="name"
+                start_dt, end_dt, ts_l, ds_1, 1, "year", "count", col_label="name"
             )
 
             index = pd.DatetimeIndex(
@@ -828,7 +863,8 @@ class TestTimeseriesDataIO:
                 end_dt + dt.timedelta(days=100),
                 ts_l,
                 ds_1,
-                "1 year",
+                1,
+                "year",
                 "count",
                 col_label="name",
             )
@@ -855,7 +891,7 @@ class TestTimeseriesDataIO:
 
             # Export CSV: UTC count 2 year
             data_df = tsdio.get_timeseries_buckets_data(
-                start_dt, end_dt, ts_l, ds_1, "2 year", "count", col_label="name"
+                start_dt, end_dt, ts_l, ds_1, 2, "year", "count", col_label="name"
             )
 
             index = pd.DatetimeIndex(
@@ -882,7 +918,8 @@ class TestTimeseriesDataIO:
                 end_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
                 ts_l,
                 ds_1,
-                "1 year",
+                1,
+                "year",
                 "count",
                 timezone="Europe/Paris",
                 col_label="name",
@@ -924,7 +961,8 @@ class TestTimeseriesDataIO:
                 start_dt_plus_3_months,
                 ts_l,
                 ds_1,
-                "1 month",
+                1,
+                "month",
                 "avg",
                 col_label="name",
             )
@@ -957,7 +995,8 @@ class TestTimeseriesDataIO:
                 start_dt_plus_3_months,
                 ts_l,
                 ds_1,
-                "1 month",
+                1,
+                "month",
                 "avg",
                 col_label="name",
             )
@@ -988,7 +1027,8 @@ class TestTimeseriesDataIO:
                 start_dt_plus_3_months,
                 ts_l,
                 ds_1,
-                "2 month",
+                2,
+                "month",
                 "avg",
                 col_label="name",
             )
@@ -1018,7 +1058,8 @@ class TestTimeseriesDataIO:
                 start_dt_plus_3_months,
                 ts_l,
                 ds_1,
-                "1 month",
+                1,
+                "month",
                 "avg",
                 timezone="Europe/Paris",
                 col_label="name",
@@ -1051,7 +1092,8 @@ class TestTimeseriesDataIO:
                 start_dt_plus_3_months,
                 ts_l,
                 ds_1,
-                "1 month",
+                1,
+                "month",
                 "sum",
                 col_label="name",
             )
@@ -1082,7 +1124,8 @@ class TestTimeseriesDataIO:
                 start_dt_plus_3_months,
                 ts_l,
                 ds_1,
-                "1 month",
+                1,
+                "month",
                 "min",
                 col_label="name",
             )
@@ -1113,7 +1156,8 @@ class TestTimeseriesDataIO:
                 start_dt_plus_3_months,
                 ts_l,
                 ds_1,
-                "1 month",
+                1,
+                "month",
                 "max",
                 col_label="name",
             )
@@ -1140,7 +1184,7 @@ class TestTimeseriesDataIO:
 
             # Export CSV: UTC count year by ID
             data_df = tsdio.get_timeseries_buckets_data(
-                start_dt, end_dt, ts_l, ds_1, "1 year", "count", col_label="id"
+                start_dt, end_dt, ts_l, ds_1, 1, "year", "count", col_label="id"
             )
 
             index = pd.DatetimeIndex(
@@ -1167,7 +1211,7 @@ class TestTimeseriesDataIO:
     @pytest.mark.usefixtures("user_groups_by_campaigns")
     @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
     @pytest.mark.parametrize("col_label", ("id", "name"))
-    def test_timeseries_data_io_export_csv_bucket_as_user(
+    def test_timeseries_data_io_get_timeseries_buckets_data_as_user(
         self, users, timeseries, col_label
     ):
         user_1 = users[1]
@@ -1198,7 +1242,7 @@ class TestTimeseriesDataIO:
 
             with pytest.raises(BEMServerAuthorizationError):
                 tsdio.get_timeseries_buckets_data(
-                    start_dt, end_dt, ts_l, ds_1, "1 day", col_label=col_label
+                    start_dt, end_dt, ts_l, ds_1, 1, "day", col_label=col_label
                 )
 
             # Export CSV: UTC avg
@@ -1206,7 +1250,7 @@ class TestTimeseriesDataIO:
             ts_l = (ts_1, ts_3)
 
             data_df = tsdio.get_timeseries_buckets_data(
-                start_dt, end_dt, ts_l, ds_1, "1 day", col_label=col_label
+                start_dt, end_dt, ts_l, ds_1, 1, "day", col_label=col_label
             )
 
             index = pd.DatetimeIndex(
@@ -1643,7 +1687,7 @@ class TestTimeseriesDataCSVIO:
 
             # Export CSV: UTC avg
             data = tsdcsvio.export_csv_bucket(
-                start_dt, end_dt, ts_l, ds_1, "1 day", col_label=col_label
+                start_dt, end_dt, ts_l, ds_1, 1, "day", col_label=col_label
             )
             assert data == header + (
                 "2020-01-01T00:00:00+0000,11.5,,33.0\n"
@@ -1657,7 +1701,8 @@ class TestTimeseriesDataCSVIO:
                 end_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
                 ts_l,
                 ds_1,
-                "1 day",
+                1,
+                "day",
                 timezone="Europe/Paris",
                 col_label=col_label,
             )
@@ -1673,7 +1718,8 @@ class TestTimeseriesDataCSVIO:
                 end_dt,
                 ts_l,
                 ds_1,
-                "1 day",
+                1,
+                "day",
                 "sum",
                 col_label=col_label,
             )
@@ -1689,7 +1735,8 @@ class TestTimeseriesDataCSVIO:
                 end_dt,
                 ts_l,
                 ds_1,
-                "1 day",
+                1,
+                "day",
                 "min",
                 col_label=col_label,
             )
@@ -1705,7 +1752,8 @@ class TestTimeseriesDataCSVIO:
                 end_dt,
                 ts_l,
                 ds_1,
-                "1 day",
+                1,
+                "day",
                 "max",
                 col_label=col_label,
             )
@@ -1722,7 +1770,8 @@ class TestTimeseriesDataCSVIO:
                     end_dt,
                     ts_l,
                     ds_1,
-                    "1 day",
+                    1,
+                    "day",
                     "lol",
                     col_label=col_label,
                 )
@@ -1763,7 +1812,7 @@ class TestTimeseriesDataCSVIO:
 
             with pytest.raises(BEMServerAuthorizationError):
                 data = tsdcsvio.export_csv_bucket(
-                    start_dt, end_dt, ts_l, ds_1, "1 day", col_label=col_label
+                    start_dt, end_dt, ts_l, ds_1, 1, "day", col_label=col_label
                 )
 
             # Export CSV: UTC avg
@@ -1776,7 +1825,7 @@ class TestTimeseriesDataCSVIO:
             ts_l = (ts_1, ts_3)
 
             data = tsdcsvio.export_csv_bucket(
-                start_dt, end_dt, ts_l, ds_1, "1 day", col_label=col_label
+                start_dt, end_dt, ts_l, ds_1, 1, "day", col_label=col_label
             )
             assert data == header + (
                 "2020-01-01T00:00:00+0000,11.5,33.0\n"
