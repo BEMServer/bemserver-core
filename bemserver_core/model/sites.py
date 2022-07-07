@@ -52,7 +52,7 @@ class SiteProperty(AuthMixin, Base):
     __tablename__ = "site_properties"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    structural_element_property_id = sqla.Column(
+    _structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
     structural_element_property = sqla.orm.relationship(
@@ -60,12 +60,22 @@ class SiteProperty(AuthMixin, Base):
         backref=sqla.orm.backref("site_properties", cascade="all, delete-orphan"),
     )
 
+    @hybrid_property
+    def structural_element_property_id(self):
+        return self._structural_element_property_id
+
+    @structural_element_property_id.setter
+    def structural_element_property_id(self, structural_element_property_id):
+        if self.id is not None:
+            raise AttributeError("structural_element_property_id cannot be modified")
+        self._structural_element_property_id = structural_element_property_id
+
 
 class BuildingProperty(AuthMixin, Base):
     __tablename__ = "building_properties"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    structural_element_property_id = sqla.Column(
+    _structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
     structural_element_property = sqla.orm.relationship(
@@ -73,12 +83,22 @@ class BuildingProperty(AuthMixin, Base):
         backref=sqla.orm.backref("building_properties", cascade="all, delete-orphan"),
     )
 
+    @hybrid_property
+    def structural_element_property_id(self):
+        return self._structural_element_property_id
+
+    @structural_element_property_id.setter
+    def structural_element_property_id(self, structural_element_property_id):
+        if self.id is not None:
+            raise AttributeError("structural_element_property_id cannot be modified")
+        self._structural_element_property_id = structural_element_property_id
+
 
 class StoreyProperty(AuthMixin, Base):
     __tablename__ = "storey_properties"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    structural_element_property_id = sqla.Column(
+    _structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
     structural_element_property = sqla.orm.relationship(
@@ -86,12 +106,22 @@ class StoreyProperty(AuthMixin, Base):
         backref=sqla.orm.backref("storey_properties", cascade="all, delete-orphan"),
     )
 
+    @hybrid_property
+    def structural_element_property_id(self):
+        return self._structural_element_property_id
+
+    @structural_element_property_id.setter
+    def structural_element_property_id(self, structural_element_property_id):
+        if self.id is not None:
+            raise AttributeError("structural_element_property_id cannot be modified")
+        self._structural_element_property_id = structural_element_property_id
+
 
 class SpaceProperty(AuthMixin, Base):
     __tablename__ = "space_properties"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    structural_element_property_id = sqla.Column(
+    _structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
     structural_element_property = sqla.orm.relationship(
@@ -99,18 +129,38 @@ class SpaceProperty(AuthMixin, Base):
         backref=sqla.orm.backref("space_properties", cascade="all, delete-orphan"),
     )
 
+    @hybrid_property
+    def structural_element_property_id(self):
+        return self._structural_element_property_id
+
+    @structural_element_property_id.setter
+    def structural_element_property_id(self, structural_element_property_id):
+        if self.id is not None:
+            raise AttributeError("structural_element_property_id cannot be modified")
+        self._structural_element_property_id = structural_element_property_id
+
 
 class ZoneProperty(AuthMixin, Base):
     __tablename__ = "zone_properties"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    structural_element_property_id = sqla.Column(
+    _structural_element_property_id = sqla.Column(
         sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
     )
     structural_element_property = sqla.orm.relationship(
         "StructuralElementProperty",
         backref=sqla.orm.backref("zone_properties", cascade="all, delete-orphan"),
     )
+
+    @hybrid_property
+    def structural_element_property_id(self):
+        return self._structural_element_property_id
+
+    @structural_element_property_id.setter
+    def structural_element_property_id(self, structural_element_property_id):
+        if self.id is not None:
+            raise AttributeError("structural_element_property_id cannot be modified")
+        self._structural_element_property_id = structural_element_property_id
 
 
 class Site(AuthMixin, Base):

@@ -209,7 +209,11 @@ class TestSitePropertyModel:
             SiteProperty.get_by_id(site_p_1.id)
             site_ps = list(SiteProperty.get())
             assert len(site_ps) == 1
-            site_p_1.update(structural_element_property_id=sep_2.id)
+            with pytest.raises(
+                AttributeError,
+                match="structural_element_property_id cannot be modified",
+            ):
+                site_p_1.update(structural_element_property_id=sep_2.id)
             site_p_1.delete()
             db.session.commit()
 
@@ -232,6 +236,30 @@ class TestSitePropertyModel:
             with pytest.raises(BEMServerAuthorizationError):
                 site_p_1.delete()
 
+    def test_site_property_cannot_change_once_created(
+        self, users, structural_element_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+
+        with CurrentUser(admin_user):
+            sp = SiteProperty(
+                structural_element_property_id=sep_1.id,
+            )
+            assert sp.id is None
+            sp.structural_element_property_id = sep_2.id
+            db.session.add(sp)
+            db.session.commit()
+            assert sp.id is not None
+            with pytest.raises(
+                AttributeError,
+                match="structural_element_property_id cannot be modified",
+            ):
+                sp.structural_element_property_id = sep_1.id
+
 
 class TestBuildingPropertyModel:
     def test_building_property_authorizations_as_admin(
@@ -250,7 +278,11 @@ class TestBuildingPropertyModel:
             BuildingProperty.get_by_id(building_p_1.id)
             building_ps = list(BuildingProperty.get())
             assert len(building_ps) == 1
-            building_p_1.update(structural_element_property_id=sep_2.id)
+            with pytest.raises(
+                AttributeError,
+                match="structural_element_property_id cannot be modified",
+            ):
+                building_p_1.update(structural_element_property_id=sep_2.id)
             building_p_1.delete()
             db.session.commit()
 
@@ -273,6 +305,30 @@ class TestBuildingPropertyModel:
             with pytest.raises(BEMServerAuthorizationError):
                 building_p_1.delete()
 
+    def test_building_property_cannot_change_once_created(
+        self, users, structural_element_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+
+        with CurrentUser(admin_user):
+            bp = BuildingProperty(
+                structural_element_property_id=sep_1.id,
+            )
+            assert bp.id is None
+            bp.structural_element_property_id = sep_2.id
+            db.session.add(bp)
+            db.session.commit()
+            assert bp.id is not None
+            with pytest.raises(
+                AttributeError,
+                match="structural_element_property_id cannot be modified",
+            ):
+                bp.structural_element_property_id = sep_1.id
+
 
 class TestStoreyPropertyModel:
     def test_storey_property_authorizations_as_admin(
@@ -291,7 +347,11 @@ class TestStoreyPropertyModel:
             StoreyProperty.get_by_id(storey_p_1.id)
             storey_ps = list(StoreyProperty.get())
             assert len(storey_ps) == 1
-            storey_p_1.update(structural_element_property_id=sep_2.id)
+            with pytest.raises(
+                AttributeError,
+                match="structural_element_property_id cannot be modified",
+            ):
+                storey_p_1.update(structural_element_property_id=sep_2.id)
             storey_p_1.delete()
             db.session.commit()
 
@@ -314,6 +374,30 @@ class TestStoreyPropertyModel:
             with pytest.raises(BEMServerAuthorizationError):
                 storey_p_1.delete()
 
+    def test_storey_property_cannot_change_once_created(
+        self, users, structural_element_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+
+        with CurrentUser(admin_user):
+            sp = StoreyProperty(
+                structural_element_property_id=sep_1.id,
+            )
+            assert sp.id is None
+            sp.structural_element_property_id = sep_2.id
+            db.session.add(sp)
+            db.session.commit()
+            assert sp.id is not None
+            with pytest.raises(
+                AttributeError,
+                match="structural_element_property_id cannot be modified",
+            ):
+                sp.structural_element_property_id = sep_1.id
+
 
 class TestSpacePropertyModel:
     def test_space_property_authorizations_as_admin(
@@ -332,7 +416,11 @@ class TestSpacePropertyModel:
             SpaceProperty.get_by_id(space_p_1.id)
             space_ps = list(SpaceProperty.get())
             assert len(space_ps) == 1
-            space_p_1.update(structural_element_property_id=sep_2.id)
+            with pytest.raises(
+                AttributeError,
+                match="structural_element_property_id cannot be modified",
+            ):
+                space_p_1.update(structural_element_property_id=sep_2.id)
             space_p_1.delete()
             db.session.commit()
 
@@ -355,6 +443,30 @@ class TestSpacePropertyModel:
             with pytest.raises(BEMServerAuthorizationError):
                 space_p_1.delete()
 
+    def test_space_property_cannot_change_once_created(
+        self, users, structural_element_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+
+        with CurrentUser(admin_user):
+            sp = SpaceProperty(
+                structural_element_property_id=sep_1.id,
+            )
+            assert sp.id is None
+            sp.structural_element_property_id = sep_2.id
+            db.session.add(sp)
+            db.session.commit()
+            assert sp.id is not None
+            with pytest.raises(
+                AttributeError,
+                match="structural_element_property_id cannot be modified",
+            ):
+                sp.structural_element_property_id = sep_1.id
+
 
 class TestZonePropertyModel:
     def test_zone_property_authorizations_as_admin(
@@ -373,7 +485,11 @@ class TestZonePropertyModel:
             ZoneProperty.get_by_id(zone_p_1.id)
             zone_ps = list(ZoneProperty.get())
             assert len(zone_ps) == 1
-            zone_p_1.update(structural_element_property_id=sep_2.id)
+            with pytest.raises(
+                AttributeError,
+                match="structural_element_property_id cannot be modified",
+            ):
+                zone_p_1.update(structural_element_property_id=sep_2.id)
             zone_p_1.delete()
             db.session.commit()
 
@@ -395,6 +511,30 @@ class TestZonePropertyModel:
                 zone_p_1.update(structural_element_property_id=sep_2.id)
             with pytest.raises(BEMServerAuthorizationError):
                 zone_p_1.delete()
+
+    def test_zone_property_cannot_change_once_created(
+        self, users, structural_element_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+
+        with CurrentUser(admin_user):
+            zp = ZoneProperty(
+                structural_element_property_id=sep_1.id,
+            )
+            assert zp.id is None
+            zp.structural_element_property_id = sep_2.id
+            db.session.add(zp)
+            db.session.commit()
+            assert zp.id is not None
+            with pytest.raises(
+                AttributeError,
+                match="structural_element_property_id cannot be modified",
+            ):
+                zp.structural_element_property_id = sep_1.id
 
 
 class TestSiteModel:
