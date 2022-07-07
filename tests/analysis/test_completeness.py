@@ -93,7 +93,8 @@ class TestCompleteness:
                     dt.datetime(2020, 2, 1, tzinfo=dt.timezone.utc),
                 ],
                 "timeseries": {
-                    "Timeseries 0": {
+                    1: {
+                        "name": "Timeseries 0",
                         "avg_count": 4320.0,
                         "avg_ratio": 1.0,
                         "count": [4464, 4176],
@@ -103,7 +104,8 @@ class TestCompleteness:
                         "total_count": 8640,
                         "undefined_interval": False,
                     },
-                    "Timeseries 1": {
+                    2: {
+                        "name": "Timeseries 1",
                         "avg_count": 3846.5,
                         "avg_ratio": 0.8939292114695341,
                         "count": [3517, 4176],
@@ -113,7 +115,8 @@ class TestCompleteness:
                         "total_count": 7693,
                         "undefined_interval": False,
                     },
-                    "Timeseries 2": {
+                    3: {
+                        "name": "Timeseries 2",
                         "avg_count": 6028.0,
                         "avg_ratio": 2.790739710789766,
                         "count": [6229, 5827],
@@ -123,7 +126,8 @@ class TestCompleteness:
                         "total_count": 12056,
                         "undefined_interval": False,
                     },
-                    "Timeseries 3": {
+                    4: {
+                        "name": "Timeseries 3",
                         "avg_count": 4672.0,
                         "avg_ratio": 0.782314808151154,
                         "count": [3517, 5827],
@@ -133,7 +137,8 @@ class TestCompleteness:
                         "total_count": 9344,
                         "undefined_interval": True,
                     },
-                    "Timeseries 4": {
+                    5: {
+                        "name": "Timeseries 4",
                         "avg_count": 0.0,
                         "avg_ratio": None,
                         "count": [0, 0],
@@ -154,36 +159,36 @@ class TestCompleteness:
             assert ret["timestamps"][-1] == dt.datetime(
                 2020, 2, 29, tzinfo=dt.timezone.utc
             )
-            assert ret["timeseries"]["Timeseries 0"]["avg_count"] == 144.0
-            assert ret["timeseries"]["Timeseries 0"]["total_count"] == 8640
-            assert ret["timeseries"]["Timeseries 0"]["avg_ratio"] == 1.0
-            assert ret["timeseries"]["Timeseries 0"]["interval"] == 600.0
-            assert ret["timeseries"]["Timeseries 0"]["undefined_interval"] is False
-            assert ret["timeseries"]["Timeseries 0"]["expected_count"] == 60 * [144.0]
-            assert ret["timeseries"]["Timeseries 1"]["avg_count"] == 128.21666666666667
-            assert ret["timeseries"]["Timeseries 1"]["total_count"] == 7693
-            assert ret["timeseries"]["Timeseries 1"]["avg_ratio"] == 0.8903935185185186
-            assert ret["timeseries"]["Timeseries 1"]["interval"] == 600.0
-            assert ret["timeseries"]["Timeseries 1"]["undefined_interval"] is False
-            assert ret["timeseries"]["Timeseries 1"]["expected_count"] == 60 * [144.0]
-            assert ret["timeseries"]["Timeseries 2"]["avg_count"] == 200.93333333333334
-            assert ret["timeseries"]["Timeseries 2"]["total_count"] == 12056
-            assert ret["timeseries"]["Timeseries 2"]["avg_ratio"] == 2.79074074074074
-            assert ret["timeseries"]["Timeseries 2"]["interval"] == 1200.0
-            assert ret["timeseries"]["Timeseries 2"]["undefined_interval"] is False
-            assert ret["timeseries"]["Timeseries 2"]["expected_count"] == 60 * [72.0]
-            assert ret["timeseries"]["Timeseries 3"]["avg_count"] == 155.73333333333332
-            assert ret["timeseries"]["Timeseries 3"]["total_count"] == 9344
-            assert ret["timeseries"]["Timeseries 3"]["avg_ratio"] == 0.7747927031509121
-            assert ret["timeseries"]["Timeseries 3"]["interval"] == 429.85074626865674
-            assert ret["timeseries"]["Timeseries 3"]["undefined_interval"] is True
-            assert ret["timeseries"]["Timeseries 3"]["expected_count"] == 60 * [201.0]
-            assert ret["timeseries"]["Timeseries 4"]["avg_count"] == 0.0
-            assert ret["timeseries"]["Timeseries 4"]["total_count"] == 0
-            assert ret["timeseries"]["Timeseries 4"]["avg_ratio"] is None
-            assert ret["timeseries"]["Timeseries 4"]["interval"] is None
-            assert ret["timeseries"]["Timeseries 4"]["undefined_interval"] is True
-            assert ret["timeseries"]["Timeseries 4"]["expected_count"] == 60 * [None]
+            assert ret["timeseries"][1]["avg_count"] == 144.0
+            assert ret["timeseries"][1]["total_count"] == 8640
+            assert ret["timeseries"][1]["avg_ratio"] == 1.0
+            assert ret["timeseries"][1]["interval"] == 600.0
+            assert ret["timeseries"][1]["undefined_interval"] is False
+            assert ret["timeseries"][1]["expected_count"] == 60 * [144.0]
+            assert ret["timeseries"][2]["avg_count"] == 128.21666666666667
+            assert ret["timeseries"][2]["total_count"] == 7693
+            assert ret["timeseries"][2]["avg_ratio"] == 0.8903935185185186
+            assert ret["timeseries"][2]["interval"] == 600.0
+            assert ret["timeseries"][2]["undefined_interval"] is False
+            assert ret["timeseries"][2]["expected_count"] == 60 * [144.0]
+            assert ret["timeseries"][3]["avg_count"] == 200.93333333333334
+            assert ret["timeseries"][3]["total_count"] == 12056
+            assert ret["timeseries"][3]["avg_ratio"] == 2.79074074074074
+            assert ret["timeseries"][3]["interval"] == 1200.0
+            assert ret["timeseries"][3]["undefined_interval"] is False
+            assert ret["timeseries"][3]["expected_count"] == 60 * [72.0]
+            assert ret["timeseries"][4]["avg_count"] == 155.73333333333332
+            assert ret["timeseries"][4]["total_count"] == 9344
+            assert ret["timeseries"][4]["avg_ratio"] == 0.7747927031509121
+            assert ret["timeseries"][4]["interval"] == 429.85074626865674
+            assert ret["timeseries"][4]["undefined_interval"] is True
+            assert ret["timeseries"][4]["expected_count"] == 60 * [201.0]
+            assert ret["timeseries"][5]["avg_count"] == 0.0
+            assert ret["timeseries"][5]["total_count"] == 0
+            assert ret["timeseries"][5]["avg_ratio"] is None
+            assert ret["timeseries"][5]["interval"] is None
+            assert ret["timeseries"][5]["undefined_interval"] is True
+            assert ret["timeseries"][5]["expected_count"] == 60 * [None]
 
             # 2 months - weekly
             ret = compute_completeness(start_dt, end_dt, ts_l, ds_1, "1 week")
@@ -193,7 +198,7 @@ class TestCompleteness:
             assert ret["timestamps"][-1] == dt.datetime(
                 2020, 2, 24, tzinfo=dt.timezone.utc
             )
-            assert ret["timeseries"]["Timeseries 0"]["count"] == [
+            assert ret["timeseries"][1]["count"] == [
                 720,
                 1008,
                 1008,
@@ -204,8 +209,8 @@ class TestCompleteness:
                 1008,
                 864,
             ]
-            assert ret["timeseries"]["Timeseries 0"]["avg_ratio"] == 1.0
-            assert ret["timeseries"]["Timeseries 2"]["count"] == [
+            assert ret["timeseries"][1]["avg_ratio"] == 1.0
+            assert ret["timeseries"][3]["count"] == [
                 1005,
                 1407,
                 1406,
@@ -216,7 +221,7 @@ class TestCompleteness:
                 1407,
                 1205,
             ]
-            assert ret["timeseries"]["Timeseries 3"]["count"] == [
+            assert ret["timeseries"][4]["count"] == [
                 720,
                 1008,
                 1008,
@@ -238,27 +243,21 @@ class TestCompleteness:
             assert ret["timestamps"][-1] == dt.datetime(
                 2020, 1, 1, 23, 59, tzinfo=dt.timezone.utc
             )
-            assert ret["timeseries"]["Timeseries 0"]["avg_count"] == 0.1
-            assert ret["timeseries"]["Timeseries 0"]["total_count"] == 6 * 24
-            assert ret["timeseries"]["Timeseries 0"]["avg_ratio"] == 1.0
-            assert ret["timeseries"]["Timeseries 0"]["interval"] == 600.0
-            assert ret["timeseries"]["Timeseries 0"]["undefined_interval"] is False
-            assert ret["timeseries"]["Timeseries 0"]["expected_count"] == 60 * 24 * [
-                0.1
-            ]
-            assert ret["timeseries"]["Timeseries 2"]["avg_count"] == 0.13958333333333334
-            assert ret["timeseries"]["Timeseries 2"]["total_count"] == 201
-            assert ret["timeseries"]["Timeseries 2"]["avg_ratio"] == 2.7916666666666665
-            assert ret["timeseries"]["Timeseries 2"]["interval"] == 1200.0
-            assert ret["timeseries"]["Timeseries 2"]["undefined_interval"] is False
-            assert ret["timeseries"]["Timeseries 2"]["expected_count"] == 24 * 60 * [
-                0.05
-            ]
-            assert ret["timeseries"]["Timeseries 4"]["avg_count"] == 0.0
-            assert ret["timeseries"]["Timeseries 4"]["total_count"] == 0
-            assert ret["timeseries"]["Timeseries 4"]["avg_ratio"] is None
-            assert ret["timeseries"]["Timeseries 4"]["interval"] is None
-            assert ret["timeseries"]["Timeseries 4"]["undefined_interval"] is True
-            assert ret["timeseries"]["Timeseries 4"]["expected_count"] == 24 * 60 * [
-                None
-            ]
+            assert ret["timeseries"][1]["avg_count"] == 0.1
+            assert ret["timeseries"][1]["total_count"] == 6 * 24
+            assert ret["timeseries"][1]["avg_ratio"] == 1.0
+            assert ret["timeseries"][1]["interval"] == 600.0
+            assert ret["timeseries"][1]["undefined_interval"] is False
+            assert ret["timeseries"][1]["expected_count"] == 60 * 24 * [0.1]
+            assert ret["timeseries"][3]["avg_count"] == 0.13958333333333334
+            assert ret["timeseries"][3]["total_count"] == 201
+            assert ret["timeseries"][3]["avg_ratio"] == 2.7916666666666665
+            assert ret["timeseries"][3]["interval"] == 1200.0
+            assert ret["timeseries"][3]["undefined_interval"] is False
+            assert ret["timeseries"][3]["expected_count"] == 24 * 60 * [0.05]
+            assert ret["timeseries"][5]["avg_count"] == 0.0
+            assert ret["timeseries"][5]["total_count"] == 0
+            assert ret["timeseries"][5]["avg_ratio"] is None
+            assert ret["timeseries"][5]["interval"] is None
+            assert ret["timeseries"][5]["undefined_interval"] is True
+            assert ret["timeseries"][5]["expected_count"] == 24 * 60 * [None]

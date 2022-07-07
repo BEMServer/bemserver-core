@@ -38,7 +38,6 @@ def compute_completeness(
         bucket_width,
         "count",
         timezone=timezone,
-        col_label="name",
     )
     avg_counts_df = counts_df.mean()
     total_counts_df = counts_df.sum()
@@ -96,6 +95,7 @@ def compute_completeness(
         "timestamps": ratios_df.index.to_list(),
         "timeseries": {
             col: {
+                "name": timeseries[idx].name,
                 "count": counts_df[col].to_list(),
                 "ratio": ratios_df[col].to_list(),
                 "total_count": total_counts_df[col],
