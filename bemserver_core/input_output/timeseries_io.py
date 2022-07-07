@@ -3,7 +3,7 @@ import sqlalchemy as sqla
 
 from bemserver_core.database import db
 from bemserver_core import model
-from bemserver_core.exceptions import TimeseriesCSVIOError
+from bemserver_core.exceptions import TimeseriesCSVIOError, PropertyTypeInvalidError
 from .base import BaseCSVIO
 
 
@@ -128,7 +128,7 @@ class TimeseriesCSVIO(BaseCSVIO):
                     )
                     try:
                         db.session.flush()
-                    except sqla.exc.DataError as exc:
+                    except (sqla.exc.DataError, PropertyTypeInvalidError) as exc:
                         raise TimeseriesCSVIOError(
                             f'Timeseries "{timeseries.name}" property "{key}"'
                             " can't be created."

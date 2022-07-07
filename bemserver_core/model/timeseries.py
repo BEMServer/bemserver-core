@@ -11,8 +11,8 @@ from bemserver_core.model.campaigns import (
     CampaignScope,
     UserGroupByCampaignScope,
 )
-from bemserver_core.model.sites import Site, Building, Storey, Space, Zone
-from bemserver_core.exceptions import TimeseriesNotFoundError
+from bemserver_core.model.sites import Site, Building, Storey, Space, Zone, PropertyType
+from bemserver_core.exceptions import TimeseriesNotFoundError, PropertyTypeInvalidError
 
 
 class TimeseriesProperty(AuthMixin, Base):
@@ -21,6 +21,11 @@ class TimeseriesProperty(AuthMixin, Base):
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
     description = sqla.Column(sqla.String(250))
+    value_type = sqla.Column(
+        sqla.Enum(PropertyType),
+        default=PropertyType.string,
+        nullable=False,
+    )
 
 
 class TimeseriesDataState(AuthMixin, Base):
@@ -284,6 +289,7 @@ class Timeseries(AuthMixin, Base):
         return list(ts_d.values())
 
 
+# TODO: make property_id read-only when created (see Site.campaign_id)
 class TimeseriesPropertyData(AuthMixin, Base):
     """Timeseries property data"""
 
@@ -295,7 +301,7 @@ class TimeseriesPropertyData(AuthMixin, Base):
     property_id = sqla.Column(
         sqla.ForeignKey("timeseries_properties.id"), nullable=False
     )
-    value = sqla.Column(sqla.Float)
+    value = sqla.Column(sqla.String(100), nullable=False)
 
     timeseries = sqla.orm.relationship(
         "Timeseries",
@@ -317,6 +323,18 @@ class TimeseriesPropertyData(AuthMixin, Base):
                 ),
             },
         )
+
+    def _before_flush(self):
+        # Get property type and try to cast value to ensure its validity.
+        prop = TimeseriesProperty.get_by_id(self.property_id)
+        if prop is not None:
+            try:
+                self.value = prop.value_type.cast(self.value)
+            except ValueError as exc:
+                self.value = None
+                raise PropertyTypeInvalidError(
+                    f"Invalid value type for {prop.name} timeseries property."
+                ) from exc
 
 
 class TimeseriesByDataState(AuthMixin, Base):
@@ -559,7 +577,11 @@ def init_db_timeseries():
     """
     db.session.add_all(
         [
-            TimeseriesProperty(name="Interval", description="Expected interval (s)"),
+            TimeseriesProperty(
+                name="Interval",
+                description="Expected interval (s)",
+                value_type=PropertyType.integer,
+            ),
             TimeseriesDataState(name="Raw"),
             TimeseriesDataState(name="Clean"),
         ]

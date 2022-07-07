@@ -1,6 +1,5 @@
 """Timeseries I/O tests"""
 import io
-import math
 
 import pytest
 
@@ -101,7 +100,7 @@ class TestTimeseriesCSVIO:
             .all()
         )
         assert len(timeseries_2_property_data) == 1
-        assert math.isclose(timeseries_2_property_data[0].value, 60)
+        assert timeseries_2_property_data[0].value == "60.0"
 
     def test_timeseries_csv_io_import_csv_missing_column(
         self,
