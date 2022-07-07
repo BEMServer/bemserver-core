@@ -1,4 +1,5 @@
 """Sites"""
+import enum
 import sqlalchemy as sqla
 import sqlalchemy.orm as sqlaorm
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -6,6 +7,22 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from bemserver_core.database import Base
 from bemserver_core.model import Campaign
 from bemserver_core.authorization import AuthMixin, auth, Relation
+from bemserver_core.exceptions import PropertyTypeInvalidError
+
+
+class PropertyType(enum.Enum):
+    integer = int
+    float = float
+    boolean = bool
+    string = str
+
+    def cast(self, val_in):
+        val_out = str(val_in)
+        if self is self.boolean:
+            val_out = val_out.lower() in ["true", "t", "1", "yes", "y"]
+        elif self is not self.string:
+            val_out = self.value(val_out)
+        return val_out
 
 
 class StructuralElementProperty(AuthMixin, Base):
@@ -14,6 +31,11 @@ class StructuralElementProperty(AuthMixin, Base):
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
     description = sqla.Column(sqla.String(500))
+    value_type = sqla.Column(
+        sqla.Enum(PropertyType),
+        default=PropertyType.string,
+        nullable=False,
+    )
 
 
 class SiteProperty(AuthMixin, Base):
@@ -359,6 +381,7 @@ class Zone(AuthMixin, Base):
         )
 
 
+# TODO: make site_property_id read-only when created (see Site.campaign_id)
 class SitePropertyData(AuthMixin, Base):
     __tablename__ = "site_property_data"
     __table_args__ = (sqla.UniqueConstraint("site_id", "site_property_id"),)
@@ -393,7 +416,23 @@ class SitePropertyData(AuthMixin, Base):
             },
         )
 
+    def _before_flush(self):
+        # Get property type and try to cast value to ensure its validity.
+        site_prop = SiteProperty.get_by_id(self.site_property_id)
+        if site_prop is not None:
+            try:
+                self.value = site_prop.structural_element_property.value_type.cast(
+                    self.value
+                )
+            except ValueError as exc:
+                self.value = None
+                prop_name = site_prop.structural_element_property.name
+                raise PropertyTypeInvalidError(
+                    f"Invalid value type for {prop_name} site property."
+                ) from exc
 
+
+# TODO: make building_property_id read-only when created (see Building.campaign_id)
 class BuildingPropertyData(AuthMixin, Base):
     __tablename__ = "building_property_data"
     __table_args__ = (sqla.UniqueConstraint("building_id", "building_property_id"),)
@@ -432,7 +471,23 @@ class BuildingPropertyData(AuthMixin, Base):
             },
         )
 
+    def _before_flush(self):
+        # Get property type and try to cast value to ensure its validity.
+        building_prop = BuildingProperty.get_by_id(self.building_property_id)
+        if building_prop is not None:
+            try:
+                self.value = building_prop.structural_element_property.value_type.cast(
+                    self.value
+                )
+            except ValueError as exc:
+                self.value = None
+                prop_name = building_prop.structural_element_property.name
+                raise PropertyTypeInvalidError(
+                    f"Invalid value type for {prop_name} building property."
+                ) from exc
 
+
+# TODO: make storey_property_id read-only when created (see Storey.campaign_id)
 class StoreyPropertyData(AuthMixin, Base):
     __tablename__ = "storey_property_data"
     __table_args__ = (sqla.UniqueConstraint("storey_id", "storey_property_id"),)
@@ -467,7 +522,23 @@ class StoreyPropertyData(AuthMixin, Base):
             },
         )
 
+    def _before_flush(self):
+        # Get property type and try to cast value to ensure its validity.
+        storey_prop = StoreyProperty.get_by_id(self.storey_property_id)
+        if storey_prop is not None:
+            try:
+                self.value = storey_prop.structural_element_property.value_type.cast(
+                    self.value
+                )
+            except ValueError as exc:
+                self.value = None
+                prop_name = storey_prop.structural_element_property.name
+                raise PropertyTypeInvalidError(
+                    f"Invalid value type for {prop_name} storey property."
+                ) from exc
 
+
+# TODO: make space_property_id read-only when created (see Space.campaign_id)
 class SpacePropertyData(AuthMixin, Base):
     __tablename__ = "space_property_data"
     __table_args__ = (sqla.UniqueConstraint("space_id", "space_property_id"),)
@@ -502,7 +573,23 @@ class SpacePropertyData(AuthMixin, Base):
             },
         )
 
+    def _before_flush(self):
+        # Get property type and try to cast value to ensure its validity.
+        space_prop = SpaceProperty.get_by_id(self.space_property_id)
+        if space_prop is not None:
+            try:
+                self.value = space_prop.structural_element_property.value_type.cast(
+                    self.value
+                )
+            except ValueError as exc:
+                self.value = None
+                prop_name = space_prop.structural_element_property.name
+                raise PropertyTypeInvalidError(
+                    f"Invalid value type for {prop_name} space property."
+                ) from exc
 
+
+# TODO: make zone_property_id read-only when created (see Zone.campaign_id)
 class ZonePropertyData(AuthMixin, Base):
     __tablename__ = "zone_property_data"
     __table_args__ = (sqla.UniqueConstraint("zone_id", "zone_property_id"),)
@@ -536,3 +623,18 @@ class ZonePropertyData(AuthMixin, Base):
                 ),
             },
         )
+
+    def _before_flush(self):
+        # Get property type and try to cast value to ensure its validity.
+        zone_prop = ZoneProperty.get_by_id(self.zone_property_id)
+        if zone_prop is not None:
+            try:
+                self.value = zone_prop.structural_element_property.value_type.cast(
+                    self.value
+                )
+            except ValueError as exc:
+                self.value = None
+                prop_name = zone_prop.structural_element_property.name
+                raise PropertyTypeInvalidError(
+                    f"Invalid value type for {prop_name} zone property."
+                ) from exc

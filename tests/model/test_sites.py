@@ -2,6 +2,7 @@
 import pytest
 
 from bemserver_core.model import (
+    PropertyType,
     StructuralElementProperty,
     SiteProperty,
     BuildingProperty,
@@ -26,7 +27,71 @@ from bemserver_core.model import (
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
-from bemserver_core.exceptions import BEMServerAuthorizationError
+from bemserver_core.exceptions import (
+    BEMServerAuthorizationError,
+    PropertyTypeInvalidError,
+)
+
+
+class TestPropertyTypeEnum:
+    def test_property_type_cast(self):
+        assert PropertyType.integer.cast(42) == 42
+        assert PropertyType.integer.cast(-42) == -42
+        with pytest.raises(ValueError):
+            PropertyType.integer.cast(4.2)
+        with pytest.raises(ValueError):
+            PropertyType.integer.cast("4.2")
+        with pytest.raises(ValueError):
+            PropertyType.integer.cast("bad")
+        with pytest.raises(ValueError):
+            PropertyType.integer.cast(True)
+
+        assert PropertyType.float.cast(42) == 42.0
+        assert PropertyType.float.cast(-42) == -42.0
+        assert PropertyType.float.cast(4.2) == 4.2
+        assert PropertyType.float.cast(-4.2) == -4.2
+        assert PropertyType.float.cast("4.2") == 4.2
+        assert PropertyType.float.cast("-4.2") == -4.2
+        with pytest.raises(ValueError):
+            PropertyType.float.cast("bad")
+        with pytest.raises(ValueError):
+            PropertyType.float.cast(True)
+
+        assert PropertyType.boolean.cast(True)
+        assert PropertyType.boolean.cast("True")
+        assert PropertyType.boolean.cast("true")
+        assert PropertyType.boolean.cast("TRUE")
+        assert PropertyType.boolean.cast(1)
+        assert PropertyType.boolean.cast("1")
+        assert PropertyType.boolean.cast("t")
+        assert PropertyType.boolean.cast("T")
+        assert PropertyType.boolean.cast("yes")
+        assert PropertyType.boolean.cast("YES")
+        assert PropertyType.boolean.cast("Yes")
+        assert PropertyType.boolean.cast("y")
+        assert PropertyType.boolean.cast("Y")
+        assert not PropertyType.boolean.cast(False)
+        assert not PropertyType.boolean.cast("False")
+        assert not PropertyType.boolean.cast("false")
+        assert not PropertyType.boolean.cast("FALSE")
+        assert not PropertyType.boolean.cast(0)
+        assert not PropertyType.boolean.cast("0")
+        assert not PropertyType.boolean.cast("whatever invalid input returns False")
+        assert not PropertyType.boolean.cast("42")
+        assert not PropertyType.boolean.cast(42)
+
+        assert PropertyType.string.cast(42) == "42"
+        assert PropertyType.string.cast(-42) == "-42"
+        assert PropertyType.string.cast(4.2) == "4.2"
+        assert PropertyType.string.cast(-4.2) == "-4.2"
+        assert PropertyType.string.cast("42") == "42"
+        assert PropertyType.string.cast("-42") == "-42"
+        assert PropertyType.string.cast("4.2") == "4.2"
+        assert PropertyType.string.cast("-4.2") == "-4.2"
+        assert PropertyType.string.cast("whatever string") == "whatever string"
+        assert PropertyType.string.cast(True) == "True"
+        assert PropertyType.string.cast(False) == "False"
+        assert PropertyType.string.cast(None) == "None"
 
 
 class TestStructuralElementPropertyModel:
@@ -47,29 +112,29 @@ class TestStructuralElementPropertyModel:
         sep_1 = structural_element_properties[0]
 
         with CurrentUser(admin_user):
-            assert len(list(SiteProperty.get())) == 2
-            assert len(list(SitePropertyData.get())) == 2
-            assert len(list(BuildingProperty.get())) == 2
-            assert len(list(BuildingPropertyData.get())) == 2
-            assert len(list(StoreyProperty.get())) == 2
-            assert len(list(StoreyPropertyData.get())) == 2
-            assert len(list(SpaceProperty.get())) == 2
-            assert len(list(SpacePropertyData.get())) == 2
-            assert len(list(ZoneProperty.get())) == 2
-            assert len(list(ZonePropertyData.get())) == 2
+            assert len(list(SiteProperty.get())) == 4
+            assert len(list(SitePropertyData.get())) == 4
+            assert len(list(BuildingProperty.get())) == 4
+            assert len(list(BuildingPropertyData.get())) == 4
+            assert len(list(StoreyProperty.get())) == 4
+            assert len(list(StoreyPropertyData.get())) == 4
+            assert len(list(SpaceProperty.get())) == 4
+            assert len(list(SpacePropertyData.get())) == 4
+            assert len(list(ZoneProperty.get())) == 4
+            assert len(list(ZonePropertyData.get())) == 4
 
             sep_1.delete()
             db.session.commit()
-            assert len(list(SiteProperty.get())) == 1
-            assert len(list(SitePropertyData.get())) == 1
-            assert len(list(BuildingProperty.get())) == 1
-            assert len(list(BuildingPropertyData.get())) == 1
-            assert len(list(StoreyProperty.get())) == 1
-            assert len(list(StoreyPropertyData.get())) == 1
-            assert len(list(SpaceProperty.get())) == 1
-            assert len(list(SpacePropertyData.get())) == 1
-            assert len(list(ZoneProperty.get())) == 1
-            assert len(list(ZonePropertyData.get())) == 1
+            assert len(list(SiteProperty.get())) == 3
+            assert len(list(SitePropertyData.get())) == 3
+            assert len(list(BuildingProperty.get())) == 3
+            assert len(list(BuildingPropertyData.get())) == 3
+            assert len(list(StoreyProperty.get())) == 3
+            assert len(list(StoreyPropertyData.get())) == 3
+            assert len(list(SpaceProperty.get())) == 3
+            assert len(list(SpacePropertyData.get())) == 3
+            assert len(list(ZoneProperty.get())) == 3
+            assert len(list(ZonePropertyData.get())) == 3
 
     def test_structural_element_property_authorizations_as_admin(self, users):
         admin_user = users[0]
@@ -324,7 +389,7 @@ class TestSiteModel:
             assert len(list(Building.get())) == 2
             assert len(list(Storey.get())) == 2
             assert len(list(Space.get())) == 2
-            assert len(list(SitePropertyData.get())) == 2
+            assert len(list(SitePropertyData.get())) == 4
             assert len(list(TimeseriesBySite.get())) == 2
 
             site_1.delete()
@@ -332,7 +397,7 @@ class TestSiteModel:
             assert len(list(Building.get())) == 1
             assert len(list(Storey.get())) == 1
             assert len(list(Space.get())) == 1
-            assert len(list(SitePropertyData.get())) == 1
+            assert len(list(SitePropertyData.get())) == 3
             assert len(list(TimeseriesBySite.get())) == 1
 
     def test_site_authorizations_as_admin(self, users, campaigns):
@@ -399,14 +464,14 @@ class TestBuildingModel:
         with CurrentUser(admin_user):
             assert len(list(Storey.get())) == 2
             assert len(list(Space.get())) == 2
-            assert len(list(BuildingPropertyData.get())) == 2
+            assert len(list(BuildingPropertyData.get())) == 4
             assert len(list(TimeseriesByBuilding.get())) == 2
 
             building_1.delete()
             db.session.commit()
             assert len(list(Storey.get())) == 1
             assert len(list(Space.get())) == 1
-            assert len(list(BuildingPropertyData.get())) == 1
+            assert len(list(BuildingPropertyData.get())) == 3
             assert len(list(TimeseriesByBuilding.get())) == 1
 
     def test_building_filters_as_admin(self, users, campaigns, buildings):
@@ -499,13 +564,13 @@ class TestStoreyModel:
 
         with CurrentUser(admin_user):
             assert len(list(Space.get())) == 2
-            assert len(list(StoreyPropertyData.get())) == 2
+            assert len(list(StoreyPropertyData.get())) == 4
             assert len(list(TimeseriesByStorey.get())) == 2
 
             storey_1.delete()
             db.session.commit()
             assert len(list(Space.get())) == 1
-            assert len(list(StoreyPropertyData.get())) == 1
+            assert len(list(StoreyPropertyData.get())) == 3
             assert len(list(TimeseriesByStorey.get())) == 1
 
     def test_storey_filters_as_admin(self, users, campaigns, sites, storeys):
@@ -607,12 +672,12 @@ class TestSpaceModel:
         space_1 = spaces[0]
 
         with CurrentUser(admin_user):
-            assert len(list(SpacePropertyData.get())) == 2
+            assert len(list(SpacePropertyData.get())) == 4
             assert len(list(TimeseriesBySpace.get())) == 2
 
             space_1.delete()
             db.session.commit()
-            assert len(list(SpacePropertyData.get())) == 1
+            assert len(list(SpacePropertyData.get())) == 3
             assert len(list(TimeseriesBySpace.get())) == 1
 
     def test_space_filters_as_admin(self, users, campaigns, sites, buildings, spaces):
@@ -725,12 +790,12 @@ class TestZoneModel:
         zone_1 = zones[0]
 
         with CurrentUser(admin_user):
-            assert len(list(ZonePropertyData.get())) == 2
+            assert len(list(ZonePropertyData.get())) == 4
             assert len(list(TimeseriesByZone.get())) == 2
 
             zone_1.delete()
             db.session.commit()
-            assert len(list(ZonePropertyData.get())) == 1
+            assert len(list(ZonePropertyData.get())) == 3
             assert len(list(TimeseriesByZone.get())) == 1
 
     def test_zone_authorizations_as_admin(self, users, campaigns):
@@ -845,6 +910,104 @@ class TestSitePropertyDataModel:
             with pytest.raises(BEMServerAuthorizationError):
                 spd_2.delete()
 
+    def test_site_property_data_type_validation_as_admin(
+        self, users, sites, site_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        site_1 = sites[0]
+        site_p_1 = site_properties[0]
+        site_p_2 = site_properties[1]
+        site_p_3 = site_properties[2]
+        site_p_4 = site_properties[3]
+
+        with CurrentUser(admin_user):
+            # Property value is expected to be an integer.
+            site_pd_1 = SitePropertyData.new(
+                site_id=site_1.id,
+                site_property_id=site_p_1.id,
+                value=42,
+            )
+            db.session.commit()
+            assert site_pd_1.value == "42"
+            site_pd_1.value = "666"
+            db.session.add(site_pd_1)
+            db.session.commit()
+            assert site_pd_1.value == "666"
+            # Invalid property value types.
+            for val in ["bad", "4.2", 4.2, None]:
+                site_pd_1.value = val
+                db.session.add(site_pd_1)
+                with pytest.raises(
+                    PropertyTypeInvalidError,
+                    match="Invalid value type for Area site property",
+                ):
+                    db.session.commit()
+                assert site_pd_1.value is None
+                db.session.rollback()
+
+            # Property value is expected to be a float.
+            site_pd_2 = SitePropertyData.new(
+                site_id=site_1.id,
+                site_property_id=site_p_2.id,
+                value=4.2,
+            )
+            db.session.commit()
+            assert site_pd_2.value == "4.2"
+            for val, exp_res in [("66.6", "66.6"), (42, "42.0")]:
+                site_pd_2.value = val
+                db.session.add(site_pd_2)
+                db.session.commit()
+                assert site_pd_2.value == exp_res
+            # Invalid property value types.
+            for val in ["bad", None]:
+                site_pd_2.value = val
+                db.session.add(site_pd_2)
+                with pytest.raises(
+                    PropertyTypeInvalidError,
+                    match="Invalid value type for Volume site property",
+                ):
+                    db.session.commit()
+                assert site_pd_2.value is None
+                db.session.rollback()
+
+            # Property value is expected to be a boolean.
+            site_pd_3 = SitePropertyData.new(
+                site_id=site_1.id,
+                site_property_id=site_p_3.id,
+                value=True,
+            )
+            db.session.commit()
+            assert site_pd_3.value == "true"
+            for val, exp_res in [
+                ("0", "false"),
+                ("something invalid will be False", "false"),
+                (42, "false"),
+            ]:
+                site_pd_3.value = val
+                db.session.add(site_pd_3)
+                db.session.commit()
+                assert site_pd_3.value == exp_res
+
+            # Property value is expected to be a string.
+            site_pd_4 = SitePropertyData.new(
+                site_id=site_1.id,
+                site_property_id=site_p_4.id,
+                value=12,
+            )
+            db.session.commit()
+            assert site_pd_4.value == "12"
+            for val, exp_res in [
+                ("everything works", "everything works"),
+                (True, "True"),
+                (None, "None"),
+            ]:
+                site_pd_4.value = val
+                db.session.add(site_pd_4)
+                db.session.commit()
+                assert site_pd_4.value == exp_res
+
 
 class TestBuildingPropertyDataModel:
     def test_building_property_data_authorizations_as_admin(
@@ -904,6 +1067,104 @@ class TestBuildingPropertyDataModel:
                 bpd_2.update(value="69")
             with pytest.raises(BEMServerAuthorizationError):
                 bpd_2.delete()
+
+    def test_building_property_data_type_validation_as_admin(
+        self, users, buildings, building_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        building_1 = buildings[0]
+        building_p_1 = building_properties[0]
+        building_p_2 = building_properties[1]
+        building_p_3 = building_properties[2]
+        building_p_4 = building_properties[3]
+
+        with CurrentUser(admin_user):
+            # Property value is expected to be an integer.
+            building_pd_1 = BuildingPropertyData.new(
+                building_id=building_1.id,
+                building_property_id=building_p_1.id,
+                value=42,
+            )
+            db.session.commit()
+            assert building_pd_1.value == "42"
+            building_pd_1.value = "666"
+            db.session.add(building_pd_1)
+            db.session.commit()
+            assert building_pd_1.value == "666"
+            # Invalid property value types.
+            for val in ["bad", "4.2", 4.2, None]:
+                building_pd_1.value = val
+                db.session.add(building_pd_1)
+                with pytest.raises(
+                    PropertyTypeInvalidError,
+                    match="Invalid value type for Area building property",
+                ):
+                    db.session.commit()
+                assert building_pd_1.value is None
+                db.session.rollback()
+
+            # Property value is expected to be a float.
+            building_pd_2 = BuildingPropertyData.new(
+                building_id=building_1.id,
+                building_property_id=building_p_2.id,
+                value=4.2,
+            )
+            db.session.commit()
+            assert building_pd_2.value == "4.2"
+            for val, exp_res in [("66.6", "66.6"), (42, "42.0")]:
+                building_pd_2.value = val
+                db.session.add(building_pd_2)
+                db.session.commit()
+                assert building_pd_2.value == exp_res
+            # Invalid property value types.
+            for val in ["bad", None]:
+                building_pd_2.value = val
+                db.session.add(building_pd_2)
+                with pytest.raises(
+                    PropertyTypeInvalidError,
+                    match="Invalid value type for Volume building property",
+                ):
+                    db.session.commit()
+                assert building_pd_2.value is None
+                db.session.rollback()
+
+            # Property value is expected to be a boolean.
+            building_pd_3 = BuildingPropertyData.new(
+                building_id=building_1.id,
+                building_property_id=building_p_3.id,
+                value=True,
+            )
+            db.session.commit()
+            assert building_pd_3.value == "true"
+            for val, exp_res in [
+                ("0", "false"),
+                ("something invalid will be False", "false"),
+                (42, "false"),
+            ]:
+                building_pd_3.value = val
+                db.session.add(building_pd_3)
+                db.session.commit()
+                assert building_pd_3.value == exp_res
+
+            # Property value is expected to be a string.
+            building_pd_4 = BuildingPropertyData.new(
+                building_id=building_1.id,
+                building_property_id=building_p_4.id,
+                value=12,
+            )
+            db.session.commit()
+            assert building_pd_4.value == "12"
+            for val, exp_res in [
+                ("everything works", "everything works"),
+                (True, "True"),
+                (None, "None"),
+            ]:
+                building_pd_4.value = val
+                db.session.add(building_pd_4)
+                db.session.commit()
+                assert building_pd_4.value == exp_res
 
 
 class TestStoreyPropertyDataModel:
@@ -965,6 +1226,104 @@ class TestStoreyPropertyDataModel:
             with pytest.raises(BEMServerAuthorizationError):
                 spd_2.delete()
 
+    def test_storey_property_data_type_validation_as_admin(
+        self, users, storeys, storey_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        storey_1 = storeys[0]
+        storey_p_1 = storey_properties[0]
+        storey_p_2 = storey_properties[1]
+        storey_p_3 = storey_properties[2]
+        storey_p_4 = storey_properties[3]
+
+        with CurrentUser(admin_user):
+            # Property value is expected to be an integer.
+            storey_pd_1 = StoreyPropertyData.new(
+                storey_id=storey_1.id,
+                storey_property_id=storey_p_1.id,
+                value=42,
+            )
+            db.session.commit()
+            assert storey_pd_1.value == "42"
+            storey_pd_1.value = "666"
+            db.session.add(storey_pd_1)
+            db.session.commit()
+            assert storey_pd_1.value == "666"
+            # Invalid property value types.
+            for val in ["bad", "4.2", 4.2, None]:
+                storey_pd_1.value = val
+                db.session.add(storey_pd_1)
+                with pytest.raises(
+                    PropertyTypeInvalidError,
+                    match="Invalid value type for Area storey property",
+                ):
+                    db.session.commit()
+                assert storey_pd_1.value is None
+                db.session.rollback()
+
+            # Property value is expected to be a float.
+            storey_pd_2 = StoreyPropertyData.new(
+                storey_id=storey_1.id,
+                storey_property_id=storey_p_2.id,
+                value=4.2,
+            )
+            db.session.commit()
+            assert storey_pd_2.value == "4.2"
+            for val, exp_res in [("66.6", "66.6"), (42, "42.0")]:
+                storey_pd_2.value = val
+                db.session.add(storey_pd_2)
+                db.session.commit()
+                assert storey_pd_2.value == exp_res
+            # Invalid property value types.
+            for val in ["bad", None]:
+                storey_pd_2.value = val
+                db.session.add(storey_pd_2)
+                with pytest.raises(
+                    PropertyTypeInvalidError,
+                    match="Invalid value type for Volume storey property",
+                ):
+                    db.session.commit()
+                assert storey_pd_2.value is None
+                db.session.rollback()
+
+            # Property value is expected to be a boolean.
+            storey_pd_3 = StoreyPropertyData.new(
+                storey_id=storey_1.id,
+                storey_property_id=storey_p_3.id,
+                value=True,
+            )
+            db.session.commit()
+            assert storey_pd_3.value == "true"
+            for val, exp_res in [
+                ("0", "false"),
+                ("something invalid will be False", "false"),
+                (42, "false"),
+            ]:
+                storey_pd_3.value = val
+                db.session.add(storey_pd_3)
+                db.session.commit()
+                assert storey_pd_3.value == exp_res
+
+            # Property value is expected to be a string.
+            storey_pd_4 = StoreyPropertyData.new(
+                storey_id=storey_1.id,
+                storey_property_id=storey_p_4.id,
+                value=12,
+            )
+            db.session.commit()
+            assert storey_pd_4.value == "12"
+            for val, exp_res in [
+                ("everything works", "everything works"),
+                (True, "True"),
+                (None, "None"),
+            ]:
+                storey_pd_4.value = val
+                db.session.add(storey_pd_4)
+                db.session.commit()
+                assert storey_pd_4.value == exp_res
+
 
 class TestSpacePropertyDataModel:
     def test_space_property_data_authorizations_as_admin(
@@ -1025,6 +1384,104 @@ class TestSpacePropertyDataModel:
             with pytest.raises(BEMServerAuthorizationError):
                 spd_2.delete()
 
+    def test_space_property_data_type_validation_as_admin(
+        self, users, spaces, space_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        space_1 = spaces[0]
+        space_p_1 = space_properties[0]
+        space_p_2 = space_properties[1]
+        space_p_3 = space_properties[2]
+        space_p_4 = space_properties[3]
+
+        with CurrentUser(admin_user):
+            # Property value is expected to be an integer.
+            space_pd_1 = SpacePropertyData.new(
+                space_id=space_1.id,
+                space_property_id=space_p_1.id,
+                value=42,
+            )
+            db.session.commit()
+            assert space_pd_1.value == "42"
+            space_pd_1.value = "666"
+            db.session.add(space_pd_1)
+            db.session.commit()
+            assert space_pd_1.value == "666"
+            # Invalid property value types.
+            for val in ["bad", "4.2", 4.2, None]:
+                space_pd_1.value = val
+                db.session.add(space_pd_1)
+                with pytest.raises(
+                    PropertyTypeInvalidError,
+                    match="Invalid value type for Area space property",
+                ):
+                    db.session.commit()
+                assert space_pd_1.value is None
+                db.session.rollback()
+
+            # Property value is expected to be a float.
+            space_pd_2 = SpacePropertyData.new(
+                space_id=space_1.id,
+                space_property_id=space_p_2.id,
+                value=4.2,
+            )
+            db.session.commit()
+            assert space_pd_2.value == "4.2"
+            for val, exp_res in [("66.6", "66.6"), (42, "42.0")]:
+                space_pd_2.value = val
+                db.session.add(space_pd_2)
+                db.session.commit()
+                assert space_pd_2.value == exp_res
+            # Invalid property value types.
+            for val in ["bad", None]:
+                space_pd_2.value = val
+                db.session.add(space_pd_2)
+                with pytest.raises(
+                    PropertyTypeInvalidError,
+                    match="Invalid value type for Volume space property",
+                ):
+                    db.session.commit()
+                assert space_pd_2.value is None
+                db.session.rollback()
+
+            # Property value is expected to be a boolean.
+            space_pd_3 = SpacePropertyData.new(
+                space_id=space_1.id,
+                space_property_id=space_p_3.id,
+                value=True,
+            )
+            db.session.commit()
+            assert space_pd_3.value == "true"
+            for val, exp_res in [
+                ("0", "false"),
+                ("something invalid will be False", "false"),
+                (42, "false"),
+            ]:
+                space_pd_3.value = val
+                db.session.add(space_pd_3)
+                db.session.commit()
+                assert space_pd_3.value == exp_res
+
+            # Property value is expected to be a string.
+            space_pd_4 = SpacePropertyData.new(
+                space_id=space_1.id,
+                space_property_id=space_p_4.id,
+                value=12,
+            )
+            db.session.commit()
+            assert space_pd_4.value == "12"
+            for val, exp_res in [
+                ("everything works", "everything works"),
+                (True, "True"),
+                (None, "None"),
+            ]:
+                space_pd_4.value = val
+                db.session.add(space_pd_4)
+                db.session.commit()
+                assert space_pd_4.value == exp_res
+
 
 class TestZonePropertyDataModel:
     def test_zone_property_data_authorizations_as_admin(
@@ -1084,3 +1541,101 @@ class TestZonePropertyDataModel:
                 zpd_2.update(value="69")
             with pytest.raises(BEMServerAuthorizationError):
                 zpd_2.delete()
+
+    def test_zone_property_data_type_validation_as_admin(
+        self, users, zones, zone_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        zone_1 = zones[0]
+        zone_p_1 = zone_properties[0]
+        zone_p_2 = zone_properties[1]
+        zone_p_3 = zone_properties[2]
+        zone_p_4 = zone_properties[3]
+
+        with CurrentUser(admin_user):
+            # Property value is expected to be an integer.
+            zone_pd_1 = ZonePropertyData.new(
+                zone_id=zone_1.id,
+                zone_property_id=zone_p_1.id,
+                value=42,
+            )
+            db.session.commit()
+            assert zone_pd_1.value == "42"
+            zone_pd_1.value = "666"
+            db.session.add(zone_pd_1)
+            db.session.commit()
+            assert zone_pd_1.value == "666"
+            # Invalid property value types.
+            for val in ["bad", "4.2", 4.2, None]:
+                zone_pd_1.value = val
+                db.session.add(zone_pd_1)
+                with pytest.raises(
+                    PropertyTypeInvalidError,
+                    match="Invalid value type for Area zone property",
+                ):
+                    db.session.commit()
+                assert zone_pd_1.value is None
+                db.session.rollback()
+
+            # Property value is expected to be a float.
+            zone_pd_2 = ZonePropertyData.new(
+                zone_id=zone_1.id,
+                zone_property_id=zone_p_2.id,
+                value=4.2,
+            )
+            db.session.commit()
+            assert zone_pd_2.value == "4.2"
+            for val, exp_res in [("66.6", "66.6"), (42, "42.0")]:
+                zone_pd_2.value = val
+                db.session.add(zone_pd_2)
+                db.session.commit()
+                assert zone_pd_2.value == exp_res
+            # Invalid property value types.
+            for val in ["bad", None]:
+                zone_pd_2.value = val
+                db.session.add(zone_pd_2)
+                with pytest.raises(
+                    PropertyTypeInvalidError,
+                    match="Invalid value type for Volume zone property",
+                ):
+                    db.session.commit()
+                assert zone_pd_2.value is None
+                db.session.rollback()
+
+            # Property value is expected to be a boolean.
+            zone_pd_3 = ZonePropertyData.new(
+                zone_id=zone_1.id,
+                zone_property_id=zone_p_3.id,
+                value=True,
+            )
+            db.session.commit()
+            assert zone_pd_3.value == "true"
+            for val, exp_res in [
+                ("0", "false"),
+                ("something invalid will be False", "false"),
+                (42, "false"),
+            ]:
+                zone_pd_3.value = val
+                db.session.add(zone_pd_3)
+                db.session.commit()
+                assert zone_pd_3.value == exp_res
+
+            # Property value is expected to be a string.
+            zone_pd_4 = ZonePropertyData.new(
+                zone_id=zone_1.id,
+                zone_property_id=zone_p_4.id,
+                value=12,
+            )
+            db.session.commit()
+            assert zone_pd_4.value == "12"
+            for val, exp_res in [
+                ("everything works", "everything works"),
+                (True, "True"),
+                (None, "None"),
+            ]:
+                zone_pd_4.value = val
+                db.session.add(zone_pd_4)
+                db.session.commit()
+                assert zone_pd_4.value == exp_res

@@ -1,5 +1,6 @@
 """Databases: SQLAlchemy database access"""
 from functools import wraps
+from itertools import chain
 
 import sqlalchemy as sqla
 from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base
@@ -174,3 +175,13 @@ class DBConnection:
 
 
 db = DBConnection()
+
+
+# Inspired from https://stackoverflow.com/a/36732359
+@sqla.event.listens_for(DB_SESSION, "before_flush")
+def receive_before_flush(session, flush_context, instances):
+    """Listen for the `before_flush` event"""
+    # Try to call _before_flush method for each modified object instance in session.
+    for obj in chain(session.new, session.dirty):
+        if hasattr(obj, "_before_flush"):
+            obj._before_flush()
