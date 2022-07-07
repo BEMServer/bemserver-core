@@ -674,6 +674,33 @@ class TestTimeseriesPropertyDataModel:
                 db.session.commit()
                 assert tspd_5.value == exp_res
 
+    def test_timseries_property_data_cannot_change_type(
+        self, users, timeseries, timeseries_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        ts_1 = timeseries[0]
+        ts_p_1 = timeseries_properties[0]
+        ts_p_2 = timeseries_properties[1]
+
+        with CurrentUser(admin_user):
+            tspd = TimeseriesPropertyData(
+                timeseries_id=ts_1.id,
+                property_id=ts_p_1.id,
+                value=12,
+            )
+            assert tspd.id is None
+            tspd.property_id = ts_p_2.id
+            db.session.add(tspd)
+            db.session.commit()
+            assert tspd.id is not None
+            with pytest.raises(
+                AttributeError,
+                match="property_id cannot be modified",
+            ):
+                tspd.property_id = ts_p_1.id
+
 
 class TestTimeseriesByDataStateModel:
     def test_timeseries_by_data_state_delete_cascade(

@@ -289,19 +289,28 @@ class Timeseries(AuthMixin, Base):
         return list(ts_d.values())
 
 
-# TODO: make property_id read-only when created (see Site.campaign_id)
 class TimeseriesPropertyData(AuthMixin, Base):
     """Timeseries property data"""
 
     __tablename__ = "timeseries_property_data"
-    __table_args__ = (sqla.UniqueConstraint("timeseries_id", "property_id"),)
+    __table_args__ = (sqla.UniqueConstraint("timeseries_id", "_property_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
-    property_id = sqla.Column(
+    _property_id = sqla.Column(
         sqla.ForeignKey("timeseries_properties.id"), nullable=False
     )
     value = sqla.Column(sqla.String(100), nullable=False)
+
+    @hybrid_property
+    def property_id(self):
+        return self._property_id
+
+    @property_id.setter
+    def property_id(self, property_id):
+        if self.id is not None:
+            raise AttributeError("property_id cannot be modified")
+        self._property_id = property_id
 
     timeseries = sqla.orm.relationship(
         "Timeseries",
