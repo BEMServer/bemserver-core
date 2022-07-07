@@ -17,6 +17,7 @@ from bemserver_core.model import (
 )
 from bemserver_core.authorization import auth, get_current_user
 from bemserver_core.exceptions import (
+    TimeseriesDataIOInvalidBucketWidthError,
     TimeseriesDataIOInvalidAggregationError,
     TimeseriesDataCSVIOError,
 )
@@ -46,11 +47,12 @@ PANDAS_RE_AGGREG_FUNC_MAPPING = {
 }
 
 
-def gen_date_range(start_dt, end_dt, bucket_width, timezone="UTC"):
+def gen_date_range(
+    start_dt, end_dt, bucket_width_value, bucket_width_unit, timezone="UTC"
+):
     """Generate a complete index for a given time period and bucket width"""
 
-    bw_val, bw_unit = bucket_width.split()
-    pd_freq = f"{bw_val}{PANDAS_OFFSET_ALIASES[bw_unit]}"
+    pd_freq = f"{bucket_width_value}{PANDAS_OFFSET_ALIASES[bucket_width_unit]}"
 
     # TODO: Drop pytz for ZoneInfo when pandas supports ZoneInfo (pandas 1.5+)
     tz = pytz.timezone(timezone)
@@ -58,13 +60,13 @@ def gen_date_range(start_dt, end_dt, bucket_width, timezone="UTC"):
     # pytz related issue: use localize, don't pass TZ in datetime constructor
     # https://stackoverflow.com/a/57526282/4653485
     origin_date = start_dt.astimezone(ZoneInfo(timezone)).date()
-    if bw_unit == "year":
+    if bucket_width_unit == "year":
         # Month: date range aligned on month start
         range_start = tz.localize(dt.datetime(origin_date.year, 1, 1))
-    elif bw_unit == "month":
+    elif bucket_width_unit == "month":
         # Month: date range aligned on month start
         range_start = tz.localize(dt.datetime(origin_date.year, origin_date.month, 1))
-    elif bw_unit == "week":
+    elif bucket_width_unit == "week":
         # Week: date range aligned on monday (range start may be before start_dt)
         range_start = tz.localize(
             dt.datetime(origin_date.year, origin_date.month, origin_date.day)
@@ -195,7 +197,8 @@ class TimeseriesDataIO:
         end_dt,
         timeseries,
         data_state,
-        bucket_width,
+        bucket_width_value,
+        bucket_width_unit,
         aggregation="avg",
         *,
         timezone="UTC",
@@ -207,12 +210,12 @@ class TimeseriesDataIO:
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
         :param list timeseries: List of timeseries
         :param TimeseriesDataState data_state: Timeseries data state
-        :param str bucket_width: Bucket width of the form "value unit" where
-            value is an integer greater than 0 and unit is a string in
-            {"second", "minute", "hour", "day", "week", "month", "year"}
-            E.g.: "1 day", "3 year"
-        :param str aggreagation: Aggregation function. Must be one of
-            "avg", "sum", "min", "max" and "count".
+        :param int bucket_witdh_value: Value of the bucket width.
+            Must be at least 1.
+        :param str bucket_witdh_unit: Unit of the bucket width
+            One of "second", "minute", "hour", "day", "week", "month", "year".
+        :param str aggregation: Aggregation function.
+            One of "avg", "sum", "min", "max" and "count".
         :param str timezone: IANA timezone
         :param string col_label: Timeseries attribute to use for column header.
             Should be "id" or "name". Default: "id".
@@ -230,6 +233,14 @@ class TimeseriesDataIO:
 
         Returns a dataframe.
         """
+        if bucket_width_value < 1:
+            raise TimeseriesDataIOInvalidBucketWidthError(
+                "bucket_width_value must be greater than or equal to 1"
+            )
+        if bucket_width_unit not in INTERVAL_UNITS:
+            raise TimeseriesDataIOInvalidBucketWidthError(
+                f"bucket_width_unit not in {INTERVAL_UNITS}"
+            )
         if aggregation not in AGGREGATION_FUNCTIONS:
             raise TimeseriesDataIOInvalidAggregationError("Invalid aggregation method")
 
@@ -241,7 +252,6 @@ class TimeseriesDataIO:
         dtype = int if aggregation == "count" else float
 
         params = {
-            "bucket_width": bucket_width,
             "timezone": timezone,
             "timeseries_ids": tuple(ts.id for ts in timeseries),
             "data_state_id": data_state.id,
@@ -249,21 +259,22 @@ class TimeseriesDataIO:
             "end_dt": end_dt,
         }
 
-        bw_val, bw_unit = bucket_width.split()
-        pd_freq = f"{bw_val}{PANDAS_OFFSET_ALIASES[bw_unit]}"
+        pd_freq = f"{bucket_width_value}{PANDAS_OFFSET_ALIASES[bucket_width_unit]}"
 
-        if bw_unit in VARIABLE_SIZE_INTERVAL_UNITS:
+        if bucket_width_unit in VARIABLE_SIZE_INTERVAL_UNITS:
             # At this stage, date_trunc can only aggregate by 1 x unit.
             # For a N x month/year bucket size, the remaining aggregation is
             # done in Pandas below.
-            params["bw_unit"] = bw_unit
+            params["bucket_width_unit"] = bucket_width_unit
             query = (
-                "SELECT date_trunc(:bw_unit, timestamp AT TIME ZONE :timezone)"
+                "SELECT date_trunc("
+                ":bucket_width_unit, timestamp AT TIME ZONE :timezone)"
                 f"  AS bucket, timeseries.id, timeseries.name, {aggregation}(value) "
             )
         else:
             # TODO: replace with PostgreSQL date_bin when dropping PostgreSQL < 14
-            if bw_unit == "week":
+            params["bucket_width"] = (f"{bucket_width_value} {bucket_width_unit}",)
+            if bucket_width_unit == "week":
                 # Align on monday (2018-01-01 is a monday)
                 params["origin"] = "2018-01-01"
             else:
@@ -314,12 +325,17 @@ class TimeseriesDataIO:
 
         # Variable size intervals are aggregated to 1 x unit due to date_trunc
         # Further aggregation is achieved here in pandas
-        if bw_unit in VARIABLE_SIZE_INTERVAL_UNITS and bw_val != 1:
+        if (
+            bucket_width_unit in VARIABLE_SIZE_INTERVAL_UNITS
+            and bucket_width_value != 1
+        ):
             func = PANDAS_RE_AGGREG_FUNC_MAPPING[aggregation]
             data_df = data_df.resample(pd_freq, closed="left", label="left").agg(func)
 
         # Fill gaps: create expected index for gapless data then reindex
-        complete_idx = gen_date_range(start_dt, end_dt, bucket_width, timezone)
+        complete_idx = gen_date_range(
+            start_dt, end_dt, bucket_width_value, bucket_width_unit, timezone
+        )
         data_df = data_df.reindex(complete_idx, fill_value=fill_value)
 
         # Fill missing columns
@@ -458,7 +474,8 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         end_dt,
         timeseries,
         data_state,
-        bucket_width,
+        bucket_width_value,
+        bucket_width_unit,
         aggregation="avg",
         *,
         timezone="UTC",
@@ -475,7 +492,8 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             end_dt,
             timeseries,
             data_state,
-            bucket_width,
+            bucket_width_value,
+            bucket_width_unit,
             aggregation,
             timezone=timezone,
             col_label=col_label,

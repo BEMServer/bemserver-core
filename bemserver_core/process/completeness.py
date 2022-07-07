@@ -16,13 +16,18 @@ from bemserver_core.input_output.timeseries_data_io import (
 
 
 def compute_completeness(
-    start_dt, end_dt, timeseries, data_state, bucket_width, timezone="UTC"
+    start_dt,
+    end_dt,
+    timeseries,
+    data_state,
+    bucket_width_value,
+    bucket_width_unit,
+    timezone="UTC",
 ):
-    bw_val, bw_unit = bucket_width.split()
-    pd_freq = f"{bw_val}{PANDAS_OFFSET_ALIASES[bw_unit]}"
+    pd_freq = f"{bucket_width_value}{PANDAS_OFFSET_ALIASES[bucket_width_unit]}"
 
     # Generate seconds per bucket (may not be constant due to variable size buckets)
-    seconds = gen_date_range(start_dt, end_dt, "1 second", timezone)
+    seconds = gen_date_range(start_dt, end_dt, 1, "second", timezone)
     nb_s_per_bucket = (
         pd.DataFrame({"count": 1}, index=seconds)
         .resample(pd_freq, closed="left", label="left")
@@ -35,7 +40,8 @@ def compute_completeness(
         end_dt,
         timeseries,
         data_state,
-        bucket_width,
+        bucket_width_value,
+        bucket_width_unit,
         "count",
         timezone=timezone,
     )

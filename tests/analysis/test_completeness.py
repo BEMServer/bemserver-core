@@ -86,7 +86,7 @@ class TestCompleteness:
             ts_l = (ts_0, ts_1, ts_2, ts_3, ts_4)
 
             # 2 months - monthly
-            ret = compute_completeness(start_dt, end_dt, ts_l, ds_1, "1 month")
+            ret = compute_completeness(start_dt, end_dt, ts_l, ds_1, 1, "month")
             assert ret == {
                 "timestamps": [
                     dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
@@ -152,7 +152,7 @@ class TestCompleteness:
             }
 
             # 2 months - daily
-            ret = compute_completeness(start_dt, end_dt, ts_l, ds_1, "1 day")
+            ret = compute_completeness(start_dt, end_dt, ts_l, ds_1, 1, "day")
             assert ret["timestamps"][0] == dt.datetime(
                 2020, 1, 1, tzinfo=dt.timezone.utc
             )
@@ -191,7 +191,7 @@ class TestCompleteness:
             assert ret["timeseries"][5]["expected_count"] == 60 * [None]
 
             # 2 months - weekly
-            ret = compute_completeness(start_dt, end_dt, ts_l, ds_1, "1 week")
+            ret = compute_completeness(start_dt, end_dt, ts_l, ds_1, 1, "week")
             assert ret["timestamps"][0] == dt.datetime(
                 2019, 12, 30, tzinfo=dt.timezone.utc
             )
@@ -235,7 +235,7 @@ class TestCompleteness:
 
             # 1 day - minute step
             ret = compute_completeness(
-                start_dt, start_dt_plus_1_day, ts_l, ds_1, "1 minute"
+                start_dt, start_dt_plus_1_day, ts_l, ds_1, 1, "minute"
             )
             assert ret["timestamps"][0] == dt.datetime(
                 2020, 1, 1, tzinfo=dt.timezone.utc
