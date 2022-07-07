@@ -5,6 +5,7 @@ import pytest
 
 from bemserver_core.model import (
     TimeseriesProperty,
+    PropertyType,
     TimeseriesDataState,
     Timeseries,
     TimeseriesData,
@@ -57,6 +58,26 @@ class TestTimeseriesPropertyModel:
                 ts_property_1.update(name="Mean")
             with pytest.raises(BEMServerAuthorizationError):
                 ts_property_1.delete()
+
+    def test_timeseries_property_cannot_change_type(self, users):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        with CurrentUser(admin_user):
+            sep = TimeseriesProperty(
+                name="New property",
+                value_type=PropertyType.integer,
+            )
+            assert sep.id is None
+            sep.value_type = PropertyType.float
+            db.session.add(sep)
+            db.session.commit()
+            assert sep.id is not None
+            with pytest.raises(
+                AttributeError,
+                match="value_type cannot be modified",
+            ):
+                sep.value_type = PropertyType.boolean
 
 
 class TestTimeseriesDataStateModel:

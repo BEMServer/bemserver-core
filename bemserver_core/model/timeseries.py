@@ -21,11 +21,21 @@ class TimeseriesProperty(AuthMixin, Base):
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
     description = sqla.Column(sqla.String(250))
-    value_type = sqla.Column(
+    _value_type = sqla.Column(
         sqla.Enum(PropertyType),
         default=PropertyType.string,
         nullable=False,
     )
+
+    @hybrid_property
+    def value_type(self):
+        return self._value_type
+
+    @value_type.setter
+    def value_type(self, value_type):
+        if self.id is not None:
+            raise AttributeError("value_type cannot be modified")
+        self._value_type = value_type
 
 
 class TimeseriesDataState(AuthMixin, Base):
