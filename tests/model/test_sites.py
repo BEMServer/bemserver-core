@@ -171,6 +171,26 @@ class TestStructuralElementPropertyModel:
             with pytest.raises(BEMServerAuthorizationError):
                 sep_1.delete()
 
+    def test_structural_element_property_cannot_change_type(self, users):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        with CurrentUser(admin_user):
+            sep = StructuralElementProperty(
+                name="New property",
+                value_type=PropertyType.integer,
+            )
+            assert sep.id is None
+            sep.value_type = PropertyType.float
+            db.session.add(sep)
+            db.session.commit()
+            assert sep.id is not None
+            with pytest.raises(
+                AttributeError,
+                match="value_type cannot be modified",
+            ):
+                sep.value_type = PropertyType.boolean
+
 
 class TestSitePropertyModel:
     def test_site_property_authorizations_as_admin(
