@@ -11,8 +11,9 @@ from bemserver_core.model.campaigns import (
     CampaignScope,
     UserGroupByCampaignScope,
 )
-from bemserver_core.model.sites import Site, Building, Storey, Space, Zone, PropertyType
-from bemserver_core.exceptions import TimeseriesNotFoundError, PropertyTypeInvalidError
+from bemserver_core.model.sites import Site, Building, Storey, Space, Zone
+from bemserver_core.common import PropertyType
+from bemserver_core.exceptions import TimeseriesNotFoundError
 
 
 class TimeseriesProperty(AuthMixin, Base):
@@ -344,16 +345,9 @@ class TimeseriesPropertyData(AuthMixin, Base):
         )
 
     def _before_flush(self):
-        # Get property type and try to cast value to ensure its validity.
-        prop = TimeseriesProperty.get_by_id(self.property_id)
-        if prop is not None:
-            try:
-                self.value = prop.value_type.cast(self.value)
-            except ValueError as exc:
-                self.value = None
-                raise PropertyTypeInvalidError(
-                    f"Invalid value type for {prop.name} timeseries property."
-                ) from exc
+        # Get property type and try to parse value to ensure its type validity.
+        if (prop := TimeseriesProperty.get_by_id(self.property_id)) is not None:
+            prop.value_type.verify(self.value)
 
 
 class TimeseriesByDataState(AuthMixin, Base):

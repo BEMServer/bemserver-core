@@ -1,5 +1,4 @@
 """Sites"""
-import enum
 import sqlalchemy as sqla
 import sqlalchemy.orm as sqlaorm
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -7,22 +6,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from bemserver_core.database import Base
 from bemserver_core.model import Campaign
 from bemserver_core.authorization import AuthMixin, auth, Relation
-from bemserver_core.exceptions import PropertyTypeInvalidError
-
-
-class PropertyType(enum.Enum):
-    integer = int
-    float = float
-    boolean = bool
-    string = str
-
-    def cast(self, val_in):
-        val_out = str(val_in)
-        if self is self.boolean:
-            val_out = val_out.lower() in ["true", "t", "1", "yes", "y"]
-        elif self is not self.string:
-            val_out = self.value(val_out)
-        return val_out
+from bemserver_core.common import PropertyType
 
 
 class StructuralElementProperty(AuthMixin, Base):
@@ -486,19 +470,9 @@ class SitePropertyData(AuthMixin, Base):
         )
 
     def _before_flush(self):
-        # Get property type and try to cast value to ensure its validity.
-        site_prop = SiteProperty.get_by_id(self.site_property_id)
-        if site_prop is not None:
-            try:
-                self.value = site_prop.structural_element_property.value_type.cast(
-                    self.value
-                )
-            except ValueError as exc:
-                self.value = None
-                prop_name = site_prop.structural_element_property.name
-                raise PropertyTypeInvalidError(
-                    f"Invalid value type for {prop_name} site property."
-                ) from exc
+        # Get property type and try to parse value to ensure its type validity.
+        if (prop := SiteProperty.get_by_id(self.site_property_id)) is not None:
+            prop.structural_element_property.value_type.verify(self.value)
 
 
 class BuildingPropertyData(AuthMixin, Base):
@@ -550,19 +524,9 @@ class BuildingPropertyData(AuthMixin, Base):
         )
 
     def _before_flush(self):
-        # Get property type and try to cast value to ensure its validity.
-        building_prop = BuildingProperty.get_by_id(self.building_property_id)
-        if building_prop is not None:
-            try:
-                self.value = building_prop.structural_element_property.value_type.cast(
-                    self.value
-                )
-            except ValueError as exc:
-                self.value = None
-                prop_name = building_prop.structural_element_property.name
-                raise PropertyTypeInvalidError(
-                    f"Invalid value type for {prop_name} building property."
-                ) from exc
+        # Get property type and try to parse value to ensure its type validity.
+        if (prop := BuildingProperty.get_by_id(self.building_property_id)) is not None:
+            prop.structural_element_property.value_type.verify(self.value)
 
 
 class StoreyPropertyData(AuthMixin, Base):
@@ -610,19 +574,9 @@ class StoreyPropertyData(AuthMixin, Base):
         )
 
     def _before_flush(self):
-        # Get property type and try to cast value to ensure its validity.
-        storey_prop = StoreyProperty.get_by_id(self.storey_property_id)
-        if storey_prop is not None:
-            try:
-                self.value = storey_prop.structural_element_property.value_type.cast(
-                    self.value
-                )
-            except ValueError as exc:
-                self.value = None
-                prop_name = storey_prop.structural_element_property.name
-                raise PropertyTypeInvalidError(
-                    f"Invalid value type for {prop_name} storey property."
-                ) from exc
+        # Get property type and try to parse value to ensure its type validity.
+        if (prop := StoreyProperty.get_by_id(self.storey_property_id)) is not None:
+            prop.structural_element_property.value_type.verify(self.value)
 
 
 class SpacePropertyData(AuthMixin, Base):
@@ -670,19 +624,9 @@ class SpacePropertyData(AuthMixin, Base):
         )
 
     def _before_flush(self):
-        # Get property type and try to cast value to ensure its validity.
-        space_prop = SpaceProperty.get_by_id(self.space_property_id)
-        if space_prop is not None:
-            try:
-                self.value = space_prop.structural_element_property.value_type.cast(
-                    self.value
-                )
-            except ValueError as exc:
-                self.value = None
-                prop_name = space_prop.structural_element_property.name
-                raise PropertyTypeInvalidError(
-                    f"Invalid value type for {prop_name} space property."
-                ) from exc
+        # Get property type and try to parse value to ensure its type validity.
+        if (prop := SpaceProperty.get_by_id(self.space_property_id)) is not None:
+            prop.structural_element_property.value_type.verify(self.value)
 
 
 class ZonePropertyData(AuthMixin, Base):
@@ -730,16 +674,6 @@ class ZonePropertyData(AuthMixin, Base):
         )
 
     def _before_flush(self):
-        # Get property type and try to cast value to ensure its validity.
-        zone_prop = ZoneProperty.get_by_id(self.zone_property_id)
-        if zone_prop is not None:
-            try:
-                self.value = zone_prop.structural_element_property.value_type.cast(
-                    self.value
-                )
-            except ValueError as exc:
-                self.value = None
-                prop_name = zone_prop.structural_element_property.name
-                raise PropertyTypeInvalidError(
-                    f"Invalid value type for {prop_name} zone property."
-                ) from exc
+        # Get property type and try to parse value to ensure its type validity.
+        if (prop := ZoneProperty.get_by_id(self.zone_property_id)) is not None:
+            prop.structural_element_property.value_type.verify(self.value)

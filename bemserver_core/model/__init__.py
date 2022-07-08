@@ -23,7 +23,6 @@ from .sites import (
     StoreyPropertyData,
     SpacePropertyData,
     ZonePropertyData,
-    PropertyType,
 )
 from .timeseries import (
     TimeseriesDataState,
@@ -60,7 +59,6 @@ __all__ = [
     "StoreyProperty",
     "SpaceProperty",
     "ZoneProperty",
-    "PropertyType",
     "Site",
     "Building",
     "Storey",

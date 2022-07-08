@@ -5,7 +5,6 @@ import pytest
 
 from bemserver_core.model import (
     TimeseriesProperty,
-    PropertyType,
     TimeseriesDataState,
     Timeseries,
     TimeseriesData,
@@ -19,6 +18,7 @@ from bemserver_core.model import (
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
+from bemserver_core.common import PropertyType
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
     TimeseriesNotFoundError,
@@ -611,6 +611,7 @@ class TestTimeseriesPropertyDataModel:
 
         with CurrentUser(admin_user):
             # Property value is expected to be a float.
+            assert tsp_1.value_type is PropertyType.float
             tspd_1 = TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=tsp_1.id,
@@ -618,7 +619,7 @@ class TestTimeseriesPropertyDataModel:
             )
             db.session.commit()
             assert tspd_1.value == "4.2"
-            for val, exp_res in [("66.6", "66.6"), (42, "42.0")]:
+            for val, exp_res in [("66.6", "66.6"), (42, "42")]:
                 tspd_1.value = val
                 db.session.add(tspd_1)
                 db.session.commit()
@@ -627,15 +628,13 @@ class TestTimeseriesPropertyDataModel:
             for val in ["bad", None]:
                 tspd_1.value = val
                 db.session.add(tspd_1)
-                with pytest.raises(
-                    PropertyTypeInvalidError,
-                    match="Invalid value type for Min timeseries property",
-                ):
+                with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
-                assert tspd_1.value is None
+                assert tspd_1.value == val
                 db.session.rollback()
 
             # Property value is expected to be an integer.
+            assert tsp_3.value_type is PropertyType.integer
             tspd_3 = TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=tsp_3.id,
@@ -651,33 +650,35 @@ class TestTimeseriesPropertyDataModel:
             for val in ["bad", "4.2", 4.2, None]:
                 tspd_3.value = val
                 db.session.add(tspd_3)
-                with pytest.raises(
-                    PropertyTypeInvalidError,
-                    match="Invalid value type for Interval timeseries property",
-                ):
+                with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
-                assert tspd_3.value is None
+                assert tspd_3.value == val
                 db.session.rollback()
 
             # Property value is expected to be a boolean.
+            assert tsp_4.value_type is PropertyType.boolean
             tspd_4 = TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=tsp_4.id,
-                value=True,
+                value="true",
             )
             db.session.commit()
             assert tspd_4.value == "true"
-            for val, exp_res in [
-                ("0", "false"),
-                ("something invalid will be False", "false"),
-                (42, "false"),
-            ]:
+            tspd_4.value = "false"
+            db.session.add(tspd_4)
+            db.session.commit()
+            assert tspd_4.value == "false"
+            # Invalid property value types.
+            for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
                 tspd_4.value = val
                 db.session.add(tspd_4)
-                db.session.commit()
-                assert tspd_4.value == exp_res
+                with pytest.raises(PropertyTypeInvalidError):
+                    db.session.commit()
+                assert tspd_4.value == val
+                db.session.rollback()
 
             # Property value is expected to be a string.
+            assert tsp_5.value_type is PropertyType.string
             tspd_5 = TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=tsp_5.id,
@@ -687,8 +688,7 @@ class TestTimeseriesPropertyDataModel:
             assert tspd_5.value == "12"
             for val, exp_res in [
                 ("everything works", "everything works"),
-                (True, "True"),
-                (None, "None"),
+                (True, "true"),
             ]:
                 tspd_5.value = val
                 db.session.add(tspd_5)

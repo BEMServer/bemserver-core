@@ -2,7 +2,6 @@
 import pytest
 
 from bemserver_core.model import (
-    PropertyType,
     StructuralElementProperty,
     SiteProperty,
     BuildingProperty,
@@ -27,71 +26,11 @@ from bemserver_core.model import (
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
+from bemserver_core.common import PropertyType
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
     PropertyTypeInvalidError,
 )
-
-
-class TestPropertyTypeEnum:
-    def test_property_type_cast(self):
-        assert PropertyType.integer.cast(42) == 42
-        assert PropertyType.integer.cast(-42) == -42
-        with pytest.raises(ValueError):
-            PropertyType.integer.cast(4.2)
-        with pytest.raises(ValueError):
-            PropertyType.integer.cast("4.2")
-        with pytest.raises(ValueError):
-            PropertyType.integer.cast("bad")
-        with pytest.raises(ValueError):
-            PropertyType.integer.cast(True)
-
-        assert PropertyType.float.cast(42) == 42.0
-        assert PropertyType.float.cast(-42) == -42.0
-        assert PropertyType.float.cast(4.2) == 4.2
-        assert PropertyType.float.cast(-4.2) == -4.2
-        assert PropertyType.float.cast("4.2") == 4.2
-        assert PropertyType.float.cast("-4.2") == -4.2
-        with pytest.raises(ValueError):
-            PropertyType.float.cast("bad")
-        with pytest.raises(ValueError):
-            PropertyType.float.cast(True)
-
-        assert PropertyType.boolean.cast(True)
-        assert PropertyType.boolean.cast("True")
-        assert PropertyType.boolean.cast("true")
-        assert PropertyType.boolean.cast("TRUE")
-        assert PropertyType.boolean.cast(1)
-        assert PropertyType.boolean.cast("1")
-        assert PropertyType.boolean.cast("t")
-        assert PropertyType.boolean.cast("T")
-        assert PropertyType.boolean.cast("yes")
-        assert PropertyType.boolean.cast("YES")
-        assert PropertyType.boolean.cast("Yes")
-        assert PropertyType.boolean.cast("y")
-        assert PropertyType.boolean.cast("Y")
-        assert not PropertyType.boolean.cast(False)
-        assert not PropertyType.boolean.cast("False")
-        assert not PropertyType.boolean.cast("false")
-        assert not PropertyType.boolean.cast("FALSE")
-        assert not PropertyType.boolean.cast(0)
-        assert not PropertyType.boolean.cast("0")
-        assert not PropertyType.boolean.cast("whatever invalid input returns False")
-        assert not PropertyType.boolean.cast("42")
-        assert not PropertyType.boolean.cast(42)
-
-        assert PropertyType.string.cast(42) == "42"
-        assert PropertyType.string.cast(-42) == "-42"
-        assert PropertyType.string.cast(4.2) == "4.2"
-        assert PropertyType.string.cast(-4.2) == "-4.2"
-        assert PropertyType.string.cast("42") == "42"
-        assert PropertyType.string.cast("-42") == "-42"
-        assert PropertyType.string.cast("4.2") == "4.2"
-        assert PropertyType.string.cast("-4.2") == "-4.2"
-        assert PropertyType.string.cast("whatever string") == "whatever string"
-        assert PropertyType.string.cast(True) == "True"
-        assert PropertyType.string.cast(False) == "False"
-        assert PropertyType.string.cast(None) == "None"
 
 
 class TestStructuralElementPropertyModel:
@@ -1084,6 +1023,9 @@ class TestSitePropertyDataModel:
 
         with CurrentUser(admin_user):
             # Property value is expected to be an integer.
+            assert (
+                site_p_1.structural_element_property.value_type is PropertyType.integer
+            )
             site_pd_1 = SitePropertyData.new(
                 site_id=site_1.id,
                 site_property_id=site_p_1.id,
@@ -1096,18 +1038,16 @@ class TestSitePropertyDataModel:
             db.session.commit()
             assert site_pd_1.value == "666"
             # Invalid property value types.
-            for val in ["bad", "4.2", 4.2, None]:
+            for val in ["bad", "4.2", 4.2, False, None]:
                 site_pd_1.value = val
                 db.session.add(site_pd_1)
-                with pytest.raises(
-                    PropertyTypeInvalidError,
-                    match="Invalid value type for Area site property",
-                ):
+                with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
-                assert site_pd_1.value is None
+                assert site_pd_1.value == val
                 db.session.rollback()
 
             # Property value is expected to be a float.
+            assert site_p_2.structural_element_property.value_type is PropertyType.float
             site_pd_2 = SitePropertyData.new(
                 site_id=site_1.id,
                 site_property_id=site_p_2.id,
@@ -1115,42 +1055,48 @@ class TestSitePropertyDataModel:
             )
             db.session.commit()
             assert site_pd_2.value == "4.2"
-            for val, exp_res in [("66.6", "66.6"), (42, "42.0")]:
+            for val, exp_res in [("66.6", "66.6"), (42, "42")]:
                 site_pd_2.value = val
                 db.session.add(site_pd_2)
                 db.session.commit()
                 assert site_pd_2.value == exp_res
             # Invalid property value types.
-            for val in ["bad", None]:
+            for val in ["bad", False, None]:
                 site_pd_2.value = val
                 db.session.add(site_pd_2)
-                with pytest.raises(
-                    PropertyTypeInvalidError,
-                    match="Invalid value type for Volume site property",
-                ):
+                with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
-                assert site_pd_2.value is None
+                assert site_pd_2.value == val
                 db.session.rollback()
 
             # Property value is expected to be a boolean.
+            assert (
+                site_p_3.structural_element_property.value_type is PropertyType.boolean
+            )
             site_pd_3 = SitePropertyData.new(
                 site_id=site_1.id,
                 site_property_id=site_p_3.id,
-                value=True,
+                value="true",
             )
             db.session.commit()
             assert site_pd_3.value == "true"
-            for val, exp_res in [
-                ("0", "false"),
-                ("something invalid will be False", "false"),
-                (42, "false"),
-            ]:
+            site_pd_3.value = "false"
+            db.session.add(site_pd_3)
+            db.session.commit()
+            assert site_pd_3.value == "false"
+            # Invalid property value types.
+            for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
                 site_pd_3.value = val
                 db.session.add(site_pd_3)
-                db.session.commit()
-                assert site_pd_3.value == exp_res
+                with pytest.raises(PropertyTypeInvalidError):
+                    db.session.commit()
+                assert site_pd_3.value == val
+                db.session.rollback()
 
             # Property value is expected to be a string.
+            assert (
+                site_p_4.structural_element_property.value_type is PropertyType.string
+            )
             site_pd_4 = SitePropertyData.new(
                 site_id=site_1.id,
                 site_property_id=site_p_4.id,
@@ -1160,8 +1106,7 @@ class TestSitePropertyDataModel:
             assert site_pd_4.value == "12"
             for val, exp_res in [
                 ("everything works", "everything works"),
-                (True, "True"),
-                (None, "None"),
+                (True, "true"),
             ]:
                 site_pd_4.value = val
                 db.session.add(site_pd_4)
@@ -1267,6 +1212,10 @@ class TestBuildingPropertyDataModel:
 
         with CurrentUser(admin_user):
             # Property value is expected to be an integer.
+            assert (
+                building_p_1.structural_element_property.value_type
+                is PropertyType.integer
+            )
             building_pd_1 = BuildingPropertyData.new(
                 building_id=building_1.id,
                 building_property_id=building_p_1.id,
@@ -1279,18 +1228,19 @@ class TestBuildingPropertyDataModel:
             db.session.commit()
             assert building_pd_1.value == "666"
             # Invalid property value types.
-            for val in ["bad", "4.2", 4.2, None]:
+            for val in ["bad", "4.2", 4.2, False, None]:
                 building_pd_1.value = val
                 db.session.add(building_pd_1)
-                with pytest.raises(
-                    PropertyTypeInvalidError,
-                    match="Invalid value type for Area building property",
-                ):
+                with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
-                assert building_pd_1.value is None
+                assert building_pd_1.value == val
                 db.session.rollback()
 
             # Property value is expected to be a float.
+            assert (
+                building_p_2.structural_element_property.value_type
+                is PropertyType.float
+            )
             building_pd_2 = BuildingPropertyData.new(
                 building_id=building_1.id,
                 building_property_id=building_p_2.id,
@@ -1298,42 +1248,50 @@ class TestBuildingPropertyDataModel:
             )
             db.session.commit()
             assert building_pd_2.value == "4.2"
-            for val, exp_res in [("66.6", "66.6"), (42, "42.0")]:
+            for val, exp_res in [("66.6", "66.6"), (42, "42")]:
                 building_pd_2.value = val
                 db.session.add(building_pd_2)
                 db.session.commit()
                 assert building_pd_2.value == exp_res
             # Invalid property value types.
-            for val in ["bad", None]:
+            for val in ["bad", False, None]:
                 building_pd_2.value = val
                 db.session.add(building_pd_2)
-                with pytest.raises(
-                    PropertyTypeInvalidError,
-                    match="Invalid value type for Volume building property",
-                ):
+                with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
-                assert building_pd_2.value is None
+                assert building_pd_2.value == val
                 db.session.rollback()
 
             # Property value is expected to be a boolean.
+            assert (
+                building_p_3.structural_element_property.value_type
+                is PropertyType.boolean
+            )
             building_pd_3 = BuildingPropertyData.new(
                 building_id=building_1.id,
                 building_property_id=building_p_3.id,
-                value=True,
+                value="true",
             )
             db.session.commit()
             assert building_pd_3.value == "true"
-            for val, exp_res in [
-                ("0", "false"),
-                ("something invalid will be False", "false"),
-                (42, "false"),
-            ]:
+            building_pd_3.value = "false"
+            db.session.add(building_pd_3)
+            db.session.commit()
+            assert building_pd_3.value == "false"
+            # Invalid property value types.
+            for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
                 building_pd_3.value = val
                 db.session.add(building_pd_3)
-                db.session.commit()
-                assert building_pd_3.value == exp_res
+                with pytest.raises(PropertyTypeInvalidError):
+                    db.session.commit()
+                assert building_pd_3.value == val
+                db.session.rollback()
 
             # Property value is expected to be a string.
+            assert (
+                building_p_4.structural_element_property.value_type
+                is PropertyType.string
+            )
             building_pd_4 = BuildingPropertyData.new(
                 building_id=building_1.id,
                 building_property_id=building_p_4.id,
@@ -1343,8 +1301,7 @@ class TestBuildingPropertyDataModel:
             assert building_pd_4.value == "12"
             for val, exp_res in [
                 ("everything works", "everything works"),
-                (True, "True"),
-                (None, "None"),
+                (True, "true"),
             ]:
                 building_pd_4.value = val
                 db.session.add(building_pd_4)
@@ -1452,6 +1409,10 @@ class TestStoreyPropertyDataModel:
 
         with CurrentUser(admin_user):
             # Property value is expected to be an integer.
+            assert (
+                storey_p_1.structural_element_property.value_type
+                is PropertyType.integer
+            )
             storey_pd_1 = StoreyPropertyData.new(
                 storey_id=storey_1.id,
                 storey_property_id=storey_p_1.id,
@@ -1464,18 +1425,18 @@ class TestStoreyPropertyDataModel:
             db.session.commit()
             assert storey_pd_1.value == "666"
             # Invalid property value types.
-            for val in ["bad", "4.2", 4.2, None]:
+            for val in ["bad", "4.2", 4.2, False, None]:
                 storey_pd_1.value = val
                 db.session.add(storey_pd_1)
-                with pytest.raises(
-                    PropertyTypeInvalidError,
-                    match="Invalid value type for Area storey property",
-                ):
+                with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
-                assert storey_pd_1.value is None
+                assert storey_pd_1.value == val
                 db.session.rollback()
 
             # Property value is expected to be a float.
+            assert (
+                storey_p_2.structural_element_property.value_type is PropertyType.float
+            )
             storey_pd_2 = StoreyPropertyData.new(
                 storey_id=storey_1.id,
                 storey_property_id=storey_p_2.id,
@@ -1483,42 +1444,49 @@ class TestStoreyPropertyDataModel:
             )
             db.session.commit()
             assert storey_pd_2.value == "4.2"
-            for val, exp_res in [("66.6", "66.6"), (42, "42.0")]:
+            for val, exp_res in [("66.6", "66.6"), (42, "42")]:
                 storey_pd_2.value = val
                 db.session.add(storey_pd_2)
                 db.session.commit()
                 assert storey_pd_2.value == exp_res
             # Invalid property value types.
-            for val in ["bad", None]:
+            for val in ["bad", False, None]:
                 storey_pd_2.value = val
                 db.session.add(storey_pd_2)
-                with pytest.raises(
-                    PropertyTypeInvalidError,
-                    match="Invalid value type for Volume storey property",
-                ):
+                with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
-                assert storey_pd_2.value is None
+                assert storey_pd_2.value == val
                 db.session.rollback()
 
             # Property value is expected to be a boolean.
+            assert (
+                storey_p_3.structural_element_property.value_type
+                is PropertyType.boolean
+            )
             storey_pd_3 = StoreyPropertyData.new(
                 storey_id=storey_1.id,
                 storey_property_id=storey_p_3.id,
-                value=True,
+                value="true",
             )
             db.session.commit()
             assert storey_pd_3.value == "true"
-            for val, exp_res in [
-                ("0", "false"),
-                ("something invalid will be False", "false"),
-                (42, "false"),
-            ]:
+            storey_pd_3.value = "false"
+            db.session.add(storey_pd_3)
+            db.session.commit()
+            assert storey_pd_3.value == "false"
+            # Invalid property value types.
+            for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
                 storey_pd_3.value = val
                 db.session.add(storey_pd_3)
-                db.session.commit()
-                assert storey_pd_3.value == exp_res
+                with pytest.raises(PropertyTypeInvalidError):
+                    db.session.commit()
+                assert storey_pd_3.value == val
+                db.session.rollback()
 
             # Property value is expected to be a string.
+            assert (
+                storey_p_4.structural_element_property.value_type is PropertyType.string
+            )
             storey_pd_4 = StoreyPropertyData.new(
                 storey_id=storey_1.id,
                 storey_property_id=storey_p_4.id,
@@ -1528,8 +1496,7 @@ class TestStoreyPropertyDataModel:
             assert storey_pd_4.value == "12"
             for val, exp_res in [
                 ("everything works", "everything works"),
-                (True, "True"),
-                (None, "None"),
+                (True, "true"),
             ]:
                 storey_pd_4.value = val
                 db.session.add(storey_pd_4)
@@ -1637,6 +1604,9 @@ class TestSpacePropertyDataModel:
 
         with CurrentUser(admin_user):
             # Property value is expected to be an integer.
+            assert (
+                space_p_1.structural_element_property.value_type is PropertyType.integer
+            )
             space_pd_1 = SpacePropertyData.new(
                 space_id=space_1.id,
                 space_property_id=space_p_1.id,
@@ -1649,18 +1619,18 @@ class TestSpacePropertyDataModel:
             db.session.commit()
             assert space_pd_1.value == "666"
             # Invalid property value types.
-            for val in ["bad", "4.2", 4.2, None]:
+            for val in ["bad", "4.2", 4.2, False, None]:
                 space_pd_1.value = val
                 db.session.add(space_pd_1)
-                with pytest.raises(
-                    PropertyTypeInvalidError,
-                    match="Invalid value type for Area space property",
-                ):
+                with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
-                assert space_pd_1.value is None
+                assert space_pd_1.value == val
                 db.session.rollback()
 
             # Property value is expected to be a float.
+            assert (
+                space_p_2.structural_element_property.value_type is PropertyType.float
+            )
             space_pd_2 = SpacePropertyData.new(
                 space_id=space_1.id,
                 space_property_id=space_p_2.id,
@@ -1668,42 +1638,48 @@ class TestSpacePropertyDataModel:
             )
             db.session.commit()
             assert space_pd_2.value == "4.2"
-            for val, exp_res in [("66.6", "66.6"), (42, "42.0")]:
+            for val, exp_res in [("66.6", "66.6"), (42, "42")]:
                 space_pd_2.value = val
                 db.session.add(space_pd_2)
                 db.session.commit()
                 assert space_pd_2.value == exp_res
             # Invalid property value types.
-            for val in ["bad", None]:
+            for val in ["bad", False, None]:
                 space_pd_2.value = val
                 db.session.add(space_pd_2)
-                with pytest.raises(
-                    PropertyTypeInvalidError,
-                    match="Invalid value type for Volume space property",
-                ):
+                with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
-                assert space_pd_2.value is None
+                assert space_pd_2.value == val
                 db.session.rollback()
 
             # Property value is expected to be a boolean.
+            assert (
+                space_p_3.structural_element_property.value_type is PropertyType.boolean
+            )
             space_pd_3 = SpacePropertyData.new(
                 space_id=space_1.id,
                 space_property_id=space_p_3.id,
-                value=True,
+                value="true",
             )
             db.session.commit()
             assert space_pd_3.value == "true"
-            for val, exp_res in [
-                ("0", "false"),
-                ("something invalid will be False", "false"),
-                (42, "false"),
-            ]:
+            space_pd_3.value = "false"
+            db.session.add(space_pd_3)
+            db.session.commit()
+            assert space_pd_3.value == "false"
+            # Invalid property value types.
+            for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
                 space_pd_3.value = val
                 db.session.add(space_pd_3)
-                db.session.commit()
-                assert space_pd_3.value == exp_res
+                with pytest.raises(PropertyTypeInvalidError):
+                    db.session.commit()
+                assert space_pd_3.value == val
+                db.session.rollback()
 
             # Property value is expected to be a string.
+            assert (
+                space_p_4.structural_element_property.value_type is PropertyType.string
+            )
             space_pd_4 = SpacePropertyData.new(
                 space_id=space_1.id,
                 space_property_id=space_p_4.id,
@@ -1713,8 +1689,7 @@ class TestSpacePropertyDataModel:
             assert space_pd_4.value == "12"
             for val, exp_res in [
                 ("everything works", "everything works"),
-                (True, "True"),
-                (None, "None"),
+                (True, "true"),
             ]:
                 space_pd_4.value = val
                 db.session.add(space_pd_4)
@@ -1822,6 +1797,9 @@ class TestZonePropertyDataModel:
 
         with CurrentUser(admin_user):
             # Property value is expected to be an integer.
+            assert (
+                zone_p_1.structural_element_property.value_type is PropertyType.integer
+            )
             zone_pd_1 = ZonePropertyData.new(
                 zone_id=zone_1.id,
                 zone_property_id=zone_p_1.id,
@@ -1834,18 +1812,16 @@ class TestZonePropertyDataModel:
             db.session.commit()
             assert zone_pd_1.value == "666"
             # Invalid property value types.
-            for val in ["bad", "4.2", 4.2, None]:
+            for val in ["bad", "4.2", 4.2, False, None]:
                 zone_pd_1.value = val
                 db.session.add(zone_pd_1)
-                with pytest.raises(
-                    PropertyTypeInvalidError,
-                    match="Invalid value type for Area zone property",
-                ):
+                with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
-                assert zone_pd_1.value is None
+                assert zone_pd_1.value == val
                 db.session.rollback()
 
             # Property value is expected to be a float.
+            assert zone_p_2.structural_element_property.value_type is PropertyType.float
             zone_pd_2 = ZonePropertyData.new(
                 zone_id=zone_1.id,
                 zone_property_id=zone_p_2.id,
@@ -1853,42 +1829,48 @@ class TestZonePropertyDataModel:
             )
             db.session.commit()
             assert zone_pd_2.value == "4.2"
-            for val, exp_res in [("66.6", "66.6"), (42, "42.0")]:
+            for val, exp_res in [("66.6", "66.6"), (42, "42")]:
                 zone_pd_2.value = val
                 db.session.add(zone_pd_2)
                 db.session.commit()
                 assert zone_pd_2.value == exp_res
             # Invalid property value types.
-            for val in ["bad", None]:
+            for val in ["bad", False, None]:
                 zone_pd_2.value = val
                 db.session.add(zone_pd_2)
-                with pytest.raises(
-                    PropertyTypeInvalidError,
-                    match="Invalid value type for Volume zone property",
-                ):
+                with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
-                assert zone_pd_2.value is None
+                assert zone_pd_2.value == val
                 db.session.rollback()
 
             # Property value is expected to be a boolean.
+            assert (
+                zone_p_3.structural_element_property.value_type is PropertyType.boolean
+            )
             zone_pd_3 = ZonePropertyData.new(
                 zone_id=zone_1.id,
                 zone_property_id=zone_p_3.id,
-                value=True,
+                value="true",
             )
             db.session.commit()
             assert zone_pd_3.value == "true"
-            for val, exp_res in [
-                ("0", "false"),
-                ("something invalid will be False", "false"),
-                (42, "false"),
-            ]:
+            zone_pd_3.value = "false"
+            db.session.add(zone_pd_3)
+            db.session.commit()
+            assert zone_pd_3.value == "false"
+            # Invalid property value types.
+            for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
                 zone_pd_3.value = val
                 db.session.add(zone_pd_3)
-                db.session.commit()
-                assert zone_pd_3.value == exp_res
+                with pytest.raises(PropertyTypeInvalidError):
+                    db.session.commit()
+                assert zone_pd_3.value == val
+                db.session.rollback()
 
             # Property value is expected to be a string.
+            assert (
+                zone_p_4.structural_element_property.value_type is PropertyType.string
+            )
             zone_pd_4 = ZonePropertyData.new(
                 zone_id=zone_1.id,
                 zone_property_id=zone_p_4.id,
@@ -1898,8 +1880,7 @@ class TestZonePropertyDataModel:
             assert zone_pd_4.value == "12"
             for val, exp_res in [
                 ("everything works", "everything works"),
-                (True, "True"),
-                (None, "None"),
+                (True, "true"),
             ]:
                 zone_pd_4.value = val
                 db.session.add(zone_pd_4)

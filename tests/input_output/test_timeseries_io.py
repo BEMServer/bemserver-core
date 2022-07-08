@@ -100,7 +100,7 @@ class TestTimeseriesCSVIO:
             .all()
         )
         assert len(timeseries_2_property_data) == 1
-        assert timeseries_2_property_data[0].value == "60.0"
+        assert timeseries_2_property_data[0].value == "60"
 
     def test_timeseries_csv_io_import_csv_missing_column(
         self,

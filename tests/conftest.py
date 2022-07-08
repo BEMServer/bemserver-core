@@ -11,7 +11,7 @@ from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core import model
 from bemserver_core.commands import setup_db
-from bemserver_core.model.sites import PropertyType
+from bemserver_core.common import PropertyType
 
 
 postgresql_proc = ppf.postgresql_proc(
@@ -304,19 +304,19 @@ def structural_element_properties(bemservercore):
     with OpenBar():
         sep_1 = model.StructuralElementProperty.new(
             name="Area",
-            value_type=model.PropertyType.integer,
+            value_type=PropertyType.integer,
         )
         sep_2 = model.StructuralElementProperty.new(
             name="Volume",
-            value_type=model.PropertyType.float,
+            value_type=PropertyType.float,
         )
         sep_3 = model.StructuralElementProperty.new(
             name="Window state",
-            value_type=model.PropertyType.boolean,
+            value_type=PropertyType.boolean,
         )
         sep_4 = model.StructuralElementProperty.new(
             name="Architect",
-            value_type=model.PropertyType.string,
+            value_type=PropertyType.string,
         )
         db.session.commit()
     return (sep_1, sep_2, sep_3, sep_4)
