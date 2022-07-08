@@ -135,11 +135,23 @@ class Base:
         """Delete object"""
         db.session.delete(self)
 
+    def _before_flush(self):
+        pass
+
 
 SESSION_FACTORY = sessionmaker()
 DB_SESSION = scoped_session(SESSION_FACTORY)
 metadata = sqla.MetaData(naming_convention=NAMING_CONVENTION)
 Base = declarative_base(metadata=metadata, cls=Base)
+
+
+# Inspired by https://stackoverflow.com/a/36732359
+@sqla.event.listens_for(DB_SESSION, "before_flush")
+def receive_before_flush(session, flush_context, instances):
+    """Listen for the `before_flush` event"""
+    # Call _before_flush method for each modified object instance in session.
+    for obj in chain(session.new, session.dirty):
+        obj._before_flush()
 
 
 class DBConnection:
@@ -175,13 +187,3 @@ class DBConnection:
 
 
 db = DBConnection()
-
-
-# Inspired from https://stackoverflow.com/a/36732359
-@sqla.event.listens_for(DB_SESSION, "before_flush")
-def receive_before_flush(session, flush_context, instances):
-    """Listen for the `before_flush` event"""
-    # Try to call _before_flush method for each modified object instance in session.
-    for obj in chain(session.new, session.dirty):
-        if hasattr(obj, "_before_flush"):
-            obj._before_flush()
