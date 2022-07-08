@@ -30,9 +30,6 @@ Set DB URI in an evironment variable::
 
 $ EXPORT SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://user:password@localhost:5432/bemserver"
 
-Alternatively, in development mode, one may write this env var in a .env file
-and install python-dotenv to load it.
-
 
 Development mode
 ----------------

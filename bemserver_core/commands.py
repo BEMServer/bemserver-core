@@ -11,14 +11,6 @@ from bemserver_core.exceptions import BEMServerCoreError
 
 
 def _set_db_url():
-    # Allow the use of a .env file to store SQLALCHEMY_DATABASE_URI environment variable
-    try:
-        from dotenv import load_dotenv
-    except ImportError:
-        pass
-    else:
-        load_dotenv()
-
     db_url = os.getenv("SQLALCHEMY_DATABASE_URI")
     if db_url is None:
         raise BEMServerCoreError("SQLALCHEMY_DATABASE_URI environment variable not set")

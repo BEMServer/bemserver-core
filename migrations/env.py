@@ -11,15 +11,6 @@ from alembic import context
 from bemserver_core.database import db, Base
 
 
-# Allow the use of a .env file to store SQLALCHEMY_DATABASE_URI environment variable
-try:
-    from dotenv import load_dotenv
-except ImportError:
-    pass
-else:
-    load_dotenv()
-
-
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
