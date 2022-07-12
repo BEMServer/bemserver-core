@@ -1,4 +1,6 @@
 """Site tests"""
+import sqlalchemy as sqla
+
 import pytest
 
 from bemserver_core.model import (
@@ -124,11 +126,13 @@ class TestStructuralElementPropertyModel:
             db.session.add(sep)
             db.session.commit()
             assert sep.id is not None
+            sep.value_type = PropertyType.boolean
+            db.session.add(sep)
             with pytest.raises(
-                AttributeError,
-                match="value_type cannot be modified",
+                sqla.exc.IntegrityError,
+                match='value_type cannot be modified for "New property"',
             ):
-                sep.value_type = PropertyType.boolean
+                db.session.commit()
 
 
 class TestSitePropertyModel:
@@ -148,11 +152,14 @@ class TestSitePropertyModel:
             SiteProperty.get_by_id(site_p_1.id)
             site_ps = list(SiteProperty.get())
             assert len(site_ps) == 1
+            site_p_1.update(structural_element_property_id=sep_2.id)
+            db.session.add(site_p_1)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="structural_element_property_id cannot be modified",
             ):
-                site_p_1.update(structural_element_property_id=sep_2.id)
+                db.session.commit()
+            db.session.rollback()
             site_p_1.delete()
             db.session.commit()
 
@@ -193,11 +200,13 @@ class TestSitePropertyModel:
             db.session.add(sp)
             db.session.commit()
             assert sp.id is not None
+            sp.structural_element_property_id = sep_1.id
+            db.session.add(sp)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="structural_element_property_id cannot be modified",
             ):
-                sp.structural_element_property_id = sep_1.id
+                db.session.commit()
 
 
 class TestBuildingPropertyModel:
@@ -217,11 +226,14 @@ class TestBuildingPropertyModel:
             BuildingProperty.get_by_id(building_p_1.id)
             building_ps = list(BuildingProperty.get())
             assert len(building_ps) == 1
+            building_p_1.update(structural_element_property_id=sep_2.id)
+            db.session.add(building_p_1)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="structural_element_property_id cannot be modified",
             ):
-                building_p_1.update(structural_element_property_id=sep_2.id)
+                db.session.commit()
+            db.session.rollback()
             building_p_1.delete()
             db.session.commit()
 
@@ -262,11 +274,13 @@ class TestBuildingPropertyModel:
             db.session.add(bp)
             db.session.commit()
             assert bp.id is not None
+            bp.structural_element_property_id = sep_1.id
+            db.session.add(bp)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="structural_element_property_id cannot be modified",
             ):
-                bp.structural_element_property_id = sep_1.id
+                db.session.commit()
 
 
 class TestStoreyPropertyModel:
@@ -286,11 +300,14 @@ class TestStoreyPropertyModel:
             StoreyProperty.get_by_id(storey_p_1.id)
             storey_ps = list(StoreyProperty.get())
             assert len(storey_ps) == 1
+            storey_p_1.update(structural_element_property_id=sep_2.id)
+            db.session.add(storey_p_1)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="structural_element_property_id cannot be modified",
             ):
-                storey_p_1.update(structural_element_property_id=sep_2.id)
+                db.session.commit()
+            db.session.rollback()
             storey_p_1.delete()
             db.session.commit()
 
@@ -331,11 +348,13 @@ class TestStoreyPropertyModel:
             db.session.add(sp)
             db.session.commit()
             assert sp.id is not None
+            sp.structural_element_property_id = sep_1.id
+            db.session.add(sp)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="structural_element_property_id cannot be modified",
             ):
-                sp.structural_element_property_id = sep_1.id
+                db.session.commit()
 
 
 class TestSpacePropertyModel:
@@ -355,11 +374,14 @@ class TestSpacePropertyModel:
             SpaceProperty.get_by_id(space_p_1.id)
             space_ps = list(SpaceProperty.get())
             assert len(space_ps) == 1
+            space_p_1.update(structural_element_property_id=sep_2.id)
+            db.session.add(space_p_1)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="structural_element_property_id cannot be modified",
             ):
-                space_p_1.update(structural_element_property_id=sep_2.id)
+                db.session.commit()
+            db.session.rollback()
             space_p_1.delete()
             db.session.commit()
 
@@ -400,11 +422,13 @@ class TestSpacePropertyModel:
             db.session.add(sp)
             db.session.commit()
             assert sp.id is not None
+            sp.structural_element_property_id = sep_1.id
+            db.session.add(sp)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="structural_element_property_id cannot be modified",
             ):
-                sp.structural_element_property_id = sep_1.id
+                db.session.commit()
 
 
 class TestZonePropertyModel:
@@ -424,11 +448,14 @@ class TestZonePropertyModel:
             ZoneProperty.get_by_id(zone_p_1.id)
             zone_ps = list(ZoneProperty.get())
             assert len(zone_ps) == 1
+            zone_p_1.update(structural_element_property_id=sep_2.id)
+            db.session.add(zone_p_1)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="structural_element_property_id cannot be modified",
             ):
-                zone_p_1.update(structural_element_property_id=sep_2.id)
+                db.session.commit()
+            db.session.rollback()
             zone_p_1.delete()
             db.session.commit()
 
@@ -469,11 +496,13 @@ class TestZonePropertyModel:
             db.session.add(zp)
             db.session.commit()
             assert zp.id is not None
+            zp.structural_element_property_id = sep_1.id
+            db.session.add(zp)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="structural_element_property_id cannot be modified",
             ):
-                zp.structural_element_property_id = sep_1.id
+                db.session.commit()
 
 
 class TestSiteModel:
@@ -1113,11 +1142,14 @@ class TestSitePropertyDataModel:
                 db.session.commit()
                 assert site_pd_4.value == exp_res
 
-    def test_site_property_data_cannot_change_type(self, users, sites, site_properties):
+    def test_site_property_data_cannot_change_site_or_property(
+        self, users, sites, site_properties
+    ):
         admin_user = users[0]
         assert admin_user.is_admin
 
         site_1 = sites[0]
+        site_2 = sites[1]
         site_p_1 = site_properties[0]
         site_p_2 = site_properties[1]
 
@@ -1132,11 +1164,22 @@ class TestSitePropertyDataModel:
             db.session.add(spd)
             db.session.commit()
             assert spd.id is not None
+            spd.site_id = site_2.id
+            db.session.add(spd)
             with pytest.raises(
-                AttributeError,
-                match="site_property_id cannot be modified",
+                sqla.exc.IntegrityError,
+                match="site_id or site_property_id cannot be modified",
             ):
-                spd.site_property_id = site_p_1.id
+                db.session.commit()
+            db.session.rollback()
+            spd.site_property_id = site_p_1.id
+            db.session.add(spd)
+            with pytest.raises(
+                sqla.exc.IntegrityError,
+                match="site_id or site_property_id cannot be modified",
+            ):
+                db.session.commit()
+            db.session.rollback()
 
 
 class TestBuildingPropertyDataModel:
@@ -1308,13 +1351,14 @@ class TestBuildingPropertyDataModel:
                 db.session.commit()
                 assert building_pd_4.value == exp_res
 
-    def test_building_property_data_cannot_change_type(
+    def test_building_property_data_cannot_change_building_or_property(
         self, users, buildings, building_properties
     ):
         admin_user = users[0]
         assert admin_user.is_admin
 
         building_1 = buildings[0]
+        building_2 = buildings[1]
         building_p_1 = building_properties[0]
         building_p_2 = building_properties[1]
 
@@ -1329,11 +1373,22 @@ class TestBuildingPropertyDataModel:
             db.session.add(bpd)
             db.session.commit()
             assert bpd.id is not None
+            bpd.building_id = building_2.id
+            db.session.add(bpd)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="building_property_id cannot be modified",
             ):
-                bpd.building_property_id = building_p_1.id
+                db.session.commit()
+            db.session.rollback()
+            bpd.building_property_id = building_p_1.id
+            db.session.add(bpd)
+            with pytest.raises(
+                sqla.exc.IntegrityError,
+                match="building_property_id cannot be modified",
+            ):
+                db.session.commit()
+            db.session.rollback()
 
 
 class TestStoreyPropertyDataModel:
@@ -1503,13 +1558,14 @@ class TestStoreyPropertyDataModel:
                 db.session.commit()
                 assert storey_pd_4.value == exp_res
 
-    def test_storey_property_data_cannot_change_type(
+    def test_storey_property_data_cannot_change_storey_or_property(
         self, users, storeys, storey_properties
     ):
         admin_user = users[0]
         assert admin_user.is_admin
 
         storey_1 = storeys[0]
+        storey_2 = storeys[1]
         storey_p_1 = storey_properties[0]
         storey_p_2 = storey_properties[1]
 
@@ -1524,11 +1580,22 @@ class TestStoreyPropertyDataModel:
             db.session.add(spd)
             db.session.commit()
             assert spd.id is not None
+            spd.storey_id = storey_2.id
+            db.session.add(spd)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="storey_property_id cannot be modified",
             ):
-                spd.storey_property_id = storey_p_1.id
+                db.session.commit()
+            db.session.rollback()
+            spd.storey_property_id = storey_p_1.id
+            db.session.add(spd)
+            with pytest.raises(
+                sqla.exc.IntegrityError,
+                match="storey_property_id cannot be modified",
+            ):
+                db.session.commit()
+            db.session.rollback()
 
 
 class TestSpacePropertyDataModel:
@@ -1696,13 +1763,14 @@ class TestSpacePropertyDataModel:
                 db.session.commit()
                 assert space_pd_4.value == exp_res
 
-    def test_space_property_data_cannot_change_type(
+    def test_space_property_data_cannot_change_space_or_property(
         self, users, spaces, space_properties
     ):
         admin_user = users[0]
         assert admin_user.is_admin
 
         space_1 = spaces[0]
+        space_2 = spaces[1]
         space_p_1 = space_properties[0]
         space_p_2 = space_properties[1]
 
@@ -1717,11 +1785,22 @@ class TestSpacePropertyDataModel:
             db.session.add(spd)
             db.session.commit()
             assert spd.id is not None
+            spd.space_id = space_2.id
+            db.session.add(spd)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="space_property_id cannot be modified",
             ):
-                spd.space_property_id = space_p_1.id
+                db.session.commit()
+            db.session.rollback()
+            spd.space_property_id = space_p_1.id
+            db.session.add(spd)
+            with pytest.raises(
+                sqla.exc.IntegrityError,
+                match="space_property_id cannot be modified",
+            ):
+                db.session.commit()
+            db.session.rollback()
 
 
 class TestZonePropertyDataModel:
@@ -1887,11 +1966,14 @@ class TestZonePropertyDataModel:
                 db.session.commit()
                 assert zone_pd_4.value == exp_res
 
-    def test_zone_property_data_cannot_change_type(self, users, zones, zone_properties):
+    def test_zone_property_data_cannot_change_zone_or_property(
+        self, users, zones, zone_properties
+    ):
         admin_user = users[0]
         assert admin_user.is_admin
 
         zone_1 = zones[0]
+        zone_2 = zones[1]
         zone_p_1 = zone_properties[0]
         zone_p_2 = zone_properties[1]
 
@@ -1906,8 +1988,19 @@ class TestZonePropertyDataModel:
             db.session.add(zpd)
             db.session.commit()
             assert zpd.id is not None
+            zpd.zone_id = zone_2.id
+            db.session.add(zpd)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="zone_property_id cannot be modified",
             ):
-                zpd.zone_property_id = zone_p_1.id
+                db.session.commit()
+            db.session.rollback()
+            zpd.zone_property_id = zone_p_1.id
+            db.session.add(zpd)
+            with pytest.raises(
+                sqla.exc.IntegrityError,
+                match="zone_property_id cannot be modified",
+            ):
+                db.session.commit()
+            db.session.rollback()

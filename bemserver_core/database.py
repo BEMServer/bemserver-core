@@ -187,3 +187,38 @@ class DBConnection:
 
 
 db = DBConnection()
+
+
+# Inspired by https://dba.stackexchange.com/a/61304 for the use of `to_json` function.
+def init_db_functions():
+    """Create functions for triggers...
+
+    This function is meant to be used for tests or dev setups after create_all.
+    Production setups should rely on migration scripts.
+    """
+
+    # SQL function to raise an exception when trying to update a "read-only" column.
+    db.session.execute(
+        sqla.DDL(
+            """CREATE FUNCTION column_update_not_allowed()
+    RETURNS TRIGGER AS
+$func$
+    DECLARE
+        col_name text := TG_ARGV[0]::text;
+        row_name text := to_json(OLD) ->> TG_ARGV[1];
+        message_text text;
+    BEGIN
+        message_text := col_name || ' cannot be modified';
+        IF row_name IS NOT NULL THEN
+            message_text := message_text || ' for "' || row_name || '"';
+        END IF;
+
+        RAISE EXCEPTION USING
+            MESSAGE = message_text,
+            ERRCODE = 'integrity_constraint_violation';
+    END;
+$func$
+LANGUAGE plpgsql STRICT;"""
+        )
+    )
+    db.session.commit()

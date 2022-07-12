@@ -1,7 +1,5 @@
 """Timeseries"""
 import sqlalchemy as sqla
-import sqlalchemy.orm as sqlaorm
-from sqlalchemy.ext.hybrid import hybrid_property
 
 from bemserver_core.database import Base, db
 from bemserver_core.authorization import AuthMixin, auth, Relation
@@ -22,21 +20,11 @@ class TimeseriesProperty(AuthMixin, Base):
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
     description = sqla.Column(sqla.String(250))
-    _value_type = sqla.Column(
+    value_type = sqla.Column(
         sqla.Enum(PropertyType),
         default=PropertyType.string,
         nullable=False,
     )
-
-    @hybrid_property
-    def value_type(self):
-        return self._value_type
-
-    @value_type.setter
-    def value_type(self, value_type):
-        if self.id is not None:
-            raise AttributeError("value_type cannot be modified")
-        self._value_type = value_type
 
 
 class TimeseriesDataState(AuthMixin, Base):
@@ -48,47 +36,16 @@ class TimeseriesDataState(AuthMixin, Base):
 
 class Timeseries(AuthMixin, Base):
     __tablename__ = "timeseries"
-    __table_args__ = (sqla.UniqueConstraint("_campaign_id", "name"),)
+    __table_args__ = (sqla.UniqueConstraint("campaign_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
     unit_symbol = sqla.Column(sqla.String(20))
-    campaign = sqla.orm.relationship("Campaign")
-    campaign_scope = sqla.orm.relationship("CampaignScope")
-
-    # Use getter/setter to prevent modifying campaign / campaign_scope after commit
-    @sqlaorm.declared_attr
-    def _campaign_id(cls):
-        return sqla.Column(
-            sqla.Integer, sqla.ForeignKey("campaigns.id"), nullable=False
-        )
-
-    @hybrid_property
-    def campaign_id(self):
-        return self._campaign_id
-
-    @campaign_id.setter
-    def campaign_id(self, campaign_id):
-        if self.id is not None:
-            raise AttributeError("campaign_id cannot be modified")
-        self._campaign_id = campaign_id
-
-    @sqlaorm.declared_attr
-    def _campaign_scope_id(cls):
-        return sqla.Column(
-            sqla.Integer, sqla.ForeignKey("campaign_scopes.id"), nullable=False
-        )
-
-    @hybrid_property
-    def campaign_scope_id(self):
-        return self._campaign_scope_id
-
-    @campaign_scope_id.setter
-    def campaign_scope_id(self, campaign_scope_id):
-        if self.id is not None:
-            raise AttributeError("campaign_scope_id cannot be modified")
-        self._campaign_scope_id = campaign_scope_id
+    campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
+    campaign_scope_id = sqla.Column(
+        sqla.ForeignKey("campaign_scopes.id"), nullable=False
+    )
 
     campaign = sqla.orm.relationship(
         "Campaign", backref=sqla.orm.backref("timeseries", cascade="all, delete-orphan")
@@ -304,24 +261,14 @@ class TimeseriesPropertyData(AuthMixin, Base):
     """Timeseries property data"""
 
     __tablename__ = "timeseries_property_data"
-    __table_args__ = (sqla.UniqueConstraint("timeseries_id", "_property_id"),)
+    __table_args__ = (sqla.UniqueConstraint("timeseries_id", "property_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
-    _property_id = sqla.Column(
+    property_id = sqla.Column(
         sqla.ForeignKey("timeseries_properties.id"), nullable=False
     )
     value = sqla.Column(sqla.String(100), nullable=False)
-
-    @hybrid_property
-    def property_id(self):
-        return self._property_id
-
-    @property_id.setter
-    def property_id(self, property_id):
-        if self.id is not None:
-            raise AttributeError("property_id cannot be modified")
-        self._property_id = property_id
 
     timeseries = sqla.orm.relationship(
         "Timeseries",
@@ -580,6 +527,85 @@ class TimeseriesByZone(AuthMixin, Base):
                 ),
             },
         )
+
+
+def init_db_timeseries_triggers():
+    """Create triggers to protect some columns from update.
+
+    This function is meant to be used for tests or dev setups after create_all.
+    Production setups should rely on migration scripts.
+    """
+
+    # Set "update read-only trigger" on
+    #  campaign_id and campaign_scope_id columns for Timeseries table.
+    db.session.execute(
+        sqla.DDL(
+            f"""CREATE TRIGGER
+    {Timeseries.__table__}_trigger_bu_campaign_not_allowed
+BEFORE UPDATE
+    OF {Timeseries.campaign_id.key}, {Timeseries.campaign_scope_id.key}
+    ON {Timeseries.__table__}
+FOR EACH ROW
+    WHEN (
+        NEW.{Timeseries.campaign_id.key}
+            IS DISTINCT FROM OLD.{Timeseries.campaign_id.key}
+        OR
+        NEW.{Timeseries.campaign_scope_id.key}
+            IS DISTINCT FROM OLD.{Timeseries.campaign_scope_id.key}
+    )
+    EXECUTE FUNCTION column_update_not_allowed(
+        '{Timeseries.campaign_id.key} or {Timeseries.campaign_scope_id.key}'
+    );"""
+        )
+    )
+
+    # Set "update read-only trigger" on value_type column for timeseries property table.
+    db.session.execute(
+        sqla.DDL(
+            f"""CREATE TRIGGER
+    {TimeseriesProperty.__table__}_trigger_bu_type_not_allowed
+BEFORE UPDATE
+    OF {TimeseriesProperty.value_type.key} ON {TimeseriesProperty.__table__}
+FOR EACH ROW
+    WHEN (
+        NEW.{TimeseriesProperty.value_type.key}
+        IS DISTINCT FROM
+        OLD.{TimeseriesProperty.value_type.key}
+    )
+    EXECUTE FUNCTION column_update_not_allowed(
+        {TimeseriesProperty.value_type.key},
+        {TimeseriesProperty.name.key}
+    );"""
+        )
+    )
+
+    # Set "update read-only trigger" on
+    #  timeseries_id and property_id columns for TimeseriesPropertyData table.
+    db.session.execute(
+        sqla.DDL(
+            f"""CREATE TRIGGER
+    {TimeseriesPropertyData.__table__}_trigger_bu_property_not_allowed
+BEFORE UPDATE
+    OF
+        {TimeseriesPropertyData.timeseries_id.key},
+        {TimeseriesPropertyData.property_id.key}
+    ON {TimeseriesPropertyData.__table__}
+FOR EACH ROW
+    WHEN (
+        NEW.{TimeseriesPropertyData.timeseries_id.key}
+            IS DISTINCT FROM OLD.{TimeseriesPropertyData.timeseries_id.key}
+        OR
+        NEW.{TimeseriesPropertyData.property_id.key}
+            IS DISTINCT FROM OLD.{TimeseriesPropertyData.property_id.key}
+    )
+    EXECUTE FUNCTION column_update_not_allowed(
+        '{TimeseriesPropertyData.timeseries_id.key}
+ or {TimeseriesPropertyData.property_id.key}'
+    );"""
+        )
+    )
+
+    db.session.commit()
 
 
 def init_db_timeseries():

@@ -1,5 +1,6 @@
 """Timeseries tests"""
 import datetime as dt
+import sqlalchemy as sqla
 
 import pytest
 
@@ -73,11 +74,14 @@ class TestTimeseriesPropertyModel:
             db.session.add(sep)
             db.session.commit()
             assert sep.id is not None
+            sep.value_type = PropertyType.boolean
+            db.session.add(sep)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="value_type cannot be modified",
             ):
-                sep.value_type = PropertyType.boolean
+                db.session.commit()
+            db.session.rollback()
 
 
 class TestTimeseriesDataStateModel:
@@ -247,7 +251,6 @@ class TestTimeseriesModel:
     def test_timeseries_read_only_fields(self, campaigns, campaign_scopes):
         """Check campaign and campaign_scope can't be modified
 
-        Also check the getter/setter don't get in the way when querying.
         This is kind of a "framework test".
         """
         campaign_1 = campaigns[0]
@@ -260,12 +263,24 @@ class TestTimeseriesModel:
             campaign_id=campaign_1.id,
             campaign_scope_id=campaign_scope_1.id,
         )
-        db.session.flush()
+        db.session.commit()
 
-        with pytest.raises(AttributeError):
-            ts_1.update(campaign_id=campaign_2.id)
-        with pytest.raises(AttributeError):
-            ts_1.update(campaign_scope_id=campaign_scope_2.id)
+        ts_1.update(campaign_id=campaign_2.id)
+        db.session.add(ts_1)
+        with pytest.raises(
+            sqla.exc.IntegrityError,
+            match="campaign_id or campaign_scope_id cannot be modified",
+        ):
+            db.session.commit()
+        db.session.rollback()
+        ts_1.update(campaign_scope_id=campaign_scope_2.id)
+        db.session.add(ts_1)
+        with pytest.raises(
+            sqla.exc.IntegrityError,
+            match="campaign_id or campaign_scope_id cannot be modified",
+        ):
+            db.session.commit()
+        db.session.rollback()
 
         ts_list = list(Timeseries.get(campaign_id=1))
         assert ts_list == [ts_1]
@@ -695,13 +710,14 @@ class TestTimeseriesPropertyDataModel:
                 db.session.commit()
                 assert tspd_5.value == exp_res
 
-    def test_timseries_property_data_cannot_change_type(
+    def test_timseries_property_data_cannot_change_timeseries_or_property(
         self, users, timeseries, timeseries_properties
     ):
         admin_user = users[0]
         assert admin_user.is_admin
 
         ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
         ts_p_1 = timeseries_properties[0]
         ts_p_2 = timeseries_properties[1]
 
@@ -716,11 +732,22 @@ class TestTimeseriesPropertyDataModel:
             db.session.add(tspd)
             db.session.commit()
             assert tspd.id is not None
+            tspd.timeseries_id = ts_2.id
+            db.session.add(tspd)
             with pytest.raises(
-                AttributeError,
+                sqla.exc.IntegrityError,
                 match="property_id cannot be modified",
             ):
-                tspd.property_id = ts_p_1.id
+                db.session.commit()
+            db.session.rollback()
+            tspd.property_id = ts_p_1.id
+            db.session.add(tspd)
+            with pytest.raises(
+                sqla.exc.IntegrityError,
+                match="property_id cannot be modified",
+            ):
+                db.session.commit()
+            db.session.rollback()
 
 
 class TestTimeseriesByDataStateModel:

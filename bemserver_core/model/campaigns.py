@@ -1,9 +1,7 @@
 """Campaings"""
 import sqlalchemy as sqla
-import sqlalchemy.orm as sqlaorm
-from sqlalchemy.ext.hybrid import hybrid_property
 
-from bemserver_core.database import Base
+from bemserver_core.database import Base, db
 from bemserver_core.authorization import AuthMixin, auth, Relation
 
 
@@ -33,28 +31,12 @@ class Campaign(AuthMixin, Base):
 
 class CampaignScope(AuthMixin, Base):
     __tablename__ = "campaign_scopes"
-    __table_args__ = (sqla.UniqueConstraint("_campaign_id", "name"),)
+    __table_args__ = (sqla.UniqueConstraint("campaign_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
-
-    # Use getter/setter to prevent modifying campaign after commit
-    @sqlaorm.declared_attr
-    def _campaign_id(cls):
-        return sqla.Column(
-            sqla.Integer, sqla.ForeignKey("campaigns.id"), nullable=False
-        )
-
-    @hybrid_property
-    def campaign_id(self):
-        return self._campaign_id
-
-    @campaign_id.setter
-    def campaign_id(self, campaign_id):
-        if self.id is not None:
-            raise AttributeError("campaign_id cannot be modified")
-        self._campaign_id = campaign_id
+    campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
 
     campaigns = sqla.orm.relationship(
         Campaign,
@@ -152,3 +134,33 @@ class UserGroupByCampaignScope(AuthMixin, Base):
                 ),
             },
         )
+
+
+def init_db_campaigns_triggers():
+    """Create triggers to protect some columns from update.
+
+    This function is meant to be used for tests or dev setups after create_all.
+    Production setups should rely on migration scripts.
+    """
+
+    # Set "update read-only trigger" on campaign_id column for CampaignScope table.
+    db.session.execute(
+        sqla.DDL(
+            f"""CREATE TRIGGER
+    {CampaignScope.__table__}_trigger_bu_campaign_not_allowed
+BEFORE UPDATE
+    OF {CampaignScope.campaign_id.key} ON {CampaignScope.__table__}
+FOR EACH ROW
+    WHEN (
+        NEW.{CampaignScope.campaign_id.key}
+        IS DISTINCT FROM
+        OLD.{CampaignScope.campaign_id.key}
+    )
+    EXECUTE FUNCTION column_update_not_allowed(
+        {CampaignScope.campaign_id.key},
+        {CampaignScope.name.key}
+    );"""
+        )
+    )
+
+    db.session.commit()

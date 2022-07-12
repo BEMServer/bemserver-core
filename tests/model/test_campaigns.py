@@ -1,4 +1,6 @@
 """Campaign tests"""
+import sqlalchemy as sqla
+
 import pytest
 
 from bemserver_core.model import (
@@ -173,7 +175,6 @@ class TestCampaignScopeModel:
     def test_campaign_scope_read_only_fields(self, campaigns):
         """Check campaign can't be modified
 
-        Also check the getter/setter don't get in the way when querying.
         This is kind of a "framework test".
         """
         campaign_1 = campaigns[0]
@@ -183,10 +184,16 @@ class TestCampaignScopeModel:
             name="Campaign scope 1",
             campaign_id=campaign_1.id,
         )
-        db.session.flush()
+        db.session.commit()
 
-        with pytest.raises(AttributeError):
-            cs_1.update(campaign_id=campaign_2.id)
+        cs_1.update(campaign_id=campaign_2.id)
+        db.session.add(cs_1)
+        with pytest.raises(
+            sqla.exc.IntegrityError,
+            match='campaign_id cannot be modified for "Campaign scope 1"',
+        ):
+            db.session.commit()
+        db.session.rollback()
 
         cs_list = list(CampaignScope.get(campaign_id=1))
         assert cs_list == [cs_1]
