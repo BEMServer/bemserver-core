@@ -231,30 +231,50 @@ class TestTimeseriesDataIO:
         with CurrentUser(admin_user):
 
             ts_l = (ts_0, ts_2, ts_4)
+
             data_df = tsdio.get_timeseries_data(
                 start_dt, end_dt, ts_l, ds_1, col_label=col_label
             )
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00+00:00",
+                    "2020-01-01T01:00:00+00:00",
+                    "2020-01-01T02:00:00+00:00",
+                ],
+                name="timestamp",
+            )
+            val_0 = [0.0, 1.0, 2.0]
+            val_2 = [np.nan, np.nan, np.nan]
+            val_4 = [10.0, 12.0, np.nan]
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name if col_label == "name" else ts_0.id: val_0,
+                    ts_2.name if col_label == "name" else ts_2.id: val_2,
+                    ts_4.name if col_label == "name" else ts_4.id: val_4,
+                },
+                index=index,
+            )
+            assert data_df.equals(expected_data_df)
 
-        index = pd.DatetimeIndex(
-            [
-                "2020-01-01T00:00:00+00:00",
-                "2020-01-01T01:00:00+00:00",
-                "2020-01-01T02:00:00+00:00",
-            ],
-            name="timestamp",
-        )
-        val_0 = [0.0, 1.0, 2.0]
-        val_2 = [np.nan, np.nan, np.nan]
-        val_4 = [10.0, 12.0, np.nan]
-        expected_data_df = pd.DataFrame(
-            {
-                ts_0.name if col_label == "name" else ts_0.id: val_0,
-                ts_2.name if col_label == "name" else ts_2.id: val_2,
-                ts_4.name if col_label == "name" else ts_4.id: val_4,
-            },
-            index=index,
-        )
-        assert data_df.equals(expected_data_df)
+            # Get with TZ
+            data_df = tsdio.get_timeseries_data(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                timezone="Europe/Paris",
+                col_label=col_label,
+            )
+            expected_data_df.index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00+00:00",
+                    "2020-01-01T01:00:00+00:00",
+                    "2020-01-01T02:00:00+00:00",
+                ],
+                name="timestamp",
+                tz="Europe/Paris",
+            )
+            assert data_df.equals(expected_data_df)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.usefixtures("users_by_user_groups")
