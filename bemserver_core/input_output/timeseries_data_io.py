@@ -143,7 +143,7 @@ class TimeseriesDataIO:
 
     @classmethod
     def get_timeseries_data(
-        cls, start_dt, end_dt, timeseries, data_state, *, col_label="id"
+        cls, start_dt, end_dt, timeseries, data_state, *, timezone="UTC", col_label="id"
     ):
         """Export timeseries data
 
@@ -151,6 +151,7 @@ class TimeseriesDataIO:
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
         :param list timeseries: List of timeseries
         :param TimeseriesDataState data_state: Timeseries data state
+        :param str timezone: IANA timezone
         :param string col_label: Timeseries attribute to use for column header.
             Should be "id" or "name". Default: "id".
 
@@ -182,7 +183,7 @@ class TimeseriesDataIO:
             data, columns=("timestamp", "id", "name", "value")
         ).set_index("timestamp")
         data_df["value"] = data_df["value"].astype(float)
-        data_df.index = pd.DatetimeIndex(data_df.index)
+        data_df.index = pd.DatetimeIndex(data_df.index, tz="UTC").tz_convert(timezone)
 
         data_df = data_df.pivot(columns=col_label, values="value")
 
