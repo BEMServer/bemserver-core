@@ -220,6 +220,24 @@ class TestTimeseriesDataIO:
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=3)
 
+        # No data
+        with CurrentUser(admin_user):
+            ts_l = (ts_0, ts_2, ts_4)
+            data_df = tsdio.get_timeseries_data(
+                start_dt, end_dt, ts_l, ds_1, col_label=col_label
+            )
+            index = pd.DatetimeIndex([], name="timestamp", tz="UTC")
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.name if col_label == "name" else ts_0.id: [],
+                    ts_2.name if col_label == "name" else ts_2.id: [],
+                    ts_4.name if col_label == "name" else ts_4.id: [],
+                },
+                index=index,
+            )
+            assert data_df.equals(expected_data_df)
+
+        # Create data
         timestamps = pd.date_range(
             start=start_dt, end=end_dt, inclusive="left", freq="H"
         )
@@ -242,6 +260,7 @@ class TestTimeseriesDataIO:
                     "2020-01-01T02:00:00+00:00",
                 ],
                 name="timestamp",
+                tz="UTC",
             )
             val_0 = [0.0, 1.0, 2.0]
             val_2 = [np.nan, np.nan, np.nan]
@@ -327,6 +346,7 @@ class TestTimeseriesDataIO:
                 "2020-01-01T02:00:00+00:00",
             ],
             name="timestamp",
+            tz="UTC",
         )
         val_1 = [0.0, 1.0, 2.0]
         val_3 = [10.0, 12.0, np.nan]
