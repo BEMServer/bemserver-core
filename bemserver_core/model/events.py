@@ -1,9 +1,8 @@
 """Event"""
-
 import sqlalchemy as sqla
 import sqlalchemy.orm as sqlaorm
 
-from bemserver_core.database import Base, db
+from bemserver_core.database import Base, db, generate_ddl_trigger_readonly
 from bemserver_core.authorization import auth, AuthMixin, Relation
 
 
@@ -86,25 +85,13 @@ def init_db_events_triggers():
 
     # Set "update read-only trigger" on
     #  timestamp and campaign_scope_id columns for Event table.
-    db.session.execute(
-        sqla.DDL(
-            f"""CREATE TRIGGER
-    {Event.__table__}_trigger_bu_timestamp_campaign_scope_not_allowed
-BEFORE UPDATE
-    OF {Event.timestamp.key}, {Event.campaign_scope_id.key}
-    ON {Event.__table__}
-FOR EACH ROW
-    WHEN (
-        NEW.{Event.timestamp.key} IS DISTINCT FROM OLD.{Event.timestamp.key}
-        OR
-        NEW.{Event.campaign_scope_id.key}
-            IS DISTINCT FROM OLD.{Event.campaign_scope_id.key}
-    )
-    EXECUTE FUNCTION column_update_not_allowed(
-        '{Event.timestamp.key} or {Event.campaign_scope_id.key}'
-    );"""
+    for ro_colname in [Event.timestamp.key, Event.campaign_scope_id.key]:
+        db.session.execute(
+            generate_ddl_trigger_readonly(
+                Event.__table__,
+                ro_colname,
+            )
         )
-    )
 
     db.session.commit()
 

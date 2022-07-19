@@ -1168,7 +1168,7 @@ class TestSitePropertyDataModel:
             db.session.add(spd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="site_id or site_property_id cannot be modified",
+                match="site_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
@@ -1176,7 +1176,7 @@ class TestSitePropertyDataModel:
             db.session.add(spd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="site_id or site_property_id cannot be modified",
+                match="site_property_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
@@ -1377,7 +1377,7 @@ class TestBuildingPropertyDataModel:
             db.session.add(bpd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="building_property_id cannot be modified",
+                match="building_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
@@ -1584,7 +1584,7 @@ class TestStoreyPropertyDataModel:
             db.session.add(spd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="storey_property_id cannot be modified",
+                match="storey_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
@@ -1789,7 +1789,7 @@ class TestSpacePropertyDataModel:
             db.session.add(spd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="space_property_id cannot be modified",
+                match="space_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
@@ -1992,7 +1992,7 @@ class TestZonePropertyDataModel:
             db.session.add(zpd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="zone_property_id cannot be modified",
+                match="zone_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()

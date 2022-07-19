@@ -1,7 +1,7 @@
 """Timeseries"""
 import sqlalchemy as sqla
 
-from bemserver_core.database import Base, db
+from bemserver_core.database import Base, db, generate_ddl_trigger_readonly
 from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.model.users import User, UserGroup, UserByUserGroup
 from bemserver_core.model.campaigns import (
@@ -538,72 +538,35 @@ def init_db_timeseries_triggers():
 
     # Set "update read-only trigger" on
     #  campaign_id and campaign_scope_id columns for Timeseries table.
-    db.session.execute(
-        sqla.DDL(
-            f"""CREATE TRIGGER
-    {Timeseries.__table__}_trigger_bu_campaign_not_allowed
-BEFORE UPDATE
-    OF {Timeseries.campaign_id.key}, {Timeseries.campaign_scope_id.key}
-    ON {Timeseries.__table__}
-FOR EACH ROW
-    WHEN (
-        NEW.{Timeseries.campaign_id.key}
-            IS DISTINCT FROM OLD.{Timeseries.campaign_id.key}
-        OR
-        NEW.{Timeseries.campaign_scope_id.key}
-            IS DISTINCT FROM OLD.{Timeseries.campaign_scope_id.key}
-    )
-    EXECUTE FUNCTION column_update_not_allowed(
-        '{Timeseries.campaign_id.key} or {Timeseries.campaign_scope_id.key}'
-    );"""
+    for ro_colname in [Timeseries.campaign_id.key, Timeseries.campaign_scope_id.key]:
+        db.session.execute(
+            generate_ddl_trigger_readonly(
+                Timeseries.__table__,
+                ro_colname,
+            )
         )
-    )
 
     # Set "update read-only trigger" on value_type column for timeseries property table.
     db.session.execute(
-        sqla.DDL(
-            f"""CREATE TRIGGER
-    {TimeseriesProperty.__table__}_trigger_bu_type_not_allowed
-BEFORE UPDATE
-    OF {TimeseriesProperty.value_type.key} ON {TimeseriesProperty.__table__}
-FOR EACH ROW
-    WHEN (
-        NEW.{TimeseriesProperty.value_type.key}
-        IS DISTINCT FROM
-        OLD.{TimeseriesProperty.value_type.key}
-    )
-    EXECUTE FUNCTION column_update_not_allowed(
-        {TimeseriesProperty.value_type.key},
-        {TimeseriesProperty.name.key}
-    );"""
+        generate_ddl_trigger_readonly(
+            TimeseriesProperty.__table__,
+            TimeseriesProperty.value_type.key,
+            row_name=TimeseriesProperty.name.key,
         )
     )
 
     # Set "update read-only trigger" on
     #  timeseries_id and property_id columns for TimeseriesPropertyData table.
-    db.session.execute(
-        sqla.DDL(
-            f"""CREATE TRIGGER
-    {TimeseriesPropertyData.__table__}_trigger_bu_property_not_allowed
-BEFORE UPDATE
-    OF
-        {TimeseriesPropertyData.timeseries_id.key},
-        {TimeseriesPropertyData.property_id.key}
-    ON {TimeseriesPropertyData.__table__}
-FOR EACH ROW
-    WHEN (
-        NEW.{TimeseriesPropertyData.timeseries_id.key}
-            IS DISTINCT FROM OLD.{TimeseriesPropertyData.timeseries_id.key}
-        OR
-        NEW.{TimeseriesPropertyData.property_id.key}
-            IS DISTINCT FROM OLD.{TimeseriesPropertyData.property_id.key}
-    )
-    EXECUTE FUNCTION column_update_not_allowed(
-        '{TimeseriesPropertyData.timeseries_id.key}
- or {TimeseriesPropertyData.property_id.key}'
-    );"""
+    for ro_colname in [
+        TimeseriesPropertyData.timeseries_id.key,
+        TimeseriesPropertyData.property_id.key,
+    ]:
+        db.session.execute(
+            generate_ddl_trigger_readonly(
+                TimeseriesPropertyData.__table__,
+                ro_colname,
+            )
         )
-    )
 
     db.session.commit()
 

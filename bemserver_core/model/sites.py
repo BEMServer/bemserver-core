@@ -1,7 +1,7 @@
 """Sites"""
 import sqlalchemy as sqla
 
-from bemserver_core.database import Base, db
+from bemserver_core.database import Base, db, generate_ddl_trigger_readonly
 from bemserver_core.model import Campaign
 from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.common import PropertyType
@@ -517,38 +517,19 @@ def init_db_structural_elements_triggers():
         (Zone, Zone.campaign_id),
     ]:
         db.session.execute(
-            sqla.DDL(
-                f"""CREATE TRIGGER
-    {struct_elmt_table.__table__}_trigger_bu_parent_not_allowed
-BEFORE UPDATE
-    OF {struct_elmt_column.key} ON {struct_elmt_table.__table__}
-FOR EACH ROW
-    WHEN (
-        NEW.{struct_elmt_column.key} IS DISTINCT FROM OLD.{struct_elmt_column.key}
-    )
-    EXECUTE FUNCTION column_update_not_allowed({struct_elmt_column.key});"""
+            generate_ddl_trigger_readonly(
+                struct_elmt_table.__table__,
+                struct_elmt_column.key,
             )
         )
 
     # Set "update read-only trigger" on value_type column
     #  for structural element property table.
     db.session.execute(
-        sqla.DDL(
-            f"""CREATE TRIGGER
-    {StructuralElementProperty.__table__}_trigger_bu_type_not_allowed
-BEFORE UPDATE
-    OF {StructuralElementProperty.value_type.key}
-    ON {StructuralElementProperty.__table__}
-FOR EACH ROW
-    WHEN (
-        NEW.{StructuralElementProperty.value_type.key}
-        IS DISTINCT FROM
-        OLD.{StructuralElementProperty.value_type.key}
-    )
-    EXECUTE FUNCTION column_update_not_allowed(
-        {StructuralElementProperty.value_type.key},
-        {StructuralElementProperty.name.key}
-    );"""
+        generate_ddl_trigger_readonly(
+            StructuralElementProperty.__table__,
+            StructuralElementProperty.value_type.key,
+            row_name=StructuralElementProperty.name.key,
         )
     )
 
@@ -562,21 +543,9 @@ FOR EACH ROW
         ZoneProperty,
     ]:
         db.session.execute(
-            sqla.DDL(
-                f"""CREATE TRIGGER
-    {struct_elmt_prop_table.__table__}_trigger_bu_property_not_allowed
-BEFORE UPDATE
-    OF {struct_elmt_prop_table.structural_element_property_id.key}
-    ON {struct_elmt_prop_table.__table__}
-FOR EACH ROW
-    WHEN (
-        NEW.{struct_elmt_prop_table.structural_element_property_id.key}
-        IS DISTINCT FROM
-        OLD.{struct_elmt_prop_table.structural_element_property_id.key}
-    )
-    EXECUTE FUNCTION column_update_not_allowed(
-        {struct_elmt_prop_table.structural_element_property_id.key}
-    );"""
+            generate_ddl_trigger_readonly(
+                struct_elmt_prop_table.__table__,
+                struct_elmt_prop_table.structural_element_property_id.key,
             )
         )
 
@@ -610,22 +579,15 @@ FOR EACH ROW
         (ZonePropertyData, ZonePropertyData.zone_id, ZonePropertyData.zone_property_id),
     ]:
         db.session.execute(
-            sqla.DDL(
-                f"""CREATE TRIGGER
-    {struct_elmt_prop_data_table.__table__}_trigger_bu_property_not_allowed
-BEFORE UPDATE
-    OF {struct_elmt_id_column.key}, {struct_elmt_prop_id_column.key}
-    ON {struct_elmt_prop_data_table.__table__}
-FOR EACH ROW
-    WHEN (
-        NEW.{struct_elmt_id_column.key} IS DISTINCT FROM OLD.{struct_elmt_id_column.key}
-        OR
-        NEW.{struct_elmt_prop_id_column.key}
-            IS DISTINCT FROM OLD.{struct_elmt_prop_id_column.key}
-    )
-    EXECUTE FUNCTION column_update_not_allowed(
-        '{struct_elmt_id_column.key} or {struct_elmt_prop_id_column.key}'
-    );"""
+            generate_ddl_trigger_readonly(
+                struct_elmt_prop_data_table.__table__,
+                struct_elmt_id_column.key,
+            )
+        )
+        db.session.execute(
+            generate_ddl_trigger_readonly(
+                struct_elmt_prop_data_table.__table__,
+                struct_elmt_prop_id_column.key,
             )
         )
 

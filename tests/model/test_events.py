@@ -155,7 +155,7 @@ class TestEventModel:
         db.session.add(evt_1)
         with pytest.raises(
             sqla.exc.IntegrityError,
-            match="timestamp or campaign_scope_id cannot be modified",
+            match="timestamp cannot be modified",
         ):
             db.session.commit()
         db.session.rollback()
@@ -163,7 +163,7 @@ class TestEventModel:
         db.session.add(evt_1)
         with pytest.raises(
             sqla.exc.IntegrityError,
-            match="timestamp or campaign_scope_id cannot be modified",
+            match="campaign_scope_id cannot be modified",
         ):
             db.session.commit()
         db.session.rollback()

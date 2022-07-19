@@ -269,7 +269,7 @@ class TestTimeseriesModel:
         db.session.add(ts_1)
         with pytest.raises(
             sqla.exc.IntegrityError,
-            match="campaign_id or campaign_scope_id cannot be modified",
+            match="campaign_id cannot be modified",
         ):
             db.session.commit()
         db.session.rollback()
@@ -277,7 +277,7 @@ class TestTimeseriesModel:
         db.session.add(ts_1)
         with pytest.raises(
             sqla.exc.IntegrityError,
-            match="campaign_id or campaign_scope_id cannot be modified",
+            match="campaign_scope_id cannot be modified",
         ):
             db.session.commit()
         db.session.rollback()
@@ -736,7 +736,7 @@ class TestTimeseriesPropertyDataModel:
             db.session.add(tspd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="property_id cannot be modified",
+                match="timeseries_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()

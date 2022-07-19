@@ -1,6 +1,7 @@
 """Databases: SQLAlchemy database access"""
 from functools import wraps
 from itertools import chain
+from textwrap import dedent
 
 import sqlalchemy as sqla
 from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base
@@ -200,25 +201,60 @@ def init_db_functions():
     # SQL function to raise an exception when trying to update a "read-only" column.
     db.session.execute(
         sqla.DDL(
-            """CREATE FUNCTION column_update_not_allowed()
-    RETURNS TRIGGER AS
-$func$
-    DECLARE
-        col_name text := TG_ARGV[0]::text;
-        row_name text := to_json(OLD) ->> TG_ARGV[1];
-        message_text text;
-    BEGIN
-        message_text := col_name || ' cannot be modified';
-        IF row_name IS NOT NULL THEN
-            message_text := message_text || ' for "' || row_name || '"';
-        END IF;
+            dedent(
+                """\
+                CREATE FUNCTION column_update_not_allowed()
+                    RETURNS TRIGGER AS
+                $func$
+                    DECLARE
+                        col_name text := TG_ARGV[0]::text;
+                        row_name text := to_json(OLD) ->> TG_ARGV[1];
+                        message_text text;
+                    BEGIN
+                        message_text := col_name || ' cannot be modified';
+                        IF row_name IS NOT NULL THEN
+                            message_text := message_text || ' for "' || row_name || '"';
+                        END IF;
 
-        RAISE EXCEPTION USING
-            MESSAGE = message_text,
-            ERRCODE = 'integrity_constraint_violation';
-    END;
-$func$
-LANGUAGE plpgsql STRICT;"""
+                        RAISE EXCEPTION USING
+                            MESSAGE = message_text,
+                            ERRCODE = 'integrity_constraint_violation';
+                    END;
+                $func$
+                LANGUAGE plpgsql STRICT;\
+                """
+            )
         )
     )
+
     db.session.commit()
+
+
+def generate_ddl_trigger_readonly(table_name, col_name, *, row_name=None):
+    """Generate the SQL statement that creates an "update read-only trigger"
+    on a specific column for a table.
+
+    :param str table_name: The name of the table concerned by the trigger.
+    :param str col_name: The name of the column to protect from update.
+    :param str row_name: (optional, default None)
+        The name of the column that can identify the row that is currently updated.
+        The "cell" value is used as the identifier of the row in exception message.
+    :returns sqlalchemy.DDL: An instance of DDL statement that creates the trigger.
+    """
+    return sqla.DDL(
+        dedent(
+            f"""\
+            CREATE TRIGGER
+                {table_name}_trigger_update_readonly_{col_name}
+            BEFORE UPDATE
+                OF {col_name} ON {table_name}
+            FOR EACH ROW
+                WHEN (
+                    NEW.{col_name} IS DISTINCT FROM OLD.{col_name}
+                )
+                EXECUTE FUNCTION column_update_not_allowed(
+                    {", ".join([x for x in [col_name, row_name] if x is not None])}
+                );\
+            """
+        )
+    )
