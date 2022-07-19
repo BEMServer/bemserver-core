@@ -2,6 +2,8 @@
 
 Compute indicators/stats about data completness
 """
+from zoneinfo import ZoneInfo
+
 import sqlalchemy as sqla
 import numpy as np
 import pandas as pd
@@ -15,6 +17,32 @@ from bemserver_core.input_output.timeseries_data_io import (
 )
 
 
+def gen_seconds_per_bucket(
+    start_dt,
+    end_dt,
+    bucket_width_value,
+    bucket_width_unit,
+    timezone,
+):
+    """Compute a Series with number of seconds per aggregation bucket
+
+    The number of seconds per bucket may not be constant due to variable size buckets
+    """
+    pd_freq = f"{bucket_width_value}{PANDAS_OFFSET_ALIASES[bucket_width_unit]}"
+    seconds = gen_date_range(start_dt, end_dt, 1, "second", timezone)
+    nb_s_per_bucket = (
+        pd.DataFrame({"count": 1}, index=seconds)
+        # Pandas doc says origin TZ must match index TZ
+        .resample(
+            pd_freq,
+            origin=start_dt.astimezone(ZoneInfo(timezone)),
+            closed="left",
+            label="left",
+        ).agg("count")
+    )["count"]
+    return nb_s_per_bucket
+
+
 def compute_completeness(
     start_dt,
     end_dt,
@@ -24,16 +52,12 @@ def compute_completeness(
     bucket_width_unit,
     timezone="UTC",
 ):
-    pd_freq = f"{bucket_width_value}{PANDAS_OFFSET_ALIASES[bucket_width_unit]}"
+    """Compute data completeness for a given list of timeseries
 
-    # Generate seconds per bucket (may not be constant due to variable size buckets)
-    seconds = gen_date_range(start_dt, end_dt, 1, "second", timezone)
-    nb_s_per_bucket = (
-        pd.DataFrame({"count": 1}, index=seconds)
-        .resample(pd_freq, closed="left", label="left")
-        .agg("count")
-    )["count"]
-
+    The expected number of values in each bucket is computed from the sample
+    interval which is read in database or inferred if possible from existing
+    data.
+    """
     # Get data count per bucket (aggregation)
     counts_df = tsdio.get_timeseries_buckets_data(
         start_dt,
@@ -47,6 +71,15 @@ def compute_completeness(
     )
     avg_counts_df = counts_df.mean()
     total_counts_df = counts_df.sum()
+
+    # Compute number of seconds per bucket
+    nb_s_per_bucket = gen_seconds_per_bucket(
+        start_dt,
+        end_dt,
+        bucket_width_value,
+        bucket_width_unit,
+        timezone,
+    )
 
     # Compute data rate (count / second)
     rates_df = counts_df.div(nb_s_per_bucket, axis=0)
