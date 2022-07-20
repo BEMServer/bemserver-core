@@ -1,5 +1,6 @@
 """Completeness tests"""
 import datetime as dt
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 
@@ -13,13 +14,156 @@ from bemserver_core.model import (
 )
 from bemserver_core.authorization import CurrentUser, OpenBar
 
-from bemserver_core.process.completeness import compute_completeness
+from bemserver_core.process.completeness import (
+    compute_completeness,
+    gen_seconds_per_bucket,
+)
 
 
 class TestCompleteness:
+    def test_gen_seconds_per_bucket(self):
+        # Bucket width 1 second
+        start_dt = dt.datetime(2020, 1, 1, 0, 0, 0, tzinfo=dt.timezone.utc)
+        end_dt = dt.datetime(2020, 1, 1, 0, 0, 3, tzinfo=dt.timezone.utc)
+        ret = gen_seconds_per_bucket(
+            start_dt,
+            end_dt,
+            1,
+            "second",
+            "UTC",
+        )
+        expected = pd.Series(
+            3 * [1],
+            index=pd.date_range(
+                start_dt, end_dt, inclusive="left", freq="S", name="timestamp"
+            ),
+        )
+        assert ret.equals(expected)
+        assert ret.index[0] == start_dt
+
+        # Bucket width 1 minute, TZ different from start_dt
+        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc)
+        end_dt = dt.datetime(2020, 1, 1, 0, 3, tzinfo=dt.timezone.utc)
+        start_bucket_dt = start_dt.astimezone(ZoneInfo("Europe/Paris"))
+        end_bucket_dt = end_dt.astimezone(ZoneInfo("Europe/Paris"))
+        ret = gen_seconds_per_bucket(
+            start_dt,
+            end_dt,
+            1,
+            "minute",
+            "Europe/Paris",
+        )
+        expected = pd.Series(
+            3 * [60],
+            index=pd.date_range(
+                start_bucket_dt.replace(tzinfo=None),
+                end_bucket_dt.replace(tzinfo=None),
+                inclusive="left",
+                freq="T",
+                name="timestamp",
+                tz="Europe/Paris",
+            ),
+        )
+        assert ret.equals(expected)
+        assert ret.index[0] == start_bucket_dt
+
+        # Bucket width 1 hour, uneven start time
+        start_dt = dt.datetime(2020, 1, 1, 0, 12, 43, tzinfo=dt.timezone.utc)
+        end_dt = dt.datetime(2020, 1, 1, 3, 12, 43, tzinfo=dt.timezone.utc)
+        ret = gen_seconds_per_bucket(
+            start_dt,
+            end_dt,
+            1,
+            "hour",
+            "UTC",
+        )
+        expected = pd.Series(
+            3 * [3600],
+            index=pd.date_range(
+                start_dt, end_dt, inclusive="left", freq="H", name="timestamp"
+            ),
+        )
+        assert ret.equals(expected)
+        assert ret.index[0] == start_dt
+
+        # Bucket width 1 week
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        end_dt = dt.datetime(2020, 1, 22, tzinfo=dt.timezone.utc)
+        start_bucket_dt = dt.datetime(2019, 12, 30, tzinfo=dt.timezone.utc)
+        end_bucket_dt = dt.datetime(2020, 1, 22, tzinfo=dt.timezone.utc)
+        ret = gen_seconds_per_bucket(
+            start_dt,
+            end_dt,
+            1,
+            "week",
+            "UTC",
+        )
+        expected = pd.Series(
+            [3600 * 24 * 5] + 2 * [3600 * 24 * 7] + [3600 * 24 * 2],
+            index=pd.date_range(
+                start_bucket_dt,
+                end_bucket_dt,
+                inclusive="left",
+                freq="W-MON",
+                name="timestamp",
+            ),
+        )
+        assert ret.equals(expected)
+        assert ret.index[0] == start_bucket_dt
+
+        # Bucket width 1 month
+        start_dt = dt.datetime(2020, 1, 30, tzinfo=dt.timezone.utc)
+        end_dt = dt.datetime(2020, 3, 3, tzinfo=dt.timezone.utc)
+        start_bucket_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        end_bucket_dt = dt.datetime(2020, 4, 1, tzinfo=dt.timezone.utc)
+        ret = gen_seconds_per_bucket(
+            start_dt,
+            end_dt,
+            1,
+            "month",
+            "UTC",
+        )
+        expected = pd.Series(
+            [3600 * 24 * 2] + [3600 * 24 * 29] + [3600 * 24 * 2],
+            index=pd.date_range(
+                start_bucket_dt,
+                end_bucket_dt,
+                inclusive="left",
+                freq="MS",
+                name="timestamp",
+            ),
+        )
+        assert ret.equals(expected)
+        assert ret.index[0] == start_bucket_dt
+
+        # Bucket width 1 year
+        start_dt = dt.datetime(2020, 12, 1, tzinfo=dt.timezone.utc)
+        end_dt = dt.datetime(2021, 2, 1, tzinfo=dt.timezone.utc)
+        start_bucket_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        end_bucket_dt = dt.datetime(2022, 1, 1, tzinfo=dt.timezone.utc)
+        ret = gen_seconds_per_bucket(
+            start_dt,
+            end_dt,
+            1,
+            "year",
+            "UTC",
+        )
+        expected = pd.Series(
+            [3600 * 24 * 31] + [3600 * 24 * 31],
+            index=pd.date_range(
+                start_bucket_dt,
+                end_bucket_dt,
+                inclusive="left",
+                freq="AS",
+                name="timestamp",
+            ),
+        )
+        assert ret.equals(expected)
+        assert ret.index[0] == start_bucket_dt
+
     @pytest.mark.usefixtures("timeseries_property_data")
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
-    def test_completeness(self, users, timeseries):
+    def test_compute_completeness(self, users, timeseries):
         # Note: timeseries_property_data fixture ensures the query for interval
         # properties doesn't get mixed-up with other properties
         admin_user = users[0]
@@ -261,3 +405,81 @@ class TestCompleteness:
             assert ret["timeseries"][5]["interval"] is None
             assert ret["timeseries"][5]["undefined_interval"] is True
             assert ret["timeseries"][5]["expected_count"] == 24 * 60 * [None]
+
+            # 2 hours - hour step with offset
+            ret = compute_completeness(
+                start_dt + dt.timedelta(minutes=30),
+                start_dt + dt.timedelta(hours=3),
+                ts_l,
+                ds_1,
+                1,
+                "hour",
+            )
+            assert ret == {
+                "timestamps": [
+                    dt.datetime(2020, 1, 1, 0, 30, tzinfo=dt.timezone.utc),
+                    dt.datetime(2020, 1, 1, 1, 30, tzinfo=dt.timezone.utc),
+                    dt.datetime(2020, 1, 1, 2, 30, tzinfo=dt.timezone.utc),
+                ],
+                "timeseries": {
+                    1: {
+                        "name": "Timeseries 0",
+                        "count": [6, 6, 3],
+                        "ratio": [1.0, 1.0, 1.0],
+                        "total_count": 15,
+                        "avg_count": 5.0,
+                        "avg_ratio": 1.0,
+                        "interval": 600.0,
+                        "undefined_interval": False,
+                        "expected_count": [6.0, 6.0, 3.0],
+                    },
+                    2: {
+                        "name": "Timeseries 1",
+                        "count": [6, 6, 3],
+                        "ratio": [1.0, 1.0, 1.0],
+                        "total_count": 15,
+                        "avg_count": 5.0,
+                        "avg_ratio": 1.0,
+                        "interval": 600.0,
+                        "undefined_interval": False,
+                        "expected_count": [6.0, 6.0, 3.0],
+                    },
+                    3: {
+                        "name": "Timeseries 2",
+                        "count": [8, 8, 5],
+                        "ratio": [
+                            2.6666666666666665,
+                            2.6666666666666665,
+                            3.3333333333333335,
+                        ],
+                        "total_count": 21,
+                        "avg_count": 7.0,
+                        "avg_ratio": 2.888888888888889,
+                        "interval": 1200.0,
+                        "undefined_interval": False,
+                        "expected_count": [3.0, 3.0, 1.5],
+                    },
+                    4: {
+                        "name": "Timeseries 3",
+                        "count": [6, 6, 3],
+                        "ratio": [1.0, 1.0, 1.0],
+                        "total_count": 15,
+                        "avg_count": 5.0,
+                        "avg_ratio": 1.0,
+                        "interval": 600.0,
+                        "undefined_interval": True,
+                        "expected_count": [6.0, 6.0, 3.0],
+                    },
+                    5: {
+                        "name": "Timeseries 4",
+                        "count": [0, 0, 0],
+                        "ratio": [None, None, None],
+                        "total_count": 0,
+                        "avg_count": 0.0,
+                        "avg_ratio": None,
+                        "interval": None,
+                        "undefined_interval": True,
+                        "expected_count": [None, None, None],
+                    },
+                },
+            }
