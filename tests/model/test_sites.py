@@ -130,7 +130,7 @@ class TestStructuralElementPropertyModel:
             db.session.add(sep)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match='value_type cannot be modified for "New property"',
+                match="value_type cannot be modified",
             ):
                 db.session.commit()
 

@@ -148,7 +148,6 @@ def init_db_campaigns_triggers():
         generate_ddl_trigger_readonly(
             CampaignScope.__table__,
             CampaignScope.campaign_id.key,
-            row_name=CampaignScope.name.key,
         )
     )
 

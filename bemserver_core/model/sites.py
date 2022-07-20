@@ -529,7 +529,6 @@ def init_db_structural_elements_triggers():
         generate_ddl_trigger_readonly(
             StructuralElementProperty.__table__,
             StructuralElementProperty.value_type.key,
-            row_name=StructuralElementProperty.name.key,
         )
     )
 

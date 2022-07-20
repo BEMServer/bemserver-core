@@ -190,7 +190,7 @@ class TestCampaignScopeModel:
         db.session.add(cs_1)
         with pytest.raises(
             sqla.exc.IntegrityError,
-            match='campaign_id cannot be modified for "Campaign scope 1"',
+            match="campaign_id cannot be modified",
         ):
             db.session.commit()
         db.session.rollback()

@@ -540,10 +540,7 @@ def init_db_timeseries_triggers():
     #  campaign_id and campaign_scope_id columns for Timeseries table.
     for ro_colname in [Timeseries.campaign_id.key, Timeseries.campaign_scope_id.key]:
         db.session.execute(
-            generate_ddl_trigger_readonly(
-                Timeseries.__table__,
-                ro_colname,
-            )
+            generate_ddl_trigger_readonly(Timeseries.__table__, ro_colname)
         )
 
     # Set "update read-only trigger" on value_type column for timeseries property table.
@@ -551,7 +548,6 @@ def init_db_timeseries_triggers():
         generate_ddl_trigger_readonly(
             TimeseriesProperty.__table__,
             TimeseriesProperty.value_type.key,
-            row_name=TimeseriesProperty.name.key,
         )
     )
 
@@ -562,10 +558,7 @@ def init_db_timeseries_triggers():
         TimeseriesPropertyData.property_id.key,
     ]:
         db.session.execute(
-            generate_ddl_trigger_readonly(
-                TimeseriesPropertyData.__table__,
-                ro_colname,
-            )
+            generate_ddl_trigger_readonly(TimeseriesPropertyData.__table__, ro_colname)
         )
 
     db.session.commit()
