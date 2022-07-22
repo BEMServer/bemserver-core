@@ -28,7 +28,7 @@ Database setup
 
 Set DB URI in an evironment variable::
 
-$ EXPORT SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://user:password@localhost:5432/bemserver"
+$ export SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://user:password@localhost:5432/bemserver"
 
 
 Development mode
