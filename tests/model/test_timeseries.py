@@ -1,5 +1,6 @@
 """Timeseries tests"""
 import datetime as dt
+import sqlalchemy as sqla
 
 import pytest
 
@@ -18,9 +19,11 @@ from bemserver_core.model import (
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
+from bemserver_core.common import PropertyType
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
     TimeseriesNotFoundError,
+    PropertyTypeInvalidError,
 )
 
 
@@ -56,6 +59,29 @@ class TestTimeseriesPropertyModel:
                 ts_property_1.update(name="Mean")
             with pytest.raises(BEMServerAuthorizationError):
                 ts_property_1.delete()
+
+    def test_timeseries_property_cannot_change_type(self, users):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        with CurrentUser(admin_user):
+            sep = TimeseriesProperty(
+                name="New property",
+                value_type=PropertyType.integer,
+            )
+            assert sep.id is None
+            sep.value_type = PropertyType.float
+            db.session.add(sep)
+            db.session.commit()
+            assert sep.id is not None
+            sep.value_type = PropertyType.boolean
+            db.session.add(sep)
+            with pytest.raises(
+                sqla.exc.IntegrityError,
+                match="value_type cannot be modified",
+            ):
+                db.session.commit()
+            db.session.rollback()
 
 
 class TestTimeseriesDataStateModel:
@@ -225,7 +251,6 @@ class TestTimeseriesModel:
     def test_timeseries_read_only_fields(self, campaigns, campaign_scopes):
         """Check campaign and campaign_scope can't be modified
 
-        Also check the getter/setter don't get in the way when querying.
         This is kind of a "framework test".
         """
         campaign_1 = campaigns[0]
@@ -238,12 +263,24 @@ class TestTimeseriesModel:
             campaign_id=campaign_1.id,
             campaign_scope_id=campaign_scope_1.id,
         )
-        db.session.flush()
+        db.session.commit()
 
-        with pytest.raises(AttributeError):
-            ts_1.update(campaign_id=campaign_2.id)
-        with pytest.raises(AttributeError):
-            ts_1.update(campaign_scope_id=campaign_scope_2.id)
+        ts_1.update(campaign_id=campaign_2.id)
+        db.session.add(ts_1)
+        with pytest.raises(
+            sqla.exc.IntegrityError,
+            match="campaign_id cannot be modified",
+        ):
+            db.session.commit()
+        db.session.rollback()
+        ts_1.update(campaign_scope_id=campaign_scope_2.id)
+        db.session.add(ts_1)
+        with pytest.raises(
+            sqla.exc.IntegrityError,
+            match="campaign_scope_id cannot be modified",
+        ):
+            db.session.commit()
+        db.session.rollback()
 
         ts_list = list(Timeseries.get(campaign_id=1))
         assert ts_list == [ts_1]
@@ -574,6 +611,143 @@ class TestTimeseriesPropertyDataModel:
                 tspd_2.update(data_state_id=2)
             with pytest.raises(BEMServerAuthorizationError):
                 tspd_2.delete()
+
+    def test_timeseries_property_data_type_validation_as_admin(
+        self, users, timeseries, timeseries_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        ts_1 = timeseries[0]
+        tsp_1 = timeseries_properties[0]
+        tsp_3 = timeseries_properties[2]
+        tsp_4 = timeseries_properties[3]
+        tsp_5 = timeseries_properties[4]
+
+        with CurrentUser(admin_user):
+            # Property value is expected to be a float.
+            assert tsp_1.value_type is PropertyType.float
+            tspd_1 = TimeseriesPropertyData.new(
+                timeseries_id=ts_1.id,
+                property_id=tsp_1.id,
+                value=4.2,
+            )
+            db.session.commit()
+            assert tspd_1.value == "4.2"
+            for val, exp_res in [("66.6", "66.6"), (42, "42")]:
+                tspd_1.value = val
+                db.session.add(tspd_1)
+                db.session.commit()
+                assert tspd_1.value == exp_res
+            # Invalid property value types.
+            for val in ["bad", None]:
+                tspd_1.value = val
+                db.session.add(tspd_1)
+                with pytest.raises(PropertyTypeInvalidError):
+                    db.session.commit()
+                assert tspd_1.value == val
+                db.session.rollback()
+
+            # Property value is expected to be an integer.
+            assert tsp_3.value_type is PropertyType.integer
+            tspd_3 = TimeseriesPropertyData.new(
+                timeseries_id=ts_1.id,
+                property_id=tsp_3.id,
+                value=42,
+            )
+            db.session.commit()
+            assert tspd_3.value == "42"
+            tspd_3.value = "666"
+            db.session.add(tspd_3)
+            db.session.commit()
+            assert tspd_3.value == "666"
+            # Invalid property value types.
+            for val in ["bad", "4.2", 4.2, None]:
+                tspd_3.value = val
+                db.session.add(tspd_3)
+                with pytest.raises(PropertyTypeInvalidError):
+                    db.session.commit()
+                assert tspd_3.value == val
+                db.session.rollback()
+
+            # Property value is expected to be a boolean.
+            assert tsp_4.value_type is PropertyType.boolean
+            tspd_4 = TimeseriesPropertyData.new(
+                timeseries_id=ts_1.id,
+                property_id=tsp_4.id,
+                value="true",
+            )
+            db.session.commit()
+            assert tspd_4.value == "true"
+            tspd_4.value = "false"
+            db.session.add(tspd_4)
+            db.session.commit()
+            assert tspd_4.value == "false"
+            # Invalid property value types.
+            for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
+                tspd_4.value = val
+                db.session.add(tspd_4)
+                with pytest.raises(PropertyTypeInvalidError):
+                    db.session.commit()
+                assert tspd_4.value == val
+                db.session.rollback()
+
+            # Property value is expected to be a string.
+            assert tsp_5.value_type is PropertyType.string
+            tspd_5 = TimeseriesPropertyData.new(
+                timeseries_id=ts_1.id,
+                property_id=tsp_5.id,
+                value=12,
+            )
+            db.session.commit()
+            assert tspd_5.value == "12"
+            for val, exp_res in [
+                ("everything works", "everything works"),
+                (True, "true"),
+            ]:
+                tspd_5.value = val
+                db.session.add(tspd_5)
+                db.session.commit()
+                assert tspd_5.value == exp_res
+
+    def test_timseries_property_data_cannot_change_timeseries_or_property(
+        self, users, timeseries, timeseries_properties
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
+        ts_p_1 = timeseries_properties[0]
+        ts_p_2 = timeseries_properties[1]
+
+        with CurrentUser(admin_user):
+            tspd = TimeseriesPropertyData(
+                timeseries_id=ts_1.id,
+                property_id=ts_p_1.id,
+                value=12,
+            )
+            assert tspd.id is None
+            tspd.property_id = ts_p_2.id
+            db.session.add(tspd)
+            db.session.commit()
+            assert tspd.id is not None
+            tspd.timeseries_id = ts_2.id
+            db.session.add(tspd)
+            with pytest.raises(
+                sqla.exc.IntegrityError,
+                match="timeseries_id cannot be modified",
+            ):
+                db.session.commit()
+            db.session.rollback()
+            tspd.property_id = ts_p_1.id
+            db.session.add(tspd)
+            with pytest.raises(
+                sqla.exc.IntegrityError,
+                match="property_id cannot be modified",
+            ):
+                db.session.commit()
+            db.session.rollback()
 
 
 class TestTimeseriesByDataStateModel:

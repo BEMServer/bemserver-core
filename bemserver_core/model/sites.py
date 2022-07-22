@@ -1,11 +1,10 @@
 """Sites"""
 import sqlalchemy as sqla
-import sqlalchemy.orm as sqlaorm
-from sqlalchemy.ext.hybrid import hybrid_property
 
-from bemserver_core.database import Base
+from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.model import Campaign
 from bemserver_core.authorization import AuthMixin, auth, Relation
+from bemserver_core.common import PropertyType
 
 
 class StructuralElementProperty(AuthMixin, Base):
@@ -14,6 +13,11 @@ class StructuralElementProperty(AuthMixin, Base):
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
     description = sqla.Column(sqla.String(500))
+    value_type = sqla.Column(
+        sqla.Enum(PropertyType),
+        default=PropertyType.string,
+        nullable=False,
+    )
 
 
 class SiteProperty(AuthMixin, Base):
@@ -83,28 +87,13 @@ class ZoneProperty(AuthMixin, Base):
 
 class Site(AuthMixin, Base):
     __tablename__ = "sites"
-    __table_args__ = (sqla.UniqueConstraint("_campaign_id", "name"),)
+    __table_args__ = (sqla.UniqueConstraint("campaign_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
     ifc_id = sqla.Column(sqla.String(22))
-
-    @sqlaorm.declared_attr
-    def _campaign_id(cls):
-        return sqla.Column(
-            sqla.Integer, sqla.ForeignKey("campaigns.id"), nullable=False
-        )
-
-    @hybrid_property
-    def campaign_id(self):
-        return self._campaign_id
-
-    @campaign_id.setter
-    def campaign_id(self, campaign_id):
-        if self.id is not None:
-            raise AttributeError("campaign_id cannot be modified")
-        self._campaign_id = campaign_id
+    campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
 
     campaign = sqla.orm.relationship(
         "Campaign", backref=sqla.orm.backref("sites", cascade="all, delete-orphan")
@@ -127,26 +116,13 @@ class Site(AuthMixin, Base):
 
 class Building(AuthMixin, Base):
     __tablename__ = "buildings"
-    __table_args__ = (sqla.UniqueConstraint("_site_id", "name"),)
+    __table_args__ = (sqla.UniqueConstraint("site_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
     ifc_id = sqla.Column(sqla.String(22))
-
-    @sqlaorm.declared_attr
-    def _site_id(cls):
-        return sqla.Column(sqla.Integer, sqla.ForeignKey("sites.id"), nullable=False)
-
-    @hybrid_property
-    def site_id(self):
-        return self._site_id
-
-    @site_id.setter
-    def site_id(self, site_id):
-        if self.id is not None:
-            raise AttributeError("site_id cannot be modified")
-        self._site_id = site_id
+    site_id = sqla.Column(sqla.ForeignKey("sites.id"), nullable=False)
 
     site = sqla.orm.relationship(
         "Site", backref=sqla.orm.backref("buildings", cascade="all, delete-orphan")
@@ -180,28 +156,13 @@ class Building(AuthMixin, Base):
 
 class Storey(AuthMixin, Base):
     __tablename__ = "storeys"
-    __table_args__ = (sqla.UniqueConstraint("_building_id", "name"),)
+    __table_args__ = (sqla.UniqueConstraint("building_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
     ifc_id = sqla.Column(sqla.String(22))
-
-    @sqlaorm.declared_attr
-    def _building_id(cls):
-        return sqla.Column(
-            sqla.Integer, sqla.ForeignKey("buildings.id"), nullable=False
-        )
-
-    @hybrid_property
-    def building_id(self):
-        return self._building_id
-
-    @building_id.setter
-    def building_id(self, building_id):
-        if self.id is not None:
-            raise AttributeError("building_id cannot be modified")
-        self._building_id = building_id
+    building_id = sqla.Column(sqla.ForeignKey("buildings.id"), nullable=False)
 
     building = sqla.orm.relationship(
         "Building", backref=sqla.orm.backref("storeys", cascade="all, delete-orphan")
@@ -244,26 +205,13 @@ class Storey(AuthMixin, Base):
 
 class Space(AuthMixin, Base):
     __tablename__ = "spaces"
-    __table_args__ = (sqla.UniqueConstraint("_storey_id", "name"),)
+    __table_args__ = (sqla.UniqueConstraint("storey_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
     ifc_id = sqla.Column(sqla.String(22))
-
-    @sqlaorm.declared_attr
-    def _storey_id(cls):
-        return sqla.Column(sqla.Integer, sqla.ForeignKey("storeys.id"), nullable=False)
-
-    @hybrid_property
-    def storey_id(self):
-        return self._storey_id
-
-    @storey_id.setter
-    def storey_id(self, storey_id):
-        if self.id is not None:
-            raise AttributeError("storey_id cannot be modified")
-        self._storey_id = storey_id
+    storey_id = sqla.Column(sqla.ForeignKey("storeys.id"), nullable=False)
 
     storey = sqla.orm.relationship(
         "Storey", backref=sqla.orm.backref("spaces", cascade="all, delete-orphan")
@@ -317,28 +265,13 @@ class Space(AuthMixin, Base):
 
 class Zone(AuthMixin, Base):
     __tablename__ = "zones"
-    __table_args__ = (sqla.UniqueConstraint("_campaign_id", "name"),)
+    __table_args__ = (sqla.UniqueConstraint("campaign_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
     ifc_id = sqla.Column(sqla.String(22))
-
-    @sqlaorm.declared_attr
-    def _campaign_id(cls):
-        return sqla.Column(
-            sqla.Integer, sqla.ForeignKey("campaigns.id"), nullable=False
-        )
-
-    @hybrid_property
-    def campaign_id(self):
-        return self._campaign_id
-
-    @campaign_id.setter
-    def campaign_id(self, campaign_id):
-        if self.id is not None:
-            raise AttributeError("campaign_id cannot be modified")
-        self._campaign_id = campaign_id
+    campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
 
     campaign = sqla.orm.relationship(
         "Campaign", backref=sqla.orm.backref("zones", cascade="all, delete-orphan")
@@ -393,6 +326,11 @@ class SitePropertyData(AuthMixin, Base):
             },
         )
 
+    def _before_flush(self):
+        # Get property type and try to parse value to ensure its type validity.
+        if (prop := SiteProperty.get_by_id(self.site_property_id)) is not None:
+            prop.structural_element_property.value_type.verify(self.value)
+
 
 class BuildingPropertyData(AuthMixin, Base):
     __tablename__ = "building_property_data"
@@ -432,6 +370,11 @@ class BuildingPropertyData(AuthMixin, Base):
             },
         )
 
+    def _before_flush(self):
+        # Get property type and try to parse value to ensure its type validity.
+        if (prop := BuildingProperty.get_by_id(self.building_property_id)) is not None:
+            prop.structural_element_property.value_type.verify(self.value)
+
 
 class StoreyPropertyData(AuthMixin, Base):
     __tablename__ = "storey_property_data"
@@ -466,6 +409,11 @@ class StoreyPropertyData(AuthMixin, Base):
                 ),
             },
         )
+
+    def _before_flush(self):
+        # Get property type and try to parse value to ensure its type validity.
+        if (prop := StoreyProperty.get_by_id(self.storey_property_id)) is not None:
+            prop.structural_element_property.value_type.verify(self.value)
 
 
 class SpacePropertyData(AuthMixin, Base):
@@ -502,6 +450,11 @@ class SpacePropertyData(AuthMixin, Base):
             },
         )
 
+    def _before_flush(self):
+        # Get property type and try to parse value to ensure its type validity.
+        if (prop := SpaceProperty.get_by_id(self.space_property_id)) is not None:
+            prop.structural_element_property.value_type.verify(self.value)
+
 
 class ZonePropertyData(AuthMixin, Base):
     __tablename__ = "zone_property_data"
@@ -536,3 +489,40 @@ class ZonePropertyData(AuthMixin, Base):
                 ),
             },
         )
+
+    def _before_flush(self):
+        # Get property type and try to parse value to ensure its type validity.
+        if (prop := ZoneProperty.get_by_id(self.zone_property_id)) is not None:
+            prop.structural_element_property.value_type.verify(self.value)
+
+
+def init_db_structural_elements_triggers():
+    """Create triggers to protect some columns from update.
+
+    This function is meant to be used for tests or dev setups after create_all.
+    Production setups should rely on migration scripts.
+    """
+    make_columns_read_only(
+        Site.campaign_id,
+        Building.site_id,
+        Storey.building_id,
+        Space.storey_id,
+        Zone.campaign_id,
+        StructuralElementProperty.value_type,
+        SiteProperty.structural_element_property_id,
+        BuildingProperty.structural_element_property_id,
+        StoreyProperty.structural_element_property_id,
+        SpaceProperty.structural_element_property_id,
+        ZoneProperty.structural_element_property_id,
+        SitePropertyData.site_id,
+        SitePropertyData.site_property_id,
+        BuildingPropertyData.building_id,
+        BuildingPropertyData.building_property_id,
+        StoreyPropertyData.storey_id,
+        StoreyPropertyData.storey_property_id,
+        SpacePropertyData.space_id,
+        SpacePropertyData.space_property_id,
+        ZonePropertyData.zone_id,
+        ZonePropertyData.zone_property_id,
+    )
+    db.session.commit()

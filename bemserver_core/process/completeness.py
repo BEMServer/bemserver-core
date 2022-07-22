@@ -104,7 +104,7 @@ def compute_completeness(
     # Guess interval from max ratio if undefined
     intervals = [
         # Use interval, if defined
-        i if i is not None
+        int(i) if i is not None
         # Otherwise, use max ratio
         else 1 / maxrate if (maxrate := rates_df[col].max()) != 0
         # Or nan if no value at all

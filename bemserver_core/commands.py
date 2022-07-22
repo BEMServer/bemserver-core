@@ -25,9 +25,14 @@ def setup_db():
     This function assumes DB URI is set.
     """
     database.db.create_all(checkfirst=False)
+    database.init_db_functions()
+    model.events.init_db_events_triggers()
     model.events.init_db_events()
+    model.campaigns.init_db_campaigns_triggers()
+    model.timeseries.init_db_timeseries_triggers()
     model.timeseries.init_db_timeseries()
     model.timeseries_data.init_db_timeseries_data()
+    model.sites.init_db_structural_elements_triggers()
 
 
 @click.command()

@@ -1,5 +1,7 @@
 """Databases: SQLAlchemy database access"""
 from functools import wraps
+from itertools import chain
+from textwrap import dedent
 
 import sqlalchemy as sqla
 from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base
@@ -134,11 +136,23 @@ class Base:
         """Delete object"""
         db.session.delete(self)
 
+    def _before_flush(self):
+        """Hook executed before DB session flush"""
+
 
 SESSION_FACTORY = sessionmaker()
 DB_SESSION = scoped_session(SESSION_FACTORY)
 metadata = sqla.MetaData(naming_convention=NAMING_CONVENTION)
 Base = declarative_base(metadata=metadata, cls=Base)
+
+
+# Inspired by https://stackoverflow.com/a/36732359
+@sqla.event.listens_for(DB_SESSION, "before_flush")
+def receive_before_flush(session, flush_context, instances):
+    """Listen for the `before_flush` event"""
+    # Call _before_flush method for each modified object instance in session.
+    for obj in chain(session.new, session.dirty):
+        obj._before_flush()
 
 
 class DBConnection:
@@ -174,3 +188,71 @@ class DBConnection:
 
 
 db = DBConnection()
+
+
+def init_db_functions():
+    """Create functions for triggers...
+
+    This function is meant to be used for tests or dev setups after create_all.
+    Production setups should rely on migration scripts.
+    """
+
+    # SQL function to raise an exception when trying to update a "read-only" column.
+    db.session.execute(
+        sqla.DDL(
+            dedent(
+                """\
+                CREATE FUNCTION column_update_not_allowed()
+                    RETURNS TRIGGER AS
+                $func$
+                    DECLARE
+                        col_name text := TG_ARGV[0]::text;
+                    BEGIN
+                        RAISE EXCEPTION USING
+                            MESSAGE = col_name || ' cannot be modified',
+                            ERRCODE = 'integrity_constraint_violation';
+                    END;
+                $func$
+                LANGUAGE plpgsql STRICT;\
+                """
+            )
+        )
+    )
+
+    db.session.commit()
+
+
+def _generate_ddl_trigger_read_only(table_name, col_name):
+    """Generate the SQL statement that creates an "update read-only trigger"
+    on a specific column for a table.
+
+    :param str table_name: The name of the table concerned by the trigger.
+    :param str col_name: The name of the column to protect from update.
+    :returns sqlalchemy.DDL: An instance of DDL statement that creates the trigger.
+    """
+    return sqla.DDL(
+        dedent(
+            f"""\
+            CREATE TRIGGER
+                {table_name}_trigger_update_readonly_{col_name}
+            BEFORE UPDATE
+                OF {col_name} ON {table_name}
+            FOR EACH ROW
+                WHEN (
+                    NEW.{col_name} IS DISTINCT FROM OLD.{col_name}
+                )
+                EXECUTE FUNCTION column_update_not_allowed({col_name});\
+            """
+        )
+    )
+
+
+def make_columns_read_only(*fields):
+    """Make table columns read-only
+
+    :param list fields: List of model Columns
+    """
+    for field in fields:
+        db.session.execute(
+            _generate_ddl_trigger_read_only(field.class_.__table__, field.key)
+        )

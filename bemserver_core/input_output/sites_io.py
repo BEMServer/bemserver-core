@@ -3,7 +3,7 @@ import sqlalchemy as sqla
 
 from bemserver_core.database import db
 from bemserver_core import model
-from bemserver_core.exceptions import SitesCSVIOError
+from bemserver_core.exceptions import SitesCSVIOError, PropertyTypeInvalidError
 from .base import BaseCSVIO
 
 
@@ -61,7 +61,7 @@ class SitesCSVIO(BaseCSVIO):
                     )
                     try:
                         db.session.flush()
-                    except sqla.exc.DataError as exc:
+                    except (sqla.exc.DataError, PropertyTypeInvalidError) as exc:
                         raise SitesCSVIOError(
                             f'Site "{site.name}" property "{key}" can\'t be created.'
                         ) from exc
@@ -104,7 +104,7 @@ class SitesCSVIO(BaseCSVIO):
                     )
                     try:
                         db.session.flush()
-                    except sqla.exc.DataError as exc:
+                    except (sqla.exc.DataError, PropertyTypeInvalidError) as exc:
                         raise SitesCSVIOError(
                             f'Building "{building.name}" property "{key}" '
                             "can't be created."
@@ -149,7 +149,7 @@ class SitesCSVIO(BaseCSVIO):
                     )
                     try:
                         db.session.flush()
-                    except sqla.exc.DataError as exc:
+                    except (sqla.exc.DataError, PropertyTypeInvalidError) as exc:
                         raise SitesCSVIOError(
                             f'Storey "{storey.name}" property "{key}" '
                             "can't be created."
@@ -196,7 +196,7 @@ class SitesCSVIO(BaseCSVIO):
                     )
                     try:
                         db.session.flush()
-                    except sqla.exc.DataError as exc:
+                    except (sqla.exc.DataError, PropertyTypeInvalidError) as exc:
                         raise SitesCSVIOError(
                             f'Space "{space.name}" property "{key}" can\'t be created.'
                         ) from exc
@@ -231,7 +231,7 @@ class SitesCSVIO(BaseCSVIO):
                     )
                     try:
                         db.session.flush()
-                    except sqla.exc.DataError as exc:
+                    except (sqla.exc.DataError, PropertyTypeInvalidError) as exc:
                         raise SitesCSVIOError(
                             f'Zone "{zone.name}" property "{key}" can\'t be created.'
                         ) from exc

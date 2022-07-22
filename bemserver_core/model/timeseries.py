@@ -1,9 +1,7 @@
 """Timeseries"""
 import sqlalchemy as sqla
-import sqlalchemy.orm as sqlaorm
-from sqlalchemy.ext.hybrid import hybrid_property
 
-from bemserver_core.database import Base, db
+from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.model.users import User, UserGroup, UserByUserGroup
 from bemserver_core.model.campaigns import (
@@ -12,6 +10,7 @@ from bemserver_core.model.campaigns import (
     UserGroupByCampaignScope,
 )
 from bemserver_core.model.sites import Site, Building, Storey, Space, Zone
+from bemserver_core.common import PropertyType
 from bemserver_core.exceptions import TimeseriesNotFoundError
 
 
@@ -21,6 +20,11 @@ class TimeseriesProperty(AuthMixin, Base):
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
     description = sqla.Column(sqla.String(250))
+    value_type = sqla.Column(
+        sqla.Enum(PropertyType),
+        default=PropertyType.string,
+        nullable=False,
+    )
 
 
 class TimeseriesDataState(AuthMixin, Base):
@@ -32,47 +36,16 @@ class TimeseriesDataState(AuthMixin, Base):
 
 class Timeseries(AuthMixin, Base):
     __tablename__ = "timeseries"
-    __table_args__ = (sqla.UniqueConstraint("_campaign_id", "name"),)
+    __table_args__ = (sqla.UniqueConstraint("campaign_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
     unit_symbol = sqla.Column(sqla.String(20))
-    campaign = sqla.orm.relationship("Campaign")
-    campaign_scope = sqla.orm.relationship("CampaignScope")
-
-    # Use getter/setter to prevent modifying campaign / campaign_scope after commit
-    @sqlaorm.declared_attr
-    def _campaign_id(cls):
-        return sqla.Column(
-            sqla.Integer, sqla.ForeignKey("campaigns.id"), nullable=False
-        )
-
-    @hybrid_property
-    def campaign_id(self):
-        return self._campaign_id
-
-    @campaign_id.setter
-    def campaign_id(self, campaign_id):
-        if self.id is not None:
-            raise AttributeError("campaign_id cannot be modified")
-        self._campaign_id = campaign_id
-
-    @sqlaorm.declared_attr
-    def _campaign_scope_id(cls):
-        return sqla.Column(
-            sqla.Integer, sqla.ForeignKey("campaign_scopes.id"), nullable=False
-        )
-
-    @hybrid_property
-    def campaign_scope_id(self):
-        return self._campaign_scope_id
-
-    @campaign_scope_id.setter
-    def campaign_scope_id(self, campaign_scope_id):
-        if self.id is not None:
-            raise AttributeError("campaign_scope_id cannot be modified")
-        self._campaign_scope_id = campaign_scope_id
+    campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
+    campaign_scope_id = sqla.Column(
+        sqla.ForeignKey("campaign_scopes.id"), nullable=False
+    )
 
     campaign = sqla.orm.relationship(
         "Campaign", backref=sqla.orm.backref("timeseries", cascade="all, delete-orphan")
@@ -295,7 +268,7 @@ class TimeseriesPropertyData(AuthMixin, Base):
     property_id = sqla.Column(
         sqla.ForeignKey("timeseries_properties.id"), nullable=False
     )
-    value = sqla.Column(sqla.Float)
+    value = sqla.Column(sqla.String(100), nullable=False)
 
     timeseries = sqla.orm.relationship(
         "Timeseries",
@@ -317,6 +290,11 @@ class TimeseriesPropertyData(AuthMixin, Base):
                 ),
             },
         )
+
+    def _before_flush(self):
+        # Get property type and try to parse value to ensure its type validity.
+        if (prop := TimeseriesProperty.get_by_id(self.property_id)) is not None:
+            prop.value_type.verify(self.value)
 
 
 class TimeseriesByDataState(AuthMixin, Base):
@@ -551,6 +529,22 @@ class TimeseriesByZone(AuthMixin, Base):
         )
 
 
+def init_db_timeseries_triggers():
+    """Create triggers to protect some columns from update.
+
+    This function is meant to be used for tests or dev setups after create_all.
+    Production setups should rely on migration scripts.
+    """
+    make_columns_read_only(
+        Timeseries.campaign_id,
+        Timeseries.campaign_scope_id,
+        TimeseriesProperty.value_type,
+        TimeseriesPropertyData.timeseries_id,
+        TimeseriesPropertyData.property_id,
+    )
+    db.session.commit()
+
+
 def init_db_timeseries():
     """Create default timeseries data states
 
@@ -559,7 +553,11 @@ def init_db_timeseries():
     """
     db.session.add_all(
         [
-            TimeseriesProperty(name="Interval", description="Expected interval (s)"),
+            TimeseriesProperty(
+                name="Interval",
+                description="Expected interval (s)",
+                value_type=PropertyType.integer,
+            ),
             TimeseriesDataState(name="Raw"),
             TimeseriesDataState(name="Clean"),
         ]

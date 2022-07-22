@@ -43,3 +43,7 @@ class TimeseriesDataCSVIOError(BEMServerCoreCSVIOError, TimeseriesDataIOError):
 
 class BEMServerAuthorizationError(BEMServerCoreIOError):
     """Operation not autorized to current user"""
+
+
+class PropertyTypeInvalidError(BEMServerCoreError):
+    """Invalid property value type: cast error"""

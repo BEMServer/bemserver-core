@@ -1,10 +1,8 @@
 """Event"""
-
 import sqlalchemy as sqla
 import sqlalchemy.orm as sqlaorm
-from sqlalchemy.ext.hybrid import hybrid_property
 
-from bemserver_core.database import Base, db
+from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.authorization import auth, AuthMixin, Relation
 
 
@@ -37,23 +35,9 @@ class Event(AuthMixin, Base):
     __tablename__ = "events"
 
     id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
-
-    # Use getter/setter to prevent modifying campaign_scope after commit
-    @sqlaorm.declared_attr
-    def _campaign_scope_id(cls):
-        return sqla.Column(
-            sqla.Integer, sqla.ForeignKey("campaign_scopes.id"), nullable=False
-        )
-
-    @hybrid_property
-    def campaign_scope_id(self):
-        return self._campaign_scope_id
-
-    @campaign_scope_id.setter
-    def campaign_scope_id(self, campaign_scope_id):
-        if self.id is not None:
-            raise AttributeError("campaign_scope_id cannot be modified")
-        self._campaign_scope_id = campaign_scope_id
+    campaign_scope_id = sqla.Column(
+        sqla.ForeignKey("campaign_scopes.id"), nullable=False
+    )
 
     @sqlaorm.declared_attr
     def category(cls):
@@ -73,21 +57,8 @@ class Event(AuthMixin, Base):
             sqla.String, sqla.ForeignKey("event_states.id"), nullable=False
         )
 
-    # Use getter/setter to prevent modifying timestamp after commit
-    _timestamp = sqla.Column(sqla.DateTime(timezone=True), nullable=False)
-
-    @hybrid_property
-    def timestamp(self):
-        return self._timestamp
-
-    @timestamp.setter
-    def timestamp(self, timestamp):
-        if self.id is not None:
-            raise AttributeError("timestamp cannot be modified")
-        self._timestamp = timestamp
-
+    timestamp = sqla.Column(sqla.DateTime(timezone=True), nullable=False)
     source = sqla.Column(sqla.String, nullable=False)
-
     description = sqla.Column(sqla.String(250))
 
     @classmethod
@@ -103,6 +74,19 @@ class Event(AuthMixin, Base):
                 ),
             },
         )
+
+
+def init_db_events_triggers():
+    """Create triggers to protect some columns from update.
+
+    This function is meant to be used for tests or dev setups after create_all.
+    Production setups should rely on migration scripts.
+    """
+    make_columns_read_only(
+        Event.timestamp,
+        Event.campaign_scope_id,
+    )
+    db.session.commit()
 
 
 def init_db_events():

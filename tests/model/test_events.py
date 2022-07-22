@@ -1,5 +1,6 @@
 """Event tests"""
 import datetime as dt
+import sqlalchemy as sqla
 
 import pytest
 
@@ -131,7 +132,6 @@ class TestEventModel:
     def test_event_read_only_fields(self, campaign_scopes, event_categories):
         """Check campaign_scope and timestamp can't be modified
 
-        Also check the getter/setter don't get in the way when querying.
         This is kind of a "framework test".
         """
         campaign_scope_1 = campaign_scopes[0]
@@ -149,12 +149,24 @@ class TestEventModel:
             level="ERROR",
             state="NEW",
         )
-        db.session.flush()
+        db.session.commit()
 
-        with pytest.raises(AttributeError):
-            evt_1.update(timestamp=timestamp_1)
-        with pytest.raises(AttributeError):
-            evt_1.update(campaign_scope_id=campaign_scope_2.id)
+        evt_1.update(timestamp=timestamp_2)
+        db.session.add(evt_1)
+        with pytest.raises(
+            sqla.exc.IntegrityError,
+            match="timestamp cannot be modified",
+        ):
+            db.session.commit()
+        db.session.rollback()
+        evt_1.update(campaign_scope_id=campaign_scope_2.id)
+        db.session.add(evt_1)
+        with pytest.raises(
+            sqla.exc.IntegrityError,
+            match="campaign_scope_id cannot be modified",
+        ):
+            db.session.commit()
+        db.session.rollback()
 
         tse_list = list(Event.get(campaign_scope_id=1))
         assert tse_list == [evt_1]

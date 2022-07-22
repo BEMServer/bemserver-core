@@ -11,6 +11,7 @@ from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core import model
 from bemserver_core.commands import setup_db
+from bemserver_core.common import PropertyType
 
 
 postgresql_proc = ppf.postgresql_proc(
@@ -191,12 +192,23 @@ def timeseries_properties(bemservercore):
     with OpenBar():
         ts_p_1 = model.TimeseriesProperty.new(
             name="Min",
+            value_type=PropertyType.float,
         )
         ts_p_2 = model.TimeseriesProperty.new(
             name="Max",
+            value_type=PropertyType.float,
+        )
+        ts_p_4 = model.TimeseriesProperty.new(
+            name="IsCalibrated",
+            value_type=PropertyType.boolean,
+        )
+        ts_p_5 = model.TimeseriesProperty.new(
+            name="Label",
+            value_type=PropertyType.string,
         )
         db.session.commit()
-    return (ts_p_1, ts_p_2)
+        ts_p_3 = model.TimeseriesProperty.get(name="Interval").first()
+    return (ts_p_1, ts_p_2, ts_p_3, ts_p_4, ts_p_5)
 
 
 @pytest.fixture(params=[2])
@@ -292,12 +304,22 @@ def structural_element_properties(bemservercore):
     with OpenBar():
         sep_1 = model.StructuralElementProperty.new(
             name="Area",
+            value_type=PropertyType.integer,
         )
         sep_2 = model.StructuralElementProperty.new(
             name="Volume",
+            value_type=PropertyType.float,
+        )
+        sep_3 = model.StructuralElementProperty.new(
+            name="Window state",
+            value_type=PropertyType.boolean,
+        )
+        sep_4 = model.StructuralElementProperty.new(
+            name="Architect",
+            value_type=PropertyType.string,
         )
         db.session.commit()
-    return (sep_1, sep_2)
+    return (sep_1, sep_2, sep_3, sep_4)
 
 
 @pytest.fixture
@@ -309,8 +331,14 @@ def site_properties(bemservercore, structural_element_properties):
         site_p_2 = model.SiteProperty.new(
             structural_element_property_id=structural_element_properties[1].id,
         )
+        site_p_3 = model.SiteProperty.new(
+            structural_element_property_id=structural_element_properties[2].id,
+        )
+        site_p_4 = model.SiteProperty.new(
+            structural_element_property_id=structural_element_properties[3].id,
+        )
         db.session.commit()
-    return (site_p_1, site_p_2)
+    return (site_p_1, site_p_2, site_p_3, site_p_4)
 
 
 @pytest.fixture
@@ -322,8 +350,14 @@ def building_properties(bemservercore, structural_element_properties):
         building_p_2 = model.BuildingProperty.new(
             structural_element_property_id=structural_element_properties[1].id,
         )
+        building_p_3 = model.BuildingProperty.new(
+            structural_element_property_id=structural_element_properties[2].id,
+        )
+        building_p_4 = model.BuildingProperty.new(
+            structural_element_property_id=structural_element_properties[3].id,
+        )
         db.session.commit()
-    return (building_p_1, building_p_2)
+    return (building_p_1, building_p_2, building_p_3, building_p_4)
 
 
 @pytest.fixture
@@ -335,8 +369,14 @@ def storey_properties(bemservercore, structural_element_properties):
         storey_p_2 = model.StoreyProperty.new(
             structural_element_property_id=structural_element_properties[1].id,
         )
+        storey_p_3 = model.StoreyProperty.new(
+            structural_element_property_id=structural_element_properties[2].id,
+        )
+        storey_p_4 = model.StoreyProperty.new(
+            structural_element_property_id=structural_element_properties[3].id,
+        )
         db.session.commit()
-    return (storey_p_1, storey_p_2)
+    return (storey_p_1, storey_p_2, storey_p_3, storey_p_4)
 
 
 @pytest.fixture
@@ -348,8 +388,14 @@ def space_properties(bemservercore, structural_element_properties):
         space_p_2 = model.SpaceProperty.new(
             structural_element_property_id=structural_element_properties[1].id,
         )
+        space_p_3 = model.SpaceProperty.new(
+            structural_element_property_id=structural_element_properties[2].id,
+        )
+        space_p_4 = model.SpaceProperty.new(
+            structural_element_property_id=structural_element_properties[3].id,
+        )
         db.session.commit()
-    return (space_p_1, space_p_2)
+    return (space_p_1, space_p_2, space_p_3, space_p_4)
 
 
 @pytest.fixture
@@ -361,8 +407,14 @@ def zone_properties(bemservercore, structural_element_properties):
         zone_p_2 = model.ZoneProperty.new(
             structural_element_property_id=structural_element_properties[1].id,
         )
+        zone_p_3 = model.ZoneProperty.new(
+            structural_element_property_id=structural_element_properties[2].id,
+        )
+        zone_p_4 = model.ZoneProperty.new(
+            structural_element_property_id=structural_element_properties[3].id,
+        )
         db.session.commit()
-    return (zone_p_1, zone_p_2)
+    return (zone_p_1, zone_p_2, zone_p_3, zone_p_4)
 
 
 @pytest.fixture
@@ -526,10 +578,20 @@ def site_property_data(bemservercore, sites, site_properties):
         spd_2 = model.SitePropertyData.new(
             site_id=sites[1].id,
             site_property_id=site_properties[1].id,
-            value="42",
+            value="4.2",
+        )
+        spd_3 = model.SitePropertyData.new(
+            site_id=sites[1].id,
+            site_property_id=site_properties[2].id,
+            value="true",
+        )
+        spd_4 = model.SitePropertyData.new(
+            site_id=sites[1].id,
+            site_property_id=site_properties[3].id,
+            value="Imhotep",
         )
         db.session.commit()
-    return (spd_1, spd_2)
+    return (spd_1, spd_2, spd_3, spd_4)
 
 
 @pytest.fixture
@@ -543,10 +605,20 @@ def building_property_data(bemservercore, buildings, building_properties):
         bpd_2 = model.BuildingPropertyData.new(
             building_id=buildings[1].id,
             building_property_id=building_properties[1].id,
-            value="42",
+            value="4.2",
+        )
+        bpd_3 = model.BuildingPropertyData.new(
+            building_id=buildings[1].id,
+            building_property_id=building_properties[2].id,
+            value="true",
+        )
+        bpd_4 = model.BuildingPropertyData.new(
+            building_id=buildings[1].id,
+            building_property_id=building_properties[3].id,
+            value="Imhotep",
         )
         db.session.commit()
-    return (bpd_1, bpd_2)
+    return (bpd_1, bpd_2, bpd_3, bpd_4)
 
 
 @pytest.fixture
@@ -560,10 +632,20 @@ def storey_property_data(bemservercore, storeys, storey_properties):
         spd_2 = model.StoreyPropertyData.new(
             storey_id=storeys[1].id,
             storey_property_id=storey_properties[1].id,
-            value="42",
+            value="4.2",
+        )
+        spd_3 = model.StoreyPropertyData.new(
+            storey_id=storeys[1].id,
+            storey_property_id=storey_properties[2].id,
+            value="true",
+        )
+        spd_4 = model.StoreyPropertyData.new(
+            storey_id=storeys[1].id,
+            storey_property_id=storey_properties[3].id,
+            value="Imhotep",
         )
         db.session.commit()
-    return (spd_1, spd_2)
+    return (spd_1, spd_2, spd_3, spd_4)
 
 
 @pytest.fixture
@@ -577,10 +659,20 @@ def space_property_data(bemservercore, spaces, space_properties):
         spd_2 = model.SpacePropertyData.new(
             space_id=spaces[1].id,
             space_property_id=space_properties[1].id,
-            value="42",
+            value="4.2",
+        )
+        spd_3 = model.SpacePropertyData.new(
+            space_id=spaces[1].id,
+            space_property_id=space_properties[2].id,
+            value="true",
+        )
+        spd_4 = model.SpacePropertyData.new(
+            space_id=spaces[1].id,
+            space_property_id=space_properties[3].id,
+            value="Imhotep",
         )
         db.session.commit()
-    return (spd_1, spd_2)
+    return (spd_1, spd_2, spd_3, spd_4)
 
 
 @pytest.fixture
@@ -594,7 +686,17 @@ def zone_property_data(bemservercore, zones, zone_properties):
         zpd_2 = model.ZonePropertyData.new(
             zone_id=zones[1].id,
             zone_property_id=zone_properties[1].id,
-            value="42",
+            value="4.2",
+        )
+        zpd_3 = model.ZonePropertyData.new(
+            zone_id=zones[1].id,
+            zone_property_id=zone_properties[2].id,
+            value="true",
+        )
+        zpd_4 = model.ZonePropertyData.new(
+            zone_id=zones[1].id,
+            zone_property_id=zone_properties[3].id,
+            value="Imhotep",
         )
         db.session.commit()
-    return (zpd_1, zpd_2)
+    return (zpd_1, zpd_2, zpd_3, zpd_4)
