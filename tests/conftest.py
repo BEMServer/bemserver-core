@@ -190,14 +190,9 @@ def user_groups_by_campaign_scopes(bemservercore, user_groups, campaign_scopes):
 @pytest.fixture
 def timeseries_properties(bemservercore):
     with OpenBar():
-        ts_p_1 = model.TimeseriesProperty.new(
-            name="Min",
-            value_type=PropertyType.float,
-        )
-        ts_p_2 = model.TimeseriesProperty.new(
-            name="Max",
-            value_type=PropertyType.float,
-        )
+        ts_p_1 = model.TimeseriesProperty.get(name="Min").first()
+        ts_p_2 = model.TimeseriesProperty.get(name="Max").first()
+        ts_p_3 = model.TimeseriesProperty.get(name="Interval").first()
         ts_p_4 = model.TimeseriesProperty.new(
             name="IsCalibrated",
             value_type=PropertyType.boolean,
@@ -207,7 +202,6 @@ def timeseries_properties(bemservercore):
             value_type=PropertyType.string,
         )
         db.session.commit()
-        ts_p_3 = model.TimeseriesProperty.get(name="Interval").first()
     return (ts_p_1, ts_p_2, ts_p_3, ts_p_4, ts_p_5)
 
 

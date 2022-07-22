@@ -554,6 +554,16 @@ def init_db_timeseries():
     db.session.add_all(
         [
             TimeseriesProperty(
+                name="Min",
+                description="Minimum expected value",
+                value_type=PropertyType.float,
+            ),
+            TimeseriesProperty(
+                name="Max",
+                description="Maximum expected value",
+                value_type=PropertyType.float,
+            ),
+            TimeseriesProperty(
                 name="Interval",
                 description="Expected interval (s)",
                 value_type=PropertyType.integer,

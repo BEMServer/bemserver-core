@@ -27,7 +27,6 @@ DUMMY_NAME = "Dummy name"
 
 
 class TestTimeseriesCSVIO:
-    @pytest.mark.usefixtures("timeseries_properties")
     def test_timeseries_csv_io_import_csv(
         self,
         users,
@@ -298,9 +297,8 @@ class TestTimeseriesCSVIO:
                     timeseries_csv=timeseries_csv,
                 )
 
-    @pytest.mark.usefixtures("timeseries_properties")
     def test_timeseries_csv_io_import_csv_property_data_error(
-        self, users, campaigns, campaign_scopes, timeseries_properties
+        self, users, campaigns, campaign_scopes
     ):
         admin_user = users[0]
         assert admin_user.is_admin
