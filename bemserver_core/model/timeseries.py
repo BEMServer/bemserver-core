@@ -1,7 +1,7 @@
 """Timeseries"""
 import sqlalchemy as sqla
 
-from bemserver_core.database import Base, db, generate_ddl_trigger_readonly
+from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.model.users import User, UserGroup, UserByUserGroup
 from bemserver_core.model.campaigns import (
@@ -535,32 +535,13 @@ def init_db_timeseries_triggers():
     This function is meant to be used for tests or dev setups after create_all.
     Production setups should rely on migration scripts.
     """
-
-    # Set "update read-only trigger" on
-    #  campaign_id and campaign_scope_id columns for Timeseries table.
-    for ro_colname in [Timeseries.campaign_id.key, Timeseries.campaign_scope_id.key]:
-        db.session.execute(
-            generate_ddl_trigger_readonly(Timeseries.__table__, ro_colname)
-        )
-
-    # Set "update read-only trigger" on value_type column for timeseries property table.
-    db.session.execute(
-        generate_ddl_trigger_readonly(
-            TimeseriesProperty.__table__,
-            TimeseriesProperty.value_type.key,
-        )
+    make_columns_read_only(
+        Timeseries.campaign_id,
+        Timeseries.campaign_scope_id,
+        TimeseriesProperty.value_type,
+        TimeseriesPropertyData.timeseries_id,
+        TimeseriesPropertyData.property_id,
     )
-
-    # Set "update read-only trigger" on
-    #  timeseries_id and property_id columns for TimeseriesPropertyData table.
-    for ro_colname in [
-        TimeseriesPropertyData.timeseries_id.key,
-        TimeseriesPropertyData.property_id.key,
-    ]:
-        db.session.execute(
-            generate_ddl_trigger_readonly(TimeseriesPropertyData.__table__, ro_colname)
-        )
-
     db.session.commit()
 
 

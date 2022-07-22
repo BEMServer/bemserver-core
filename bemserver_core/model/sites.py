@@ -1,7 +1,7 @@
 """Sites"""
 import sqlalchemy as sqla
 
-from bemserver_core.database import Base, db, generate_ddl_trigger_readonly
+from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.model import Campaign
 from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.common import PropertyType
@@ -502,92 +502,27 @@ def init_db_structural_elements_triggers():
     This function is meant to be used for tests or dev setups after create_all.
     Production setups should rely on migration scripts.
     """
-
-    # Set "update read-only trigger" on:
-    #  - campaign_id column for Site table
-    #  - site_id column for Building table
-    #  - building_id column for Storey table
-    #  - storey_id column for Space table
-    #  - campaign_id column for Zone table
-    for struct_elmt_table, struct_elmt_column in [
-        (Site, Site.campaign_id),
-        (Building, Building.site_id),
-        (Storey, Storey.building_id),
-        (Space, Space.storey_id),
-        (Zone, Zone.campaign_id),
-    ]:
-        db.session.execute(
-            generate_ddl_trigger_readonly(
-                struct_elmt_table.__table__,
-                struct_elmt_column.key,
-            )
-        )
-
-    # Set "update read-only trigger" on value_type column
-    #  for structural element property table.
-    db.session.execute(
-        generate_ddl_trigger_readonly(
-            StructuralElementProperty.__table__,
-            StructuralElementProperty.value_type.key,
-        )
+    make_columns_read_only(
+        Site.campaign_id,
+        Building.site_id,
+        Storey.building_id,
+        Space.storey_id,
+        Zone.campaign_id,
+        StructuralElementProperty.value_type,
+        SiteProperty.structural_element_property_id,
+        BuildingProperty.structural_element_property_id,
+        StoreyProperty.structural_element_property_id,
+        SpaceProperty.structural_element_property_id,
+        ZoneProperty.structural_element_property_id,
+        SitePropertyData.site_id,
+        SitePropertyData.site_property_id,
+        BuildingPropertyData.building_id,
+        BuildingPropertyData.building_property_id,
+        StoreyPropertyData.storey_id,
+        StoreyPropertyData.storey_property_id,
+        SpacePropertyData.space_id,
+        SpacePropertyData.space_property_id,
+        ZonePropertyData.zone_id,
+        ZonePropertyData.zone_property_id,
     )
-
-    # Set "update read-only trigger" on structural_element_property_id column
-    #  for site/building/... property tables.
-    for struct_elmt_prop_table in [
-        SiteProperty,
-        BuildingProperty,
-        StoreyProperty,
-        SpaceProperty,
-        ZoneProperty,
-    ]:
-        db.session.execute(
-            generate_ddl_trigger_readonly(
-                struct_elmt_prop_table.__table__,
-                struct_elmt_prop_table.structural_element_property_id.key,
-            )
-        )
-
-    # Set "update read-only trigger" on:
-    #  - site_id and site_property_id columns for SitePropertyData table
-    #  - building_id and building_property_id columns for BuildingPropertyData table
-    #  - storey_id and storey_property_id columns for StoreyPropertyData table
-    #  - space_id and space_property_id columns for SpacePropertyData table
-    #  - zone_id and zone_property_id columns for ZonePropertyData table
-    for (
-        struct_elmt_prop_data_table,
-        struct_elmt_id_column,
-        struct_elmt_prop_id_column,
-    ) in [
-        (SitePropertyData, SitePropertyData.site_id, SitePropertyData.site_property_id),
-        (
-            BuildingPropertyData,
-            BuildingPropertyData.building_id,
-            BuildingPropertyData.building_property_id,
-        ),
-        (
-            StoreyPropertyData,
-            StoreyPropertyData.storey_id,
-            StoreyPropertyData.storey_property_id,
-        ),
-        (
-            SpacePropertyData,
-            SpacePropertyData.space_id,
-            SpacePropertyData.space_property_id,
-        ),
-        (ZonePropertyData, ZonePropertyData.zone_id, ZonePropertyData.zone_property_id),
-    ]:
-        db.session.execute(
-            generate_ddl_trigger_readonly(
-                struct_elmt_prop_data_table.__table__,
-                struct_elmt_id_column.key,
-            )
-        )
-        db.session.execute(
-            generate_ddl_trigger_readonly(
-                struct_elmt_prop_data_table.__table__,
-                struct_elmt_prop_id_column.key,
-            )
-        )
-
     db.session.commit()

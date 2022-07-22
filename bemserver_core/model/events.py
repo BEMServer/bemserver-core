@@ -2,7 +2,7 @@
 import sqlalchemy as sqla
 import sqlalchemy.orm as sqlaorm
 
-from bemserver_core.database import Base, db, generate_ddl_trigger_readonly
+from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.authorization import auth, AuthMixin, Relation
 
 
@@ -82,17 +82,10 @@ def init_db_events_triggers():
     This function is meant to be used for tests or dev setups after create_all.
     Production setups should rely on migration scripts.
     """
-
-    # Set "update read-only trigger" on
-    #  timestamp and campaign_scope_id columns for Event table.
-    for ro_colname in [Event.timestamp.key, Event.campaign_scope_id.key]:
-        db.session.execute(
-            generate_ddl_trigger_readonly(
-                Event.__table__,
-                ro_colname,
-            )
-        )
-
+    make_columns_read_only(
+        Event.timestamp,
+        Event.campaign_scope_id,
+    )
     db.session.commit()
 
 

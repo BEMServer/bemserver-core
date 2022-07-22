@@ -137,7 +137,7 @@ class Base:
         db.session.delete(self)
 
     def _before_flush(self):
-        pass
+        """Hook executed before DB session flush"""
 
 
 SESSION_FACTORY = sessionmaker()
@@ -190,7 +190,6 @@ class DBConnection:
 db = DBConnection()
 
 
-# Inspired by https://dba.stackexchange.com/a/61304 for the use of `to_json` function.
 def init_db_functions():
     """Create functions for triggers...
 
@@ -223,7 +222,7 @@ def init_db_functions():
     db.session.commit()
 
 
-def generate_ddl_trigger_readonly(table_name, col_name):
+def _generate_ddl_trigger_read_only(table_name, col_name):
     """Generate the SQL statement that creates an "update read-only trigger"
     on a specific column for a table.
 
@@ -246,3 +245,14 @@ def generate_ddl_trigger_readonly(table_name, col_name):
             """
         )
     )
+
+
+def make_columns_read_only(*fields):
+    """Make table columns read-only
+
+    :param list fields: List of model Columns
+    """
+    for field in fields:
+        db.session.execute(
+            _generate_ddl_trigger_read_only(field.class_.__table__, field.key)
+        )

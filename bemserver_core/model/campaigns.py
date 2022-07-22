@@ -1,7 +1,7 @@
 """Campaings"""
 import sqlalchemy as sqla
 
-from bemserver_core.database import Base, db, generate_ddl_trigger_readonly
+from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.authorization import AuthMixin, auth, Relation
 
 
@@ -142,13 +142,7 @@ def init_db_campaigns_triggers():
     This function is meant to be used for tests or dev setups after create_all.
     Production setups should rely on migration scripts.
     """
-
-    # Set "update read-only trigger" on campaign_id column for CampaignScope table.
-    db.session.execute(
-        generate_ddl_trigger_readonly(
-            CampaignScope.__table__,
-            CampaignScope.campaign_id.key,
-        )
+    make_columns_read_only(
+        CampaignScope.campaign_id,
     )
-
     db.session.commit()
