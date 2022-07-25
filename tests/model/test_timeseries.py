@@ -34,16 +34,15 @@ class TestTimeseriesPropertyModel:
 
         with CurrentUser(admin_user):
             nb_ts_properties = len(list(TimeseriesProperty.get()))
-            ts_property_1 = TimeseriesProperty.new(name="Min")
+            ts_property_1 = TimeseriesProperty.new(name="Custom")
             db.session.add(ts_property_1)
             db.session.commit()
             assert TimeseriesProperty.get_by_id(ts_property_1.id) == ts_property_1
             assert len(list(TimeseriesProperty.get())) == nb_ts_properties + 1
-            ts_property_1.update(name="Max")
+            ts_property_1.update(name="Super custom")
             ts_property_1.delete()
             db.session.commit()
 
-    @pytest.mark.usefixtures("timeseries_properties")
     def test_timeseries_property_authorizations_as_user(self, users):
         user_1 = users[1]
         assert not user_1.is_admin
@@ -53,10 +52,10 @@ class TestTimeseriesPropertyModel:
             ts_property_1 = TimeseriesProperty.get_by_id(ts_properties[0].id)
             with pytest.raises(BEMServerAuthorizationError):
                 TimeseriesProperty.new(
-                    name="Frequency",
+                    name="Custom",
                 )
             with pytest.raises(BEMServerAuthorizationError):
-                ts_property_1.update(name="Mean")
+                ts_property_1.update(name="Super custom")
             with pytest.raises(BEMServerAuthorizationError):
                 ts_property_1.delete()
 
