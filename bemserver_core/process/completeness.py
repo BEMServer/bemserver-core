@@ -4,12 +4,10 @@ Compute indicators/stats about data completness
 """
 from zoneinfo import ZoneInfo
 
-import sqlalchemy as sqla
 import numpy as np
 import pandas as pd
 
-from bemserver_core.database import db
-from bemserver_core.model import Timeseries, TimeseriesProperty, TimeseriesPropertyData
+from bemserver_core.model import Timeseries
 from bemserver_core.input_output import tsdio
 from bemserver_core.input_output.timeseries_data_io import (
     gen_date_range,
@@ -58,6 +56,8 @@ def compute_completeness(
     interval which is read in database or inferred if possible from existing
     data.
     """
+    timeseries_ids = [ts.id for ts in timeseries]
+
     # Get data count per bucket (aggregation)
     counts_df = tsdio.get_timeseries_buckets_data(
         start_dt,
@@ -85,21 +85,10 @@ def compute_completeness(
     rates_df = counts_df.div(nb_s_per_bucket, axis=0)
 
     # Get interval property value for each TS
-    subq = (
-        sqla.select(TimeseriesPropertyData)
-        .join(TimeseriesProperty)
-        .filter(TimeseriesProperty.name == "Interval")
-    ).subquery()
-    stmt = (
-        sqla.select(Timeseries.id, subq.c.value)
-        .outerjoin(subq)
-        .filter(Timeseries.id.in_(ts.id for ts in timeseries))
+    ts_intervals = Timeseries.get_property_for_many_timeseries(
+        timeseries_ids, "Interval"
     )
-    # Thanks to the outer join, the query produces a list of of (TS.id, interval) tuples
-    # where interval is None if not defined
-    # intervals list is of the form [(ts_1, 300), (ts_2, None), ..., (ts_N, 600)]
-    ts_interval = dict(list(db.session.execute(stmt)))
-    intervals = [ts_interval[ts.id] for ts in timeseries]
+    intervals = [ts_intervals[ts_id] for ts_id in timeseries_ids]
     undefined_intervals = [i is None for i in intervals]
     # Guess interval from max ratio if undefined
     intervals = [

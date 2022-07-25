@@ -2,11 +2,9 @@
 
 Remove outliers from timeseries data
 """
-import sqlalchemy as sqla
 import numpy as np
 
-from bemserver_core.database import db
-from bemserver_core.model import Timeseries, TimeseriesProperty, TimeseriesPropertyData
+from bemserver_core.model import Timeseries
 from bemserver_core.input_output import tsdio
 
 
@@ -32,29 +30,8 @@ def cleanup(
     )
 
     # Get min/max properties values for each TS
-    # TODO: merge into a single query
-    subq = (
-        sqla.select(TimeseriesPropertyData)
-        .join(TimeseriesProperty)
-        .filter(TimeseriesProperty.name == "Min")
-    ).subquery()
-    stmt = (
-        sqla.select(Timeseries.id, subq.c.value)
-        .outerjoin(subq)
-        .filter(Timeseries.id.in_(timeseries_ids))
-    )
-    ts_mins = dict(list(db.session.execute(stmt)))
-    subq = (
-        sqla.select(TimeseriesPropertyData)
-        .join(TimeseriesProperty)
-        .filter(TimeseriesProperty.name == "Max")
-    ).subquery()
-    stmt = (
-        sqla.select(Timeseries.id, subq.c.value)
-        .outerjoin(subq)
-        .filter(Timeseries.id.in_(timeseries_ids))
-    )
-    ts_maxs = dict(list(db.session.execute(stmt)))
+    ts_mins = Timeseries.get_property_for_many_timeseries(timeseries_ids, "Min")
+    ts_maxs = Timeseries.get_property_for_many_timeseries(timeseries_ids, "Max")
 
     for ts_id, (_, col) in zip(timeseries_ids, data_df.items()):
         if (ts_min := ts_mins[ts_id]) is not None:
