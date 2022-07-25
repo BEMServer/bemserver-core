@@ -256,6 +256,28 @@ class Timeseries(AuthMixin, Base):
             )
         return list(ts_d.values())
 
+    @classmethod
+    def get_property_for_many_timeseries(cls, timeseries, prop_name):
+        """Get property by name for a list of timeseries
+
+        :param list timeseries: List of timeseries IDs
+        """
+        subq = (
+            sqla.select(TimeseriesPropertyData)
+            .join(TimeseriesProperty)
+            .filter(TimeseriesProperty.name == prop_name)
+        ).subquery()
+        stmt = (
+            sqla.select(Timeseries.id, subq.c.value)
+            .outerjoin(subq)
+            .filter(Timeseries.id.in_(timeseries))
+        )
+        # Thanks to the outer join, the query produces a list of of (TS.id, prop) tuples
+        # where prop is None if not defined
+        # prop list is of the form [(id_1, "value"), (id_2, None), ..., (id_N, "value")]
+        # prop dict is of the form {id_1: "value", id_2: None, ..., id_N: "value"}
+        return dict(list(db.session.execute(stmt)))
+
 
 class TimeseriesPropertyData(AuthMixin, Base):
     """Timeseries property data"""
