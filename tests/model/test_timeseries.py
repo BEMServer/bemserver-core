@@ -18,7 +18,7 @@ from bemserver_core.model import (
     TimeseriesByZone,
 )
 from bemserver_core.database import db
-from bemserver_core.authorization import CurrentUser
+from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.common import PropertyType
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
@@ -245,6 +245,41 @@ class TestTimeseriesModel:
 
         with pytest.raises(TimeseriesNotFoundError):
             Timeseries.get_many_by_name(campaign_1, [ts_1.name, ts_2.name, dummy_name])
+
+    @pytest.mark.usefixtures("as_admin")
+    def test_timeseries_get_property_for_many_timeseries(self, timeseries):
+        ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
+        timeseries_ids = [ts.id for ts in timeseries]
+
+        with OpenBar():
+            ts_p_1 = TimeseriesProperty.get(name="Min").first()
+            ts_p_2 = TimeseriesProperty.get(name="Max").first()
+            ts_1_p_1 = TimeseriesPropertyData(
+                timeseries_id=ts_1.id,
+                property_id=ts_p_1.id,
+                value="12",
+            )
+            ts_1_p_2 = TimeseriesPropertyData(
+                timeseries_id=ts_1.id,
+                property_id=ts_p_2.id,
+                value="42",
+            )
+            ts_2_p_2 = TimeseriesPropertyData(
+                timeseries_id=ts_2.id,
+                property_id=ts_p_2.id,
+                value="69",
+            )
+            db.session.add_all((ts_1_p_1, ts_1_p_2, ts_2_p_2))
+
+        assert Timeseries.get_property_for_many_timeseries(timeseries_ids, "Min") == {
+            1: "12",
+            2: None,
+        }
+        assert Timeseries.get_property_for_many_timeseries(timeseries_ids, "Max") == {
+            1: "42",
+            2: "69",
+        }
 
     @pytest.mark.usefixtures("as_admin")
     def test_timeseries_read_only_fields(self, campaigns, campaign_scopes):
