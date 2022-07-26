@@ -52,9 +52,14 @@ class TimeseriesCSVIO(BaseCSVIO):
                 campaign_id=campaign.id,
                 name=row.pop("Name"),
                 description=row.pop("Description"),
-                unit_symbol=row.pop("Unit"),
                 campaign_scope=cls._get_campaign_scope_by_name(campaign, cs_name),
             )
+
+            unit_symbol = row.pop("Unit")
+            if unit_symbol:
+                unit = cls._get_unit_by_symbol(unit_symbol)
+                timeseries.unit_id = unit.id
+
             try:
                 db.session.flush()
             except sqla.exc.DataError as exc:

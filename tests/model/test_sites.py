@@ -25,6 +25,7 @@ from bemserver_core.model import (
     TimeseriesByStorey,
     TimeseriesBySpace,
     TimeseriesByZone,
+    Unit,
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
@@ -133,6 +134,39 @@ class TestStructuralElementPropertyModel:
                 match="value_type cannot be modified",
             ):
                 db.session.commit()
+
+    def test_structural_element_property_unit_as_admin(
+        self,
+        users,
+        structural_element_properties,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        sep_1 = structural_element_properties[0]
+        assert sep_1.unit.symbol == "m²"
+
+        with CurrentUser(admin_user):
+            unit_1 = Unit.get_by_symbol("°C")
+            unit_2 = Unit.get_by_symbol("K")
+
+            sep = StructuralElementProperty(
+                name="Temperature",
+                value_type=PropertyType.float,
+                unit_id=unit_1.id,
+            )
+            db.session.add(sep)
+            db.session.commit()
+            assert sep.unit == unit_1
+            sep.unit_id = unit_2.id
+            db.session.add(sep)
+            db.session.commit()
+            assert sep.unit == unit_2
+            sep.unit_id = None
+            db.session.add(sep)
+            db.session.commit()
+            assert sep.unit_id is None
+            assert sep.unit is None
 
 
 class TestSitePropertyModel:

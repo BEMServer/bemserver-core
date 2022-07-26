@@ -26,11 +26,12 @@ def setup_db():
     """
     database.db.create_all(checkfirst=False)
     database.init_db_functions()
+    units = model.units.init_db_units()
     model.events.init_db_events_triggers()
     model.events.init_db_events()
     model.campaigns.init_db_campaigns_triggers()
     model.timeseries.init_db_timeseries_triggers()
-    model.timeseries.init_db_timeseries()
+    model.timeseries.init_db_timeseries(units)
     model.timeseries_data.init_db_timeseries_data()
     model.sites.init_db_structural_elements_triggers()
 

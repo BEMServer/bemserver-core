@@ -43,6 +43,7 @@ from .events import (  # noqa
     EventLevel,
     Event,
 )
+from .units import Unit  # noqa
 
 
 __all__ = [
@@ -84,6 +85,7 @@ __all__ = [
     "EventState",
     "EventLevel",
     "Event",
+    "Unit",
 ]
 
 
@@ -125,4 +127,5 @@ AUTH_MODEL_CLASSES = [
     EventState,
     EventLevel,
     Event,
+    Unit,
 ]

@@ -212,7 +212,7 @@ class TestTimeseriesCSVIO:
             )
 
     @pytest.mark.parametrize(
-        "unknown", ("campaign scope", "site", "building", "storey", "space")
+        "unknown", ("unit", "campaign scope", "site", "building", "storey", "space")
     )
     def test_timeseries_csv_io_import_csv_unknown_fk(
         self,
@@ -234,31 +234,33 @@ class TestTimeseriesCSVIO:
         storey_1 = storeys[0]
         space_1 = spaces[0]
 
-        row = "Space_1_Temp,Temperature,°C,"
+        row = "Space_1_Temp,Temperature,"
+        if unknown == "unit":
+            row += f"{DUMMY_NAME},{cs_1.name},{site_1.name},,,,"
         if unknown == "campaign scope":
             row += (
-                f"DUMMY_NAME,{site_1.name},{building_1.name},"
+                f"°C,{DUMMY_NAME},{site_1.name},{building_1.name},"
                 f"{storey_1.name},{space_1.name},,\n"
             )
         elif unknown == "site":
             row += (
-                f"{cs_1.name},DUMMY_NAME,{building_1.name},"
+                f"°C,{cs_1.name},{DUMMY_NAME},{building_1.name},"
                 f"{storey_1.name},{space_1.name},,\n"
             )
         elif unknown == "building":
             row += (
-                f"{cs_1.name},{site_1.name},DUMMY_NAME,"
-                "{storey_1.name},{space_1.name},,\n"
+                f"°C,{cs_1.name},{site_1.name},{DUMMY_NAME},"
+                f"{storey_1.name},{space_1.name},,\n"
             )
         elif unknown == "storey":
             row += (
-                f"{cs_1.name},{site_1.name},{building_1.name},"
-                f"DUMMY_NAME,{space_1.name},,\n"
+                f"°C,{cs_1.name},{site_1.name},{building_1.name},"
+                f"{DUMMY_NAME},{space_1.name},,\n"
             )
         else:
             row += (
-                f"{cs_1.name},{site_1.name},{building_1.name},"
-                f"{storey_1.name},DUMMY_NAME,,\n"
+                f"°C,{cs_1.name},{site_1.name},{building_1.name},"
+                f"{storey_1.name},{DUMMY_NAME},,\n"
             )
 
         timeseries_csv = (

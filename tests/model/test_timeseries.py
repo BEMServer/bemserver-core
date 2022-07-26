@@ -16,6 +16,7 @@ from bemserver_core.model import (
     TimeseriesByStorey,
     TimeseriesBySpace,
     TimeseriesByZone,
+    Unit,
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
@@ -81,6 +82,41 @@ class TestTimeseriesPropertyModel:
             ):
                 db.session.commit()
             db.session.rollback()
+
+    def test_timeseries_property_unit_as_admin(
+        self,
+        users,
+        timeseries_properties,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        tsp_1 = timeseries_properties[0]
+        assert tsp_1.unit is None
+        tsp_3 = timeseries_properties[2]
+        assert tsp_3.unit.symbol == "s"
+
+        with CurrentUser(admin_user):
+            unit_1 = Unit.get_by_symbol("°C")
+            unit_2 = Unit.get_by_symbol("K")
+
+            tsp = TimeseriesProperty(
+                name="Temperature",
+                value_type=PropertyType.float,
+                unit_id=unit_1.id,
+            )
+            db.session.add(tsp)
+            db.session.commit()
+            assert tsp.unit == unit_1
+            tsp.unit_id = unit_2.id
+            db.session.add(tsp)
+            db.session.commit()
+            assert tsp.unit == unit_2
+            tsp.unit_id = None
+            db.session.add(tsp)
+            db.session.commit()
+            assert tsp.unit_id is None
+            assert tsp.unit is None
 
 
 class TestTimeseriesDataStateModel:
@@ -579,6 +615,39 @@ class TestTimeseriesModel:
                 timeseries.update(name="Super timeseries 1")
             with pytest.raises(BEMServerAuthorizationError):
                 timeseries.delete()
+
+    def test_timeseries_unit_as_admin(self, users, campaigns, campaign_scopes):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        cs_1 = campaign_scopes[0]
+
+        with CurrentUser(admin_user):
+            unit_1 = Unit.get_by_symbol("°C")
+            unit_2 = Unit.get_by_symbol("kWh")
+
+            ts_1 = Timeseries.new(
+                name="Timeseries 1",
+                campaign_id=campaign_1.id,
+                campaign_scope_id=cs_1.id,
+                unit_id=unit_1.id,
+            )
+            db.session.add(ts_1)
+            db.session.commit()
+
+            ts = Timeseries.get_by_id(ts_1.id)
+            assert ts.id == ts_1.id
+            assert ts.name == ts_1.name
+            assert ts.unit_id == unit_1.id
+            assert ts.unit.symbol == unit_1.symbol
+            ts.update(unit_id=unit_2.id)
+            db.session.commit()
+            assert ts.unit_id == unit_2.id
+            assert ts.unit.symbol == unit_2.symbol
+            ts.update(unit_id=None)
+            db.session.commit()
+            assert ts.unit_id is None
+            assert ts.unit is None
 
 
 class TestTimeseriesPropertyDataModel:

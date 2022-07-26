@@ -11,6 +11,17 @@ class BaseIO:
     """Base class for IO classes"""
 
     @classmethod
+    def _get_unit_by_symbol(cls, unit_symbol):
+        # try:
+        #     return db.session.query(model.Unit).filter_by(symbol=unit_symbol)[0]
+        # except IndexError as exc:
+        #     raise BEMServerCoreIOError(f'Unknown unit: "{unit_symbol}"') from exc
+        unit = model.Unit.get_by_symbol(symbol=unit_symbol)
+        if unit is None:
+            raise BEMServerCoreIOError(f'Unknown unit: "{unit_symbol}"')
+        return unit
+
+    @classmethod
     def _get_campaign_scope_by_name(cls, campaign, campaign_scope_name):
         try:
             return db.session.query(model.CampaignScope).filter_by(

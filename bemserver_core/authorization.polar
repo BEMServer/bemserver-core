@@ -160,6 +160,14 @@ has_relation(ts: Timeseries, "timeseries", tsbds: TimeseriesByDataState) if
     ts = tsbds.timeseries;
 
 
+resource Unit{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
 resource EventCategory{
     permissions = ["create", "read", "update", "delete"];
     roles = ["user"];

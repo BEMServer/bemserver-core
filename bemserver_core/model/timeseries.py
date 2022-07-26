@@ -25,6 +25,26 @@ class TimeseriesProperty(AuthMixin, Base):
         default=PropertyType.string,
         nullable=False,
     )
+    unit_id = sqla.Column(sqla.ForeignKey("units.id"))
+
+    unit = sqla.orm.relationship(
+        "Unit",
+        backref=sqla.orm.backref("timeseries_properties"),
+    )
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "unit": Relation(
+                    kind="one",
+                    other_type="Unit",
+                    my_field="unit_id",
+                    other_field="id",
+                ),
+            },
+        )
 
 
 class TimeseriesDataState(AuthMixin, Base):
@@ -41,12 +61,13 @@ class Timeseries(AuthMixin, Base):
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
-    unit_symbol = sqla.Column(sqla.String(20))
+    unit_id = sqla.Column(sqla.ForeignKey("units.id"))
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
     campaign_scope_id = sqla.Column(
         sqla.ForeignKey("campaign_scopes.id"), nullable=False
     )
 
+    unit = sqla.orm.relationship("Unit", backref=sqla.orm.backref("timeseries"))
     campaign = sqla.orm.relationship(
         "Campaign", backref=sqla.orm.backref("timeseries", cascade="all, delete-orphan")
     )
@@ -60,6 +81,12 @@ class Timeseries(AuthMixin, Base):
         auth.register_class(
             cls,
             fields={
+                "unit": Relation(
+                    kind="one",
+                    other_type="Unit",
+                    my_field="unit_id",
+                    other_field="id",
+                ),
                 "campaign": Relation(
                     kind="one",
                     other_type="Campaign",
@@ -567,7 +594,7 @@ def init_db_timeseries_triggers():
     db.session.commit()
 
 
-def init_db_timeseries():
+def init_db_timeseries(units):
     """Create default timeseries data states
 
     This function is meant to be used for tests or dev setups after create_all.
@@ -587,8 +614,9 @@ def init_db_timeseries():
             ),
             TimeseriesProperty(
                 name="Interval",
-                description="Expected interval (s)",
+                description="Expected interval",
                 value_type=PropertyType.integer,
+                unit_id=units["s"].id,
             ),
             TimeseriesDataState(name="Raw"),
             TimeseriesDataState(name="Clean"),

@@ -18,6 +18,26 @@ class StructuralElementProperty(AuthMixin, Base):
         default=PropertyType.string,
         nullable=False,
     )
+    unit_id = sqla.Column(sqla.ForeignKey("units.id"))
+
+    unit = sqla.orm.relationship(
+        "Unit",
+        backref=sqla.orm.backref("structural_element_properties"),
+    )
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "unit": Relation(
+                    kind="one",
+                    other_type="Unit",
+                    my_field="unit_id",
+                    other_field="id",
+                ),
+            },
+        )
 
 
 class SiteProperty(AuthMixin, Base):

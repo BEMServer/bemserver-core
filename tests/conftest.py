@@ -299,10 +299,12 @@ def structural_element_properties(bemservercore):
         sep_1 = model.StructuralElementProperty.new(
             name="Area",
             value_type=PropertyType.integer,
+            unit_id=model.Unit.get_by_symbol("m²").id,
         )
         sep_2 = model.StructuralElementProperty.new(
             name="Volume",
             value_type=PropertyType.float,
+            unit_id=model.Unit.get_by_symbol("m³").id,
         )
         sep_3 = model.StructuralElementProperty.new(
             name="Window state",
