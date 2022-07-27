@@ -18,6 +18,10 @@ Assuming the user has database creation permission:::
 $ createdb bemserver
 $ psql -U $USER -d bemserver -c "CREATE EXTENSION IF NOT EXISTS timescaledb"
 
+Install prerequisites for psycopg2 compilation (assuming Debian system)::
+
+$ aptitude install python3-dev libpq-dev
+
 Install bemserver_core (typically in a virtual environment)::
 
 $ pip install bemserver_core
