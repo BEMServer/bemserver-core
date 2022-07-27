@@ -1,6 +1,6 @@
 """Authorization"""
+import functools
 from contextvars import ContextVar
-from contextlib import AbstractContextManager
 from pathlib import Path
 
 from oso import Oso, OsoError, Relation  # noqa, republishing
@@ -8,6 +8,7 @@ from polar.data.adapter.sqlalchemy_adapter import SqlAlchemyAdapter
 
 from bemserver_core.database import db
 from bemserver_core.exceptions import BEMServerAuthorizationError
+from bemserver_core.utils import make_context_var_manager
 
 
 CURRENT_USER = ContextVar("current_user", default=None)
@@ -18,35 +19,8 @@ AUTH_POLAR_FILES = [
 ]
 
 
-class CurrentUser(AbstractContextManager):
-    """Set current user for context"""
-
-    def __init__(self, user):
-        self._token = None
-        self._user = user
-
-    def __enter__(self):
-        self._token = CURRENT_USER.set(self._user)
-
-    def __exit__(self, *args, **kwargs):
-        CURRENT_USER.reset(self._token)
-
-
-class OpenBar(AbstractContextManager):
-    """Open bar mode
-
-    Used for tests or admin tasks.
-    "With great power comes great responsibility."
-    """
-
-    def __init__(self):
-        self._token = None
-
-    def __enter__(self):
-        self._token = OPEN_BAR.set(True)
-
-    def __exit__(self, *args, **kwargs):
-        OPEN_BAR.reset(self._token)
+CurrentUser = make_context_var_manager(CURRENT_USER)
+OpenBar = functools.partial(make_context_var_manager(OPEN_BAR), True)
 
 
 def get_current_user():
