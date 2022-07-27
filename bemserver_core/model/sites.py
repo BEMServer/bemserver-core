@@ -18,6 +18,7 @@ class StructuralElementProperty(AuthMixin, Base):
         default=PropertyType.string,
         nullable=False,
     )
+    unit_symbol = sqla.Column(sqla.String(20))
 
 
 class SiteProperty(AuthMixin, Base):
