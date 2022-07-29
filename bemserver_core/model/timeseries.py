@@ -588,8 +588,9 @@ def init_db_timeseries():
             ),
             TimeseriesProperty(
                 name="Interval",
-                description="Expected interval (s)",
+                description="Expected interval",
                 value_type=PropertyType.integer,
+                unit_symbol="s",
             ),
             TimeseriesDataState(name="Raw"),
             TimeseriesDataState(name="Clean"),
