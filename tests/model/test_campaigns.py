@@ -59,8 +59,12 @@ class TestCampaignModel:
             campaign_1 = Campaign.new(
                 name="Campaign 1",
             )
+            assert campaign_1.id is None
+            assert campaign_1.timezone is None
             db.session.add(campaign_1)
             db.session.commit()
+            assert campaign_1.id is not None
+            assert campaign_1.timezone == "UTC"
 
             campaign = Campaign.get_by_id(campaign_1.id)
             assert campaign.id == campaign_1.id
