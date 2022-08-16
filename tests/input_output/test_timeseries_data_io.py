@@ -1628,12 +1628,33 @@ class TestTimeseriesDataCSVIO:
 
             ts_l = (ts_0, ts_2, ts_4)
 
-            data = tsdcsvio.export_csv(start_dt, end_dt, ts_l, ds_1, col_label)
+            data = tsdcsvio.export_csv(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                col_label=col_label,
+            )
 
             assert data == header + (
                 "2020-01-01T00:00:00+0000,0.0,,10.0\n"
                 "2020-01-01T01:00:00+0000,1.0,,12.0\n"
                 "2020-01-01T02:00:00+0000,2.0,,\n"
+            )
+
+            data = tsdcsvio.export_csv(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                timezone="Europe/Paris",
+                col_label=col_label,
+            )
+
+            assert data == header + (
+                "2020-01-01T01:00:00+0100,0.0,,10.0\n"
+                "2020-01-01T02:00:00+0100,1.0,,12.0\n"
+                "2020-01-01T03:00:00+0100,2.0,,\n"
             )
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)

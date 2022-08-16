@@ -448,7 +448,16 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         cls.set_timeseries_data(data_df, data_state=data_state, campaign=campaign)
 
     @classmethod
-    def export_csv(cls, start_dt, end_dt, timeseries, data_state, col_label="id"):
+    def export_csv(
+        cls,
+        start_dt,
+        end_dt,
+        timeseries,
+        data_state,
+        *,
+        timezone="UTC",
+        col_label="id",
+    ):
         """Export timeseries data as CSV file
 
         See ``TimeseriesDataIO.get_timeseries_data``.
@@ -460,6 +469,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             end_dt,
             timeseries,
             data_state,
+            timezone=timezone,
             col_label=col_label,
         )
         data_df.index.name = "Datetime"
