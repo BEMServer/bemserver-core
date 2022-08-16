@@ -13,6 +13,7 @@ class Campaign(AuthMixin, Base):
     description = sqla.Column(sqla.String(500))
     start_time = sqla.Column(sqla.DateTime(timezone=True))
     end_time = sqla.Column(sqla.DateTime(timezone=True))
+    timezone = sqla.Column(sqla.String(40), nullable=False, default="UTC")
 
     @classmethod
     def register_class(cls):
