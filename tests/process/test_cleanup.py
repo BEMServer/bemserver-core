@@ -38,27 +38,27 @@ class TestCleanup:
             tsp_0_min = TimeseriesPropertyData(
                 timeseries_id=ts_0.id,
                 property_id=ts_p_min.id,
-                value=12,
+                value="12",
             )
             tsp_0_max = TimeseriesPropertyData(
                 timeseries_id=ts_0.id,
                 property_id=ts_p_max.id,
-                value=42,
+                value="42",
             )
             tsp_1_min = TimeseriesPropertyData(
                 timeseries_id=ts_1.id,
                 property_id=ts_p_min.id,
-                value=12,
+                value="12",
             )
             tsp_3_min = TimeseriesPropertyData(
                 timeseries_id=ts_3.id,
                 property_id=ts_p_min.id,
-                value=12,
+                value="12",
             )
             tsp_3_max = TimeseriesPropertyData(
                 timeseries_id=ts_3.id,
                 property_id=ts_p_max.id,
-                value=42,
+                value="42",
             )
             db.session.add_all((tsp_0_min, tsp_0_max, tsp_1_min, tsp_3_min, tsp_3_max))
 

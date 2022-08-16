@@ -185,17 +185,17 @@ class TestCompleteness:
             TimeseriesPropertyData.new(
                 timeseries_id=ts_0.id,
                 property_id=interval_prop.id,
-                value=600,
+                value="600",
             )
             TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=interval_prop.id,
-                value=600,
+                value="600",
             )
             TimeseriesPropertyData.new(
                 timeseries_id=ts_2.id,
                 property_id=interval_prop.id,
-                value=1200,
+                value="1200",
             )
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)

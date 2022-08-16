@@ -231,14 +231,14 @@ def timeseries_property_data(request, bemservercore, timeseries_properties, time
                 model.TimeseriesPropertyData(
                     timeseries_id=ts.id,
                     property_id=timeseries_properties[0].id,
-                    value=12,
+                    value="12",
                 )
             )
             tspd_l.append(
                 model.TimeseriesPropertyData(
                     timeseries_id=ts.id,
                     property_id=timeseries_properties[1].id,
-                    value=42,
+                    value="42",
                 )
             )
         db.session.add_all(tspd_l)
