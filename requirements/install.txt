@@ -6,18 +6,41 @@
 #
 alembic==1.8.1
     # via bemserver-core (setup.py)
+amqp==5.1.1
+    # via kombu
 argon2-cffi==21.3.0
     # via bemserver-core (setup.py)
 argon2-cffi-bindings==21.2.0
     # via argon2-cffi
+async-timeout==4.0.2
+    # via redis
+billiard==3.6.4.0
+    # via celery
+celery==5.2.7
+    # via bemserver-core (setup.py)
 cffi==1.15.1
     # via
     #   argon2-cffi-bindings
     #   oso
 click==8.1.3
-    # via bemserver-core (setup.py)
+    # via
+    #   bemserver-core (setup.py)
+    #   celery
+    #   click-didyoumean
+    #   click-plugins
+    #   click-repl
+click-didyoumean==0.3.0
+    # via celery
+click-plugins==1.1.1
+    # via celery
+click-repl==0.2.0
+    # via celery
+deprecated==1.2.13
+    # via redis
 greenlet==1.1.2
     # via sqlalchemy
+kombu==5.2.4
+    # via celery
 mako==1.2.1
     # via alembic
 markupsafe==2.1.1
@@ -26,21 +49,42 @@ numpy==1.23.2
     # via pandas
 oso==0.26.2
     # via bemserver-core (setup.py)
+packaging==21.3
+    # via redis
 pandas==1.4.3
     # via bemserver-core (setup.py)
 passlib==1.7.4
     # via bemserver-core (setup.py)
+prompt-toolkit==3.0.30
+    # via click-repl
 psycopg2==2.9.3
     # via bemserver-core (setup.py)
 pycparser==2.21
     # via cffi
+pyparsing==3.0.9
+    # via packaging
 python-dateutil==2.8.2
     # via pandas
 pytz==2022.2.1
-    # via pandas
+    # via
+    #   celery
+    #   pandas
+redis==4.3.4
+    # via bemserver-core (setup.py)
 six==1.16.0
-    # via python-dateutil
+    # via
+    #   click-repl
+    #   python-dateutil
 sqlalchemy==1.4.40
     # via
     #   alembic
     #   bemserver-core (setup.py)
+vine==5.0.0
+    # via
+    #   amqp
+    #   celery
+    #   kombu
+wcwidth==0.2.5
+    # via prompt-toolkit
+wrapt==1.14.1
+    # via deprecated

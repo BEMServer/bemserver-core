@@ -1,7 +1,7 @@
 """Authorization"""
+from pathlib import Path
 import functools
 from contextvars import ContextVar
-from pathlib import Path
 
 from oso import Oso, OsoError, Relation  # noqa, republishing
 from polar.data.adapter.sqlalchemy_adapter import SqlAlchemyAdapter
@@ -14,13 +14,11 @@ from bemserver_core.utils import make_context_var_manager
 CURRENT_USER = ContextVar("current_user", default=None)
 OPEN_BAR = ContextVar("open_bar", default=False)
 
-AUTH_POLAR_FILES = [
-    Path(__file__).parent / "authorization.polar",
-]
-
-
 CurrentUser = make_context_var_manager(CURRENT_USER)
 OpenBar = functools.partial(make_context_var_manager(OPEN_BAR), True)
+
+
+AUTH_POLAR_FILE = Path(__file__).parent / "authorization.polar"
 
 
 def get_current_user():
