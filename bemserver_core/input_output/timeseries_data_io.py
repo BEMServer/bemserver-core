@@ -91,7 +91,7 @@ class TimeseriesDataIO:
     """Base class for TimeseriesData IO classes"""
 
     @classmethod
-    def set_timeseries_data(cls, data_df, data_state, campaign):
+    def set_timeseries_data(cls, data_df, data_state, campaign=None):
         """Insert timeseries data
 
         :param DataFrame data_df: Input timeseries data
