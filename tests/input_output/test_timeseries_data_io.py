@@ -227,7 +227,7 @@ class TestTimeseriesDataIO:
                 start_dt, end_dt, ts_l, ds_1, col_label=col_label
             )
             index = pd.DatetimeIndex([], name="timestamp", tz="UTC")
-            expected_data_df = pd.DataFrame(
+            no_data_df = pd.DataFrame(
                 {
                     ts_0.name if col_label == "name" else ts_0.id: [],
                     ts_2.name if col_label == "name" else ts_2.id: [],
@@ -235,7 +235,7 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-            assert data_df.equals(expected_data_df)
+            assert data_df.equals(no_data_df)
 
         # Create data
         timestamps = pd.date_range(
@@ -274,6 +274,30 @@ class TestTimeseriesDataIO:
                 index=index,
             )
             assert data_df.equals(expected_data_df)
+
+            # Get with no start_date
+            data_df = tsdio.get_timeseries_data(
+                None, end_dt, ts_l, ds_1, col_label=col_label
+            )
+            assert data_df.equals(expected_data_df)
+
+            # Get with no end date
+            data_df = tsdio.get_timeseries_data(
+                start_dt, None, ts_l, ds_1, col_label=col_label
+            )
+            assert data_df.equals(expected_data_df)
+
+            # Get with no start/end date
+            data_df = tsdio.get_timeseries_data(
+                None, None, ts_l, ds_1, col_label=col_label
+            )
+            assert data_df.equals(expected_data_df)
+
+            # Get outside data range: no data
+            data_df = tsdio.get_timeseries_data(
+                end_dt, None, ts_l, ds_1, col_label=col_label
+            )
+            assert data_df.equals(no_data_df)
 
             # Get with TZ
             data_df = tsdio.get_timeseries_data(
@@ -1631,6 +1655,20 @@ class TestTimeseriesDataCSVIO:
             data = tsdcsvio.export_csv(
                 start_dt,
                 end_dt,
+                ts_l,
+                ds_1,
+                col_label=col_label,
+            )
+
+            assert data == header + (
+                "2020-01-01T00:00:00+0000,0.0,,10.0\n"
+                "2020-01-01T01:00:00+0000,1.0,,12.0\n"
+                "2020-01-01T02:00:00+0000,2.0,,\n"
+            )
+
+            data = tsdcsvio.export_csv(
+                None,
+                None,
                 ts_l,
                 ds_1,
                 col_label=col_label,
