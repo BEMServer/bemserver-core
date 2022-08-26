@@ -162,7 +162,7 @@ class TimeseriesDataIO:
             auth.authorize(get_current_user(), "read_data", ts)
 
         # Get timeseries data
-        data = db.session.execute(
+        stmt = (
             sqla.select(
                 TimeseriesData.timestamp,
                 Timeseries.id,
@@ -175,9 +175,12 @@ class TimeseriesDataIO:
             .filter(TimeseriesByDataState.data_state_id == data_state.id)
             .filter(TimeseriesByDataState.timeseries_id == Timeseries.id)
             .filter(Timeseries.id.in_(ts.id for ts in timeseries))
-            .filter(start_dt <= TimeseriesData.timestamp)
-            .filter(TimeseriesData.timestamp < end_dt)
-        ).all()
+        )
+        if start_dt:
+            stmt = stmt.filter(start_dt <= TimeseriesData.timestamp)
+        if end_dt:
+            stmt = stmt.filter(TimeseriesData.timestamp < end_dt)
+        data = db.session.execute(stmt).all()
 
         data_df = pd.DataFrame(
             data, columns=("timestamp", "id", "name", "value")
