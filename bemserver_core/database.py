@@ -170,6 +170,8 @@ class DBConnection:
             future=True,
         )
         SESSION_FACTORY.configure(bind=self.engine)
+        # Remove any existing session from registry
+        DB_SESSION.remove()
 
     @property
     def session(self):
