@@ -13,6 +13,8 @@ def cleanup(
     end_dt,
     timeseries,
     data_state,
+    *,
+    inclusive="left",
 ):
     """Cleanup process
 
@@ -27,6 +29,7 @@ def cleanup(
         end_dt,
         timeseries,
         data_state,
+        inclusive=inclusive,
     )
 
     # Get min/max properties values for each TS

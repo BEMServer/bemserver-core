@@ -17,9 +17,9 @@ from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.process.cleanup import cleanup
 
 
-class TestCleanup:
+class TestCleanupProcess:
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
-    def test_cleanup(self, users, timeseries):
+    def test_cleanup_process(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin
         # Min/Max
@@ -64,21 +64,21 @@ class TestCleanup:
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc)
-        timestamps = pd.date_range(start_dt, end_dt, inclusive="left", freq="6H")
-        values = [0, 13, 33, 69]
+        timestamps = pd.date_range(start_dt, end_dt, inclusive="both", freq="6H")
+        values = [0, 13, 33, 42, 69]
         create_timeseries_data(ts_0, ds_1, timestamps, values)
         create_timeseries_data(ts_1, ds_1, timestamps, values)
         create_timeseries_data(ts_2, ds_1, timestamps, values)
 
         with CurrentUser(admin_user):
             ts_l = (ts_0, ts_1, ts_2, ts_3)
-            ret = cleanup(start_dt, end_dt, ts_l, ds_1)
+            ret = cleanup(start_dt, end_dt, ts_l, ds_1, inclusive="both")
             expected = pd.DataFrame(
                 {
-                    ts_0.id: [np.nan, 13, 33, np.nan],
-                    ts_1.id: [np.nan, 13, 33, 69],
-                    ts_2.id: [0, 13, 33, 69],
-                    ts_3.id: [np.nan, np.nan, np.nan, np.nan],
+                    ts_0.id: [np.nan, 13, 33, 42, np.nan],
+                    ts_1.id: [np.nan, 13, 33, 42, 69],
+                    ts_2.id: [0, 13, 33, 42, 69],
+                    ts_3.id: [np.nan, np.nan, np.nan, np.nan, np.nan],
                 },
                 index=pd.DatetimeIndex(timestamps, name="timestamp"),
                 dtype=float,
