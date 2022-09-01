@@ -143,7 +143,15 @@ class TimeseriesDataIO:
 
     @classmethod
     def get_timeseries_data(
-        cls, start_dt, end_dt, timeseries, data_state, *, timezone="UTC", col_label="id"
+        cls,
+        start_dt,
+        end_dt,
+        timeseries,
+        data_state,
+        *,
+        timezone="UTC",
+        inclusive="left",
+        col_label="id",
     ):
         """Export timeseries data
 
@@ -152,6 +160,8 @@ class TimeseriesDataIO:
         :param list timeseries: List of timeseries
         :param TimeseriesDataState data_state: Timeseries data state
         :param str timezone: IANA timezone
+        :param str inclusive: Whether to set each bound as closed or open.
+            Must be "both", "neither", "left" or "right". Default: "left".
         :param string col_label: Timeseries attribute to use for column header.
             Should be "id" or "name". Default: "id".
 
@@ -177,9 +187,15 @@ class TimeseriesDataIO:
             .filter(Timeseries.id.in_(ts.id for ts in timeseries))
         )
         if start_dt:
-            stmt = stmt.filter(start_dt <= TimeseriesData.timestamp)
+            if inclusive in {"both", "left"}:
+                stmt = stmt.filter(start_dt <= TimeseriesData.timestamp)
+            else:
+                stmt = stmt.filter(start_dt < TimeseriesData.timestamp)
         if end_dt:
-            stmt = stmt.filter(TimeseriesData.timestamp < end_dt)
+            if inclusive in {"both", "right"}:
+                stmt = stmt.filter(TimeseriesData.timestamp <= end_dt)
+            else:
+                stmt = stmt.filter(TimeseriesData.timestamp < end_dt)
         data = db.session.execute(stmt).all()
 
         data_df = pd.DataFrame(
