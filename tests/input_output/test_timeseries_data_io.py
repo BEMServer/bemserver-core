@@ -204,9 +204,10 @@ class TestTimeseriesDataIO:
                 tsdio.set_timeseries_data(data_df, ds_1, campaign)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
-    @pytest.mark.parametrize("col_label", ("id", "name"))
     def test_timeseries_data_io_get_timeseries_data_as_admin(
-        self, users, timeseries, col_label
+        self,
+        users,
+        timeseries,
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -218,21 +219,19 @@ class TestTimeseriesDataIO:
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        h1_dt = start_dt + dt.timedelta(hours=1)
+        h2_dt = start_dt + dt.timedelta(hours=2)
         end_dt = start_dt + dt.timedelta(hours=3)
 
-        # No data
+        # No data (by col name)
         with CurrentUser(admin_user):
             ts_l = (ts_0, ts_2, ts_4)
             data_df = tsdio.get_timeseries_data(
-                start_dt, end_dt, ts_l, ds_1, col_label=col_label
+                start_dt, end_dt, ts_l, ds_1, col_label="name"
             )
             index = pd.DatetimeIndex([], name="timestamp", tz="UTC")
             no_data_df = pd.DataFrame(
-                {
-                    ts_0.name if col_label == "name" else ts_0.id: [],
-                    ts_2.name if col_label == "name" else ts_2.id: [],
-                    ts_4.name if col_label == "name" else ts_4.id: [],
-                },
+                {ts_0.name: [], ts_2.name: [], ts_4.name: []},
                 index=index,
             )
             assert data_df.equals(no_data_df)
@@ -250,9 +249,7 @@ class TestTimeseriesDataIO:
 
             ts_l = (ts_0, ts_2, ts_4)
 
-            data_df = tsdio.get_timeseries_data(
-                start_dt, end_dt, ts_l, ds_1, col_label=col_label
-            )
+            data_df = tsdio.get_timeseries_data(start_dt, end_dt, ts_l, ds_1)
             index = pd.DatetimeIndex(
                 [
                     "2020-01-01T00:00:00+00:00",
@@ -266,36 +263,26 @@ class TestTimeseriesDataIO:
             val_2 = [np.nan, np.nan, np.nan]
             val_4 = [10.0, 12.0, np.nan]
             expected_data_df = pd.DataFrame(
-                {
-                    ts_0.name if col_label == "name" else ts_0.id: val_0,
-                    ts_2.name if col_label == "name" else ts_2.id: val_2,
-                    ts_4.name if col_label == "name" else ts_4.id: val_4,
-                },
+                {ts_0.id: val_0, ts_2.id: val_2, ts_4.id: val_4},
                 index=index,
             )
             assert data_df.equals(expected_data_df)
 
             # Get with no start_date
-            data_df = tsdio.get_timeseries_data(
-                None, end_dt, ts_l, ds_1, col_label=col_label
-            )
+            data_df = tsdio.get_timeseries_data(None, end_dt, ts_l, ds_1)
             assert data_df.equals(expected_data_df)
 
             # Get with no end date
-            data_df = tsdio.get_timeseries_data(
-                start_dt, None, ts_l, ds_1, col_label=col_label
-            )
+            data_df = tsdio.get_timeseries_data(start_dt, None, ts_l, ds_1)
             assert data_df.equals(expected_data_df)
 
             # Get with no start/end date
-            data_df = tsdio.get_timeseries_data(
-                None, None, ts_l, ds_1, col_label=col_label
-            )
+            data_df = tsdio.get_timeseries_data(None, None, ts_l, ds_1)
             assert data_df.equals(expected_data_df)
 
             # Get outside data range: no data
             data_df = tsdio.get_timeseries_data(
-                end_dt, None, ts_l, ds_1, col_label=col_label
+                end_dt, None, ts_l, ds_1, col_label="name"
             )
             assert data_df.equals(no_data_df)
 
@@ -306,7 +293,6 @@ class TestTimeseriesDataIO:
                 ts_l,
                 ds_1,
                 timezone="Europe/Paris",
-                col_label=col_label,
             )
             expected_data_df.index = pd.DatetimeIndex(
                 [
@@ -318,6 +304,42 @@ class TestTimeseriesDataIO:
                 tz="Europe/Paris",
             )
             assert data_df.equals(expected_data_df)
+
+            # Test inclusive
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T01:00:00+00:00",
+                    "2020-01-01T02:00:00+00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            val_0 = [1.0, 2.0]
+            val_2 = [np.nan, np.nan]
+            val_4 = [12.0, np.nan]
+            expected_data_df = pd.DataFrame(
+                {ts_0.id: val_0, ts_2.id: val_2, ts_4.id: val_4},
+                index=index,
+            )
+            data_df = tsdio.get_timeseries_data(
+                h1_dt, h2_dt, ts_l, ds_1, inclusive="both"
+            )
+            assert data_df.equals(expected_data_df)
+            data_df = tsdio.get_timeseries_data(
+                h1_dt, h2_dt, ts_l, ds_1, inclusive="neither"
+            )
+            mask = (expected_data_df.index > h1_dt) & (expected_data_df.index < h2_dt)
+            assert data_df.equals(expected_data_df.loc[mask])
+            data_df = tsdio.get_timeseries_data(
+                h1_dt, h2_dt, ts_l, ds_1, inclusive="left"
+            )
+            mask = (expected_data_df.index >= h1_dt) & (expected_data_df.index < h2_dt)
+            assert data_df.equals(expected_data_df.loc[mask])
+            data_df = tsdio.get_timeseries_data(
+                h1_dt, h2_dt, ts_l, ds_1, inclusive="right"
+            )
+            mask = (expected_data_df.index > h1_dt) & (expected_data_df.index <= h2_dt)
+            assert data_df.equals(expected_data_df.loc[mask])
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.usefixtures("users_by_user_groups")
