@@ -5,12 +5,12 @@ Manages scheduled and asynchronous tasks
 import os
 from functools import wraps
 
-from celery import Celery, Task
+from celery import Celery, Task, signals
 from celery.utils.log import get_task_logger
+from celery.exceptions import WorkerShutdown
 
 from bemserver_core.database import db
 from bemserver_core.authorization import OpenBar
-from bemserver_core.exceptions import BEMServerCoreError
 
 
 logger = get_task_logger(__name__)
@@ -40,24 +40,10 @@ def open_bar_wrap(func):
 class BEMServerCoreTask(Task):
     """Celery Task override
 
-    - Setup BEMServerCore on init
     - Wrap tasks in OpenBar context
     """
 
     def __init__(self):
-
-        # Setup BEMServerCore (avoid circular import)
-        from bemserver_core import BEMServerCore
-
-        db_url = os.getenv("SQLALCHEMY_DATABASE_URI")
-        if db_url is None:
-            raise BEMServerCoreError(
-                "SQLALCHEMY_DATABASE_URI environment variable not set"
-            )
-        db.set_db_url(db_url)
-        bsc = BEMServerCore()
-        bsc.init_auth()
-
         # This seems to be the recommended way to wrap a task run method
         # https://github.com/celery/celery/issues/1282
         self.run = open_bar_wrap(self.run)
@@ -66,31 +52,26 @@ class BEMServerCoreTask(Task):
 class BEMServerCoreCelery(Celery):
     """Celery app class override
 
-    - Lazy registration of periodic tasks
+    In case we need to override someday so we don't have to fix imports everywhere
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._periodic_tasks = []
-        self.on_after_configure.connect(self.on_after_configure_cb)
 
-    def lazy_add_periodic_task(self, *args, **kwargs):
-        """Register periodic task to be added when Celery is configured
+@signals.worker_process_init.connect
+def worker_process_init_cb(**kwargs):
+    """Callback executed at worker init
 
-        Same arguments as Celery.add_periodic_task.
-        """
-        if self.configured:
-            self.add_periodic_task(*args, **kwargs)
-        else:
-            self._periodic_tasks.append((args, kwargs))
+    - Setup BEMServerCore
+    """
+    # Setup BEMServerCore (avoid circular import)
+    from bemserver_core import BEMServerCore
 
-    def on_after_configure_cb(self, *args, **kwargs):
-        """Callback called when Celery is configured.
-
-        - Add periodic tasks
-        """
-        for args, kwargs in self._periodic_tasks:
-            self.add_periodic_task(*args, **kwargs)
+    db_url = os.getenv("SQLALCHEMY_DATABASE_URI")
+    if db_url is None:
+        logger.critical("SQLALCHEMY_DATABASE_URI environment variable not set")
+        raise WorkerShutdown()
+    db.set_db_url(db_url)
+    bsc = BEMServerCore()
+    bsc.init_auth()
 
 
 celery = BEMServerCoreCelery("BEMServer Core", task_cls=BEMServerCoreTask)
