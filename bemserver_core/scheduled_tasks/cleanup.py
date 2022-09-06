@@ -149,4 +149,4 @@ def cleanup_scheduled_task():
                 db.session.commit()
 
 
-celery.add_periodic_task(5, cleanup_scheduled_task)
+celery.add_periodic_task(300, cleanup_scheduled_task)
