@@ -78,6 +78,17 @@ class ST_CleanupByTimeseries(AuthMixin, Base):
             },
         )
 
+    @classmethod
+    def get(cls, *, campaign_id=None, **kwargs):
+        query = super().get(**kwargs)
+        # Filter by campaign
+        if campaign_id is not None:
+            st_cbc = sqla.orm.aliased(ST_CleanupByCampaign)
+            query = query.join(
+                st_cbc, cls.st_cleanup_by_campaign_id == st_cbc.id
+            ).filter(st_cbc.campaign_id == campaign_id)
+        return query
+
 
 @celery.task(name="Cleanup")
 def cleanup_scheduled_task():

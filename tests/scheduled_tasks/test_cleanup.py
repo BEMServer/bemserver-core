@@ -97,6 +97,19 @@ class TestST_CleanupByTimeseriesModel:
             db.session.commit()
             assert len(list(ST_CleanupByTimeseries.get())) == 1
 
+    def test_st_cleanup_by_timeseries_filters_as_admin(
+        self, users, campaigns, st_cleanups_by_timeseries
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        st_cbt_1 = st_cleanups_by_timeseries[0]
+
+        with CurrentUser(admin_user):
+            st_cbt_l = list(ST_CleanupByTimeseries.get(campaign_id=campaign_1.id))
+            assert len(st_cbt_l) == 1
+            assert st_cbt_l[0] == st_cbt_1
+
     def test_st_cleanup_by_timeseries_authorizations_as_admin(
         self, users, timeseries, st_cleanups_by_campaigns
     ):
