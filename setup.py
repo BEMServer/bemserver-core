@@ -38,6 +38,8 @@ setup(
         "oso>=0.26.0,<0.27",
         "alembic>=1.8.0",
         "click>=8.1.3",
+        "celery>=5.2.0",
+        "redis>=4.3.4",
     ],
     packages=find_packages(exclude=["tests*"]),
     include_package_data=True,

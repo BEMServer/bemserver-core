@@ -1,4 +1,6 @@
 """Model"""
+from pathlib import Path
+
 from .users import User, UserGroup, UserByUserGroup
 from .campaigns import (
     Campaign,
@@ -126,3 +128,6 @@ AUTH_MODEL_CLASSES = [
     EventLevel,
     Event,
 ]
+
+
+AUTH_POLAR_FILE = Path(__file__).parent / "authorization.polar"
