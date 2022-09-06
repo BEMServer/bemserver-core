@@ -68,19 +68,21 @@ class TestST_CleanupByCampaignModel:
         user_1 = users[1]
         assert not user_1.is_admin
         campaign_2 = campaigns[1]
+        st_cbc_1 = st_cleanups_by_campaigns[0]
         st_cbc_2 = st_cleanups_by_campaigns[1]
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
                 ST_CleanupByCampaign.new(campaign_id=campaign_2.id, enabled=True)
             with pytest.raises(BEMServerAuthorizationError):
-                ST_CleanupByCampaign.get_by_id(st_cbc_2.id)
+                ST_CleanupByCampaign.get_by_id(st_cbc_1.id)
+            ST_CleanupByCampaign.get_by_id(st_cbc_2.id)
             stcs = list(ST_CleanupByCampaign.get())
-            assert stcs == []
+            assert stcs == [st_cbc_2]
             with pytest.raises(BEMServerAuthorizationError):
-                st_cbc_2.update(enabled=False)
+                st_cbc_1.update(enabled=False)
             with pytest.raises(BEMServerAuthorizationError):
-                st_cbc_2.delete()
+                st_cbc_1.delete()
 
 
 class TestST_CleanupByTimeseriesModel:
@@ -121,6 +123,7 @@ class TestST_CleanupByTimeseriesModel:
 
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
     def test_st_cleanup_by_timeseries_authorizations_as_user(
         self, users, timeseries, st_cleanups_by_campaigns, st_cleanups_by_timeseries
     ):
@@ -128,6 +131,7 @@ class TestST_CleanupByTimeseriesModel:
         assert not user_1.is_admin
         ts_2 = timeseries[1]
         st_cbc_2 = st_cleanups_by_campaigns[1]
+        st_cbt_1 = st_cleanups_by_timeseries[0]
         st_cbt_2 = st_cleanups_by_timeseries[1]
 
         with CurrentUser(user_1):
@@ -137,9 +141,10 @@ class TestST_CleanupByTimeseriesModel:
                     timeseries_id=ts_2.id,
                 )
             with pytest.raises(BEMServerAuthorizationError):
-                ST_CleanupByTimeseries.get_by_id(st_cbt_2.id)
+                ST_CleanupByTimeseries.get_by_id(st_cbt_1.id)
+            assert st_cbt_2 == ST_CleanupByTimeseries.get_by_id(st_cbt_2.id)
             stcs = list(ST_CleanupByTimeseries.get())
-            assert stcs == []
+            assert stcs == [st_cbt_2]
             with pytest.raises(BEMServerAuthorizationError):
                 st_cbt_2.update(last_timestamp=dt.datetime.now(tz=dt.timezone.utc))
             with pytest.raises(BEMServerAuthorizationError):

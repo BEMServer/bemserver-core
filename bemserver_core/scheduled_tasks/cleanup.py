@@ -4,7 +4,7 @@ import sqlalchemy as sqla
 from bemserver_core.model import TimeseriesDataState
 from bemserver_core.input_output import tsdio
 from bemserver_core.database import Base, db
-from bemserver_core.authorization import AuthMixin
+from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.process.cleanup import cleanup as cleanup_process
 from bemserver_core.celery import celery, logger
 
@@ -23,6 +23,20 @@ class ST_CleanupByCampaign(AuthMixin, Base):
             "processors_by_campaigns", cascade="all, delete-orphan"
         ),
     )
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "campaign": Relation(
+                    kind="one",
+                    other_type="Campaign",
+                    my_field="campaign_id",
+                    other_field="id",
+                ),
+            },
+        )
 
 
 class ST_CleanupByTimeseries(AuthMixin, Base):
@@ -49,6 +63,20 @@ class ST_CleanupByTimeseries(AuthMixin, Base):
             "st_cleanups_by_timeseries", cascade="all, delete-orphan"
         ),
     )
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "timeseries": Relation(
+                    kind="one",
+                    other_type="Timeseries",
+                    my_field="timeseries_id",
+                    other_field="id",
+                ),
+            },
+        )
 
 
 @celery.task(name="Cleanup")
