@@ -1,7 +1,7 @@
 """Cleanup scheduled task"""
 import sqlalchemy as sqla
 
-from bemserver_core.model import TimeseriesDataState
+from bemserver_core.model import Timeseries, TimeseriesDataState
 from bemserver_core.input_output import tsdio
 from bemserver_core.database import Base, db
 from bemserver_core.authorization import AuthMixin, auth, Relation
@@ -43,20 +43,11 @@ class ST_CleanupByTimeseries(AuthMixin, Base):
     __tablename__ = "st_cleanups_by_timeseries"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    st_cleanup_by_campaign_id = sqla.Column(
-        sqla.ForeignKey("st_cleanups_by_campaigns.id"), nullable=False
-    )
     timeseries_id = sqla.Column(
         sqla.ForeignKey("timeseries.id"), unique=True, nullable=False
     )
     last_timestamp = sqla.Column(sqla.DateTime(timezone=True))
 
-    st_cleanup_by_campaign = sqla.orm.relationship(
-        "ST_CleanupByCampaign",
-        backref=sqla.orm.backref(
-            "st_cleanups_by_timeseries", cascade="all, delete-orphan"
-        ),
-    )
     timeseries = sqla.orm.relationship(
         "Timeseries",
         backref=sqla.orm.backref(
@@ -83,10 +74,10 @@ class ST_CleanupByTimeseries(AuthMixin, Base):
         query = super().get(**kwargs)
         # Filter by campaign
         if campaign_id is not None:
-            st_cbc = sqla.orm.aliased(ST_CleanupByCampaign)
-            query = query.join(
-                st_cbc, cls.st_cleanup_by_campaign_id == st_cbc.id
-            ).filter(st_cbc.campaign_id == campaign_id)
+            timeseries = sqla.orm.aliased(Timeseries)
+            query = query.join(timeseries, cls.timeseries_id == timeseries.id).filter(
+                timeseries.campaign_id == campaign_id
+            )
         return query
 
 
@@ -116,14 +107,9 @@ def cleanup_scheduled_task():
 
                 logger.debug("Cleaning data for timeseries %s", ts.name)
 
-                cbt = ST_CleanupByTimeseries.get(
-                    st_cleanup_by_campaign_id=cbc.id
-                ).first()
+                cbt = ST_CleanupByTimeseries.get(timeseries_id=ts.id).first()
                 if cbt is None:
-                    cbt = ST_CleanupByTimeseries.new(
-                        st_cleanup_by_campaign_id=cbc.id,
-                        timeseries_id=ts.id,
-                    )
+                    cbt = ST_CleanupByTimeseries.new(timeseries_id=ts.id)
                 last_timestamp = cbt.last_timestamp if cbt else None
 
                 data_df = cleanup_process(
