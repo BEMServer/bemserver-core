@@ -699,14 +699,8 @@ def zone_property_data(bemservercore, zones, zone_properties):
 @pytest.fixture
 def st_cleanups_by_campaigns(bemservercore, campaigns):
     with OpenBar():
-        st_cbc_1 = scheduled_tasks.ST_CleanupByCampaign.new(
-            campaign_id=campaigns[0].id,
-            enabled=True,
-        )
-        st_cbc_2 = scheduled_tasks.ST_CleanupByCampaign.new(
-            campaign_id=campaigns[1].id,
-            enabled=True,
-        )
+        st_cbc_1 = scheduled_tasks.ST_CleanupByCampaign.new(campaign_id=campaigns[0].id)
+        st_cbc_2 = scheduled_tasks.ST_CleanupByCampaign.new(campaign_id=campaigns[1].id)
         db.session.commit()
     return (st_cbc_1, st_cbc_2)
 

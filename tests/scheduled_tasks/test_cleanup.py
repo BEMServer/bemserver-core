@@ -39,9 +39,10 @@ class TestST_CleanupByCampaignModel:
         admin_user = users[0]
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
 
         with CurrentUser(admin_user):
-            st_cbc_1 = ST_CleanupByCampaign.new(campaign_id=campaign_1.id, enabled=True)
+            st_cbc_1 = ST_CleanupByCampaign.new(campaign_id=campaign_1.id)
             db.session.add(st_cbc_1)
             db.session.commit()
             st_cbc = ST_CleanupByCampaign.get_by_id(st_cbc_1.id)
@@ -49,7 +50,7 @@ class TestST_CleanupByCampaignModel:
             st_cbcs_ = list(ST_CleanupByCampaign.get())
             assert len(st_cbcs_) == 1
             assert st_cbcs_[0].id == st_cbc_1.id
-            st_cbc.update(enabled=False)
+            st_cbc.update(campaign_id=campaign_2.id)
             st_cbc.delete()
             db.session.commit()
 
@@ -60,20 +61,21 @@ class TestST_CleanupByCampaignModel:
     ):
         user_1 = users[1]
         assert not user_1.is_admin
+        campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
         st_cbc_1 = st_cleanups_by_campaigns[0]
         st_cbc_2 = st_cleanups_by_campaigns[1]
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
-                ST_CleanupByCampaign.new(campaign_id=campaign_2.id, enabled=True)
+                ST_CleanupByCampaign.new(campaign_id=campaign_2.id)
             with pytest.raises(BEMServerAuthorizationError):
                 ST_CleanupByCampaign.get_by_id(st_cbc_1.id)
             ST_CleanupByCampaign.get_by_id(st_cbc_2.id)
             stcs = list(ST_CleanupByCampaign.get())
             assert stcs == [st_cbc_2]
             with pytest.raises(BEMServerAuthorizationError):
-                st_cbc_1.update(enabled=False)
+                st_cbc_1.update(campaign_id=campaign_1.id)
             with pytest.raises(BEMServerAuthorizationError):
                 st_cbc_1.delete()
 
@@ -107,6 +109,7 @@ class TestST_CleanupByTimeseriesModel:
         admin_user = users[0]
         assert admin_user.is_admin
         ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
 
         with CurrentUser(admin_user):
             st_cbt_1 = ST_CleanupByTimeseries.new(timeseries_id=ts_1.id)
@@ -117,7 +120,7 @@ class TestST_CleanupByTimeseriesModel:
             st_cbts_ = list(ST_CleanupByTimeseries.get())
             assert len(st_cbts_) == 1
             assert st_cbts_[0].id == st_cbt_1.id
-            st_cbt.update(enabled=False)
+            st_cbt.update(timeseries_id=ts_2.id)
             st_cbt.delete()
             db.session.commit()
 
@@ -149,24 +152,24 @@ class TestST_CleanupByTimeseriesModel:
 
 class TestCleanupScheduledTask:
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
-    def test_cleanup_scheduled_task(self, users, timeseries, st_cleanups_by_campaigns):
+    def test_cleanup_scheduled_task(self, users, timeseries, campaigns):
         admin_user = users[0]
         assert admin_user.is_admin
         ts_0 = timeseries[0]
         ts_1 = timeseries[1]
-        st_cbc_2 = st_cleanups_by_campaigns[1]
+        campaign_1 = campaigns[0]
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
             ds_2 = TimeseriesDataState.get(name="Clean").first()
             ts_p_min = TimeseriesProperty.get(name="Min").first()
-            tsp_0_min = TimeseriesPropertyData(
+            TimeseriesPropertyData.new(
                 timeseries_id=ts_0.id,
                 property_id=ts_p_min.id,
                 value="12",
             )
-            st_cbc_2.enabled = False
-            db.session.add(tsp_0_min)
+            ST_CleanupByCampaign.new(campaign_id=campaign_1.id)
+            db.session.flush()
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc)

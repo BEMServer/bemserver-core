@@ -16,7 +16,6 @@ class ST_CleanupByCampaign(AuthMixin, Base):
     campaign_id = sqla.Column(
         sqla.ForeignKey("campaigns.id"), unique=True, nullable=False
     )
-    enabled = sqla.Column(sqla.Boolean(), nullable=False)
     campaign = sqla.orm.relationship(
         "Campaign",
         backref=sqla.orm.backref(
@@ -85,54 +84,46 @@ class ST_CleanupByTimeseries(AuthMixin, Base):
 def cleanup_scheduled_task():
     logger.info("Start")
 
+    ds_raw = TimeseriesDataState.get(name="Raw").first()
+    ds_clean = TimeseriesDataState.get(name="Clean").first()
+
+    logger.debug("Cleaning data")
+
     for cbc in ST_CleanupByCampaign.get():
         campaign = cbc.campaign
 
-        logger.debug(
-            "Campaign %s: %s",
-            campaign.name,
-            "enabled" if cbc.enabled else "disabled",
-        )
+        logger.info("Cleanup campaign %s", campaign.name)
 
-        if cbc.enabled:
+        for ts in campaign.timeseries:
 
-            logger.info("Cleanup campaign %s", campaign.name)
+            logger.debug("Cleaning data for timeseries %s", ts.name)
 
-            ds_raw = TimeseriesDataState.get(name="Raw").first()
-            ds_clean = TimeseriesDataState.get(name="Clean").first()
+            cbt = ST_CleanupByTimeseries.get(timeseries_id=ts.id).first()
+            if cbt is None:
+                cbt = ST_CleanupByTimeseries.new(timeseries_id=ts.id)
+            last_timestamp = cbt.last_timestamp if cbt else None
 
-            logger.debug("Cleaning data")
+            data_df = cleanup_process(
+                last_timestamp,
+                None,
+                [ts],
+                ds_raw,
+                inclusive="neither",
+            )
 
-            for ts in campaign.timeseries:
+            if data_df.empty:
+                logger.debug("No data since last run")
+                continue
 
-                logger.debug("Cleaning data for timeseries %s", ts.name)
+            logger.debug("Writing clean data")
+            tsdio.set_timeseries_data(data_df, ds_clean)
 
-                cbt = ST_CleanupByTimeseries.get(timeseries_id=ts.id).first()
-                if cbt is None:
-                    cbt = ST_CleanupByTimeseries.new(timeseries_id=ts.id)
-                last_timestamp = cbt.last_timestamp if cbt else None
+            last_timestamp = data_df.index[-1]
+            logger.debug("Updating last timestamp: %s", last_timestamp)
+            cbt.last_timestamp = last_timestamp
 
-                data_df = cleanup_process(
-                    last_timestamp,
-                    None,
-                    [ts],
-                    ds_raw,
-                    inclusive="neither",
-                )
-
-                if data_df.empty:
-                    logger.debug("No data since last run")
-                    continue
-
-                logger.debug("Writing clean data")
-                tsdio.set_timeseries_data(data_df, ds_clean)
-
-                last_timestamp = data_df.index[-1]
-                logger.debug("Updating last timestamp: %s", last_timestamp)
-                cbt.last_timestamp = last_timestamp
-
-                logger.debug("Committing")
-                db.session.commit()
+            logger.debug("Committing")
+            db.session.commit()
 
 
 celery.add_periodic_task(300, cleanup_scheduled_task)
