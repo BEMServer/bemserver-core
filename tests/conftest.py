@@ -699,27 +699,19 @@ def zone_property_data(bemservercore, zones, zone_properties):
 @pytest.fixture
 def st_cleanups_by_campaigns(bemservercore, campaigns):
     with OpenBar():
-        st_cbc_1 = scheduled_tasks.ST_CleanupByCampaign.new(
-            campaign_id=campaigns[0].id,
-            enabled=True,
-        )
-        st_cbc_2 = scheduled_tasks.ST_CleanupByCampaign.new(
-            campaign_id=campaigns[1].id,
-            enabled=True,
-        )
+        st_cbc_1 = scheduled_tasks.ST_CleanupByCampaign.new(campaign_id=campaigns[0].id)
+        st_cbc_2 = scheduled_tasks.ST_CleanupByCampaign.new(campaign_id=campaigns[1].id)
         db.session.commit()
     return (st_cbc_1, st_cbc_2)
 
 
 @pytest.fixture
-def st_cleanups_by_timeseries(bemservercore, st_cleanups_by_campaigns, timeseries):
+def st_cleanups_by_timeseries(bemservercore, timeseries):
     with OpenBar():
         st_cbt_1 = scheduled_tasks.ST_CleanupByTimeseries.new(
-            st_cleanup_by_campaign_id=st_cleanups_by_campaigns[0].id,
             timeseries_id=timeseries[0].id,
         )
         st_cbt_2 = scheduled_tasks.ST_CleanupByTimeseries.new(
-            st_cleanup_by_campaign_id=st_cleanups_by_campaigns[1].id,
             timeseries_id=timeseries[1].id,
         )
         db.session.commit()
