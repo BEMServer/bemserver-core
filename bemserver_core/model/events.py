@@ -16,13 +16,6 @@ class EventCategory(AuthMixin, Base):
     )
 
 
-class EventState(AuthMixin, Base):
-    __tablename__ = "event_states"
-
-    id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
-    description = sqla.Column(sqla.String(250))
-
-
 class EventLevel(AuthMixin, Base):
     __tablename__ = "event_levels"
 
@@ -49,12 +42,6 @@ class Event(AuthMixin, Base):
     def level(cls):
         return sqla.Column(
             sqla.String, sqla.ForeignKey("event_levels.id"), nullable=False
-        )
-
-    @sqlaorm.declared_attr
-    def state(cls):
-        return sqla.Column(
-            sqla.String, sqla.ForeignKey("event_states.id"), nullable=False
         )
 
     timestamp = sqla.Column(sqla.DateTime(timezone=True), nullable=False)
@@ -90,7 +77,7 @@ def init_db_events_triggers():
 
 
 def init_db_events():
-    """Create default event levels and states
+    """Create default event levels
 
     This function is meant to be used for tests or dev setups after create_all.
     Production setups should rely on migration scripts.
@@ -101,9 +88,6 @@ def init_db_events():
             EventLevel(id="WARNING", description="Warning"),
             EventLevel(id="ERROR", description="Error"),
             EventLevel(id="CRITICAL", description="Critical"),
-            EventState(id="NEW", description="New event"),
-            EventState(id="ONGOING", description="Ongoing event"),
-            EventState(id="CLOSED", description="Closed event"),
         ]
     )
     db.session.commit()

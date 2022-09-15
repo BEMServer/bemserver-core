@@ -4,53 +4,10 @@ import sqlalchemy as sqla
 
 import pytest
 
-from bemserver_core.model import (
-    EventCategory,
-    EventState,
-    EventLevel,
-    Event,
-)
+from bemserver_core.model import EventCategory, EventLevel, Event
 from bemserver_core.authorization import CurrentUser
 from bemserver_core.database import db
 from bemserver_core.exceptions import BEMServerAuthorizationError
-
-
-class TestEventStateModel:
-    def test_event_state_authorizations_as_admin(self, users):
-        admin_user = users[0]
-        assert admin_user.is_admin
-
-        with CurrentUser(admin_user):
-            nb_event_states = len(list(EventState.get()))
-            event_state_1 = EventState.new(
-                id="TEST",
-                description="Event state 1",
-            )
-            db.session.add(event_state_1)
-            db.session.commit()
-            EventState.get_by_id(event_state_1.id)
-            event_states = list(EventState.get())
-            assert len(event_states) == nb_event_states + 1
-            event_state_1.update(name="Super event_state 1")
-            event_state_1.delete()
-            db.session.commit()
-
-    def test_event_state_authorizations_as_user(self, users):
-        user_1 = users[1]
-        assert not user_1.is_admin
-
-        with CurrentUser(user_1):
-            event_states = list(EventState.get())
-            event_state_1 = EventState.get_by_id(event_states[0].id)
-            with pytest.raises(BEMServerAuthorizationError):
-                EventState.new(
-                    id="TEST",
-                    description="Event state 1",
-                )
-            with pytest.raises(BEMServerAuthorizationError):
-                event_state_1.update(name="Super event_state 1")
-            with pytest.raises(BEMServerAuthorizationError):
-                event_state_1.delete()
 
 
 class TestEventLevelModel:
@@ -147,7 +104,6 @@ class TestEventModel:
             category=ec_1.id,
             source="src",
             level="ERROR",
-            state="NEW",
         )
         db.session.commit()
 
@@ -203,10 +159,9 @@ class TestEventModel:
                 category=ec_1.id,
                 source="src",
                 level="ERROR",
-                state="NEW",
             )
             db.session.commit()
-            event_2.update(level="WARNING", state="ONGOING")
+            event_2.update(level="WARNING")
             db.session.commit()
             event_2.delete()
             db.session.commit()
@@ -240,10 +195,9 @@ class TestEventModel:
                     category=ec_1.id,
                     source="src",
                     level="ERROR",
-                    state="NEW",
                 )
             with pytest.raises(BEMServerAuthorizationError):
-                event_1.update(level="WARNING", state="ONGOING")
+                event_1.update(level="WARNING")
             with pytest.raises(BEMServerAuthorizationError):
                 event_1.delete()
 
@@ -254,10 +208,9 @@ class TestEventModel:
                 category=ec_1.id,
                 source="src",
                 level="ERROR",
-                state="NEW",
             )
             db.session.commit()
-            event_2.update(level="WARNING", state="ONGOING")
+            event_2.update(level="WARNING")
             db.session.commit()
             event_2.delete()
             db.session.commit()

@@ -309,7 +309,6 @@ def events(bemservercore, campaign_scopes, event_categories):
             category=event_categories[0].id,
             source="src",
             level="ERROR",
-            state="NEW",
         )
         ts_event_2 = model.Event.new(
             campaign_scope_id=campaign_scopes[1].id,
@@ -317,7 +316,6 @@ def events(bemservercore, campaign_scopes, event_categories):
             category=event_categories[0].id,
             source="src",
             level="WARNING",
-            state="ONGOING",
         )
         db.session.commit()
     return (ts_event_1, ts_event_2)
