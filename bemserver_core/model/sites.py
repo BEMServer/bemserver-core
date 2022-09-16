@@ -86,14 +86,28 @@ class ZoneProperty(AuthMixin, Base):
     )
 
 
-class Site(AuthMixin, Base):
-    __tablename__ = "sites"
-    __table_args__ = (sqla.UniqueConstraint("campaign_id", "name"),)
+class StructuralElement(AuthMixin, Base):
+    __tablename__ = "structural_elements"
+    __mapper_args__ = {
+        "polymorphic_identity": "se",
+        "polymorphic_on": "type_",
+    }
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
     ifc_id = sqla.Column(sqla.String(22))
+    type_ = sqla.Column(sqla.String(50))
+
+
+class Site(StructuralElement):
+    __tablename__ = "sites"
+    __table_args__ = (sqla.UniqueConstraint("campaign_id", "name"),)
+    __mapper_args__ = {
+        "polymorphic_identity": "site",
+    }
+
+    id = sqla.Column(sqla.ForeignKey("structural_elements.id"), primary_key=True)
+    name = sqla.Column(sqla.String(80), nullable=False)
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
 
     campaign = sqla.orm.relationship(
@@ -115,18 +129,21 @@ class Site(AuthMixin, Base):
         )
 
 
-class Building(AuthMixin, Base):
+class Building(StructuralElement):
     __tablename__ = "buildings"
     __table_args__ = (sqla.UniqueConstraint("site_id", "name"),)
+    __mapper_args__ = {
+        "polymorphic_identity": "building",
+    }
 
-    id = sqla.Column(sqla.Integer, primary_key=True)
+    id = sqla.Column(sqla.ForeignKey("structural_elements.id"), primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
-    description = sqla.Column(sqla.String(500))
-    ifc_id = sqla.Column(sqla.String(22))
     site_id = sqla.Column(sqla.ForeignKey("sites.id"), nullable=False)
 
     site = sqla.orm.relationship(
-        "Site", backref=sqla.orm.backref("buildings", cascade="all, delete-orphan")
+        "Site",
+        backref=sqla.orm.backref("buildings", cascade="all, delete-orphan"),
+        foreign_keys=site_id,
     )
 
     @classmethod
@@ -155,18 +172,21 @@ class Building(AuthMixin, Base):
         )
 
 
-class Storey(AuthMixin, Base):
+class Storey(StructuralElement):
     __tablename__ = "storeys"
     __table_args__ = (sqla.UniqueConstraint("building_id", "name"),)
+    __mapper_args__ = {
+        "polymorphic_identity": "storey",
+    }
 
-    id = sqla.Column(sqla.Integer, primary_key=True)
+    id = sqla.Column(sqla.ForeignKey("structural_elements.id"), primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
-    description = sqla.Column(sqla.String(500))
-    ifc_id = sqla.Column(sqla.String(22))
     building_id = sqla.Column(sqla.ForeignKey("buildings.id"), nullable=False)
 
     building = sqla.orm.relationship(
-        "Building", backref=sqla.orm.backref("storeys", cascade="all, delete-orphan")
+        "Building",
+        backref=sqla.orm.backref("storeys", cascade="all, delete-orphan"),
+        foreign_keys=building_id,
     )
 
     @classmethod
@@ -204,18 +224,21 @@ class Storey(AuthMixin, Base):
         )
 
 
-class Space(AuthMixin, Base):
+class Space(StructuralElement):
     __tablename__ = "spaces"
     __table_args__ = (sqla.UniqueConstraint("storey_id", "name"),)
+    __mapper_args__ = {
+        "polymorphic_identity": "space",
+    }
 
-    id = sqla.Column(sqla.Integer, primary_key=True)
+    id = sqla.Column(sqla.ForeignKey("structural_elements.id"), primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
-    description = sqla.Column(sqla.String(500))
-    ifc_id = sqla.Column(sqla.String(22))
     storey_id = sqla.Column(sqla.ForeignKey("storeys.id"), nullable=False)
 
     storey = sqla.orm.relationship(
-        "Storey", backref=sqla.orm.backref("spaces", cascade="all, delete-orphan")
+        "Storey",
+        backref=sqla.orm.backref("spaces", cascade="all, delete-orphan"),
+        foreign_keys=storey_id,
     )
 
     @classmethod
@@ -264,14 +287,15 @@ class Space(AuthMixin, Base):
         )
 
 
-class Zone(AuthMixin, Base):
+class Zone(StructuralElement):
     __tablename__ = "zones"
     __table_args__ = (sqla.UniqueConstraint("campaign_id", "name"),)
+    __mapper_args__ = {
+        "polymorphic_identity": "zone",
+    }
 
-    id = sqla.Column(sqla.Integer, primary_key=True)
+    id = sqla.Column(sqla.ForeignKey("structural_elements.id"), primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
-    description = sqla.Column(sqla.String(500))
-    ifc_id = sqla.Column(sqla.String(22))
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
 
     campaign = sqla.orm.relationship(
