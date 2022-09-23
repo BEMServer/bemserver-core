@@ -238,7 +238,7 @@ class TestCompleteness:
                 ],
                 "timeseries": {
                     1: {
-                        "name": "Timeseries 0",
+                        "name": "Timeseries 1",
                         "avg_count": 4320.0,
                         "avg_ratio": 1.0,
                         "count": [4464, 4176],
@@ -249,7 +249,7 @@ class TestCompleteness:
                         "undefined_interval": False,
                     },
                     2: {
-                        "name": "Timeseries 1",
+                        "name": "Timeseries 2",
                         "avg_count": 3846.5,
                         "avg_ratio": 0.8939292114695341,
                         "count": [3517, 4176],
@@ -260,7 +260,7 @@ class TestCompleteness:
                         "undefined_interval": False,
                     },
                     3: {
-                        "name": "Timeseries 2",
+                        "name": "Timeseries 3",
                         "avg_count": 6028.0,
                         "avg_ratio": 2.790739710789766,
                         "count": [6229, 5827],
@@ -271,7 +271,7 @@ class TestCompleteness:
                         "undefined_interval": False,
                     },
                     4: {
-                        "name": "Timeseries 3",
+                        "name": "Timeseries 4",
                         "avg_count": 4672.0,
                         "avg_ratio": 0.782314808151154,
                         "count": [3517, 5827],
@@ -282,7 +282,7 @@ class TestCompleteness:
                         "undefined_interval": True,
                     },
                     5: {
-                        "name": "Timeseries 4",
+                        "name": "Timeseries 5",
                         "avg_count": 0.0,
                         "avg_ratio": None,
                         "count": [0, 0],
@@ -423,17 +423,6 @@ class TestCompleteness:
                 ],
                 "timeseries": {
                     1: {
-                        "name": "Timeseries 0",
-                        "count": [6, 6, 3],
-                        "ratio": [1.0, 1.0, 1.0],
-                        "total_count": 15,
-                        "avg_count": 5.0,
-                        "avg_ratio": 1.0,
-                        "interval": 600.0,
-                        "undefined_interval": False,
-                        "expected_count": [6.0, 6.0, 3.0],
-                    },
-                    2: {
                         "name": "Timeseries 1",
                         "count": [6, 6, 3],
                         "ratio": [1.0, 1.0, 1.0],
@@ -444,8 +433,19 @@ class TestCompleteness:
                         "undefined_interval": False,
                         "expected_count": [6.0, 6.0, 3.0],
                     },
-                    3: {
+                    2: {
                         "name": "Timeseries 2",
+                        "count": [6, 6, 3],
+                        "ratio": [1.0, 1.0, 1.0],
+                        "total_count": 15,
+                        "avg_count": 5.0,
+                        "avg_ratio": 1.0,
+                        "interval": 600.0,
+                        "undefined_interval": False,
+                        "expected_count": [6.0, 6.0, 3.0],
+                    },
+                    3: {
+                        "name": "Timeseries 3",
                         "count": [8, 8, 5],
                         "ratio": [
                             2.6666666666666665,
@@ -460,7 +460,7 @@ class TestCompleteness:
                         "expected_count": [3.0, 3.0, 1.5],
                     },
                     4: {
-                        "name": "Timeseries 3",
+                        "name": "Timeseries 4",
                         "count": [6, 6, 3],
                         "ratio": [1.0, 1.0, 1.0],
                         "total_count": 15,
@@ -471,7 +471,7 @@ class TestCompleteness:
                         "expected_count": [6.0, 6.0, 3.0],
                     },
                     5: {
-                        "name": "Timeseries 4",
+                        "name": "Timeseries 5",
                         "count": [0, 0, 0],
                         "ratio": [None, None, None],
                         "total_count": 0,

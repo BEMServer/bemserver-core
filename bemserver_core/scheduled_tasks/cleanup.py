@@ -1,7 +1,7 @@
 """Cleanup scheduled task"""
 import sqlalchemy as sqla
 
-from bemserver_core.model import Timeseries, TimeseriesDataState
+from bemserver_core.model import Timeseries, TimeseriesDataState, Campaign
 from bemserver_core.input_output import tsdio
 from bemserver_core.database import Base, db
 from bemserver_core.authorization import AuthMixin, auth, Relation
@@ -16,12 +16,70 @@ class ST_CleanupByCampaign(AuthMixin, Base):
     campaign_id = sqla.Column(
         sqla.ForeignKey("campaigns.id"), unique=True, nullable=False
     )
+    is_enabled = sqla.Column(sqla.Boolean, default=True, nullable=False)
     campaign = sqla.orm.relationship(
         "Campaign",
         backref=sqla.orm.backref(
             "processors_by_campaigns", cascade="all, delete-orphan"
         ),
     )
+
+    @classmethod
+    def get_all(cls, *, is_enabled=None, **kwargs):
+        """Get the cleanup service state for all campaigns, even if campaign has
+        not explicitly a relation with cleanup (campaign has never been cleaned yet).
+        """
+        # Extract sort info to apply it at the end.
+        sort = kwargs.pop("sort", None)
+
+        # Extract and prepare kwargs for each sub-request.
+        camp_alias_name = "campaign"
+        camp_kwargs = {}
+        if f"in_{camp_alias_name}_name" in kwargs:
+            camp_kwargs["in_name"] = kwargs.pop(f"in_{camp_alias_name}_name")
+        if f"{camp_alias_name}_id" in kwargs:
+            camp_kwargs["id"] = kwargs.pop(f"{camp_alias_name}_id")
+
+        # Prepare sub-requests.
+        camp_subq = sqla.orm.aliased(
+            Campaign,
+            alias=Campaign.get(**camp_kwargs).subquery(),
+        )
+        cleanup_subq = sqla.orm.aliased(
+            ST_CleanupByCampaign,
+            alias=ST_CleanupByCampaign.get(**kwargs).subquery(),
+        )
+
+        # Main request.
+        query = db.session.query(
+            cleanup_subq.id,
+            camp_subq.id.label(f"{camp_alias_name}_id"),
+            camp_subq.name.label(f"{camp_alias_name}_name"),
+            cleanup_subq.is_enabled,
+        ).join(cleanup_subq, cleanup_subq.campaign_id == camp_subq.id, isouter=True)
+
+        # Apply a special filter for is_enabled attribute (None is considered as False).
+        if is_enabled is not None:
+            if is_enabled:
+                query = query.filter(cleanup_subq.is_enabled == is_enabled)
+            else:
+                query = query.filter(
+                    sqla.or_(
+                        cleanup_subq.is_enabled == is_enabled,
+                        cleanup_subq.is_enabled.is_(None),
+                    )
+                )
+
+        # Apply sort on final result.
+        if sort is not None:
+            for field in sort:
+                cls_field = cleanup_subq
+                if camp_alias_name in field:
+                    field = field.replace(f"{camp_alias_name}_", "")
+                    cls_field = camp_subq
+                query = cls_field._apply_sort_query_filter(query, field)
+
+        return query
 
     @classmethod
     def register_class(cls):
@@ -77,6 +135,58 @@ class ST_CleanupByTimeseries(AuthMixin, Base):
             query = query.join(timeseries, cls.timeseries_id == timeseries.id).filter(
                 timeseries.campaign_id == campaign_id
             )
+        return query
+
+    @classmethod
+    def get_all(cls, **kwargs):
+        """Get the last cleanup timestamp for all timeseries, even if timeseries
+        has never been cleaned yet (because just new...).
+        """
+        # Extract sort info to apply it at the end.
+        sort = kwargs.pop("sort", None)
+
+        # Extract and prepare kwargs for each sub-request.
+        ts_alias_name = "timeseries"
+        ts_kwargs = {}
+        if f"in_{ts_alias_name}_name" in kwargs:
+            ts_kwargs["in_name"] = kwargs.pop(f"in_{ts_alias_name}_name")
+        if "campaign_id" in kwargs:
+            ts_kwargs["campaign_id"] = kwargs["campaign_id"]
+
+        # Prepare sub-requests.
+        ts_subq = sqla.orm.aliased(
+            Timeseries,
+            alias=Timeseries.get(**ts_kwargs).subquery(),
+        )
+        cleanup_subq = sqla.orm.aliased(
+            ST_CleanupByTimeseries,
+            alias=ST_CleanupByTimeseries.get(**kwargs).subquery(),
+        )
+
+        # Main request.
+        query = db.session.query(
+            cleanup_subq.id,
+            ts_subq.id.label(f"{ts_alias_name}_id"),
+            ts_subq.name.label(f"{ts_alias_name}_name"),
+            ts_subq.unit_symbol.label(f"{ts_alias_name}_unit_symbol"),
+            cleanup_subq.last_timestamp,
+        ).join(cleanup_subq, cleanup_subq.timeseries_id == ts_subq.id, isouter=True)
+
+        # Apply sort on final result.
+        if sort is not None:
+            for sort_field in sort:
+                cls_field = cleanup_subq
+                if ts_alias_name in sort_field:
+                    sort_field = sort_field.replace(f"{ts_alias_name}_", "")
+                    cls_field = ts_subq
+                # nulls_last ensures that null timestamps stay at the end of results,
+                #  whatever the sort direction.
+                query = cls_field._apply_sort_query_filter(
+                    query,
+                    sort_field,
+                    nulls_last=sort_field.endswith("last_timestamp"),
+                )
+
         return query
 
 

@@ -23,6 +23,137 @@ from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestST_CleanupByCampaignModel:
+    def test_st_cleanup_by_campaign_get_all_as_admin(
+        self, users, campaigns, st_cleanups_by_campaigns
+    ):
+        admin_user = users[0]
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
+        campaign_3 = campaigns[2]
+
+        with CurrentUser(admin_user):
+            assert len(list(ST_CleanupByCampaign.get())) < len(campaigns)
+            assert len(list(ST_CleanupByCampaign.get_all())) == len(campaigns)
+
+            assert len(list(ST_CleanupByCampaign.get_all(is_enabled=True))) == 1
+            assert len(list(ST_CleanupByCampaign.get_all(is_enabled=False))) == 2
+
+            ret = list(ST_CleanupByCampaign.get_all(campaign_id=campaign_1.id))
+            assert len(ret) == 1
+            assert ret[0][2] == campaign_1.name
+            ret = list(ST_CleanupByCampaign.get_all(campaign_id=campaign_3.id))
+            assert len(ret) == 1
+            assert ret[0][2] == campaign_3.name
+
+            ret = ST_CleanupByCampaign.get_all(
+                campaign_id=campaign_3.id, is_enabled=True
+            )
+            assert len(list(ret)) == 0
+            ret = list(
+                ST_CleanupByCampaign.get_all(
+                    campaign_id=campaign_3.id, is_enabled=False
+                )
+            )
+            assert len(ret) == 1
+            assert ret[0][2] == campaign_3.name
+
+            ret = list(ST_CleanupByCampaign.get_all(in_campaign_name="1"))
+            assert len(ret) == 1
+            assert ret[0][2] == campaign_1.name
+            ret = list(ST_CleanupByCampaign.get_all(in_campaign_name="3"))
+            assert len(ret) == 1
+            assert ret[0][2] == campaign_3.name
+            ret = ST_CleanupByCampaign.get_all(in_campaign_name="3", is_enabled=True)
+            assert len(list(ret)) == 0
+            ret = list(
+                ST_CleanupByCampaign.get_all(in_campaign_name="3", is_enabled=False)
+            )
+            assert len(ret) == 1
+            assert ret[0][2] == campaign_3.name
+            ret = list(ST_CleanupByCampaign.get_all(in_campaign_name="non-existent"))
+            assert len(ret) == 0
+
+            ret = list(ST_CleanupByCampaign.get_all(sort=["+campaign_name"]))
+            assert len(ret) == 3
+            assert ret[0][2] == campaign_1.name
+            assert ret[1][2] == campaign_2.name
+            assert ret[2][2] == campaign_3.name
+            ret = list(ST_CleanupByCampaign.get_all(sort=["-campaign_name"]))
+            assert len(ret) == 3
+            assert ret[0][2] == campaign_3.name
+            assert ret[1][2] == campaign_2.name
+            assert ret[2][2] == campaign_1.name
+            ret = ST_CleanupByCampaign.get_all(sort=["-campaign_name"], is_enabled=True)
+            assert len(list(ret)) == 1
+            ret = list(
+                ST_CleanupByCampaign.get_all(sort=["-campaign_name"], is_enabled=False)
+            )
+            assert len(ret) == 2
+            assert ret[0][2] == campaign_3.name
+            assert ret[1][2] == campaign_2.name
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    def test_st_cleanup_by_campaign_get_all_as_user(
+        self, users, campaigns, st_cleanups_by_campaigns
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
+        campaign_3 = campaigns[2]
+
+        with CurrentUser(user_1):
+            assert len(list(ST_CleanupByCampaign.get())) == 1
+            assert len(list(ST_CleanupByCampaign.get_all())) == 2
+
+            assert len(list(ST_CleanupByCampaign.get_all(is_enabled=True))) == 0
+            assert len(list(ST_CleanupByCampaign.get_all(is_enabled=False))) == 2
+
+            assert (
+                len(list(ST_CleanupByCampaign.get_all(campaign_id=campaign_1.id))) == 0
+            )
+            ret = list(ST_CleanupByCampaign.get_all(campaign_id=campaign_3.id))
+            assert len(ret) == 1
+            assert ret[0][2] == campaign_3.name
+
+            ret = ST_CleanupByCampaign.get_all(
+                campaign_id=campaign_3.id, is_enabled=True
+            )
+            assert len(list(ret)) == 0
+            ret = list(
+                ST_CleanupByCampaign.get_all(
+                    campaign_id=campaign_3.id, is_enabled=False
+                )
+            )
+            assert len(ret) == 1
+            assert ret[0][2] == campaign_3.name
+
+            assert len(list(ST_CleanupByCampaign.get_all(in_campaign_name="1"))) == 0
+            ret = list(ST_CleanupByCampaign.get_all(in_campaign_name="3"))
+            assert len(ret) == 1
+            assert ret[0][2] == campaign_3.name
+            ret = ST_CleanupByCampaign.get_all(in_campaign_name="3", is_enabled=True)
+            assert len(list(ret)) == 0
+            ret = list(
+                ST_CleanupByCampaign.get_all(in_campaign_name="3", is_enabled=False)
+            )
+            assert len(ret) == 1
+            assert ret[0][2] == campaign_3.name
+            ret = ST_CleanupByCampaign.get_all(in_campaign_name="non-existent")
+            assert len(list(ret)) == 0
+
+            ret = list(ST_CleanupByCampaign.get_all(sort=["+campaign_name"]))
+            assert len(ret) == 2
+            assert ret[0][2] == campaign_2.name
+            assert ret[1][2] == campaign_3.name
+            ret = list(ST_CleanupByCampaign.get_all(sort=["-campaign_name"]))
+            assert len(ret) == 2
+            assert ret[0][2] == campaign_3.name
+            assert ret[1][2] == campaign_2.name
+            ret = ST_CleanupByCampaign.get_all(sort=["-campaign_name"], is_enabled=True)
+            assert len(list(ret)) == 0
+
     def test_st_cleanup_by_campaign_delete_cascade(
         self, users, campaigns, st_cleanups_by_campaigns
     ):
@@ -81,6 +212,216 @@ class TestST_CleanupByCampaignModel:
 
 
 class TestST_CleanupByTimeseriesModel:
+    @pytest.mark.usefixtures("st_cleanups_by_timeseries")
+    @pytest.mark.parametrize("timeseries", (10,), indirect=True)
+    def test_st_cleanup_by_timeseries_get_all_as_admin(
+        self, users, campaigns, timeseries
+    ):
+        admin_user = users[0]
+        campaign_1 = campaigns[0]
+        ts_1 = timeseries[0]
+        ts_4 = timeseries[3]
+        ts_7 = timeseries[6]
+
+        with CurrentUser(admin_user):
+            st_cbt_1 = ST_CleanupByTimeseries.get(timeseries_id=ts_1.id).first()
+            assert st_cbt_1 is not None
+            assert st_cbt_1.last_timestamp is None
+            st_cbt_1.last_timestamp = dt.datetime(2022, 1, 1, tzinfo=dt.timezone.utc)
+            db.session.add(st_cbt_1)
+            st_cbt_4 = ST_CleanupByTimeseries.new(
+                timeseries_id=ts_4.id,
+                last_timestamp=dt.datetime(2022, 9, 22, tzinfo=dt.timezone.utc),
+            )
+            db.session.add(st_cbt_4)
+            st_cbt_7 = ST_CleanupByTimeseries.new(
+                timeseries_id=ts_7.id,
+                last_timestamp=dt.datetime(2022, 9, 22, tzinfo=dt.timezone.utc),
+            )
+            db.session.add(st_cbt_7)
+            db.session.commit()
+
+            assert len(list(ST_CleanupByTimeseries.get())) < len(timeseries)
+            assert len(list(ST_CleanupByTimeseries.get_all())) == len(timeseries)
+
+            camp_1_ts = [x for x in timeseries if x.campaign_id == campaign_1.id]
+            assert len(camp_1_ts) == 4
+            ret = list(ST_CleanupByTimeseries.get_all(campaign_id=campaign_1.id))
+            assert len(ret) == len(camp_1_ts)
+
+            ret = ST_CleanupByTimeseries.get_all(
+                campaign_id=campaign_1.id, in_timeseries_name="Timeseries 1"
+            )
+            assert len(list(ret)) == 2
+            ret = ST_CleanupByTimeseries.get_all(
+                campaign_id=campaign_1.id, in_timeseries_name="Timeseries 7"
+            )
+            assert len(list(ret)) == 1
+            ret = ST_CleanupByTimeseries.get_all(
+                campaign_id=campaign_1.id, in_timeseries_name="Timeseries 2"
+            )
+            assert len(list(ret)) == 0
+            ret = ST_CleanupByTimeseries.get_all(in_timeseries_name="Timeseries 2")
+            assert len(list(ret)) == 1
+
+            ret = list(
+                ST_CleanupByTimeseries.get_all(
+                    campaign_id=campaign_1.id,
+                    sort=["+last_timestamp", "+timeseries_name"],
+                )
+            )
+            assert len(ret) == len(camp_1_ts)
+            assert ret[0][1] == ts_1.id
+            assert ret[0][4] == st_cbt_1.last_timestamp
+            assert ret[1][1] == ts_4.id
+            assert ret[1][4] == st_cbt_4.last_timestamp
+            assert ret[2][1] == ts_7.id
+            assert ret[2][4] == st_cbt_7.last_timestamp
+            assert ret[3][4] is None
+            ret = list(
+                ST_CleanupByTimeseries.get_all(
+                    campaign_id=campaign_1.id,
+                    sort=["-last_timestamp", "-timeseries_name"],
+                )
+            )
+            assert len(ret) == len(camp_1_ts)
+            assert ret[0][1] == ts_7.id
+            assert ret[0][4] == st_cbt_7.last_timestamp
+            assert ret[0][2] == "Timeseries 7"
+            assert ret[1][1] == ts_4.id
+            assert ret[1][4] == st_cbt_4.last_timestamp
+            assert ret[1][2] == "Timeseries 4"
+            assert ret[2][1] == ts_1.id
+            assert ret[2][4] == st_cbt_1.last_timestamp
+            assert ret[2][2] == "Timeseries 1"
+            assert ret[3][4] is None
+            assert ret[3][2] == "Timeseries 10"
+            ret = list(
+                ST_CleanupByTimeseries.get_all(
+                    campaign_id=campaign_1.id, sort=["+timeseries_name"]
+                )
+            )
+            assert len(ret) == len(camp_1_ts)
+            assert ret[0][2] == "Timeseries 1"
+            assert ret[1][2] == "Timeseries 10"
+            assert ret[2][2] == "Timeseries 4"
+            assert ret[3][2] == "Timeseries 7"
+            ret = list(
+                ST_CleanupByTimeseries.get_all(
+                    campaign_id=campaign_1.id, sort=["-timeseries_name"]
+                )
+            )
+            assert len(ret) == len(camp_1_ts)
+            assert ret[0][2] == "Timeseries 7"
+            assert ret[1][2] == "Timeseries 4"
+            assert ret[2][2] == "Timeseries 10"
+            assert ret[3][2] == "Timeseries 1"
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.usefixtures("st_cleanups_by_timeseries")
+    @pytest.mark.parametrize("timeseries", (10,), indirect=True)
+    def test_st_cleanup_by_timeseries_get_all_as_user(
+        self, users, campaigns, timeseries
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        user_1 = users[1]
+        assert not user_1.is_admin
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
+        campaign_3 = campaigns[2]
+        ts_1 = timeseries[0]
+        ts_5 = timeseries[4]
+        ts_8 = timeseries[7]
+        ts_9 = timeseries[8]
+
+        st_cbt_1_last_timestamp = dt.datetime(2022, 9, 22, tzinfo=dt.timezone.utc)
+        st_cbt_5_last_timestamp = dt.datetime(2022, 7, 1, 12, tzinfo=dt.timezone.utc)
+        st_cbt_8_last_timestamp = dt.datetime(2022, 7, 1, 11, tzinfo=dt.timezone.utc)
+        st_cbt_9_last_timestamp = dt.datetime(2022, 7, 1, tzinfo=dt.timezone.utc)
+
+        with CurrentUser(admin_user):
+            st_cbt_1 = ST_CleanupByTimeseries.get(timeseries_id=ts_1.id).first()
+            assert st_cbt_1 is not None
+            assert st_cbt_1.last_timestamp is None
+            st_cbt_1.last_timestamp = st_cbt_1_last_timestamp
+            db.session.add(st_cbt_1)
+            st_cbt_5 = ST_CleanupByTimeseries.new(
+                timeseries_id=ts_5.id,
+                last_timestamp=st_cbt_5_last_timestamp,
+            )
+            db.session.add(st_cbt_5)
+            st_cbt_8 = ST_CleanupByTimeseries.new(
+                timeseries_id=ts_8.id,
+                last_timestamp=st_cbt_8_last_timestamp,
+            )
+            db.session.add(st_cbt_8)
+            st_cbt_9 = ST_CleanupByTimeseries.new(
+                timeseries_id=ts_9.id,
+                last_timestamp=st_cbt_9_last_timestamp,
+            )
+            db.session.add(st_cbt_9)
+            db.session.commit()
+
+        with CurrentUser(user_1):
+            assert len(list(ST_CleanupByTimeseries.get())) == 4
+            assert len(list(ST_CleanupByTimeseries.get_all())) == 6
+
+            with pytest.raises(BEMServerAuthorizationError):
+                ST_CleanupByTimeseries.get_all(campaign_id=campaign_1.id)
+
+            ret = list(ST_CleanupByTimeseries.get_all(campaign_id=campaign_2.id))
+            assert len(ret) == 3
+            ts_ids = [x[1] for x in ret]
+            assert ts_1.id not in ts_ids
+            assert ts_5.id in ts_ids
+            assert ts_8.id in ts_ids
+            assert ts_9.id not in ts_ids
+
+            ret = list(ST_CleanupByTimeseries.get_all(campaign_id=campaign_3.id))
+            assert len(ret) == 3
+            ts_ids = [x[1] for x in ret]
+            assert ts_1.id not in ts_ids
+            assert ts_5.id not in ts_ids
+            assert ts_8.id not in ts_ids
+            assert ts_9.id in ts_ids
+
+            ret = ST_CleanupByTimeseries.get_all(
+                campaign_id=campaign_2.id, in_timeseries_name="Timeseries 1"
+            )
+            assert len(list(ret)) == 0
+            ret = ST_CleanupByTimeseries.get_all(
+                campaign_id=campaign_2.id, in_timeseries_name="Timeseries 2"
+            )
+            assert len(list(ret)) == 1
+            ret = ST_CleanupByTimeseries.get_all(in_timeseries_name="Timeseries")
+            assert len(list(ret)) == 6
+
+            ret = list(
+                ST_CleanupByTimeseries.get_all(
+                    campaign_id=campaign_2.id, sort=["+last_timestamp"]
+                )
+            )
+            assert len(ret) == 3
+            assert ret[0][1] == ts_8.id
+            assert ret[0][4] == st_cbt_8_last_timestamp
+            assert ret[1][1] == ts_5.id
+            assert ret[1][4] == st_cbt_5_last_timestamp
+            assert ret[2][4] is None
+            ret = list(
+                ST_CleanupByTimeseries.get_all(
+                    campaign_id=campaign_2.id, sort=["-last_timestamp"]
+                )
+            )
+            assert len(ret) == 3
+            assert ret[0][1] == ts_5.id
+            assert ret[0][4] == st_cbt_5_last_timestamp
+            assert ret[1][1] == ts_8.id
+            assert ret[1][4] == st_cbt_8_last_timestamp
+            assert ret[2][4] is None
+
     @pytest.mark.usefixtures("st_cleanups_by_timeseries")
     def test_st_cleanup_by_timeseries_delete_cascade(self, users, timeseries):
         admin_user = users[0]

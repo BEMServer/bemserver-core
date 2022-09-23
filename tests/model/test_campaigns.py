@@ -31,8 +31,8 @@ class TestCampaignModel:
         campaign_1 = campaigns[0]
 
         with CurrentUser(admin_user):
-            assert len(list(CampaignScope.get())) == 2
-            assert len(list(UserGroupByCampaign.get())) == 2
+            assert len(list(CampaignScope.get())) == 3
+            assert len(list(UserGroupByCampaign.get())) == 3
             assert len(list(Site.get())) == 2
             assert len(list(Building.get())) == 2
             assert len(list(Storey.get())) == 2
@@ -42,14 +42,24 @@ class TestCampaignModel:
 
             campaign_1.delete()
             db.session.commit()
-            assert len(list(CampaignScope.get())) == 1
-            assert len(list(UserGroupByCampaign.get())) == 1
+            assert len(list(CampaignScope.get())) == 2
+            assert len(list(UserGroupByCampaign.get())) == 2
             assert len(list(Site.get())) == 1
             assert len(list(Building.get())) == 1
             assert len(list(Storey.get())) == 1
             assert len(list(Space.get())) == 1
             assert len(list(Zone.get())) == 1
             assert len(list(Timeseries.get())) == 1
+
+    def test_campaign_get_in_name(self, users, campaigns):
+        admin_user = users[0]
+        campaign_1 = campaigns[0]
+
+        with CurrentUser(admin_user):
+            ret = Campaign.get(in_name=campaign_1.name[4:])
+            assert len(list(ret)) == 1
+            assert ret[0] == campaign_1
+            assert len(list(Campaign.get(in_name="toto"))) == 0
 
     def test_campaign_authorizations_as_admin(self, users):
         admin_user = users[0]
@@ -92,7 +102,7 @@ class TestCampaignModel:
 
             campaign = Campaign.get_by_id(campaign_2.id)
             campaigns = list(Campaign.get())
-            assert len(campaigns) == 1
+            assert len(campaigns) == 2
             assert campaigns[0].id == campaign_2.id
             with pytest.raises(BEMServerAuthorizationError):
                 Campaign.get_by_id(campaign_1.id)
@@ -149,7 +159,7 @@ class TestUserGroupByCampaignModel:
                 )
             ugbc = UserGroupByCampaign.get_by_id(ugbc_2.id)
             ugbcs = list(UserGroupByCampaign.get())
-            assert len(ugbcs) == 1
+            assert len(ugbcs) == 2
             assert ugbcs[0].id == ugbc_2.id
             with pytest.raises(BEMServerAuthorizationError):
                 UserGroupByCampaign.get_by_id(ugbc_1.id)
@@ -167,12 +177,12 @@ class TestCampaignScopeModel:
         cs_1 = campaign_scopes[0]
 
         with CurrentUser(admin_user):
-            assert len(list(UserGroupByCampaignScope.get())) == 2
+            assert len(list(UserGroupByCampaignScope.get())) == 3
             assert len(list(Timeseries.get())) == 2
 
             cs_1.delete()
             db.session.commit()
-            assert len(list(UserGroupByCampaignScope.get())) == 1
+            assert len(list(UserGroupByCampaignScope.get())) == 2
             assert len(list(Timeseries.get())) == 1
 
     @pytest.mark.usefixtures("as_admin")
@@ -244,7 +254,7 @@ class TestCampaignScopeModel:
 
             campaign_scope = CampaignScope.get_by_id(campaign_scope_2.id)
             campaign_scopes = list(CampaignScope.get())
-            assert len(campaign_scopes) == 1
+            assert len(campaign_scopes) == 2
             assert campaign_scopes[0].id == campaign_scope_2.id
             with pytest.raises(BEMServerAuthorizationError):
                 CampaignScope.get_by_id(campaign_scope_1.id)
@@ -301,7 +311,7 @@ class TestUserGroupByCampaignScopeModel:
                 )
             ugbcs = UserGroupByCampaignScope.get_by_id(ugbcs_2.id)
             ugbcss = list(UserGroupByCampaignScope.get())
-            assert len(ugbcss) == 1
+            assert len(ugbcss) == 2
             assert ugbcss[0].id == ugbcs_2.id
             with pytest.raises(BEMServerAuthorizationError):
                 UserGroupByCampaignScope.get_by_id(ugbcs_1.id)

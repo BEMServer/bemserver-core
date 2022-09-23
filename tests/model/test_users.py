@@ -130,14 +130,14 @@ class TestUserGroupModel:
 
         with CurrentUser(admin_user):
             assert len(list(UserByUserGroup.get())) == 2
-            assert len(list(UserGroupByCampaign.get())) == 2
-            assert len(list(UserGroupByCampaignScope.get())) == 2
+            assert len(list(UserGroupByCampaign.get())) == 3
+            assert len(list(UserGroupByCampaignScope.get())) == 3
 
             user_group_1.delete()
             db.session.commit()
             assert len(list(UserByUserGroup.get())) == 1
-            assert len(list(UserGroupByCampaign.get())) == 1
-            assert len(list(UserGroupByCampaignScope.get())) == 1
+            assert len(list(UserGroupByCampaign.get())) == 2
+            assert len(list(UserGroupByCampaignScope.get())) == 2
 
     def test_user_group_authorizations_as_admin(self, users):
         admin_user = users[0]

@@ -25,6 +25,24 @@ class Base:
         return db.session.query(cls).filter_by(**kwargs)
 
     @classmethod
+    def _apply_sort_query_filter(cls, query, sort_field, *, nulls_last=False):
+        """Add order_by instruction to query.
+
+        sort_field is a field name, optionally prefixed with "+" or "-".
+            No prefix is equivalent to "+", which means "ascending" order.
+        """
+        if sort_field[0] == "-":
+            sort_direction = sqla.desc
+        else:
+            sort_direction = sqla.asc
+        if sort_field[0] in {"-", "+"}:
+            sort_field = sort_field[1:]
+        order = sort_direction(getattr(cls, sort_field))
+        if nulls_last:
+            order = sqla.nulls_last(order)
+        return query.order_by(order)
+
+    @classmethod
     def _add_sort_query_filter(cls, func):
         """Add sort argument to query function
 
@@ -39,14 +57,8 @@ class Base:
             sort = kwargs.pop("sort", None)
             query = func(*args, **kwargs)
             if sort:
-                for field in sort:
-                    if field[0] == "-":
-                        direction = sqla.desc
-                    else:
-                        direction = sqla.asc
-                    if field[0] in {"-", "+"}:
-                        field = field[1:]
-                    query = query.order_by(direction(getattr(cls, field)))
+                for sort_field in sort:
+                    query = cls._apply_sort_query_filter(query, sort_field)
             return query
 
         return wrapper

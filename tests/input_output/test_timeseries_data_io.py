@@ -27,6 +27,7 @@ from bemserver_core.exceptions import (
 
 
 class TestTimeseriesDataIO:
+    @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
     @pytest.mark.parametrize("for_campaign", (True, False))
     def test_timeseries_data_io_set_timeseries_data_as_admin(
@@ -341,6 +342,7 @@ class TestTimeseriesDataIO:
             mask = (expected_data_df.index > h1_dt) & (expected_data_df.index <= h2_dt)
             assert data_df.equals(expected_data_df.loc[mask])
 
+    @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
@@ -1292,6 +1294,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
+    @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
@@ -1391,6 +1394,7 @@ class TestTimeseriesDataIO:
             db.session.rollback()
             assert not db.session.query(TimeseriesData).all()
 
+    @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
@@ -1439,6 +1443,7 @@ class TestTimeseriesDataIO:
 
 
 class TestTimeseriesDataCSVIO:
+    @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
     @pytest.mark.parametrize("mode", ("str", "textiobase"))
     @pytest.mark.parametrize("for_campaign", (True, False))
@@ -1717,6 +1722,7 @@ class TestTimeseriesDataCSVIO:
                 "2020-01-01T03:00:00+0100,2.0,,\n"
             )
 
+    @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
@@ -1897,6 +1903,7 @@ class TestTimeseriesDataCSVIO:
                     col_label=col_label,
                 )
 
+    @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
