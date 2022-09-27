@@ -125,66 +125,92 @@ def users_by_user_groups(bemservercore, users, user_groups):
     return (ubug_1, ubug_2)
 
 
-@pytest.fixture
-def campaigns(bemservercore):
+@pytest.fixture(params=[3])
+def campaigns(request, bemservercore):
     with OpenBar():
-        campaign_1 = model.Campaign.new(
-            name="Campaign 1",
-            start_time=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
-            end_time=dt.datetime(2020, 2, 1, tzinfo=dt.timezone.utc),
-        )
-        campaign_2 = model.Campaign.new(
-            name="Campaign 2",
-            start_time=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
-            end_time=dt.datetime(2020, 2, 1, tzinfo=dt.timezone.utc),
-        )
+        campaigns = []
+        for i in range(max(2, request.param)):
+            campaign_i = model.Campaign.new(
+                name=f"Campaign {i+1}",
+                start_time=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+                end_time=dt.datetime(2020, 2, 1, tzinfo=dt.timezone.utc),
+            )
+            campaigns.append(campaign_i)
+        db.session.add_all(campaigns)
         db.session.commit()
-    return (campaign_1, campaign_2)
+        return campaigns
 
 
 @pytest.fixture
 def campaign_scopes(bemservercore, campaigns):
     with OpenBar():
+        cs_l = []
         cs_1 = model.CampaignScope.new(
             name="Campaign 1 - Scope 1",
             campaign_id=campaigns[0].id,
         )
+        cs_l.append(cs_1)
         cs_2 = model.CampaignScope.new(
             name="Campaign 2 - Scope 1",
             campaign_id=campaigns[1].id,
         )
+        cs_l.append(cs_2)
+        if len(campaigns) > 2:
+            cs_3 = model.CampaignScope.new(
+                name="Campaign 3 - Scope 1",
+                campaign_id=campaigns[2].id,
+            )
+            cs_l.append(cs_3)
         db.session.commit()
-    return (cs_1, cs_2)
+    return cs_l
 
 
 @pytest.fixture
 def user_groups_by_campaigns(bemservercore, user_groups, campaigns):
     with OpenBar():
+        ugbc_l = []
         ugbc_1 = model.UserGroupByCampaign.new(
             user_group_id=user_groups[0].id,
             campaign_id=campaigns[0].id,
         )
+        ugbc_l.append(ugbc_1)
         ugbc_2 = model.UserGroupByCampaign.new(
             user_group_id=user_groups[1].id,
             campaign_id=campaigns[1].id,
         )
+        ugbc_l.append(ugbc_2)
+        if len(campaigns) > 2:
+            ugbc_3 = model.UserGroupByCampaign.new(
+                user_group_id=user_groups[1].id,
+                campaign_id=campaigns[2].id,
+            )
+            ugbc_l.append(ugbc_3)
         db.session.commit()
-    return (ugbc_1, ugbc_2)
+    return ugbc_l
 
 
 @pytest.fixture
 def user_groups_by_campaign_scopes(bemservercore, user_groups, campaign_scopes):
     with OpenBar():
+        ugbcs_l = []
         ugbcs_1 = model.UserGroupByCampaignScope.new(
             user_group_id=user_groups[0].id,
             campaign_scope_id=campaign_scopes[0].id,
         )
+        ugbcs_l.append(ugbcs_1)
         ugbcs_2 = model.UserGroupByCampaignScope.new(
             user_group_id=user_groups[1].id,
             campaign_scope_id=campaign_scopes[1].id,
         )
+        ugbcs_l.append(ugbcs_2)
+        if len(campaign_scopes) > 2:
+            ugbcs_3 = model.UserGroupByCampaignScope.new(
+                user_group_id=user_groups[1].id,
+                campaign_scope_id=campaign_scopes[2].id,
+            )
+            ugbcs_l.append(ugbcs_3)
         db.session.commit()
-    return (ugbcs_1, ugbcs_2)
+    return ugbcs_l
 
 
 @pytest.fixture
@@ -211,7 +237,7 @@ def timeseries(request, bemservercore, campaigns, campaign_scopes):
         ts_l = []
         for i in range(request.param):
             ts_i = model.Timeseries(
-                name=f"Timeseries {i}",
+                name=f"Timeseries {i+1}",
                 description=f"Test timeseries #{i}",
                 campaign=campaigns[i % len(campaigns)],
                 campaign_scope=campaign_scopes[i % len(campaign_scopes)],
@@ -700,7 +726,10 @@ def zone_property_data(bemservercore, zones, zone_properties):
 def st_cleanups_by_campaigns(bemservercore, campaigns):
     with OpenBar():
         st_cbc_1 = scheduled_tasks.ST_CleanupByCampaign.new(campaign_id=campaigns[0].id)
-        st_cbc_2 = scheduled_tasks.ST_CleanupByCampaign.new(campaign_id=campaigns[1].id)
+        st_cbc_2 = scheduled_tasks.ST_CleanupByCampaign.new(
+            campaign_id=campaigns[1].id,
+            is_enabled=False,
+        )
         db.session.commit()
     return (st_cbc_1, st_cbc_2)
 
