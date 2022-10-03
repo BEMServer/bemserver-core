@@ -51,7 +51,7 @@ oso==0.26.2
     # via bemserver-core (setup.py)
 packaging==21.3
     # via redis
-pandas==1.4.3
+pandas==1.5.0
     # via bemserver-core (setup.py)
 passlib==1.7.4
     # via bemserver-core (setup.py)

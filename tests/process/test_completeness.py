@@ -86,6 +86,32 @@ class TestCompleteness:
         assert ret.equals(expected)
         assert ret.index[0] == start_dt
 
+        # Bucket width 1 day, TZ not UTC
+        start_dt = dt.datetime(2020, 1, 1, 6, 0, tzinfo=dt.timezone.utc)
+        end_dt = dt.datetime(2020, 1, 3, tzinfo=dt.timezone.utc)
+        start_bucket_dt = start_dt.astimezone(ZoneInfo("Europe/Paris"))
+        end_bucket_dt = end_dt.astimezone(ZoneInfo("Europe/Paris"))
+        ret = gen_seconds_per_bucket(
+            start_dt,
+            end_dt,
+            1,
+            "day",
+            "Europe/Paris",
+        )
+        expected = pd.Series(
+            [3600 * 24, 3600 * 18],
+            index=pd.date_range(
+                start_bucket_dt.replace(tzinfo=None),
+                end_bucket_dt.replace(tzinfo=None),
+                inclusive="left",
+                freq="D",
+                name="timestamp",
+                tz="Europe/Paris",
+            ),
+        )
+        assert ret.equals(expected)
+        assert ret.index[0] == start_bucket_dt
+
         # Bucket width 1 week
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 1, 22, tzinfo=dt.timezone.utc)
@@ -199,7 +225,9 @@ class TestCompleteness:
             )
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt_plus_8_hours = dt.datetime(2020, 1, 1, 8, 0, tzinfo=dt.timezone.utc)
         start_dt_plus_1_day = dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc)
+        start_dt_plus_2_days = dt.datetime(2020, 1, 3, tzinfo=dt.timezone.utc)
         intermediate_dt_1 = dt.datetime(2020, 1, 25, 10, 3, tzinfo=dt.timezone.utc)
         intermediate_dt_2 = dt.datetime(2020, 2, 1, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 3, 1, tzinfo=dt.timezone.utc)
@@ -375,6 +403,22 @@ class TestCompleteness:
                 1406,
                 1407,
                 1205,
+            ]
+
+            # 2 days - daily step - TZ offset - start_dt not at midnight
+            # Non-reg ression test for an issue with date range generation
+            ret = compute_completeness(
+                start_dt_plus_8_hours,
+                start_dt_plus_2_days,
+                ts_l,
+                ds_1,
+                1,
+                "day",
+                timezone="Europe/Paris",
+            )
+            assert ret["timestamps"] == [
+                start_dt_plus_8_hours,
+                start_dt_plus_8_hours + dt.timedelta(days=1),
             ]
 
             # 1 day - minute step
