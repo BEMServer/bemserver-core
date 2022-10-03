@@ -37,15 +37,15 @@ click-repl==0.2.0
     # via celery
 deprecated==1.2.13
     # via redis
-greenlet==1.1.2
+greenlet==1.1.3
     # via sqlalchemy
 kombu==5.2.4
     # via celery
-mako==1.2.1
+mako==1.2.3
     # via alembic
 markupsafe==2.1.1
     # via mako
-numpy==1.23.2
+numpy==1.23.3
     # via pandas
 oso==0.26.2
     # via bemserver-core (setup.py)
@@ -55,7 +55,7 @@ pandas==1.5.0
     # via bemserver-core (setup.py)
 passlib==1.7.4
     # via bemserver-core (setup.py)
-prompt-toolkit==3.0.30
+prompt-toolkit==3.0.31
     # via click-repl
 psycopg2==2.9.3
     # via bemserver-core (setup.py)
@@ -65,7 +65,7 @@ pyparsing==3.0.9
     # via packaging
 python-dateutil==2.8.2
     # via pandas
-pytz==2022.2.1
+pytz==2022.4
     # via
     #   celery
     #   pandas
@@ -75,7 +75,7 @@ six==1.16.0
     # via
     #   click-repl
     #   python-dateutil
-sqlalchemy==1.4.40
+sqlalchemy==1.4.41
     # via
     #   alembic
     #   bemserver-core (setup.py)
