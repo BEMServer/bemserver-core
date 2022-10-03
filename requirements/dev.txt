@@ -10,13 +10,13 @@ bump2version==1.0.1
     # via -r requirements/dev.in
 cfgv==3.3.1
     # via pre-commit
-coverage[toml]==6.4.3
+coverage[toml]==6.5.0
     # via pytest-cov
-distlib==0.3.5
+distlib==0.3.6
     # via virtualenv
 filelock==3.8.0
     # via virtualenv
-identify==2.5.3
+identify==2.5.5
     # via pre-commit
 iniconfig==1.1.1
     # via pytest
@@ -34,7 +34,7 @@ port-for==0.6.2
     # via pytest-postgresql
 pre-commit==2.20.0
     # via -r requirements/dev.in
-psutil==5.9.1
+psutil==5.9.2
     # via mirakuru
 py==1.11.0
     # via pytest
@@ -57,7 +57,7 @@ tomli==2.0.1
     # via
     #   coverage
     #   pytest
-virtualenv==20.16.3
+virtualenv==20.16.5
     # via pre-commit
 
 # The following packages are considered to be unsafe in a requirements file:
