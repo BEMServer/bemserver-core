@@ -343,101 +343,6 @@ def structural_element_properties(bemservercore):
 
 
 @pytest.fixture
-def site_properties(bemservercore, structural_element_properties):
-    with OpenBar():
-        site_p_1 = model.SiteProperty.new(
-            structural_element_property_id=structural_element_properties[0].id,
-        )
-        site_p_2 = model.SiteProperty.new(
-            structural_element_property_id=structural_element_properties[1].id,
-        )
-        site_p_3 = model.SiteProperty.new(
-            structural_element_property_id=structural_element_properties[2].id,
-        )
-        site_p_4 = model.SiteProperty.new(
-            structural_element_property_id=structural_element_properties[3].id,
-        )
-        db.session.commit()
-    return (site_p_1, site_p_2, site_p_3, site_p_4)
-
-
-@pytest.fixture
-def building_properties(bemservercore, structural_element_properties):
-    with OpenBar():
-        building_p_1 = model.BuildingProperty.new(
-            structural_element_property_id=structural_element_properties[0].id,
-        )
-        building_p_2 = model.BuildingProperty.new(
-            structural_element_property_id=structural_element_properties[1].id,
-        )
-        building_p_3 = model.BuildingProperty.new(
-            structural_element_property_id=structural_element_properties[2].id,
-        )
-        building_p_4 = model.BuildingProperty.new(
-            structural_element_property_id=structural_element_properties[3].id,
-        )
-        db.session.commit()
-    return (building_p_1, building_p_2, building_p_3, building_p_4)
-
-
-@pytest.fixture
-def storey_properties(bemservercore, structural_element_properties):
-    with OpenBar():
-        storey_p_1 = model.StoreyProperty.new(
-            structural_element_property_id=structural_element_properties[0].id,
-        )
-        storey_p_2 = model.StoreyProperty.new(
-            structural_element_property_id=structural_element_properties[1].id,
-        )
-        storey_p_3 = model.StoreyProperty.new(
-            structural_element_property_id=structural_element_properties[2].id,
-        )
-        storey_p_4 = model.StoreyProperty.new(
-            structural_element_property_id=structural_element_properties[3].id,
-        )
-        db.session.commit()
-    return (storey_p_1, storey_p_2, storey_p_3, storey_p_4)
-
-
-@pytest.fixture
-def space_properties(bemservercore, structural_element_properties):
-    with OpenBar():
-        space_p_1 = model.SpaceProperty.new(
-            structural_element_property_id=structural_element_properties[0].id,
-        )
-        space_p_2 = model.SpaceProperty.new(
-            structural_element_property_id=structural_element_properties[1].id,
-        )
-        space_p_3 = model.SpaceProperty.new(
-            structural_element_property_id=structural_element_properties[2].id,
-        )
-        space_p_4 = model.SpaceProperty.new(
-            structural_element_property_id=structural_element_properties[3].id,
-        )
-        db.session.commit()
-    return (space_p_1, space_p_2, space_p_3, space_p_4)
-
-
-@pytest.fixture
-def zone_properties(bemservercore, structural_element_properties):
-    with OpenBar():
-        zone_p_1 = model.ZoneProperty.new(
-            structural_element_property_id=structural_element_properties[0].id,
-        )
-        zone_p_2 = model.ZoneProperty.new(
-            structural_element_property_id=structural_element_properties[1].id,
-        )
-        zone_p_3 = model.ZoneProperty.new(
-            structural_element_property_id=structural_element_properties[2].id,
-        )
-        zone_p_4 = model.ZoneProperty.new(
-            structural_element_property_id=structural_element_properties[3].id,
-        )
-        db.session.commit()
-    return (zone_p_1, zone_p_2, zone_p_3, zone_p_4)
-
-
-@pytest.fixture
 def sites(bemservercore, campaigns):
     with OpenBar():
         site_1 = model.Site.new(
@@ -588,26 +493,26 @@ def timeseries_by_zones(bemservercore, timeseries, zones):
 
 
 @pytest.fixture
-def site_property_data(bemservercore, sites, site_properties):
+def site_property_data(bemservercore, sites, structural_element_properties):
     with OpenBar():
-        spd_1 = model.SitePropertyData.new(
-            site_id=sites[0].id,
-            site_property_id=site_properties[0].id,
+        spd_1 = model.StructuralElementPropertyData.new(
+            structural_element_id=sites[0].id,
+            structural_element_property_id=structural_element_properties[0].id,
             value="12",
         )
-        spd_2 = model.SitePropertyData.new(
-            site_id=sites[1].id,
-            site_property_id=site_properties[1].id,
+        spd_2 = model.StructuralElementPropertyData.new(
+            structural_element_id=sites[1].id,
+            structural_element_property_id=structural_element_properties[1].id,
             value="4.2",
         )
-        spd_3 = model.SitePropertyData.new(
-            site_id=sites[1].id,
-            site_property_id=site_properties[2].id,
+        spd_3 = model.StructuralElementPropertyData.new(
+            structural_element_id=sites[1].id,
+            structural_element_property_id=structural_element_properties[2].id,
             value="true",
         )
-        spd_4 = model.SitePropertyData.new(
-            site_id=sites[1].id,
-            site_property_id=site_properties[3].id,
+        spd_4 = model.StructuralElementPropertyData.new(
+            structural_element_id=sites[1].id,
+            structural_element_property_id=structural_element_properties[3].id,
             value="Imhotep",
         )
         db.session.commit()
@@ -615,26 +520,26 @@ def site_property_data(bemservercore, sites, site_properties):
 
 
 @pytest.fixture
-def building_property_data(bemservercore, buildings, building_properties):
+def building_property_data(bemservercore, buildings, structural_element_properties):
     with OpenBar():
-        bpd_1 = model.BuildingPropertyData.new(
-            building_id=buildings[0].id,
-            building_property_id=building_properties[0].id,
+        bpd_1 = model.StructuralElementPropertyData.new(
+            structural_element_id=buildings[0].id,
+            structural_element_property_id=structural_element_properties[0].id,
             value="12",
         )
-        bpd_2 = model.BuildingPropertyData.new(
-            building_id=buildings[1].id,
-            building_property_id=building_properties[1].id,
+        bpd_2 = model.StructuralElementPropertyData.new(
+            structural_element_id=buildings[1].id,
+            structural_element_property_id=structural_element_properties[1].id,
             value="4.2",
         )
-        bpd_3 = model.BuildingPropertyData.new(
-            building_id=buildings[1].id,
-            building_property_id=building_properties[2].id,
+        bpd_3 = model.StructuralElementPropertyData.new(
+            structural_element_id=buildings[1].id,
+            structural_element_property_id=structural_element_properties[2].id,
             value="true",
         )
-        bpd_4 = model.BuildingPropertyData.new(
-            building_id=buildings[1].id,
-            building_property_id=building_properties[3].id,
+        bpd_4 = model.StructuralElementPropertyData.new(
+            structural_element_id=buildings[1].id,
+            structural_element_property_id=structural_element_properties[3].id,
             value="Imhotep",
         )
         db.session.commit()
@@ -642,26 +547,26 @@ def building_property_data(bemservercore, buildings, building_properties):
 
 
 @pytest.fixture
-def storey_property_data(bemservercore, storeys, storey_properties):
+def storey_property_data(bemservercore, storeys, structural_element_properties):
     with OpenBar():
-        spd_1 = model.StoreyPropertyData.new(
-            storey_id=storeys[0].id,
-            storey_property_id=storey_properties[0].id,
+        spd_1 = model.StructuralElementPropertyData.new(
+            structural_element_id=storeys[0].id,
+            structural_element_property_id=structural_element_properties[0].id,
             value="12",
         )
-        spd_2 = model.StoreyPropertyData.new(
-            storey_id=storeys[1].id,
-            storey_property_id=storey_properties[1].id,
+        spd_2 = model.StructuralElementPropertyData.new(
+            structural_element_id=storeys[1].id,
+            structural_element_property_id=structural_element_properties[1].id,
             value="4.2",
         )
-        spd_3 = model.StoreyPropertyData.new(
-            storey_id=storeys[1].id,
-            storey_property_id=storey_properties[2].id,
+        spd_3 = model.StructuralElementPropertyData.new(
+            structural_element_id=storeys[1].id,
+            structural_element_property_id=structural_element_properties[2].id,
             value="true",
         )
-        spd_4 = model.StoreyPropertyData.new(
-            storey_id=storeys[1].id,
-            storey_property_id=storey_properties[3].id,
+        spd_4 = model.StructuralElementPropertyData.new(
+            structural_element_id=storeys[1].id,
+            structural_element_property_id=structural_element_properties[3].id,
             value="Imhotep",
         )
         db.session.commit()
@@ -669,26 +574,26 @@ def storey_property_data(bemservercore, storeys, storey_properties):
 
 
 @pytest.fixture
-def space_property_data(bemservercore, spaces, space_properties):
+def space_property_data(bemservercore, spaces, structural_element_properties):
     with OpenBar():
-        spd_1 = model.SpacePropertyData.new(
-            space_id=spaces[0].id,
-            space_property_id=space_properties[0].id,
+        spd_1 = model.StructuralElementPropertyData.new(
+            structural_element_id=spaces[0].id,
+            structural_element_property_id=structural_element_properties[0].id,
             value="12",
         )
-        spd_2 = model.SpacePropertyData.new(
-            space_id=spaces[1].id,
-            space_property_id=space_properties[1].id,
+        spd_2 = model.StructuralElementPropertyData.new(
+            structural_element_id=spaces[1].id,
+            structural_element_property_id=structural_element_properties[1].id,
             value="4.2",
         )
-        spd_3 = model.SpacePropertyData.new(
-            space_id=spaces[1].id,
-            space_property_id=space_properties[2].id,
+        spd_3 = model.StructuralElementPropertyData.new(
+            structural_element_id=spaces[1].id,
+            structural_element_property_id=structural_element_properties[2].id,
             value="true",
         )
-        spd_4 = model.SpacePropertyData.new(
-            space_id=spaces[1].id,
-            space_property_id=space_properties[3].id,
+        spd_4 = model.StructuralElementPropertyData.new(
+            structural_element_id=spaces[1].id,
+            structural_element_property_id=structural_element_properties[3].id,
             value="Imhotep",
         )
         db.session.commit()
@@ -696,26 +601,26 @@ def space_property_data(bemservercore, spaces, space_properties):
 
 
 @pytest.fixture
-def zone_property_data(bemservercore, zones, zone_properties):
+def zone_property_data(bemservercore, zones, structural_element_properties):
     with OpenBar():
-        zpd_1 = model.ZonePropertyData.new(
-            zone_id=zones[0].id,
-            zone_property_id=zone_properties[0].id,
+        zpd_1 = model.StructuralElementPropertyData.new(
+            structural_element_id=zones[0].id,
+            structural_element_property_id=structural_element_properties[0].id,
             value="12",
         )
-        zpd_2 = model.ZonePropertyData.new(
-            zone_id=zones[1].id,
-            zone_property_id=zone_properties[1].id,
+        zpd_2 = model.StructuralElementPropertyData.new(
+            structural_element_id=zones[1].id,
+            structural_element_property_id=structural_element_properties[1].id,
             value="4.2",
         )
-        zpd_3 = model.ZonePropertyData.new(
-            zone_id=zones[1].id,
-            zone_property_id=zone_properties[2].id,
+        zpd_3 = model.StructuralElementPropertyData.new(
+            structural_element_id=zones[1].id,
+            structural_element_property_id=structural_element_properties[2].id,
             value="true",
         )
-        zpd_4 = model.ZonePropertyData.new(
-            zone_id=zones[1].id,
-            zone_property_id=zone_properties[3].id,
+        zpd_4 = model.StructuralElementPropertyData.new(
+            structural_element_id=zones[1].id,
+            structural_element_property_id=structural_element_properties[3].id,
             value="Imhotep",
         )
         db.session.commit()

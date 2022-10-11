@@ -248,7 +248,7 @@ def _generate_ddl_trigger_read_only(table_name, col_name):
         dedent(
             f"""\
             CREATE TRIGGER
-                {table_name}_trigger_update_readonly_{col_name}
+                {table_name}_updt_ro_{col_name}
             BEFORE UPDATE
                 OF {col_name} ON {table_name}
             FOR EACH ROW

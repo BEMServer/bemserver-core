@@ -185,45 +185,15 @@ resource StructuralElementProperty{
 }
 
 
-resource SiteProperty{
+resource StructuralElement {
     permissions = ["create", "read", "update", "delete"];
-    roles = ["user"];
-
-    "read" if "user";
 }
-
-
-resource BuildingProperty{
-    permissions = ["create", "read", "update", "delete"];
-    roles = ["user"];
-
-    "read" if "user";
-}
-
-
-resource StoreyProperty{
-    permissions = ["create", "read", "update", "delete"];
-    roles = ["user"];
-
-    "read" if "user";
-}
-
-
-resource SpaceProperty{
-    permissions = ["create", "read", "update", "delete"];
-    roles = ["user"];
-
-    "read" if "user";
-}
-
-
-resource ZoneProperty{
-    permissions = ["create", "read", "update", "delete"];
-    roles = ["user"];
-
-    "read" if "user";
-}
-
+has_permission(user: User, "read", se:StructuralElement) if
+    has_role(user, "member", se.site.campaign) or
+    has_role(user, "member", se.building.site) or
+    has_role(user, "member", se.storey.building) or
+    has_role(user, "member", se.space.storey) or
+    has_role(user, "member", se.zone.campaign);
 
 resource Site {
     permissions = ["create", "read", "update", "delete"];
@@ -258,7 +228,7 @@ has_permission(user: User, "read", zone:Zone) if
 
 # TODO: Oso issue: checking both site and timeseries involves user x group
 # twice and triggers an error in Oso when building the query:
-# "Type `UserGroup` occurs more than once as the target of a relation"
+# "Type `UserGroup` occurs more than once as the target of a relation"
 # Fortunately, in our case, checking only timeseries is enough because users
 # having access to the timeseries "should" be part of the campaign and
 # therefore should have access to the site.
@@ -299,32 +269,8 @@ has_permission(user: User, "read", tbz:TimeseriesByZone) if
     has_permission(user, "read", tbz.timeseries);
 
 
-resource SitePropertyData {
+resource StructuralElementPropertyData {
     permissions = ["create", "read", "update", "delete"];
 }
-has_permission(user: User, "read", spd:SitePropertyData) if
-    has_permission(user, "read", spd.site);
-
-resource BuildingPropertyData {
-    permissions = ["create", "read", "update", "delete"];
-}
-has_permission(user: User, "read", bpd:BuildingPropertyData) if
-    has_permission(user, "read", bpd.building);
-
-resource StoreyPropertyData {
-    permissions = ["create", "read", "update", "delete"];
-}
-has_permission(user: User, "read", spd:StoreyPropertyData) if
-    has_permission(user, "read", spd.storey);
-
-resource SpacePropertyData {
-    permissions = ["create", "read", "update", "delete"];
-}
-has_permission(user: User, "read", spd:SpacePropertyData) if
-    has_permission(user, "read", spd.space);
-
-resource ZonePropertyData {
-    permissions = ["create", "read", "update", "delete"];
-}
-has_permission(user: User, "read", zpd:ZonePropertyData) if
-    has_permission(user, "read", zpd.zone);
+has_permission(user: User, "read", spd:StructuralElementPropertyData) if
+    has_permission(user, "read", spd.structural_element);

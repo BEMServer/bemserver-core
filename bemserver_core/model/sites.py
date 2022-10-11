@@ -21,71 +21,6 @@ class StructuralElementProperty(AuthMixin, Base):
     unit_symbol = sqla.Column(sqla.String(20))
 
 
-class SiteProperty(AuthMixin, Base):
-    __tablename__ = "site_properties"
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    structural_element_property_id = sqla.Column(
-        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
-    )
-    structural_element_property = sqla.orm.relationship(
-        "StructuralElementProperty",
-        backref=sqla.orm.backref("site_properties", cascade="all, delete-orphan"),
-    )
-
-
-class BuildingProperty(AuthMixin, Base):
-    __tablename__ = "building_properties"
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    structural_element_property_id = sqla.Column(
-        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
-    )
-    structural_element_property = sqla.orm.relationship(
-        "StructuralElementProperty",
-        backref=sqla.orm.backref("building_properties", cascade="all, delete-orphan"),
-    )
-
-
-class StoreyProperty(AuthMixin, Base):
-    __tablename__ = "storey_properties"
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    structural_element_property_id = sqla.Column(
-        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
-    )
-    structural_element_property = sqla.orm.relationship(
-        "StructuralElementProperty",
-        backref=sqla.orm.backref("storey_properties", cascade="all, delete-orphan"),
-    )
-
-
-class SpaceProperty(AuthMixin, Base):
-    __tablename__ = "space_properties"
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    structural_element_property_id = sqla.Column(
-        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
-    )
-    structural_element_property = sqla.orm.relationship(
-        "StructuralElementProperty",
-        backref=sqla.orm.backref("space_properties", cascade="all, delete-orphan"),
-    )
-
-
-class ZoneProperty(AuthMixin, Base):
-    __tablename__ = "zone_properties"
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    structural_element_property_id = sqla.Column(
-        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
-    )
-    structural_element_property = sqla.orm.relationship(
-        "StructuralElementProperty",
-        backref=sqla.orm.backref("zone_properties", cascade="all, delete-orphan"),
-    )
-
-
 class StructuralElement(AuthMixin, Base):
     __tablename__ = "structural_elements"
     __mapper_args__ = {
@@ -97,6 +32,29 @@ class StructuralElement(AuthMixin, Base):
     description = sqla.Column(sqla.String(500))
     ifc_id = sqla.Column(sqla.String(22))
     type_ = sqla.Column(sqla.String(50))
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "site": Relation(
+                    kind="one", other_type="Site", my_field="id", other_field="id"
+                ),
+                "building": Relation(
+                    kind="one", other_type="Building", my_field="id", other_field="id"
+                ),
+                "storey": Relation(
+                    kind="one", other_type="Storey", my_field="id", other_field="id"
+                ),
+                "space": Relation(
+                    kind="one", other_type="Space", my_field="id", other_field="id"
+                ),
+                "zone": Relation(
+                    kind="one", other_type="Zone", my_field="id", other_field="id"
+                ),
+            },
+        )
 
 
 class Site(StructuralElement):
@@ -317,67 +275,33 @@ class Zone(StructuralElement):
         )
 
 
-class SitePropertyData(AuthMixin, Base):
-    __tablename__ = "site_property_data"
-    __table_args__ = (sqla.UniqueConstraint("site_id", "site_property_id"),)
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    site_id = sqla.Column(sqla.ForeignKey("sites.id"), nullable=False)
-    site_property_id = sqla.Column(
-        sqla.ForeignKey("site_properties.id"), nullable=False
-    )
-    value = sqla.Column(sqla.String(100), nullable=False)
-
-    site = sqla.orm.relationship(
-        "Site",
-        backref=sqla.orm.backref("site_property_data", cascade="all, delete-orphan"),
-    )
-    site_property = sqla.orm.relationship(
-        "SiteProperty",
-        backref=sqla.orm.backref("site_property_data", cascade="all, delete-orphan"),
-    )
-
-    @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "site": Relation(
-                    kind="one",
-                    other_type="Site",
-                    my_field="site_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-    def _before_flush(self):
-        # Get property type and try to parse value to ensure its type validity.
-        if (prop := SiteProperty.get_by_id(self.site_property_id)) is not None:
-            prop.structural_element_property.value_type.verify(self.value)
-
-
-class BuildingPropertyData(AuthMixin, Base):
-    __tablename__ = "building_property_data"
-    __table_args__ = (sqla.UniqueConstraint("building_id", "building_property_id"),)
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    building_id = sqla.Column(sqla.ForeignKey("buildings.id"), nullable=False)
-    building_property_id = sqla.Column(
-        sqla.ForeignKey("building_properties.id"), nullable=False
-    )
-    value = sqla.Column(sqla.String(100), nullable=False)
-
-    building = sqla.orm.relationship(
-        "Building",
-        backref=sqla.orm.backref(
-            "building_property_data", cascade="all, delete-orphan"
+class StructuralElementPropertyData(AuthMixin, Base):
+    __tablename__ = "structural_element_property_data"
+    __table_args__ = (
+        sqla.UniqueConstraint(
+            "structural_element_id", "structural_element_property_id"
         ),
     )
-    building_property = sqla.orm.relationship(
-        "BuildingProperty",
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    structural_element_id = sqla.Column(
+        sqla.ForeignKey("structural_elements.id"), nullable=False
+    )
+    structural_element_property_id = sqla.Column(
+        sqla.ForeignKey("structural_element_properties.id"), nullable=False
+    )
+    value = sqla.Column(sqla.String(100), nullable=False)
+
+    structural_element = sqla.orm.relationship(
+        "StructuralElement",
         backref=sqla.orm.backref(
-            "building_property_data", cascade="all, delete-orphan"
+            "structural_element_property_data", cascade="all, delete-orphan"
+        ),
+    )
+    structural_element_property = sqla.orm.relationship(
+        "StructuralElementProperty",
+        backref=sqla.orm.backref(
+            "structural_element_property_data", cascade="all, delete-orphan"
         ),
     )
 
@@ -386,10 +310,10 @@ class BuildingPropertyData(AuthMixin, Base):
         auth.register_class(
             cls,
             fields={
-                "building": Relation(
+                "structural_element": Relation(
                     kind="one",
-                    other_type="Building",
-                    my_field="building_id",
+                    other_type="StructuralElement",
+                    my_field="structural_element_id",
                     other_field="id",
                 ),
             },
@@ -397,128 +321,12 @@ class BuildingPropertyData(AuthMixin, Base):
 
     def _before_flush(self):
         # Get property type and try to parse value to ensure its type validity.
-        if (prop := BuildingProperty.get_by_id(self.building_property_id)) is not None:
-            prop.structural_element_property.value_type.verify(self.value)
-
-
-class StoreyPropertyData(AuthMixin, Base):
-    __tablename__ = "storey_property_data"
-    __table_args__ = (sqla.UniqueConstraint("storey_id", "storey_property_id"),)
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    storey_id = sqla.Column(sqla.ForeignKey("storeys.id"), nullable=False)
-    storey_property_id = sqla.Column(
-        sqla.ForeignKey("storey_properties.id"), nullable=False
-    )
-    value = sqla.Column(sqla.String(100), nullable=False)
-
-    storey = sqla.orm.relationship(
-        "Storey",
-        backref=sqla.orm.backref("storey_property_data", cascade="all, delete-orphan"),
-    )
-    storey_property = sqla.orm.relationship(
-        "StoreyProperty",
-        backref=sqla.orm.backref("storey_property_data", cascade="all, delete-orphan"),
-    )
-
-    @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "storey": Relation(
-                    kind="one",
-                    other_type="Storey",
-                    my_field="storey_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-    def _before_flush(self):
-        # Get property type and try to parse value to ensure its type validity.
-        if (prop := StoreyProperty.get_by_id(self.storey_property_id)) is not None:
-            prop.structural_element_property.value_type.verify(self.value)
-
-
-class SpacePropertyData(AuthMixin, Base):
-    __tablename__ = "space_property_data"
-    __table_args__ = (sqla.UniqueConstraint("space_id", "space_property_id"),)
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    space_id = sqla.Column(sqla.ForeignKey("spaces.id"), nullable=False)
-    space_property_id = sqla.Column(
-        sqla.ForeignKey("space_properties.id"), nullable=False
-    )
-    value = sqla.Column(sqla.String(100), nullable=False)
-
-    space = sqla.orm.relationship(
-        "Space",
-        backref=sqla.orm.backref("space_property_data", cascade="all, delete-orphan"),
-    )
-    space_property = sqla.orm.relationship(
-        "SpaceProperty",
-        backref=sqla.orm.backref("space_property_data", cascade="all, delete-orphan"),
-    )
-
-    @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "space": Relation(
-                    kind="one",
-                    other_type="Space",
-                    my_field="space_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-    def _before_flush(self):
-        # Get property type and try to parse value to ensure its type validity.
-        if (prop := SpaceProperty.get_by_id(self.space_property_id)) is not None:
-            prop.structural_element_property.value_type.verify(self.value)
-
-
-class ZonePropertyData(AuthMixin, Base):
-    __tablename__ = "zone_property_data"
-    __table_args__ = (sqla.UniqueConstraint("zone_id", "zone_property_id"),)
-
-    id = sqla.Column(sqla.Integer, primary_key=True)
-    zone_id = sqla.Column(sqla.ForeignKey("zones.id"), nullable=False)
-    zone_property_id = sqla.Column(
-        sqla.ForeignKey("zone_properties.id"), nullable=False
-    )
-    value = sqla.Column(sqla.String(100), nullable=False)
-
-    zone = sqla.orm.relationship(
-        "Zone",
-        backref=sqla.orm.backref("zone_property_data", cascade="all, delete-orphan"),
-    )
-    zone_property = sqla.orm.relationship(
-        "ZoneProperty",
-        backref=sqla.orm.backref("zone_property_data", cascade="all, delete-orphan"),
-    )
-
-    @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "zone": Relation(
-                    kind="one",
-                    other_type="Zone",
-                    my_field="zone_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-    def _before_flush(self):
-        # Get property type and try to parse value to ensure its type validity.
-        if (prop := ZoneProperty.get_by_id(self.zone_property_id)) is not None:
-            prop.structural_element_property.value_type.verify(self.value)
+        if (
+            prop := StructuralElementProperty.get_by_id(
+                self.structural_element_property_id
+            )
+        ) is not None:
+            prop.value_type.verify(self.value)
 
 
 def init_db_structural_elements_triggers():
@@ -534,20 +342,7 @@ def init_db_structural_elements_triggers():
         Space.storey_id,
         Zone.campaign_id,
         StructuralElementProperty.value_type,
-        SiteProperty.structural_element_property_id,
-        BuildingProperty.structural_element_property_id,
-        StoreyProperty.structural_element_property_id,
-        SpaceProperty.structural_element_property_id,
-        ZoneProperty.structural_element_property_id,
-        SitePropertyData.site_id,
-        SitePropertyData.site_property_id,
-        BuildingPropertyData.building_id,
-        BuildingPropertyData.building_property_id,
-        StoreyPropertyData.storey_id,
-        StoreyPropertyData.storey_property_id,
-        SpacePropertyData.space_id,
-        SpacePropertyData.space_property_id,
-        ZonePropertyData.zone_id,
-        ZonePropertyData.zone_property_id,
+        StructuralElementPropertyData.structural_element_id,
+        StructuralElementPropertyData.structural_element_property_id,
     )
     db.session.commit()
