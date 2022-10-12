@@ -45,7 +45,12 @@ from .events import (  # noqa
     EventLevel,
     Event,
 )
-
+from .energy import (
+    EnergySource,
+    EnergyEndUse,
+    EnergyConsumptionTimeseriesBySite,
+    EnergyConsumptionTimeseriesByBuilding,
+)
 
 __all__ = [
     "User",
@@ -86,6 +91,10 @@ __all__ = [
     "EventState",
     "EventLevel",
     "Event",
+    "EnergySource",
+    "EnergyEndUse",
+    "EnergyConsumptionTimeseriesBySite",
+    "EnergyConsumptionTimeseriesByBuilding",
 ]
 
 
@@ -127,6 +136,10 @@ AUTH_MODEL_CLASSES = [
     EventState,
     EventLevel,
     Event,
+    EnergySource,
+    EnergyEndUse,
+    EnergyConsumptionTimeseriesBySite,
+    EnergyConsumptionTimeseriesByBuilding,
 ]
 
 

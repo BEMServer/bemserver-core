@@ -33,6 +33,7 @@ def setup_db():
     model.timeseries.init_db_timeseries()
     model.timeseries_data.init_db_timeseries_data()
     model.sites.init_db_structural_elements_triggers()
+    model.energy.init_db_energy()
 
 
 @click.command()
