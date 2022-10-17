@@ -25,6 +25,8 @@ from bemserver_core.model import (
     TimeseriesByStorey,
     TimeseriesBySpace,
     TimeseriesByZone,
+    EnergyConsumptionTimeseriesBySite,
+    EnergyConsumptionTimeseriesByBuilding,
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
@@ -509,6 +511,8 @@ class TestSiteModel:
     @pytest.mark.usefixtures("spaces")
     @pytest.mark.usefixtures("site_property_data")
     @pytest.mark.usefixtures("timeseries_by_sites")
+    @pytest.mark.usefixtures("energy_consumption_timeseries_by_sites")
+    @pytest.mark.usefixtures("energy_consumption_timeseries_by_buildings")
     def test_site_delete_cascade(self, users, sites):
         admin_user = users[0]
         site_1 = sites[0]
@@ -519,6 +523,8 @@ class TestSiteModel:
             assert len(list(Space.get())) == 2
             assert len(list(SitePropertyData.get())) == 4
             assert len(list(TimeseriesBySite.get())) == 2
+            assert len(list(EnergyConsumptionTimeseriesBySite.get())) == 2
+            assert len(list(EnergyConsumptionTimeseriesByBuilding.get())) == 2
 
             site_1.delete()
             db.session.commit()
@@ -527,6 +533,8 @@ class TestSiteModel:
             assert len(list(Space.get())) == 1
             assert len(list(SitePropertyData.get())) == 3
             assert len(list(TimeseriesBySite.get())) == 1
+            assert len(list(EnergyConsumptionTimeseriesBySite.get())) == 1
+            assert len(list(EnergyConsumptionTimeseriesByBuilding.get())) == 1
 
     def test_site_authorizations_as_admin(self, users, campaigns):
         admin_user = users[0]

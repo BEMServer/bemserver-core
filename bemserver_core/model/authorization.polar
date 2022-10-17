@@ -258,7 +258,7 @@ has_permission(user: User, "read", zone:Zone) if
 
 # TODO: Oso issue: checking both site and timeseries involves user x group
 # twice and triggers an error in Oso when building the query:
-# "Type `UserGroup` occurs more than once as the target of a relation"
+# "Type `UserGroup` occurs more than once as the target of a relation"
 # Fortunately, in our case, checking only timeseries is enough because users
 # having access to the timeseries "should" be part of the campaign and
 # therefore should have access to the site.
@@ -328,3 +328,30 @@ resource ZonePropertyData {
 }
 has_permission(user: User, "read", zpd:ZonePropertyData) if
     has_permission(user, "read", zpd.zone);
+
+
+resource EnergySource {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+resource EnergyEndUse {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+resource EnergyConsumptionTimeseriesBySite {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", ecbs: EnergyConsumptionTimeseriesBySite) if
+    has_permission(user, "read_data", ecbs.timeseries);
+
+resource EnergyConsumptionTimeseriesByBuilding {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", ecbb: EnergyConsumptionTimeseriesByBuilding) if
+    has_permission(user, "read_data", ecbb.timeseries);

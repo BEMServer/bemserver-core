@@ -723,6 +723,44 @@ def zone_property_data(bemservercore, zones, zone_properties):
 
 
 @pytest.fixture
+def energy_consumption_timeseries_by_sites(bemservercore, timeseries, sites):
+    with OpenBar():
+        ectbs_1 = model.EnergyConsumptionTimeseriesBySite.new(
+            site_id=sites[0].id,
+            source_id=1,
+            end_use_id=1,
+            timeseries_id=timeseries[0].id,
+        )
+        ectbs_2 = model.EnergyConsumptionTimeseriesBySite.new(
+            site_id=sites[1].id,
+            source_id=2,
+            end_use_id=2,
+            timeseries_id=timeseries[1].id,
+        )
+        db.session.commit()
+    return (ectbs_1, ectbs_2)
+
+
+@pytest.fixture
+def energy_consumption_timeseries_by_buildings(bemservercore, timeseries, buildings):
+    with OpenBar():
+        ectbb_1 = model.EnergyConsumptionTimeseriesByBuilding.new(
+            building_id=buildings[0].id,
+            source_id=1,
+            end_use_id=1,
+            timeseries_id=timeseries[0].id,
+        )
+        ectbb_2 = model.EnergyConsumptionTimeseriesByBuilding.new(
+            building_id=buildings[1].id,
+            source_id=2,
+            end_use_id=2,
+            timeseries_id=timeseries[1].id,
+        )
+        db.session.commit()
+    return (ectbb_1, ectbb_2)
+
+
+@pytest.fixture
 def st_cleanups_by_campaigns(bemservercore, campaigns):
     with OpenBar():
         st_cbc_1 = scheduled_tasks.ST_CleanupByCampaign.new(campaign_id=campaigns[0].id)
