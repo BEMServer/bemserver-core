@@ -1,8 +1,6 @@
 include LICENSE
 
-include bemserver_core/authorization.polar
-include bemserver_core/model/authorization.polar
-include bemserver_core/scheduled_tasks/authorization.polar
+recursive-include bemserver_core *.polar
 
 graft tests
 include tox.ini
