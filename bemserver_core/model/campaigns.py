@@ -31,7 +31,7 @@ class Campaign(AuthMixin, Base):
 
 
 class CampaignScope(AuthMixin, Base):
-    __tablename__ = "campaign_scopes"
+    __tablename__ = "c_scopes"
     __table_args__ = (sqla.UniqueConstraint("campaign_id", "name"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -62,12 +62,12 @@ class CampaignScope(AuthMixin, Base):
 class UserGroupByCampaign(AuthMixin, Base):
     """UserGroup x Campaign associations"""
 
-    __tablename__ = "user_groups_by_campaigns"
+    __tablename__ = "u_groups_by_campaigns"
     __table_args__ = (sqla.UniqueConstraint("campaign_id", "user_group_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
-    user_group_id = sqla.Column(sqla.ForeignKey("user_groups.id"), nullable=False)
+    user_group_id = sqla.Column(sqla.ForeignKey("u_groups.id"), nullable=False)
 
     campaign = sqla.orm.relationship(
         Campaign,
@@ -100,14 +100,12 @@ class UserGroupByCampaign(AuthMixin, Base):
 class UserGroupByCampaignScope(AuthMixin, Base):
     """UserGroup x CampaignScope associations"""
 
-    __tablename__ = "user_groups_by_campaign_scopes"
+    __tablename__ = "u_groups_by_c_scopes"
     __table_args__ = (sqla.UniqueConstraint("campaign_scope_id", "user_group_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
-    campaign_scope_id = sqla.Column(
-        sqla.ForeignKey("campaign_scopes.id"), nullable=False
-    )
-    user_group_id = sqla.Column(sqla.ForeignKey("user_groups.id"), nullable=False)
+    campaign_scope_id = sqla.Column(sqla.ForeignKey("c_scopes.id"), nullable=False)
+    user_group_id = sqla.Column(sqla.ForeignKey("u_groups.id"), nullable=False)
 
     campaign_scope = sqla.orm.relationship(
         CampaignScope,

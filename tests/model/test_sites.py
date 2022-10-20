@@ -158,7 +158,7 @@ class TestSitePropertyModel:
             db.session.add(site_p_1)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="structural_element_property_id cannot be modified",
+                match="struct_elem_prop_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
@@ -206,7 +206,7 @@ class TestSitePropertyModel:
             db.session.add(sp)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="structural_element_property_id cannot be modified",
+                match="struct_elem_prop_id cannot be modified",
             ):
                 db.session.commit()
 
@@ -232,7 +232,7 @@ class TestBuildingPropertyModel:
             db.session.add(building_p_1)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="structural_element_property_id cannot be modified",
+                match="struct_elem_prop_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
@@ -280,7 +280,7 @@ class TestBuildingPropertyModel:
             db.session.add(bp)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="structural_element_property_id cannot be modified",
+                match="struct_elem_prop_id cannot be modified",
             ):
                 db.session.commit()
 
@@ -306,7 +306,7 @@ class TestStoreyPropertyModel:
             db.session.add(storey_p_1)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="structural_element_property_id cannot be modified",
+                match="struct_elem_prop_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
@@ -354,7 +354,7 @@ class TestStoreyPropertyModel:
             db.session.add(sp)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="structural_element_property_id cannot be modified",
+                match="struct_elem_prop_id cannot be modified",
             ):
                 db.session.commit()
 
@@ -380,7 +380,7 @@ class TestSpacePropertyModel:
             db.session.add(space_p_1)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="structural_element_property_id cannot be modified",
+                match="struct_elem_prop_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
@@ -428,7 +428,7 @@ class TestSpacePropertyModel:
             db.session.add(sp)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="structural_element_property_id cannot be modified",
+                match="struct_elem_prop_id cannot be modified",
             ):
                 db.session.commit()
 
@@ -454,7 +454,7 @@ class TestZonePropertyModel:
             db.session.add(zone_p_1)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="structural_element_property_id cannot be modified",
+                match="struct_elem_prop_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
@@ -502,7 +502,7 @@ class TestZonePropertyModel:
             db.session.add(zp)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="structural_element_property_id cannot be modified",
+                match="struct_elem_prop_id cannot be modified",
             ):
                 db.session.commit()
 
@@ -1184,7 +1184,7 @@ class TestSitePropertyDataModel:
             db.session.add(spd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="site_property_id cannot be modified",
+                match="site_prop_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
@@ -1393,7 +1393,7 @@ class TestBuildingPropertyDataModel:
             db.session.add(bpd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="building_property_id cannot be modified",
+                match="building_prop_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
@@ -1600,7 +1600,7 @@ class TestStoreyPropertyDataModel:
             db.session.add(spd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="storey_property_id cannot be modified",
+                match="storey_prop_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
@@ -1805,7 +1805,7 @@ class TestSpacePropertyDataModel:
             db.session.add(spd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="space_property_id cannot be modified",
+                match="space_prop_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
@@ -2008,7 +2008,7 @@ class TestZonePropertyDataModel:
             db.session.add(zpd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
-                match="zone_property_id cannot be modified",
+                match="zone_prop_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()

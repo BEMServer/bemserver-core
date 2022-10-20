@@ -268,5 +268,5 @@ def make_columns_read_only(*fields):
     """
     for field in fields:
         db.session.execute(
-            _generate_ddl_trigger_read_only(field.class_.__table__, field.key)
+            _generate_ddl_trigger_read_only(field.class_.__table__, field.name)
         )

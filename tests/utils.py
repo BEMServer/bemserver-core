@@ -29,7 +29,7 @@ def create_timeseries_data(timeseries, data_state, timestamps, values):
         )
         in_df = in_df.melt(
             value_vars=in_df.columns,
-            var_name="timeseries_by_data_state_id",
+            var_name="ts_by_data_state_id",
             ignore_index=False,
         )
         data_rows = [

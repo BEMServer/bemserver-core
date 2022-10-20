@@ -68,7 +68,7 @@ class User(AuthMixin, Base):
 
 
 class UserGroup(AuthMixin, Base):
-    __tablename__ = "user_groups"
+    __tablename__ = "u_groups"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
@@ -97,12 +97,12 @@ class UserGroup(AuthMixin, Base):
 class UserByUserGroup(AuthMixin, Base):
     """UserGroup x User associations"""
 
-    __tablename__ = "users_by_user_groups"
+    __tablename__ = "users_by_u_groups"
     __table_args__ = (sqla.UniqueConstraint("user_id", "user_group_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     user_id = sqla.Column(sqla.ForeignKey("users.id"), nullable=False)
-    user_group_id = sqla.Column(sqla.ForeignKey("user_groups.id"), nullable=False)
+    user_group_id = sqla.Column(sqla.ForeignKey("u_groups.id"), nullable=False)
 
     user = sqla.orm.relationship(
         User,
