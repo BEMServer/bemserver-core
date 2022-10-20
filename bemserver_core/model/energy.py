@@ -6,27 +6,27 @@ from bemserver_core.authorization import AuthMixin, auth, Relation
 
 
 class EnergySource(AuthMixin, Base):
-    __tablename__ = "energy_sources"
+    __tablename__ = "ener_sources"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
 
 
 class EnergyEndUse(AuthMixin, Base):
-    __tablename__ = "energy_end_uses"
+    __tablename__ = "ener_end_uses"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
 
 
 class EnergyConsumptionTimeseriesBySite(AuthMixin, Base):
-    __tablename__ = "energy_consumption_ts_by_site"
+    __tablename__ = "ener_cons_ts_by_site"
     __table_args__ = (sqla.UniqueConstraint("site_id", "source_id", "end_use_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     site_id = sqla.Column(sqla.ForeignKey("sites.id"), nullable=False)
-    source_id = sqla.Column(sqla.ForeignKey("energy_sources.id"), nullable=False)
-    end_use_id = sqla.Column(sqla.ForeignKey("energy_end_uses.id"), nullable=False)
+    source_id = sqla.Column(sqla.ForeignKey("ener_sources.id"), nullable=False)
+    end_use_id = sqla.Column(sqla.ForeignKey("ener_end_uses.id"), nullable=False)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
     # Multiply TS values by wh_conversion_factor to get Wh
     wh_conversion_factor = sqla.Column(sqla.Integer, nullable=False, default=1)
@@ -72,13 +72,13 @@ class EnergyConsumptionTimeseriesBySite(AuthMixin, Base):
 
 
 class EnergyConsumptionTimeseriesByBuilding(AuthMixin, Base):
-    __tablename__ = "energy_consumption_ts_by_building"
+    __tablename__ = "ener_cons_ts_by_building"
     __table_args__ = (sqla.UniqueConstraint("building_id", "source_id", "end_use_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     building_id = sqla.Column(sqla.ForeignKey("buildings.id"), nullable=False)
-    source_id = sqla.Column(sqla.ForeignKey("energy_sources.id"), nullable=False)
-    end_use_id = sqla.Column(sqla.ForeignKey("energy_end_uses.id"), nullable=False)
+    source_id = sqla.Column(sqla.ForeignKey("ener_sources.id"), nullable=False)
+    end_use_id = sqla.Column(sqla.ForeignKey("ener_end_uses.id"), nullable=False)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
     # Multiply TS values by kwh_conversion_factor to get Wh
     wh_conversion_factor = sqla.Column(sqla.Integer, nullable=False, default=1)
@@ -124,7 +124,7 @@ class EnergyConsumptionTimeseriesByBuilding(AuthMixin, Base):
 
 
 def init_db_energy():
-    """Create default energu sources and end uses
+    """Create default energy sources and end uses
 
     This function is meant to be used for tests or dev setups after create_all.
     Production setups should rely on migration scripts.

@@ -8,7 +8,7 @@ from bemserver_core.common import PropertyType
 
 
 class StructuralElementProperty(AuthMixin, Base):
-    __tablename__ = "structural_element_properties"
+    __tablename__ = "struct_elem_props"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
@@ -22,11 +22,11 @@ class StructuralElementProperty(AuthMixin, Base):
 
 
 class SiteProperty(AuthMixin, Base):
-    __tablename__ = "site_properties"
+    __tablename__ = "site_props"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     structural_element_property_id = sqla.Column(
-        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
+        sqla.ForeignKey("struct_elem_props.id"), unique=True, nullable=False
     )
     structural_element_property = sqla.orm.relationship(
         "StructuralElementProperty",
@@ -35,11 +35,11 @@ class SiteProperty(AuthMixin, Base):
 
 
 class BuildingProperty(AuthMixin, Base):
-    __tablename__ = "building_properties"
+    __tablename__ = "building_props"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     structural_element_property_id = sqla.Column(
-        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
+        sqla.ForeignKey("struct_elem_props.id"), unique=True, nullable=False
     )
     structural_element_property = sqla.orm.relationship(
         "StructuralElementProperty",
@@ -48,11 +48,11 @@ class BuildingProperty(AuthMixin, Base):
 
 
 class StoreyProperty(AuthMixin, Base):
-    __tablename__ = "storey_properties"
+    __tablename__ = "storey_props"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     structural_element_property_id = sqla.Column(
-        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
+        sqla.ForeignKey("struct_elem_props.id"), unique=True, nullable=False
     )
     structural_element_property = sqla.orm.relationship(
         "StructuralElementProperty",
@@ -61,11 +61,11 @@ class StoreyProperty(AuthMixin, Base):
 
 
 class SpaceProperty(AuthMixin, Base):
-    __tablename__ = "space_properties"
+    __tablename__ = "space_props"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     structural_element_property_id = sqla.Column(
-        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
+        sqla.ForeignKey("struct_elem_props.id"), unique=True, nullable=False
     )
     structural_element_property = sqla.orm.relationship(
         "StructuralElementProperty",
@@ -74,11 +74,11 @@ class SpaceProperty(AuthMixin, Base):
 
 
 class ZoneProperty(AuthMixin, Base):
-    __tablename__ = "zone_properties"
+    __tablename__ = "zone_props"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     structural_element_property_id = sqla.Column(
-        sqla.ForeignKey("structural_element_properties.id"), unique=True, nullable=False
+        sqla.ForeignKey("struct_elem_props.id"), unique=True, nullable=False
     )
     structural_element_property = sqla.orm.relationship(
         "StructuralElementProperty",
@@ -299,9 +299,7 @@ class SitePropertyData(AuthMixin, Base):
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     site_id = sqla.Column(sqla.ForeignKey("sites.id"), nullable=False)
-    site_property_id = sqla.Column(
-        sqla.ForeignKey("site_properties.id"), nullable=False
-    )
+    site_property_id = sqla.Column(sqla.ForeignKey("site_props.id"), nullable=False)
     value = sqla.Column(sqla.String(100), nullable=False)
 
     site = sqla.orm.relationship(
@@ -334,13 +332,13 @@ class SitePropertyData(AuthMixin, Base):
 
 
 class BuildingPropertyData(AuthMixin, Base):
-    __tablename__ = "building_property_data"
+    __tablename__ = "building_prop_data"
     __table_args__ = (sqla.UniqueConstraint("building_id", "building_property_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     building_id = sqla.Column(sqla.ForeignKey("buildings.id"), nullable=False)
     building_property_id = sqla.Column(
-        sqla.ForeignKey("building_properties.id"), nullable=False
+        sqla.ForeignKey("building_props.id"), nullable=False
     )
     value = sqla.Column(sqla.String(100), nullable=False)
 
@@ -378,14 +376,12 @@ class BuildingPropertyData(AuthMixin, Base):
 
 
 class StoreyPropertyData(AuthMixin, Base):
-    __tablename__ = "storey_property_data"
+    __tablename__ = "storey_prop_data"
     __table_args__ = (sqla.UniqueConstraint("storey_id", "storey_property_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     storey_id = sqla.Column(sqla.ForeignKey("storeys.id"), nullable=False)
-    storey_property_id = sqla.Column(
-        sqla.ForeignKey("storey_properties.id"), nullable=False
-    )
+    storey_property_id = sqla.Column(sqla.ForeignKey("storey_props.id"), nullable=False)
     value = sqla.Column(sqla.String(100), nullable=False)
 
     storey = sqla.orm.relationship(
@@ -418,14 +414,12 @@ class StoreyPropertyData(AuthMixin, Base):
 
 
 class SpacePropertyData(AuthMixin, Base):
-    __tablename__ = "space_property_data"
+    __tablename__ = "space_prop_data"
     __table_args__ = (sqla.UniqueConstraint("space_id", "space_property_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     space_id = sqla.Column(sqla.ForeignKey("spaces.id"), nullable=False)
-    space_property_id = sqla.Column(
-        sqla.ForeignKey("space_properties.id"), nullable=False
-    )
+    space_property_id = sqla.Column(sqla.ForeignKey("space_props.id"), nullable=False)
     value = sqla.Column(sqla.String(100), nullable=False)
 
     space = sqla.orm.relationship(
@@ -458,14 +452,12 @@ class SpacePropertyData(AuthMixin, Base):
 
 
 class ZonePropertyData(AuthMixin, Base):
-    __tablename__ = "zone_property_data"
+    __tablename__ = "zone_prop_data"
     __table_args__ = (sqla.UniqueConstraint("zone_id", "zone_property_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     zone_id = sqla.Column(sqla.ForeignKey("zones.id"), nullable=False)
-    zone_property_id = sqla.Column(
-        sqla.ForeignKey("zone_properties.id"), nullable=False
-    )
+    zone_property_id = sqla.Column(sqla.ForeignKey("zone_props.id"), nullable=False)
     value = sqla.Column(sqla.String(100), nullable=False)
 
     zone = sqla.orm.relationship(

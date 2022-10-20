@@ -15,7 +15,7 @@ from bemserver_core.exceptions import TimeseriesNotFoundError
 
 
 class TimeseriesProperty(AuthMixin, Base):
-    __tablename__ = "timeseries_properties"
+    __tablename__ = "ts_props"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
@@ -29,7 +29,7 @@ class TimeseriesProperty(AuthMixin, Base):
 
 
 class TimeseriesDataState(AuthMixin, Base):
-    __tablename__ = "timeseries_data_states"
+    __tablename__ = "ts_data_states"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
@@ -44,9 +44,7 @@ class Timeseries(AuthMixin, Base):
     description = sqla.Column(sqla.String(500))
     unit_symbol = sqla.Column(sqla.String(20))
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
-    campaign_scope_id = sqla.Column(
-        sqla.ForeignKey("campaign_scopes.id"), nullable=False
-    )
+    campaign_scope_id = sqla.Column(sqla.ForeignKey("c_scopes.id"), nullable=False)
 
     campaign = sqla.orm.relationship(
         "Campaign", backref=sqla.orm.backref("timeseries", cascade="all, delete-orphan")
@@ -283,14 +281,12 @@ class Timeseries(AuthMixin, Base):
 class TimeseriesPropertyData(AuthMixin, Base):
     """Timeseries property data"""
 
-    __tablename__ = "timeseries_property_data"
+    __tablename__ = "ts_prop_data"
     __table_args__ = (sqla.UniqueConstraint("timeseries_id", "property_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
-    property_id = sqla.Column(
-        sqla.ForeignKey("timeseries_properties.id"), nullable=False
-    )
+    property_id = sqla.Column(sqla.ForeignKey("ts_props.id"), nullable=False)
     value = sqla.Column(sqla.String(100), nullable=False)
 
     timeseries = sqla.orm.relationship(
@@ -321,14 +317,12 @@ class TimeseriesPropertyData(AuthMixin, Base):
 
 
 class TimeseriesByDataState(AuthMixin, Base):
-    __tablename__ = "timeseries_by_data_states"
+    __tablename__ = "ts_by_data_states"
     __table_args__ = (sqla.UniqueConstraint("timeseries_id", "data_state_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
-    data_state_id = sqla.Column(
-        sqla.ForeignKey("timeseries_data_states.id"), nullable=False
-    )
+    data_state_id = sqla.Column(sqla.ForeignKey("ts_data_states.id"), nullable=False)
 
     timeseries = sqla.orm.relationship(
         "Timeseries",
@@ -359,7 +353,7 @@ class TimeseriesByDataState(AuthMixin, Base):
 
 
 class TimeseriesBySite(AuthMixin, Base):
-    __tablename__ = "timeseries_by_sites"
+    __tablename__ = "ts_by_sites"
     __table_args__ = (sqla.UniqueConstraint("site_id", "timeseries_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -397,7 +391,7 @@ class TimeseriesBySite(AuthMixin, Base):
 
 
 class TimeseriesByBuilding(AuthMixin, Base):
-    __tablename__ = "timeseries_by_buildings"
+    __tablename__ = "ts_by_buildings"
     __table_args__ = (sqla.UniqueConstraint("building_id", "timeseries_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -439,7 +433,7 @@ class TimeseriesByBuilding(AuthMixin, Base):
 
 
 class TimeseriesByStorey(AuthMixin, Base):
-    __tablename__ = "timeseries_by_storeys"
+    __tablename__ = "ts_by_storeys"
     __table_args__ = (sqla.UniqueConstraint("storey_id", "timeseries_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -477,7 +471,7 @@ class TimeseriesByStorey(AuthMixin, Base):
 
 
 class TimeseriesBySpace(AuthMixin, Base):
-    __tablename__ = "timeseries_by_spaces"
+    __tablename__ = "ts_by_spaces"
     __table_args__ = (sqla.UniqueConstraint("space_id", "timeseries_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)

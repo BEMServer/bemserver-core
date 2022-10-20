@@ -97,7 +97,7 @@ class ST_CleanupByCampaign(AuthMixin, Base):
 
 
 class ST_CleanupByTimeseries(AuthMixin, Base):
-    __tablename__ = "st_cleanups_by_timeseries"
+    __tablename__ = "st_cleanups_by_ts"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     timeseries_id = sqla.Column(

@@ -5,7 +5,7 @@ from bemserver_core.database import Base, db
 
 
 class TimeseriesData(Base):
-    __tablename__ = "timeseries_data"
+    __tablename__ = "ts_data"
     __table_args__ = (
         sqla.PrimaryKeyConstraint("timeseries_by_data_state_id", "timestamp"),
     )
@@ -13,7 +13,7 @@ class TimeseriesData(Base):
     timestamp = sqla.Column(sqla.DateTime(timezone=True))
     timeseries_by_data_state_id = sqla.Column(
         sqla.Integer,
-        sqla.ForeignKey("timeseries_by_data_states.id"),
+        sqla.ForeignKey("ts_by_data_states.id"),
         nullable=False,
     )
     value = sqla.Column(sqla.Float)

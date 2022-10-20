@@ -308,11 +308,11 @@ class TimeseriesDataIO:
             )
 
         query += (
-            "FROM timeseries_data, timeseries, timeseries_by_data_states "
-            "WHERE timeseries_data.timeseries_by_data_state_id = "
-            "      timeseries_by_data_states.id "
-            "  AND timeseries_by_data_states.data_state_id = :data_state_id "
-            "  AND timeseries_by_data_states.timeseries_id = timeseries.id "
+            "FROM ts_data, timeseries, ts_by_data_states "
+            "WHERE ts_data.timeseries_by_data_state_id = "
+            "      ts_by_data_states.id "
+            "  AND ts_by_data_states.data_state_id = :data_state_id "
+            "  AND ts_by_data_states.timeseries_id = timeseries.id "
             "  AND timeseries_id IN :timeseries_ids "
             "  AND timestamp >= :start_dt AND timestamp < :end_dt "
             "GROUP BY bucket, timeseries.id "
