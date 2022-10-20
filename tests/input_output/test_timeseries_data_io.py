@@ -435,7 +435,7 @@ class TestTimeseriesDataIO:
 
             ts_l = (ts_0, ts_2, ts_4)
 
-            # Export CSV: UTC count 1 day
+            # UTC count 1 day
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 end_dt,
@@ -466,7 +466,7 @@ class TestTimeseriesDataIO:
             )
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC count 2 days
+            # UTC count 2 days
             data_df = tsdio.get_timeseries_buckets_data(
                 # Also check that start_dt TZ doesn't matter
                 start_dt.astimezone(dt.timezone(dt.timedelta(hours=12))),
@@ -498,7 +498,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC count 2 days with gapfill
+            # UTC count 2 days with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 end_dt + dt.timedelta(days=3),
@@ -530,7 +530,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC count 1 day, 3 hour (and a half) offset
+            # UTC count 1 day, 3 hour (and a half) offset
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt + dt.timedelta(hours=3, minutes=30),
                 end_dt,
@@ -562,7 +562,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: local TZ count 1 week
+            # Local TZ count 1 week
             data_df = tsdio.get_timeseries_buckets_data(
                 # Check start_dt TZ doesn't change alignment to 00:00 local TZ
                 dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
@@ -595,7 +595,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC count 12 hours
+            # UTC count 12 hours
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 end_dt,
@@ -629,7 +629,7 @@ class TestTimeseriesDataIO:
             )
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: local TZ avg
+            # Local TZ avg
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
                 end_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
@@ -661,7 +661,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC sum, with gapfill
+            # UTC sum, with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 end_dt + dt.timedelta(days=1),
@@ -694,7 +694,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC min, with gapfill
+            # UTC min, with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 end_dt + dt.timedelta(days=1),
@@ -727,7 +727,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC max, with gapfill
+            # UTC max, with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 end_dt + dt.timedelta(days=1),
@@ -760,7 +760,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC count 1 day by ID
+            # UTC count 1 day by ID
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 end_dt,
@@ -791,7 +791,24 @@ class TestTimeseriesDataIO:
             )
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: invalid aggregation
+            # No timeseries
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt, end_dt, [], ds_1, 1, "day"
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame({}, index=index)
+            assert data_df.equals(expected_data_df)
+
+            # Invalid aggregation
             with pytest.raises(TimeseriesDataIOInvalidAggregationError):
                 tsdio.get_timeseries_buckets_data(
                     start_dt,
@@ -921,7 +938,7 @@ class TestTimeseriesDataIO:
 
             ts_l = (ts_0, ts_2, ts_4)
 
-            # Export CSV: UTC count year
+            # UTC count year
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt, end_dt, ts_l, ds_1, 1, "year", "count", col_label="name"
             )
@@ -945,7 +962,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC count year, with gapfill
+            # UTC count year, with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 end_dt + dt.timedelta(days=100),
@@ -977,7 +994,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC count 2 year
+            # UTC count 2 year
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt, end_dt, ts_l, ds_1, 2, "year", "count", col_label="name"
             )
@@ -1000,7 +1017,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: local TZ count year (first bucket incomplete)
+            # Local TZ count year (first bucket incomplete)
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt_plus_3_months.replace(tzinfo=ZoneInfo("Europe/Paris")),
                 end_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
@@ -1042,7 +1059,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC avg month, with gapfill
+            # UTC avg month, with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
                 # Exact start day does not matter, data is aligned to month
                 start_dt - dt.timedelta(days=20),
@@ -1076,7 +1093,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC avg month with start offset
+            # UTC avg month with start offset
             # Bins are aligned to month, only first bin differs
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt + dt.timedelta(days=3),
@@ -1109,7 +1126,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC avg 2 month
+            # UTC avg 2 month
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 start_dt_plus_3_months,
@@ -1140,7 +1157,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: local TZ avg month
+            # Local TZ avg month
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 start_dt_plus_3_months,
@@ -1174,7 +1191,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC sum month
+            # UTC sum month
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 start_dt_plus_3_months,
@@ -1206,7 +1223,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC min month
+            # UTC min month
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 start_dt_plus_3_months,
@@ -1238,7 +1255,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC max month
+            # UTC max month
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 start_dt_plus_3_months,
@@ -1270,7 +1287,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # Export CSV: UTC count year by ID
+            # UTC count year by ID
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt, end_dt, ts_l, ds_1, 1, "year", "count", col_label="id"
             )
@@ -1292,6 +1309,22 @@ class TestTimeseriesDataIO:
                 index=index,
             )
 
+            assert data_df.equals(expected_data_df)
+
+            # No timeseries
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt, end_dt, [], ds_1, 1, "year"
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2021-01-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame({}, index=index)
             assert data_df.equals(expected_data_df)
 
     @pytest.mark.parametrize("campaigns", (2,), indirect=True)
@@ -1334,7 +1367,7 @@ class TestTimeseriesDataIO:
                     start_dt, end_dt, ts_l, ds_1, 1, "day", col_label=col_label
                 )
 
-            # Export CSV: UTC avg
+            # UTC avg
 
             ts_l = (ts_1, ts_3)
 
@@ -1888,6 +1921,23 @@ class TestTimeseriesDataCSVIO:
                 "2020-01-01T00:00:00+0000,23.0,,56.0\n"
                 "2020-01-02T00:00:00+0000,47.0,,104.0\n"
                 "2020-01-03T00:00:00+0000,71.0,,\n"
+            )
+
+            # Export CSV: no timeseries
+            data = tsdcsvio.export_csv_bucket(
+                start_dt,
+                end_dt,
+                [],
+                ds_1,
+                1,
+                "day",
+                col_label=col_label,
+            )
+            assert data == (
+                "Datetime\n"
+                "2020-01-01T00:00:00+0000\n"
+                "2020-01-02T00:00:00+0000\n"
+                "2020-01-03T00:00:00+0000\n"
             )
 
             # Export CSV: invalid aggregation

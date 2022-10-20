@@ -271,6 +271,14 @@ class TimeseriesDataIO:
         fill_value = 0 if aggregation == "count" else np.nan
         dtype = int if aggregation == "count" else float
 
+        # Create expected complete index
+        complete_idx = gen_date_range(
+            start_dt, end_dt, bucket_width_value, bucket_width_unit, timezone
+        )
+
+        if not timeseries:
+            return pd.DataFrame({}, index=complete_idx)
+
         params = {
             "timezone": timezone,
             "timeseries_ids": tuple(ts.id for ts in timeseries),
@@ -352,10 +360,7 @@ class TimeseriesDataIO:
             func = PANDAS_RE_AGGREG_FUNC_MAPPING[aggregation]
             data_df = data_df.resample(pd_freq, closed="left", label="left").agg(func)
 
-        # Fill gaps: create expected index for gapless data then reindex
-        complete_idx = gen_date_range(
-            start_dt, end_dt, bucket_width_value, bucket_width_unit, timezone
-        )
+        # Fill gaps: reindex with complete index
         data_df = data_df.reindex(complete_idx, fill_value=fill_value)
 
         # Fill missing columns
