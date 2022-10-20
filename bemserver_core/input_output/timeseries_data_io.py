@@ -117,7 +117,7 @@ class TimeseriesDataIO:
 
         data_df = data_df.melt(
             value_vars=data_df.columns,
-            var_name="timeseries_by_data_state_id",
+            var_name="ts_by_data_state_id",
             ignore_index=False,
         )
         data_rows = [
@@ -309,7 +309,7 @@ class TimeseriesDataIO:
 
         query += (
             "FROM ts_data, timeseries, ts_by_data_states "
-            "WHERE ts_data.timeseries_by_data_state_id = "
+            "WHERE ts_data.ts_by_data_state_id = "
             "      ts_by_data_states.id "
             "  AND ts_by_data_states.data_state_id = :data_state_id "
             "  AND ts_by_data_states.timeseries_id = timeseries.id "
