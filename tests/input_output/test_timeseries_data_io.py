@@ -791,6 +791,23 @@ class TestTimeseriesDataIO:
             )
             assert data_df.equals(expected_data_df)
 
+            # No timeseries
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt, end_dt, [], ds_1, 1, "day"
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame({}, index=index)
+            assert data_df.equals(expected_data_df)
+
             # Invalid aggregation
             with pytest.raises(TimeseriesDataIOInvalidAggregationError):
                 tsdio.get_timeseries_buckets_data(
@@ -1292,6 +1309,22 @@ class TestTimeseriesDataIO:
                 index=index,
             )
 
+            assert data_df.equals(expected_data_df)
+
+            # No timeseries
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt, end_dt, [], ds_1, 1, "year"
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2021-01-01T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame({}, index=index)
             assert data_df.equals(expected_data_df)
 
     @pytest.mark.parametrize("campaigns", (2,), indirect=True)
@@ -1888,6 +1921,23 @@ class TestTimeseriesDataCSVIO:
                 "2020-01-01T00:00:00+0000,23.0,,56.0\n"
                 "2020-01-02T00:00:00+0000,47.0,,104.0\n"
                 "2020-01-03T00:00:00+0000,71.0,,\n"
+            )
+
+            # Export CSV: no timeseries
+            data = tsdcsvio.export_csv_bucket(
+                start_dt,
+                end_dt,
+                [],
+                ds_1,
+                1,
+                "day",
+                col_label=col_label,
+            )
+            assert data == (
+                "Datetime\n"
+                "2020-01-01T00:00:00+0000\n"
+                "2020-01-02T00:00:00+0000\n"
+                "2020-01-03T00:00:00+0000\n"
             )
 
             # Export CSV: invalid aggregation
