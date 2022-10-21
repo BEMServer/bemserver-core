@@ -174,6 +174,12 @@ class TestEnergyConsumption:
             )
             assert ret == expected
 
+            # Check values are aggregated with a sum
+            ret = compute_energy_consumption_breakdown_for_site(
+                site_1, start_dt, end_dt, 2, "hour"
+            )
+            assert ret["energy"]["all"]["all"] == [142.0]
+
     def test_compute_energy_consumption_breakdown_for_building(
         self, users, buildings, campaigns, campaign_scopes
     ):
@@ -271,3 +277,9 @@ class TestEnergyConsumption:
                 building_1, start_dt, end_dt, 1, "hour"
             )
             assert ret == expected
+
+            # Check values are aggregated with a sum
+            ret = compute_energy_consumption_breakdown_for_building(
+                building_1, start_dt, end_dt, 2, "hour"
+            )
+            assert ret["energy"]["all"]["all"] == [142.0]
