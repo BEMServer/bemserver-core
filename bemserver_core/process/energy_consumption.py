@@ -73,6 +73,7 @@ def compute_energy_consumption_breakdown(
         data_state,
         bucket_width_value,
         bucket_width_unit,
+        "sum",
         timezone=timezone,
     ).fillna(0)
 
