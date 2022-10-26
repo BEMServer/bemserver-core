@@ -342,14 +342,8 @@ class TimeseriesDataIO:
             .tz_localize(None).tz_localize(timezone)
         )
 
-        data_df = pd.pivot_table(
-            data_df,
-            index="timestamp",
-            columns=col_label,
-            values="value",
-            aggfunc="sum",
-            fill_value=fill_value,
-        )
+        # Pivot table to get timeseries in columns
+        data_df = data_df.pivot(values="value", columns=col_label).fillna(fill_value)
 
         # Variable size intervals are aggregated to 1 x unit due to date_trunc
         # Further aggregation is achieved here in pandas

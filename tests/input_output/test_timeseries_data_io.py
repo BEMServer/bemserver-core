@@ -426,6 +426,40 @@ class TestTimeseriesDataIO:
         timestamps = pd.date_range(
             start=start_dt, end=end_dt, inclusive="left", freq="H"
         )
+
+        ts_l = (ts_0, ts_2, ts_4)
+
+        with CurrentUser(admin_user):
+
+            # No data
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                1,
+                "day",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
+                    "2020-01-03T00:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.id: [np.nan, np.nan, np.nan],
+                    ts_2.id: [np.nan, np.nan, np.nan],
+                    ts_4.id: [np.nan, np.nan, np.nan],
+                },
+                index=index,
+            )
+            assert data_df.equals(expected_data_df)
+
         values_1 = range(24 * 3)
         create_timeseries_data(ts_0, ds_1, timestamps, values_1)
         values_2 = [10 + 2 * i for i in range(24 * 2)]
