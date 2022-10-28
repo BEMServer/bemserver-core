@@ -7,7 +7,6 @@ import sqlalchemy as sqla
 import numpy as np
 import pandas as pd
 import dateutil
-import pytz
 
 from bemserver_core.database import db
 from bemserver_core.model import (
@@ -54,32 +53,29 @@ def gen_date_range(
 
     pd_freq = f"{bucket_width_value}{PANDAS_OFFSET_ALIASES[bucket_width_unit]}"
 
-    # TODO: Drop pytz for ZoneInfo when pandas supports ZoneInfo (pandas 1.5+)
-    tz = pytz.timezone(timezone)
-    # Ensure start TZ, end TZ and timezone match to avoid date_range crash
-    # pytz related issue: use localize, don't pass TZ in datetime constructor
-    # https://stackoverflow.com/a/57526282/4653485
-    origin_date = start_dt.astimezone(ZoneInfo(timezone)).date()
+    tz = ZoneInfo(timezone)
+    start_dt = start_dt.astimezone(tz)
+    end_dt = end_dt.astimezone(tz)
+
     if bucket_width_unit == "year":
-        # Month: date range aligned on month start
-        range_start = tz.localize(dt.datetime(origin_date.year, 1, 1))
+        # Year: date range aligned on year start
+        start_dt = dt.datetime(start_dt.year, 1, 1, tzinfo=tz)
     elif bucket_width_unit == "month":
         # Month: date range aligned on month start
-        range_start = tz.localize(dt.datetime(origin_date.year, origin_date.month, 1))
+        start_dt = dt.datetime(start_dt.year, start_dt.month, 1, tzinfo=tz)
     elif bucket_width_unit == "week":
         # Week: date range aligned on monday (range start may be before start_dt)
-        range_start = tz.localize(
-            dt.datetime(origin_date.year, origin_date.month, origin_date.day)
-            - dt.timedelta(days=origin_date.weekday())
-        )
+        # Note that timedelta arithmetics respect wall clock so subtracting days
+        # works even across DST
+        start_dt = dt.datetime(
+            start_dt.year, start_dt.month, start_dt.day, tzinfo=tz
+        ) - dt.timedelta(days=start_dt.weekday())
     else:
-        # Second / Minute / Hour / Day: date range aligned on exact second
-        range_start = start_dt.astimezone(tz)
-    range_end = end_dt.astimezone(tz)
+        start_dt = pd.Timestamp(start_dt).floor(pd_freq, ambiguous=start_dt.fold)
 
     return pd.date_range(
-        range_start,
-        range_end,
+        start_dt,
+        end_dt,
         freq=pd_freq,
         tz=tz,
         name="timestamp",
@@ -240,12 +236,7 @@ class TimeseriesDataIO:
         :param string col_label: Timeseries attribute to use for column header.
             Should be "id" or "name". Default: "id".
 
-        The time alignment of the bucket depends on the bucket width unit.
-        - For a size bucket width unit of day or smaller, the aggregation is
-        time-aligned on start_dt.
-        - For week, it is aligned on 00:00 in timezone, monday.
-        - For month, it is aligned on 00:00 in timezone, first day of month.
-        - For year,  it is aligned on 00:00 in timezone, first day of year.
+        The time alignment of the buckets respects the timezone.
 
         Note: ``start_dt`` and ``end_dt`` may have timezones that don't match
         ``timezone`` parameter. The conversion is done internally. In practice,
@@ -287,35 +278,14 @@ class TimeseriesDataIO:
             "end_dt": end_dt,
         }
 
-        pd_freq = f"{bucket_width_value}{PANDAS_OFFSET_ALIASES[bucket_width_unit]}"
-
-        if bucket_width_unit in VARIABLE_SIZE_INTERVAL_UNITS:
-            # At this stage, date_trunc can only aggregate by 1 x unit.
-            # For a N x month/year bucket size, the remaining aggregation is
-            # done in Pandas below.
-            params["bucket_width_unit"] = bucket_width_unit
-            query = (
-                "SELECT date_trunc("
-                ":bucket_width_unit, timestamp AT TIME ZONE :timezone)"
-                f"  AS bucket, timeseries.id, timeseries.name, {aggregation}(value) "
-            )
-        else:
-            # TODO: replace with PostgreSQL date_bin when dropping PostgreSQL < 14
-            params["bucket_width"] = (f"{bucket_width_value} {bucket_width_unit}",)
-            if bucket_width_unit == "week":
-                # Align on monday (2018-01-01 is a monday)
-                params["origin"] = "2018-01-01"
-            else:
-                params["origin"] = start_dt.astimezone(ZoneInfo(timezone)).replace(
-                    tzinfo=None
-                )
-            query = (
-                "SELECT time_bucket("
-                ":bucket_width, timestamp AT TIME ZONE :timezone, origin => :origin)"
-                f"  AS bucket, timeseries.id, timeseries.name, {aggregation}(value) "
-            )
-
-        query += (
+        # At this stage, date_trunc can only aggregate by 1 x unit.
+        # For a N x width bucket size, the remaining aggregation is
+        # done in Pandas below.
+        params["bucket_width_unit"] = bucket_width_unit
+        query = (
+            "SELECT date_trunc("
+            ":bucket_width_unit, timestamp AT TIME ZONE :timezone)"
+            f"  AS bucket, timeseries.id, timeseries.name, {aggregation}(value) "
             "FROM ts_data, timeseries, ts_by_data_states "
             "WHERE ts_data.ts_by_data_state_id = "
             "      ts_by_data_states.id "
@@ -326,31 +296,21 @@ class TimeseriesDataIO:
             "GROUP BY bucket, timeseries.id "
             "ORDER BY bucket;"
         )
-        query = sqla.text(query)
-
-        data = db.session.execute(query, params)
+        data = db.session.execute(sqla.text(query), params)
 
         data_df = pd.DataFrame(
             data, columns=("timestamp", "id", "name", "value")
         ).set_index("timestamp")
 
-        data_df.index = (
-            pd.DatetimeIndex(data_df.index)
-            # For some reason, due to origin being TZ-aware, the timestamps
-            # in the query results sometimes have a (wrong) UTC timezone
-            # Remove UTC timezone before setting timezone
-            .tz_localize(None).tz_localize(timezone)
-        )
+        data_df.index = pd.DatetimeIndex(data_df.index).tz_localize(timezone)
 
         # Pivot table to get timeseries in columns
         data_df = data_df.pivot(values="value", columns=col_label).fillna(fill_value)
 
         # Variable size intervals are aggregated to 1 x unit due to date_trunc
         # Further aggregation is achieved here in pandas
-        if (
-            bucket_width_unit in VARIABLE_SIZE_INTERVAL_UNITS
-            and bucket_width_value != 1
-        ):
+        if bucket_width_value != 1:
+            pd_freq = f"{bucket_width_value}{PANDAS_OFFSET_ALIASES[bucket_width_unit]}"
             func = PANDAS_RE_AGGREG_FUNC_MAPPING[aggregation]
             data_df = data_df.resample(pd_freq, closed="left", label="left").agg(func)
 

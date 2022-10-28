@@ -15,6 +15,7 @@ from bemserver_core.model import (
     TimeseriesByDataState,
 )
 from bemserver_core.input_output import tsdio, tsdcsvio
+from bemserver_core.input_output.timeseries_data_io import gen_date_range
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.exceptions import (
@@ -27,6 +28,83 @@ from bemserver_core.exceptions import (
 
 
 class TestTimeseriesDataIO:
+    def test_timeseries_data_io_gen_date_range_day(self):
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        end_dt = dt.datetime(2020, 1, 3, tzinfo=dt.timezone.utc)
+
+        # UTC
+        ret = gen_date_range(
+            start_dt + dt.timedelta(minutes=30),
+            end_dt - dt.timedelta(minutes=30),
+            1,
+            "day",
+            timezone="UTC",
+        )
+        index = pd.DatetimeIndex(
+            [
+                "2020-01-01T00:00:00+00:00",
+                "2020-01-02T00:00:00+00:00",
+            ]
+        )
+        assert ret.equals(index)
+
+        # Local TZ
+        ret = gen_date_range(
+            start_dt + dt.timedelta(minutes=30),
+            end_dt - dt.timedelta(minutes=30),
+            1,
+            "day",
+            timezone="Europe/Paris",
+        )
+        # end_dt - 30 min is after local TZ day bound (UTC-1)
+        # so we get 3 datetimes in the range
+        index = pd.DatetimeIndex(
+            [
+                "2020-01-01T00:00:00+01:00",
+                "2020-01-02T00:00:00+01:00",
+                "2020-01-03T00:00:00+01:00",
+            ],
+            tz=ZoneInfo("Europe/Paris"),
+        )
+        assert ret.equals(index)
+
+    def test_timeseries_data_io_gen_date_range_week(self):
+        start_dt = dt.datetime(2020, 10, 24, tzinfo=dt.timezone.utc)
+        end_dt = dt.datetime(2020, 10, 28, tzinfo=dt.timezone.utc)
+
+        # UTC
+        ret = gen_date_range(
+            start_dt + dt.timedelta(minutes=30),
+            end_dt - dt.timedelta(minutes=30),
+            1,
+            "week",
+            timezone="UTC",
+        )
+        index = pd.DatetimeIndex(
+            [
+                "2020-10-19 00:00:00+00:00",
+                "2020-10-26 00:00:00+00:00",
+            ]
+        )
+        assert ret.equals(index)
+
+        # Local TZ
+        ret = gen_date_range(
+            start_dt + dt.timedelta(minutes=30),
+            end_dt - dt.timedelta(minutes=30),
+            1,
+            "week",
+            timezone="Europe/Paris",
+        )
+        index = pd.DatetimeIndex(
+            [
+                "2020-10-18 22:00:00+00:00",
+                "2020-10-25 23:00:00+00:00",
+            ],
+            tz=ZoneInfo("Europe/Paris"),
+        )
+        assert ret.equals(index)
+
     @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
     @pytest.mark.parametrize("for_campaign", (True, False))
@@ -564,13 +642,15 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # UTC count 1 day, 3 hour (and a half) offset
+            # UTC count 2 days, 3 hour (and a half) offset
+            # Aggregation interval start time is floored to round to interval
+            # so we get the same intervals but less data in the first interval
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt + dt.timedelta(hours=3, minutes=30),
                 end_dt,
                 ts_l,
                 ds_1,
-                1,
+                2,
                 "day",
                 "count",
                 col_label="name",
@@ -578,18 +658,17 @@ class TestTimeseriesDataIO:
 
             index = pd.DatetimeIndex(
                 [
-                    "2020-01-01T03:30:00",
-                    "2020-01-02T03:30:00",
-                    "2020-01-03T03:30:00",
+                    "2020-01-01T00:00:00",
+                    "2020-01-03T00:00:00",
                 ],
                 name="timestamp",
                 tz="UTC",
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name: [24, 24, 20],
-                    ts_2.name: [0, 0, 0],
-                    ts_4.name: [24, 20, 0],
+                    ts_0.name: [44, 24],
+                    ts_2.name: [0, 0],
+                    ts_4.name: [44, 0],
                 },
                 index=index,
             )
@@ -616,7 +695,7 @@ class TestTimeseriesDataIO:
                     "2020-01-06T00:00:00",
                 ],
                 name="timestamp",
-                tz="Europe/Paris",
+                tz=ZoneInfo("Europe/Paris"),
             )
             expected_data_df = pd.DataFrame(
                 {
@@ -682,7 +761,7 @@ class TestTimeseriesDataIO:
                     "2020-01-03T00:00:00",
                 ],
                 name="timestamp",
-                tz="Europe/Paris",
+                tz=ZoneInfo("Europe/Paris"),
             )
             expected_data_df = pd.DataFrame(
                 {
@@ -926,7 +1005,7 @@ class TestTimeseriesDataIO:
             index = pd.DatetimeIndex(
                 ["2020-03-28T00:00:00", "2020-03-29T00:00:00"],
                 name="timestamp",
-                tz="Europe/Paris",
+                tz=ZoneInfo("Europe/Paris"),
             )
             expected_data_df = pd.DataFrame({ts_0.name: [24, 23]}, index=index)
             assert data_df.equals(expected_data_df)
@@ -938,7 +1017,7 @@ class TestTimeseriesDataIO:
             index = pd.DatetimeIndex(
                 ["2020-10-24T00:00:00", "2020-10-25T00:00:00"],
                 name="timestamp",
-                tz="Europe/Paris",
+                tz=ZoneInfo("Europe/Paris"),
             )
             expected_data_df = pd.DataFrame({ts_0.name: [24, 25]}, index=index)
             assert data_df.equals(expected_data_df)
@@ -1070,7 +1149,7 @@ class TestTimeseriesDataIO:
                     "2021-01-01T00:00:00",
                 ],
                 name="timestamp",
-                tz="Europe/Paris",
+                tz=ZoneInfo("Europe/Paris"),
             )
             expected_data_df = pd.DataFrame(
                 {
@@ -1212,7 +1291,7 @@ class TestTimeseriesDataIO:
                     "2020-04-01T00:00:00",
                 ],
                 name="timestamp",
-                tz="Europe/Paris",
+                tz=ZoneInfo("Europe/Paris"),
             )
             expected_data_df = pd.DataFrame(
                 {
