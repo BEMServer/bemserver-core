@@ -1,5 +1,6 @@
 import sys
 import os
+import contextlib
 import logging
 from logging.config import fileConfig
 
@@ -21,16 +22,17 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 logger = logging.getLogger("alembic")
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-DB_URL = os.getenv("SQLALCHEMY_DATABASE_URI")
-if DB_URL is None:
-    logger.error("SQLALCHEMY_DATABASE_URI environment variable not set.")
-    sys.exit()
-db.set_db_url(DB_URL)
-config.set_main_option("sqlalchemy.url", str(db.url).replace("%", "%%"))
+# If running in custom BEMServer command, connection is provided by caller
+# If running as alembic command, set connection from DB URL as env var
+connectable = config.attributes.get("connection")
+if connectable is None:
+    DB_URL = os.getenv("SQLALCHEMY_DATABASE_URI")
+    if DB_URL is None:
+        logger.error("SQLALCHEMY_DATABASE_URI environment variable not set.")
+        sys.exit()
+    db.set_db_url(DB_URL)
+    config.set_main_option("sqlalchemy.url", str(db.url).replace("%", "%%"))
+
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -80,19 +82,24 @@ def run_migrations_online():
                 directives[:] = []
                 logger.info("No database schema change.")
 
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    # https://alembic.sqlalchemy.org/en/latest/cookbook.html#connection-sharing
+    # Running as alembic command. Create connection.
+    if connectable is None:
+        connection_ctx = engine_from_config(
+            config.get_section(config.config_ini_section),
+            prefix="sqlalchemy.",
+            poolclass=pool.NullPool,
+        ).connect()
+    # Running as custom command.
+    else:
+        connection_ctx = contextlib.nullcontext(connectable)
 
-    with connectable.connect() as connection:
+    with connection_ctx as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
             process_revision_directives=process_revision_directives,
         )
-
         with context.begin_transaction():
             context.run_migrations()
 
