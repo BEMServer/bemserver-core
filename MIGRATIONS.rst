@@ -15,9 +15,6 @@ must be passed as environment variable::
 
     $ export SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://user:password@localhost:5432/bemserver"
 
-Also, those commands work when Alembic files are accessible, which means they
-must be launched from the root of this repository.
-
 Generate Migration Scripts
 --------------------------
 
@@ -30,10 +27,7 @@ bemserver-core version).
 
 Create an automatic revision file::
 
-    $ alembic revision --autogenerate -m "0.1"
-
-The last part of the command is a message appended to the revision file name.
-It seems sensible to use the bemserver-core version here.
+    $ alembic --config bemserver/alembic.ini revision --autogenerate -m "Message" --rev-id "Revision ID"
 
 Automatic generation may not be perfect, so revision files should be checked
 manually.
@@ -44,15 +38,21 @@ is the case, for instance, for default timeseries properties and data states.
 
 Once a revision file is ready, it can be committed to the repository.
 
-Use Migration Scripts
----------------------
+Manage Migrations
+-----------------
 
-In an environment where bemserver-core is installed, the database can be
-updated using an Alembic command::
+bemserver-core provides the following commands to manage the database.
 
-    $ alembic upgrade head
+Display current database revision::
 
-For other actions, see Alembic documentation.
+    $ bemserver_db_current
 
+Upgrade database (to head revision by default) ::
+
+    $ bemserver_db_upgrade -r revision
+
+Downgrade database::
+
+    $ bemserver_db_dowbgrade -r revision
 
 .. _Alembic: https://alembic.sqlalchemy.org/
