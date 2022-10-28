@@ -47,6 +47,9 @@ setup(
         "console_scripts": [
             "bemserver_setup_db = bemserver_core.commands:setup_db_cmd",
             "bemserver_create_user = bemserver_core.commands:create_user_cmd",
+            "bemserver_db_current = bemserver_core.commands:db_current_cmd",
+            "bemserver_db_upgrade = bemserver_core.commands:db_upgrade_cmd",
+            "bemserver_db_downgrade = bemserver_core.commands:db_downgrade_cmd",
         ],
     },
 )

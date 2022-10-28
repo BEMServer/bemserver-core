@@ -6,7 +6,7 @@ import os
 
 import click
 
-from bemserver_core import model, database
+from bemserver_core import model, database, migrations
 from bemserver_core.exceptions import BEMServerCoreError
 
 
@@ -70,3 +70,24 @@ def create_user_cmd(name, email, admin, inactive, password):
     )
     database.db.session.add(user)
     database.db.session.commit()
+
+
+@click.command()
+@click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose mode")
+def db_current_cmd(verbose):
+    """Display current database revision"""
+    migrations.current(verbose)
+
+
+@click.command()
+@click.option("-r", "--revision", default="head", help="Revision target")
+def db_upgrade_cmd(revision):
+    """Upgrade to a later database revision"""
+    migrations.upgrade(revision)
+
+
+@click.command()
+@click.option("-r", "--revision", required=True, help="Revision target")
+def db_downgrade_cmd(revision):
+    """Revert to a previous database revision"""
+    migrations.downgrade(revision)
