@@ -1,7 +1,7 @@
 """Timeseries data"""
 import sqlalchemy as sqla
 
-from bemserver_core.database import Base, db
+from bemserver_core.database import Base
 
 
 class TimeseriesData(Base):
@@ -21,21 +21,3 @@ class TimeseriesData(Base):
         "TimeseriesByDataState",
         backref=sqla.orm.backref("timeseries_data", cascade="all, delete-orphan"),
     )
-
-
-def init_db_timeseries_data():
-    """Create timescale hypertable
-
-    This function is meant to be used for tests or dev setups after create_all.
-    Production setups should rely on migration scripts.
-    """
-    db.session.execute(
-        sqla.DDL(
-            "SELECT create_hypertable("
-            f"  '{TimeseriesData.__table__}',"
-            "  'timestamp',"
-            "  create_default_indexes => False"
-            ");"
-        )
-    )
-    db.session.commit()
