@@ -285,12 +285,10 @@ class TimeseriesDataIO:
         # done in Pandas below.
         params["bucket_width_unit"] = bucket_width_unit
         query = (
-            "SELECT date_trunc("
-            ":bucket_width_unit, timestamp AT TIME ZONE :timezone)"
-            f"  AS bucket, timeseries.id, timeseries.name, {aggregation}(value) "
+            "SELECT date_trunc(:bucket_width_unit, timestamp, :timezone) AS bucket,"
+            f"  timeseries.id, timeseries.name, {aggregation}(value) "
             "FROM ts_data, timeseries, ts_by_data_states "
-            "WHERE ts_data.ts_by_data_state_id = "
-            "      ts_by_data_states.id "
+            "WHERE ts_data.ts_by_data_state_id = ts_by_data_states.id "
             "  AND ts_by_data_states.data_state_id = :data_state_id "
             "  AND ts_by_data_states.timeseries_id = timeseries.id "
             "  AND timeseries_id IN :timeseries_ids "
@@ -304,7 +302,9 @@ class TimeseriesDataIO:
             data, columns=("timestamp", "id", "name", "value")
         ).set_index("timestamp")
 
-        data_df.index = pd.DatetimeIndex(data_df.index).tz_localize(ZoneInfo(timezone))
+        data_df.index = pd.DatetimeIndex(data_df.index, tz="UTC").tz_convert(
+            ZoneInfo(timezone)
+        )
 
         # Pivot table to get timeseries in columns
         data_df = data_df.pivot(values="value", columns=col_label).fillna(fill_value)

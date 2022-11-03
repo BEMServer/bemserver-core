@@ -302,9 +302,10 @@ class TestTimeseriesDataIO:
         h2_dt = start_dt + dt.timedelta(hours=2)
         end_dt = start_dt + dt.timedelta(hours=3)
 
+        ts_l = (ts_0, ts_2, ts_4)
+
         # No data (by col name)
         with CurrentUser(admin_user):
-            ts_l = (ts_0, ts_2, ts_4)
             data_df = tsdio.get_timeseries_data(
                 start_dt, end_dt, ts_l, ds_1, col_label="name"
             )
@@ -325,8 +326,6 @@ class TestTimeseriesDataIO:
         create_timeseries_data(ts_4, ds_1, timestamps[:2], values_2)
 
         with CurrentUser(admin_user):
-
-            ts_l = (ts_0, ts_2, ts_4)
 
             data_df = tsdio.get_timeseries_data(start_dt, end_dt, ts_l, ds_1)
             index = pd.DatetimeIndex(
@@ -544,8 +543,6 @@ class TestTimeseriesDataIO:
         create_timeseries_data(ts_4, ds_1, timestamps[: 24 * 2], values_2)
 
         with CurrentUser(admin_user):
-
-            ts_l = (ts_0, ts_2, ts_4)
 
             # UTC count 1 day
             data_df = tsdio.get_timeseries_buckets_data(
@@ -955,6 +952,56 @@ class TestTimeseriesDataIO:
                     "avg",
                 )
 
+    def test_timeseries_data_io_get_timeseries_buckets_data_dst_as_admin(
+        self, users, timeseries
+    ):
+        """Non-regression test for issue with ambiguous datetimes on DST change"""
+        admin_user = users[0]
+        assert admin_user.is_admin
+        ts_0 = timeseries[0]
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        start_dt = dt.datetime(2020, 10, 25, tzinfo=dt.timezone.utc)
+        end_dt = dt.datetime(2020, 10, 26, tzinfo=dt.timezone.utc)
+
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+
+        ts_l = (ts_0,)
+
+        values_1 = range(24)
+        create_timeseries_data(ts_0, ds_1, timestamps, values_1)
+
+        with CurrentUser(admin_user):
+
+            # Local TZ count 1 hour
+            data_df = tsdio.get_timeseries_buckets_data(
+                dt.datetime(2020, 10, 25, 0, 0, tzinfo=dt.timezone.utc),
+                dt.datetime(2020, 10, 25, 2, 0, tzinfo=dt.timezone.utc),
+                ts_l,
+                ds_1,
+                1,
+                "hour",
+                "count",
+                timezone="Europe/Paris",
+                col_label="name",
+            )
+
+            index = pd.DatetimeIndex(
+                [
+                    "2020-10-25T00:00:00",
+                    "2020-10-25T01:00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            ).tz_convert(ZoneInfo("Europe/Paris"))
+            expected_data_df = pd.DataFrame({ts_0.name: [1, 1]}, index=index)
+
+            assert data_df.equals(expected_data_df)
+
     def test_timeseries_data_io_get_timeseries_buckets_data_fixed_size_dst_as_admin(
         self, users, timeseries
     ):
@@ -1047,9 +1094,9 @@ class TestTimeseriesDataIO:
         values_2 = [10 + 2 * i for i in range(24 * 366)]
         create_timeseries_data(ts_4, ds_1, timestamps[: 24 * 366], values_2)
 
-        with CurrentUser(admin_user):
+        ts_l = (ts_0, ts_2, ts_4)
 
-            ts_l = (ts_0, ts_2, ts_4)
+        with CurrentUser(admin_user):
 
             # UTC count year
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1816,14 +1863,14 @@ class TestTimeseriesDataCSVIO:
         values_2 = [10 + 2 * i for i in range(2)]
         create_timeseries_data(ts_4, ds_1, timestamps[:2], values_2)
 
+        ts_l = (ts_0, ts_2, ts_4)
+
         with CurrentUser(admin_user):
 
             if col_label == "name":
                 header = f"Datetime,{ts_0.name},{ts_2.name},{ts_4.name}\n"
             else:
                 header = f"Datetime,{ts_0.id},{ts_2.id},{ts_4.id}\n"
-
-            ts_l = (ts_0, ts_2, ts_4)
 
             data = tsdcsvio.export_csv(
                 start_dt,
@@ -1949,14 +1996,14 @@ class TestTimeseriesDataCSVIO:
         values_2 = [10 + 2 * i for i in range(24 * 2)]
         create_timeseries_data(ts_4, ds_1, timestamps[: 24 * 2], values_2)
 
+        ts_l = (ts_0, ts_2, ts_4)
+
         with CurrentUser(admin_user):
 
             if col_label == "name":
                 header = f"Datetime,{ts_0.name},{ts_2.name},{ts_4.name}\n"
             else:
                 header = f"Datetime,{ts_0.id},{ts_2.id},{ts_4.id}\n"
-
-            ts_l = (ts_0, ts_2, ts_4)
 
             # Export CSV: UTC avg
             data = tsdcsvio.export_csv_bucket(
