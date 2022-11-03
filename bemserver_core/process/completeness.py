@@ -9,36 +9,6 @@ import pandas as pd
 
 from bemserver_core.model import Timeseries
 from bemserver_core.input_output import tsdio
-from bemserver_core.input_output.timeseries_data_io import (
-    gen_date_range,
-    PANDAS_OFFSET_ALIASES,
-)
-
-
-def gen_seconds_per_bucket(
-    start_dt,
-    end_dt,
-    bucket_width_value,
-    bucket_width_unit,
-    timezone,
-):
-    """Compute a Series with number of seconds per aggregation bucket
-
-    The number of seconds per bucket may not be constant due to variable size buckets
-    """
-    pd_freq = f"{bucket_width_value}{PANDAS_OFFSET_ALIASES[bucket_width_unit]}"
-    seconds = gen_date_range(start_dt, end_dt, 1, "second", timezone)
-    nb_s_per_bucket = (
-        pd.DataFrame({"count": 1}, index=seconds)
-        # Pandas doc says origin TZ must match index TZ
-        .resample(
-            pd_freq,
-            origin=start_dt.astimezone(ZoneInfo(timezone)),
-            closed="left",
-            label="left",
-        ).agg("count")
-    )["count"]
-    return nb_s_per_bucket
 
 
 def compute_completeness(
@@ -73,13 +43,11 @@ def compute_completeness(
     total_counts_df = counts_df.sum()
 
     # Compute number of seconds per bucket
-    nb_s_per_bucket = gen_seconds_per_bucket(
-        start_dt,
-        end_dt,
-        bucket_width_value,
-        bucket_width_unit,
-        timezone,
-    )
+    tz = ZoneInfo(timezone)
+    idx = pd.Series(counts_df.index)
+    idx[0] = pd.Timestamp(start_dt.astimezone(tz))
+    idx[len(idx)] = pd.Timestamp(end_dt.astimezone(tz))
+    nb_s_per_bucket = [i.total_seconds() for i in idx.diff().iloc[1:]]
 
     # Compute data rate (count / second)
     rates_df = counts_df.div(nb_s_per_bucket, axis=0)

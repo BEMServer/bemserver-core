@@ -29,7 +29,6 @@ def setup_db():
     model.campaigns.init_db_campaigns_triggers()
     model.timeseries.init_db_timeseries_triggers()
     model.timeseries.init_db_timeseries()
-    model.timeseries_data.init_db_timeseries_data()
     model.sites.init_db_structural_elements_triggers()
     model.energy.init_db_energy()
 
