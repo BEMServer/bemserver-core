@@ -380,7 +380,7 @@ class TestTimeseriesDataIO:
                     "2020-01-01T02:00:00+00:00",
                 ],
                 name="timestamp",
-                tz="Europe/Paris",
+                tz=ZoneInfo("Europe/Paris"),
             )
             assert data_df.equals(expected_data_df)
 

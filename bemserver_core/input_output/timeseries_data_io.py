@@ -198,7 +198,9 @@ class TimeseriesDataIO:
             data, columns=("timestamp", "id", "name", "value")
         ).set_index("timestamp")
         data_df["value"] = data_df["value"].astype(float)
-        data_df.index = pd.DatetimeIndex(data_df.index, tz="UTC").tz_convert(timezone)
+        data_df.index = pd.DatetimeIndex(data_df.index, tz="UTC").tz_convert(
+            ZoneInfo(timezone)
+        )
 
         data_df = data_df.pivot(columns=col_label, values="value")
 
@@ -302,7 +304,7 @@ class TimeseriesDataIO:
             data, columns=("timestamp", "id", "name", "value")
         ).set_index("timestamp")
 
-        data_df.index = pd.DatetimeIndex(data_df.index).tz_localize(timezone)
+        data_df.index = pd.DatetimeIndex(data_df.index).tz_localize(ZoneInfo(timezone))
 
         # Pivot table to get timeseries in columns
         data_df = data_df.pivot(values="value", columns=col_label).fillna(fill_value)
