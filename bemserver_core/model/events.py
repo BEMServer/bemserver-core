@@ -7,13 +7,11 @@ from bemserver_core.authorization import auth, AuthMixin, Relation
 
 
 class EventCategory(AuthMixin, Base):
-    __tablename__ = "event_categories"
+    __tablename__ = "event_categs"
 
     id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
     description = sqla.Column(sqla.String(250))
-    parent = sqla.Column(
-        sqla.String, sqla.ForeignKey("event_categories.id"), nullable=True
-    )
+    parent = sqla.Column(sqla.String, sqla.ForeignKey("event_categs.id"), nullable=True)
 
 
 class EventLevel(AuthMixin, Base):
@@ -24,18 +22,15 @@ class EventLevel(AuthMixin, Base):
 
 
 class Event(AuthMixin, Base):
-
     __tablename__ = "events"
 
     id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
-    campaign_scope_id = sqla.Column(
-        sqla.ForeignKey("campaign_scopes.id"), nullable=False
-    )
+    campaign_scope_id = sqla.Column(sqla.ForeignKey("c_scopes.id"), nullable=False)
 
     @sqlaorm.declared_attr
     def category(cls):
         return sqla.Column(
-            sqla.String, sqla.ForeignKey("event_categories.id"), nullable=False
+            sqla.String, sqla.ForeignKey("event_categs.id"), nullable=False
         )
 
     @sqlaorm.declared_attr
