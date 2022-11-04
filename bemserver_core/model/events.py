@@ -11,7 +11,6 @@ class EventCategory(AuthMixin, Base):
 
     id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
     description = sqla.Column(sqla.String(250))
-    parent = sqla.Column(sqla.String, sqla.ForeignKey("event_categs.id"), nullable=True)
 
 
 class EventLevel(AuthMixin, Base):
