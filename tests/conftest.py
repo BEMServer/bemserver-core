@@ -292,6 +292,38 @@ def timeseries_by_data_states(request, bemservercore, timeseries):
 
 
 @pytest.fixture
+def event_categories(bemservercore):
+    with OpenBar():
+        ec_1 = model.EventCategory.new(id="Custom event category 1")
+        ec_2 = model.EventCategory.new(id="Custom event category 2")
+        db.session.commit()
+    return (ec_1, ec_2)
+
+
+@pytest.fixture
+def events(bemservercore, campaign_scopes, event_categories):
+    with OpenBar():
+        ts_event_1 = model.Event.new(
+            campaign_scope_id=campaign_scopes[0].id,
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            category=event_categories[0].id,
+            source="src",
+            level="ERROR",
+            state="NEW",
+        )
+        ts_event_2 = model.Event.new(
+            campaign_scope_id=campaign_scopes[1].id,
+            timestamp=dt.datetime(2020, 1, 15, tzinfo=dt.timezone.utc),
+            category=event_categories[0].id,
+            source="src",
+            level="WARNING",
+            state="ONGOING",
+        )
+        db.session.commit()
+    return (ts_event_1, ts_event_2)
+
+
+@pytest.fixture
 def structural_element_properties(bemservercore):
     with OpenBar():
         sep_1 = model.StructuralElementProperty.new(

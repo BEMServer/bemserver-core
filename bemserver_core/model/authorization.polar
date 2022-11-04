@@ -140,6 +140,43 @@ has_relation(ts: Timeseries, "timeseries", tsbds: TimeseriesByDataState) if
     ts = tsbds.timeseries;
 
 
+resource EventCategory{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource EventState{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+resource EventLevel{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+
+resource Event {
+    permissions = ["create", "read", "update", "delete"];
+}
+
+has_permission(user: User, "create", event:Event) if
+    has_role(user, "member", event.campaign_scope);
+has_permission(user: User, "read", event:Event) if
+    has_role(user, "member", event.campaign_scope);
+has_permission(user: User, "update", event:Event) if
+    has_role(user, "member", event.campaign_scope);
+has_permission(user: User, "delete", event:Event) if
+    has_role(user, "member", event.campaign_scope);
+
+
 resource StructuralElementProperty{
     permissions = ["create", "read", "update", "delete"];
     roles = ["user"];
