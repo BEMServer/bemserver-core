@@ -20,7 +20,7 @@ class ST_CleanupByCampaign(AuthMixin, Base):
     campaign = sqla.orm.relationship(
         "Campaign",
         backref=sqla.orm.backref(
-            "processors_by_campaigns", cascade="all, delete-orphan"
+            "st_cleanups_by_campaigns", cascade="all, delete-orphan"
         ),
     )
 
