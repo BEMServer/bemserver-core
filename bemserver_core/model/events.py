@@ -40,7 +40,7 @@ class Event(AuthMixin, Base):
 
     timestamp = sqla.Column(sqla.DateTime(timezone=True), nullable=False)
     source = sqla.Column(sqla.String, nullable=False)
-    description = sqla.Column(sqla.String(250))
+    description = sqla.Column(sqla.String())
 
     @classmethod
     def register_class(cls):
