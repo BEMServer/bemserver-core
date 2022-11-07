@@ -270,18 +270,17 @@ class TimeseriesDataIO:
         if not timeseries:
             return pd.DataFrame({}, index=complete_idx)
 
+        # At this stage, date_trunc can only aggregate by 1 x unit.
+        # For a N x width bucket size, the remaining aggregation is
+        # done in Pandas below.
         params = {
             "timezone": timezone,
             "timeseries_ids": tuple(ts.id for ts in timeseries),
             "data_state_id": data_state.id,
             "start_dt": start_dt,
             "end_dt": end_dt,
+            "bucket_width_unit": bucket_width_unit,
         }
-
-        # At this stage, date_trunc can only aggregate by 1 x unit.
-        # For a N x width bucket size, the remaining aggregation is
-        # done in Pandas below.
-        params["bucket_width_unit"] = bucket_width_unit
         query = (
             "SELECT date_trunc(:bucket_width_unit, timestamp, :timezone) AS bucket,"
             f"  timeseries.id, timeseries.name, {aggregation}(value) "
