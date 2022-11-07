@@ -78,6 +78,9 @@ def init_db_events():
     """
     db.session.add_all(
         [
+            EventCategory(id="Data missing"),
+            EventCategory(id="Data present"),
+            EventCategory(id="Data outliers"),
             EventLevel(id="INFO", description="Information"),
             EventLevel(id="WARNING", description="Warning"),
             EventLevel(id="ERROR", description="Error"),

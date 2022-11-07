@@ -54,6 +54,8 @@ class TestEventCategoryModel:
         assert admin_user.is_admin
 
         with CurrentUser(admin_user):
+            event_categories = list(EventCategory.get())
+            nb_categs = len(event_categories)
             event_category_1 = EventCategory.new(
                 id="TEST",
                 description="Event category 1",
@@ -62,7 +64,7 @@ class TestEventCategoryModel:
             db.session.commit()
             EventCategory.get_by_id(event_category_1.id)
             event_categories = list(EventCategory.get())
-            assert len(event_categories) == 1
+            assert len(event_categories) == nb_categs + 1
             event_category_1.update(name="Super event_category 1")
             event_category_1.delete()
             db.session.commit()
