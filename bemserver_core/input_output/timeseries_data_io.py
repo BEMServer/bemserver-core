@@ -24,9 +24,7 @@ from bemserver_core.exceptions import (
 from .base import BaseCSVIO
 
 AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max", "count")
-FIXED_SIZE_INTERVAL_UNITS = ("second", "minute", "hour", "day", "week")
-VARIABLE_SIZE_INTERVAL_UNITS = ("month", "year")
-INTERVAL_UNITS = FIXED_SIZE_INTERVAL_UNITS + VARIABLE_SIZE_INTERVAL_UNITS
+INTERVAL_UNITS = ("second", "minute", "hour", "day", "week", "month", "year")
 PANDAS_OFFSET_ALIASES = {
     "second": "S",
     "minute": "T",
