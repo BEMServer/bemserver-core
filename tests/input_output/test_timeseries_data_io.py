@@ -533,8 +533,7 @@ class TestTimeseriesDataIO:
             assert data_df.equals(expected_data_df)
 
             # UTC count 1 day1, 3 hour (and a half) offset
-            # Aggregation interval start time is floored to round to interval
-            # so we get the same intervals but less data in the first interval
+            # start time is floored to round to interval
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt + dt.timedelta(hours=3, minutes=30),
                 end_dt,
@@ -557,9 +556,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name: [20, 24, 24],
+                    ts_0.name: [24, 24, 24],
                     ts_2.name: [0, 0, 0],
-                    ts_4.name: [20, 24, 0],
+                    ts_4.name: [24, 24, 0],
                 },
                 index=index,
             )
@@ -1057,10 +1056,9 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-
             assert data_df.equals(expected_data_df)
 
-            # Local TZ count year (first bucket incomplete)
+            # Local TZ count year - start_dt floored
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt_plus_3_months.replace(tzinfo=ZoneInfo("Europe/Paris")),
                 end_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
@@ -1084,22 +1082,19 @@ class TestTimeseriesDataIO:
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [
-                        # Apr 2020 UTC+2 -> Jan 2021 UTC+1
-                        24 * (30 + 31 + 30 + 31 + 31 + 30 + 31 + 30 + 31) + 1,
-                        # Apr 2021 UTC+2 -> Jan 2022 UTC+1
+                        # 1st sample missing because UTC+1
+                        24 * 366 - 1,
                         24 * 365,
                     ],
                     ts_2.name: [0, 0],
                     ts_4.name: [
-                        # Apr 2020 UTC+2 -> Jan 2021 UTC+1
-                        24 * (30 + 31 + 30 + 31 + 31 + 30 + 31 + 30 + 31) + 1,
-                        # Jan 2021 UTC+1 -> Jan 2022 UTC
+                        # 1st sample missing because UTC+1
+                        24 * 366 - 1,
                         1,
                     ],
                 },
                 index=index,
             )
-
             assert data_df.equals(expected_data_df)
 
             # UTC avg month, with gapfill
@@ -1125,6 +1120,7 @@ class TestTimeseriesDataIO:
                 name="timestamp",
                 tz="UTC",
             )
+
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [np.nan, 371.5, 1091.5, 1811.5],
@@ -1136,8 +1132,7 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # UTC avg month with start offset
-            # Bins are aligned to month, only first bin differs
+            # UTC avg month
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt + dt.timedelta(days=3),
                 start_dt_plus_3_months,
@@ -1160,9 +1155,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name: [407.5, 1091.5, 1811.5],
+                    ts_0.name: [371.5, 1091.5, 1811.5],
                     ts_2.name: [np.nan, np.nan, np.nan],
-                    ts_4.name: [825.0, 2193.0, 3633.0],
+                    ts_4.name: [753.0, 2193.0, 3633.0],
                 },
                 index=index,
             )
@@ -1194,9 +1189,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name: [371.0, 1090.5, 1810.0, 2182.5],
+                    ts_0.name: [371.0, 1090.5, 1810.0, 2541.5],
                     ts_2.name: [np.nan, np.nan, np.nan, np.nan],
-                    ts_4.name: [752.0, 2191.0, 3630.0, 4375.0],
+                    ts_4.name: [752.0, 2191.0, 3630.0, 5093.0],
                 },
                 index=index,
             )

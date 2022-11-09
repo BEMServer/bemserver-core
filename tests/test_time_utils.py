@@ -2,11 +2,9 @@
 import datetime as dt
 from zoneinfo import ZoneInfo
 
-import pandas as pd
-
 import pytest
 
-from bemserver_core.time_utils import floor, ceil, gen_date_range
+from bemserver_core.time_utils import floor, ceil
 from bemserver_core.exceptions import BEMServerCorePeriodError
 
 
@@ -127,82 +125,3 @@ class TestTimeUtilsCeil:
             match="Period multipliers only allowed for fixed size periods",
         ):
             ceil(dt.datetime(2020, 1, 1), period, 2)
-
-
-class TestTimeUtilsGenDateRange:
-    def test_timeseries_data_io_gen_date_range_day(self):
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 1, 3, tzinfo=dt.timezone.utc)
-
-        # UTC
-        ret = gen_date_range(
-            start_dt + dt.timedelta(minutes=30),
-            end_dt - dt.timedelta(minutes=30),
-            1,
-            "day",
-            timezone="UTC",
-        )
-        index = pd.DatetimeIndex(
-            [
-                "2020-01-01T00:00:00+00:00",
-                "2020-01-02T00:00:00+00:00",
-            ]
-        )
-        assert ret.equals(index)
-
-        # Local TZ
-        ret = gen_date_range(
-            start_dt + dt.timedelta(minutes=30),
-            end_dt - dt.timedelta(minutes=30),
-            1,
-            "day",
-            timezone="Europe/Paris",
-        )
-        # end_dt - 30 min is after local TZ day bound (UTC-1)
-        # so we get 3 datetimes in the range
-        index = pd.DatetimeIndex(
-            [
-                "2020-01-01T00:00:00+01:00",
-                "2020-01-02T00:00:00+01:00",
-                "2020-01-03T00:00:00+01:00",
-            ],
-            tz=ZoneInfo("Europe/Paris"),
-        )
-        assert ret.equals(index)
-
-    def test_timeseries_data_io_gen_date_range_week(self):
-        start_dt = dt.datetime(2020, 10, 24, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 10, 28, tzinfo=dt.timezone.utc)
-
-        # UTC
-        ret = gen_date_range(
-            start_dt + dt.timedelta(minutes=30),
-            end_dt - dt.timedelta(minutes=30),
-            1,
-            "week",
-            timezone="UTC",
-        )
-        index = pd.DatetimeIndex(
-            [
-                "2020-10-19 00:00:00+00:00",
-                "2020-10-26 00:00:00+00:00",
-            ]
-        )
-        assert ret.equals(index)
-
-        # Local TZ
-        ret = gen_date_range(
-            start_dt + dt.timedelta(minutes=30),
-            end_dt - dt.timedelta(minutes=30),
-            1,
-            "week",
-            timezone="Europe/Paris",
-        )
-        index = pd.DatetimeIndex(
-            [
-                "2020-10-18 22:00:00+00:00",
-                "2020-10-25 23:00:00+00:00",
-            ],
-            tz=ZoneInfo("Europe/Paris"),
-        )
-        assert ret.equals(index)

@@ -1,6 +1,5 @@
 """Time utils"""
 import datetime as dt
-from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas.tseries.offsets import DateOffset
@@ -114,26 +113,3 @@ def ceil(datetime, period, period_multiplier=1):
         return ret
 
     raise BEMServerCorePeriodError(f'Invalid period: "{period}"')
-
-
-def gen_date_range(
-    start_dt, end_dt, bucket_width_value, bucket_width_unit, timezone="UTC"
-):
-    """Generate a complete index for a given time period and bucket width"""
-
-    pd_freq = f"{bucket_width_value}{PANDAS_PERIOD_ALIASES[bucket_width_unit]}"
-
-    tz = ZoneInfo(timezone)
-    start_dt = start_dt.astimezone(tz)
-    end_dt = end_dt.astimezone(tz)
-
-    start_dt = floor(start_dt, bucket_width_unit, bucket_width_value)
-
-    return pd.date_range(
-        start_dt,
-        end_dt,
-        freq=pd_freq,
-        tz=tz,
-        name="timestamp",
-        inclusive="left",
-    )

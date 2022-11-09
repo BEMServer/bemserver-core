@@ -15,7 +15,7 @@ from bemserver_core.model import (
     TimeseriesByDataState,
 )
 from bemserver_core.authorization import auth, get_current_user
-from bemserver_core.time_utils import gen_date_range, PERIODS, PANDAS_PERIOD_ALIASES
+from bemserver_core.time_utils import floor, ceil, PERIODS, PANDAS_PERIOD_ALIASES
 from bemserver_core.exceptions import (
     TimeseriesDataIOInvalidBucketWidthError,
     TimeseriesDataIOInvalidAggregationError,
@@ -218,9 +218,25 @@ class TimeseriesDataIO:
         fill_value = 0 if aggregation == "count" else np.nan
         dtype = int if aggregation == "count" else float
 
+        # Ensure start/end dates are in target timezone
+        tz_info = ZoneInfo(timezone)
+        start_dt = start_dt.astimezone(tz_info)
+        end_dt = end_dt.astimezone(tz_info)
+
+        # Floor/ceil start/end dates to return complete buckets
+        start_dt = floor(start_dt, bucket_width_unit, bucket_width_value)
+        end_dt = ceil(end_dt, bucket_width_unit, bucket_width_value)
+
+        pd_freq = f"{bucket_width_value}{PANDAS_PERIOD_ALIASES[bucket_width_unit]}"
+
         # Create expected complete index
-        complete_idx = gen_date_range(
-            start_dt, end_dt, bucket_width_value, bucket_width_unit, timezone
+        complete_idx = pd.date_range(
+            start_dt,
+            end_dt,
+            freq=pd_freq,
+            tz=tz_info,
+            name="timestamp",
+            inclusive="left",
         )
 
         if not timeseries:
@@ -255,9 +271,7 @@ class TimeseriesDataIO:
             data, columns=("timestamp", "id", "name", "value")
         ).set_index("timestamp")
 
-        data_df.index = pd.DatetimeIndex(data_df.index, tz="UTC").tz_convert(
-            ZoneInfo(timezone)
-        )
+        data_df.index = pd.DatetimeIndex(data_df.index, tz="UTC").tz_convert(tz_info)
 
         # Pivot table to get timeseries in columns
         data_df = data_df.pivot(values="value", columns=col_label).fillna(fill_value)
@@ -265,7 +279,6 @@ class TimeseriesDataIO:
         # Variable size intervals are aggregated to 1 x unit due to date_trunc
         # Further aggregation is achieved here in pandas
         if bucket_width_value != 1:
-            pd_freq = f"{bucket_width_value}{PANDAS_PERIOD_ALIASES[bucket_width_unit]}"
             func = PANDAS_RE_AGGREG_FUNC_MAPPING[aggregation]
             data_df = data_df.resample(pd_freq, closed="left", label="left").agg(func)
 
