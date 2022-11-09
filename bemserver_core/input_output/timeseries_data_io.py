@@ -15,7 +15,7 @@ from bemserver_core.model import (
     TimeseriesByDataState,
 )
 from bemserver_core.authorization import auth, get_current_user
-from bemserver_core.time_utils import floor, ceil, PERIODS, PANDAS_PERIOD_ALIASES
+from bemserver_core.time_utils import floor, ceil, PERIODS, make_pandas_freq
 from bemserver_core.exceptions import (
     TimeseriesDataIOInvalidBucketWidthError,
     TimeseriesDataIOInvalidAggregationError,
@@ -227,7 +227,7 @@ class TimeseriesDataIO:
         start_dt = floor(start_dt, bucket_width_unit, bucket_width_value)
         end_dt = ceil(end_dt, bucket_width_unit, bucket_width_value)
 
-        pd_freq = f"{bucket_width_value}{PANDAS_PERIOD_ALIASES[bucket_width_unit]}"
+        pd_freq = make_pandas_freq(bucket_width_unit, bucket_width_value)
 
         # Create expected complete index
         complete_idx = pd.date_range(

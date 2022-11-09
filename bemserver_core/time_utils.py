@@ -23,6 +23,10 @@ PERIODS = ("second", "minute", "hour", "day", "week", "month", "year")
 FIXED_SIZE_PERIODS = {"second", "minute", "hour"}
 
 
+def make_pandas_freq(period, period_multiplier):
+    return f"{period_multiplier}{PANDAS_PERIOD_ALIASES[period]}"
+
+
 def floor(datetime, period, period_multiplier=1):
     """Floor datetime to a given time period
 
@@ -36,7 +40,7 @@ def floor(datetime, period, period_multiplier=1):
     above period. E.g. "4 hours" starts at midnight, while "5 hours" may not.
     """
     if period in FIXED_SIZE_PERIODS:
-        pd_freq = f"{period_multiplier}{PANDAS_PERIOD_ALIASES[period]}"
+        pd_freq = make_pandas_freq(period, period_multiplier)
         return pd.Timestamp(datetime).floor(pd_freq, ambiguous=datetime.fold)
 
     if period_multiplier != 1:
