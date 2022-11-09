@@ -20,6 +20,7 @@ from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
+    BEMServerCorePeriodError,
     TimeseriesDataIOInvalidBucketWidthError,
     TimeseriesDataIOInvalidAggregationError,
     TimeseriesDataCSVIOError,
@@ -575,45 +576,13 @@ class TestTimeseriesDataIO:
             )
             assert data_df.equals(expected_data_df)
 
-            # UTC count 2 days
-            data_df = tsdio.get_timeseries_buckets_data(
-                # Also check that start_dt TZ doesn't matter
-                start_dt.astimezone(dt.timezone(dt.timedelta(hours=12))),
-                end_dt,
-                ts_l,
-                ds_1,
-                2,
-                "day",
-                "count",
-                col_label="name",
-            )
-
-            index = pd.DatetimeIndex(
-                [
-                    "2020-01-01T00:00:00",
-                    "2020-01-03T00:00:00",
-                ],
-                name="timestamp",
-                tz="UTC",
-            )
-            expected_data_df = pd.DataFrame(
-                {
-                    ts_0.name: [48, 24],
-                    ts_2.name: [0, 0],
-                    ts_4.name: [48, 0],
-                },
-                index=index,
-            )
-
-            assert data_df.equals(expected_data_df)
-
-            # UTC count 2 days with gapfill
+            # UTC count 1 day with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
                 end_dt + dt.timedelta(days=3),
                 ts_l,
                 ds_1,
-                2,
+                1,
                 "day",
                 "count",
                 col_label="name",
@@ -622,24 +591,26 @@ class TestTimeseriesDataIO:
             index = pd.DatetimeIndex(
                 [
                     "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
                     "2020-01-03T00:00:00",
+                    "2020-01-04T00:00:00",
                     "2020-01-05T00:00:00",
+                    "2020-01-06T00:00:00",
                 ],
                 name="timestamp",
                 tz="UTC",
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name: [48, 24, 0],
-                    ts_2.name: [0, 0, 0],
-                    ts_4.name: [48, 0, 0],
+                    ts_0.name: [24, 24, 24, 0, 0, 0],
+                    ts_2.name: [0, 0, 0, 0, 0, 0],
+                    ts_4.name: [24, 24, 0, 0, 0, 0],
                 },
                 index=index,
             )
-
             assert data_df.equals(expected_data_df)
 
-            # UTC count 2 days, 3 hour (and a half) offset
+            # UTC count 1 day1, 3 hour (and a half) offset
             # Aggregation interval start time is floored to round to interval
             # so we get the same intervals but less data in the first interval
             data_df = tsdio.get_timeseries_buckets_data(
@@ -647,7 +618,7 @@ class TestTimeseriesDataIO:
                 end_dt,
                 ts_l,
                 ds_1,
-                2,
+                1,
                 "day",
                 "count",
                 col_label="name",
@@ -656,6 +627,7 @@ class TestTimeseriesDataIO:
             index = pd.DatetimeIndex(
                 [
                     "2020-01-01T00:00:00",
+                    "2020-01-02T00:00:00",
                     "2020-01-03T00:00:00",
                 ],
                 name="timestamp",
@@ -663,9 +635,9 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.name: [44, 24],
-                    ts_2.name: [0, 0],
-                    ts_4.name: [44, 0],
+                    ts_0.name: [20, 24, 24],
+                    ts_2.name: [0, 0, 0],
+                    ts_4.name: [20, 24, 0],
                 },
                 index=index,
             )
@@ -952,6 +924,18 @@ class TestTimeseriesDataIO:
                     "avg",
                 )
 
+            with pytest.raises(BEMServerCorePeriodError):
+                # 2 weeks
+                tsdio.get_timeseries_buckets_data(
+                    start_dt, end_dt, ts_l, ds_1, 2, "week", "count"
+                )
+
+            with pytest.raises(BEMServerCorePeriodError):
+                # 2 days
+                tsdio.get_timeseries_buckets_data(
+                    start_dt, end_dt, ts_l, ds_1, 2, "day", "count"
+                )
+
     def test_timeseries_data_io_get_timeseries_buckets_data_dst_as_admin(
         self, users, timeseries
     ):
@@ -1154,29 +1138,6 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
-            # UTC count 2 year
-            data_df = tsdio.get_timeseries_buckets_data(
-                start_dt, end_dt, ts_l, ds_1, 2, "year", "count", col_label="name"
-            )
-
-            index = pd.DatetimeIndex(
-                [
-                    "2020-01-01T00:00:00",
-                ],
-                name="timestamp",
-                tz="UTC",
-            )
-            expected_data_df = pd.DataFrame(
-                {
-                    ts_0.name: [24 * 366 + 24 * 365],
-                    ts_2.name: [0],
-                    ts_4.name: [24 * 366],
-                },
-                index=index,
-            )
-
-            assert data_df.equals(expected_data_df)
-
             # Local TZ count year (first bucket incomplete)
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt_plus_3_months.replace(tzinfo=ZoneInfo("Europe/Paris")),
@@ -1280,37 +1241,6 @@ class TestTimeseriesDataIO:
                     ts_0.name: [407.5, 1091.5, 1811.5],
                     ts_2.name: [np.nan, np.nan, np.nan],
                     ts_4.name: [825.0, 2193.0, 3633.0],
-                },
-                index=index,
-            )
-
-            assert data_df.equals(expected_data_df)
-
-            # UTC avg 2 month
-            data_df = tsdio.get_timeseries_buckets_data(
-                start_dt,
-                start_dt_plus_3_months,
-                ts_l,
-                ds_1,
-                2,
-                "month",
-                "avg",
-                col_label="name",
-            )
-
-            index = pd.DatetimeIndex(
-                [
-                    "2020-01-01T00:00:00",
-                    "2020-03-01T00:00:00",
-                ],
-                name="timestamp",
-                tz="UTC",
-            )
-            expected_data_df = pd.DataFrame(
-                {
-                    ts_0.name: [731.5, 1811.5],
-                    ts_2.name: [np.nan, np.nan],
-                    ts_4.name: [1473.0, 3633.0],
                 },
                 index=index,
             )
@@ -1486,6 +1416,18 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame({}, index=index)
             assert data_df.equals(expected_data_df)
+
+            with pytest.raises(BEMServerCorePeriodError):
+                # 2 years
+                tsdio.get_timeseries_buckets_data(
+                    start_dt, end_dt, ts_l, ds_1, 2, "year", "count"
+                )
+
+            with pytest.raises(BEMServerCorePeriodError):
+                # 2 months
+                tsdio.get_timeseries_buckets_data(
+                    start_dt, end_dt, ts_l, ds_1, 2, "month"
+                )
 
     @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)

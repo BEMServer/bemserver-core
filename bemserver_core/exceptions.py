@@ -5,6 +5,10 @@ class BEMServerCoreError(Exception):
     """Base BEMServer Core exception"""
 
 
+class BEMServerCorePeriodError(BEMServerCoreError):
+    """Wrong time period unit or multiplier"""
+
+
 class TimeseriesNotFoundError(BEMServerCoreError):
     """Timeseries not found"""
 

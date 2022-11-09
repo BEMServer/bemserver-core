@@ -15,6 +15,7 @@ from bemserver_core.model import (
     TimeseriesByDataState,
 )
 from bemserver_core.authorization import auth, get_current_user
+from bemserver_core.time_utils import gen_date_range, PERIODS, PANDAS_PERIOD_ALIASES
 from bemserver_core.exceptions import (
     TimeseriesDataIOInvalidBucketWidthError,
     TimeseriesDataIOInvalidAggregationError,
@@ -23,17 +24,9 @@ from bemserver_core.exceptions import (
 
 from .base import BaseCSVIO
 
+
 AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max", "count")
-INTERVAL_UNITS = ("second", "minute", "hour", "day", "week", "month", "year")
-PANDAS_OFFSET_ALIASES = {
-    "second": "S",
-    "minute": "T",
-    "hour": "H",
-    "day": "D",
-    "week": "W-MON",
-    "month": "MS",
-    "year": "AS",
-}
+
 # Function to use to re-aggregate in pandas after SQL aggregation
 PANDAS_RE_AGGREG_FUNC_MAPPING = {
     "avg": "mean",
@@ -42,43 +35,6 @@ PANDAS_RE_AGGREG_FUNC_MAPPING = {
     "sum": "sum",
     "count": "sum",
 }
-
-
-def gen_date_range(
-    start_dt, end_dt, bucket_width_value, bucket_width_unit, timezone="UTC"
-):
-    """Generate a complete index for a given time period and bucket width"""
-
-    pd_freq = f"{bucket_width_value}{PANDAS_OFFSET_ALIASES[bucket_width_unit]}"
-
-    tz = ZoneInfo(timezone)
-    start_dt = start_dt.astimezone(tz)
-    end_dt = end_dt.astimezone(tz)
-
-    if bucket_width_unit == "year":
-        # Year: date range aligned on year start
-        start_dt = dt.datetime(start_dt.year, 1, 1, tzinfo=tz)
-    elif bucket_width_unit == "month":
-        # Month: date range aligned on month start
-        start_dt = dt.datetime(start_dt.year, start_dt.month, 1, tzinfo=tz)
-    elif bucket_width_unit == "week":
-        # Week: date range aligned on monday (range start may be before start_dt)
-        # Note that timedelta arithmetics respect wall clock so subtracting days
-        # works even across DST
-        start_dt = dt.datetime(
-            start_dt.year, start_dt.month, start_dt.day, tzinfo=tz
-        ) - dt.timedelta(days=start_dt.weekday())
-    else:
-        start_dt = pd.Timestamp(start_dt).floor(pd_freq, ambiguous=start_dt.fold)
-
-    return pd.date_range(
-        start_dt,
-        end_dt,
-        freq=pd_freq,
-        tz=tz,
-        name="timestamp",
-        inclusive="left",
-    )
 
 
 class TimeseriesDataIO:
@@ -248,9 +204,9 @@ class TimeseriesDataIO:
             raise TimeseriesDataIOInvalidBucketWidthError(
                 "bucket_width_value must be greater than or equal to 1"
             )
-        if bucket_width_unit not in INTERVAL_UNITS:
+        if bucket_width_unit not in PERIODS:
             raise TimeseriesDataIOInvalidBucketWidthError(
-                f"bucket_width_unit not in {INTERVAL_UNITS}"
+                f"bucket_width_unit not in {PERIODS}"
             )
         if aggregation not in AGGREGATION_FUNCTIONS:
             raise TimeseriesDataIOInvalidAggregationError("Invalid aggregation method")
@@ -309,7 +265,7 @@ class TimeseriesDataIO:
         # Variable size intervals are aggregated to 1 x unit due to date_trunc
         # Further aggregation is achieved here in pandas
         if bucket_width_value != 1:
-            pd_freq = f"{bucket_width_value}{PANDAS_OFFSET_ALIASES[bucket_width_unit]}"
+            pd_freq = f"{bucket_width_value}{PANDAS_PERIOD_ALIASES[bucket_width_unit]}"
             func = PANDAS_RE_AGGREG_FUNC_MAPPING[aggregation]
             data_df = data_df.resample(pd_freq, closed="left", label="left").agg(func)
 
