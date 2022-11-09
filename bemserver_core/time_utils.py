@@ -51,17 +51,21 @@ def floor(datetime, period, period_multiplier=1):
     tz = datetime.tzinfo
 
     if period == "year":
-        return pd.Timestamp(datetime.year, 1, 1, tzinfo=tz)
+        return pd.Timestamp(datetime.year, 1, 1, tzinfo=tz, fold=datetime.fold)
     if period == "month":
-        return pd.Timestamp(datetime.year, datetime.month, 1, tzinfo=tz)
+        return pd.Timestamp(
+            datetime.year, datetime.month, 1, tzinfo=tz, fold=datetime.fold
+        )
     if period == "day":
-        return pd.Timestamp(datetime.year, datetime.month, datetime.day, tzinfo=tz)
+        return pd.Timestamp(
+            datetime.year, datetime.month, datetime.day, tzinfo=tz, fold=datetime.fold
+        )
     if period == "week":
         # Week: align on monday
         # Note that timedelta arithmetics respect wall clock so subtracting days
         # works even across DST
         return pd.Timestamp(
-            datetime.year, datetime.month, datetime.day, tzinfo=tz
+            datetime.year, datetime.month, datetime.day, tzinfo=tz, fold=datetime.fold
         ) - dt.timedelta(days=datetime.weekday())
 
     raise BEMServerCorePeriodError(f'Invalid period: "{period}"')
@@ -91,17 +95,21 @@ def ceil(datetime, period, period_multiplier=1):
     tz = datetime.tzinfo
 
     if period == "year":
-        ret = pd.Timestamp(datetime.year, 1, 1, tzinfo=tz)
+        ret = pd.Timestamp(datetime.year, 1, 1, tzinfo=tz, fold=datetime.fold)
         if datetime != floor(datetime, period):
             ret += DateOffset(years=1)
         return ret
     if period == "month":
-        ret = pd.Timestamp(datetime.year, datetime.month, 1, tzinfo=tz)
+        ret = pd.Timestamp(
+            datetime.year, datetime.month, 1, tzinfo=tz, fold=datetime.fold
+        )
         if datetime != floor(datetime, period):
             ret += DateOffset(months=1)
         return ret
     if period == "day":
-        ret = pd.Timestamp(datetime.year, datetime.month, datetime.day, tzinfo=tz)
+        ret = pd.Timestamp(
+            datetime.year, datetime.month, datetime.day, tzinfo=tz, fold=datetime.fold
+        )
         if datetime != floor(datetime, period):
             ret += DateOffset(days=1)
         return ret
@@ -110,7 +118,7 @@ def ceil(datetime, period, period_multiplier=1):
         # Note that timedelta arithmetics respect wall clock so subtracting days
         # works even across DST
         ret = pd.Timestamp(
-            datetime.year, datetime.month, datetime.day, tzinfo=tz
+            datetime.year, datetime.month, datetime.day, tzinfo=tz, fold=datetime.fold
         ) - dt.timedelta(days=datetime.weekday())
         if datetime != floor(datetime, period):
             ret += DateOffset(days=7)
