@@ -27,6 +27,14 @@ def make_pandas_freq(period, period_multiplier):
     return f"{period_multiplier}{PANDAS_PERIOD_ALIASES[period]}"
 
 
+def make_date_offset(period, period_multiplier):
+    if period == "week":
+        period = "day"
+        period_multiplier *= 7
+    period = f"{period}s"
+    return DateOffset(**{period: period_multiplier})
+
+
 def floor(datetime, period, period_multiplier=1):
     """Floor datetime to a given time period
 
@@ -92,36 +100,7 @@ def ceil(datetime, period, period_multiplier=1):
             "Period multipliers only allowed for fixed size periods"
         )
 
-    tz = datetime.tzinfo
-
-    if period == "year":
-        ret = pd.Timestamp(datetime.year, 1, 1, tzinfo=tz, fold=datetime.fold)
-        if datetime != floor(datetime, period):
-            ret += DateOffset(years=1)
-        return ret
-    if period == "month":
-        ret = pd.Timestamp(
-            datetime.year, datetime.month, 1, tzinfo=tz, fold=datetime.fold
-        )
-        if datetime != floor(datetime, period):
-            ret += DateOffset(months=1)
-        return ret
-    if period == "day":
-        ret = pd.Timestamp(
-            datetime.year, datetime.month, datetime.day, tzinfo=tz, fold=datetime.fold
-        )
-        if datetime != floor(datetime, period):
-            ret += DateOffset(days=1)
-        return ret
-    if period == "week":
-        # Week: align on monday
-        # Note that timedelta arithmetics respect wall clock so subtracting days
-        # works even across DST
-        ret = pd.Timestamp(
-            datetime.year, datetime.month, datetime.day, tzinfo=tz, fold=datetime.fold
-        ) - dt.timedelta(days=datetime.weekday())
-        if datetime != floor(datetime, period):
-            ret += DateOffset(days=7)
-        return ret
-
-    raise BEMServerCorePeriodError(f'Invalid period: "{period}"')
+    ret = floor(datetime, period)
+    if ret != datetime:
+        ret += make_date_offset(period, 1)
+    return ret

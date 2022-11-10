@@ -2,13 +2,25 @@
 import datetime as dt
 from zoneinfo import ZoneInfo
 
+from pandas.tseries.offsets import DateOffset
+
 import pytest
 
-from bemserver_core.time_utils import floor, ceil
+from bemserver_core.time_utils import make_date_offset, floor, ceil
 from bemserver_core.exceptions import BEMServerCorePeriodError
 
 
 PERIODS = ("second", "minute", "hour", "day", "week", "month", "year")
+
+
+def test_time_utils_make_date_offset():
+    assert make_date_offset("year", 1) == DateOffset(years=1)
+    assert make_date_offset("month", 2) == DateOffset(months=2)
+    assert make_date_offset("week", 3) == DateOffset(days=21)
+    assert make_date_offset("day", 4) == DateOffset(days=4)
+    assert make_date_offset("hour", 5) == DateOffset(hours=5)
+    assert make_date_offset("minute", 6) == DateOffset(minutes=6)
+    assert make_date_offset("second", 7) == DateOffset(seconds=7)
 
 
 class TestTimeUtilsFloor:
