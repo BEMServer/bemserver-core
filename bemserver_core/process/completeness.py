@@ -69,13 +69,22 @@ def compute_completeness(
         for i, col in zip(intervals, counts_df.columns)
     ]
 
+    # Add a special case for empty intervals to avoid a deprecation warning
+    # in div() and mul(). See https://stackoverflow.com/questions/74448601/
+
     # Compute expected count (nb seconds per bucket / interval)
-    expected_counts_df = pd.DataFrame(
-        {col: nb_s_per_bucket for col in counts_df.columns}, index=counts_df.index
-    ).div(intervals, axis=1)
+    if not intervals:
+        expected_counts_df = pd.DataFrame({}, index=counts_df.index)
+    else:
+        expected_counts_df = pd.DataFrame(
+            {col: nb_s_per_bucket for col in counts_df.columns}, index=counts_df.index
+        ).div(intervals, axis=1)
 
     # Compute ratios (data rate x interval)
-    ratios_df = rates_df.mul(intervals, axis=1)
+    if not intervals:
+        ratios_df = pd.DataFrame({}, index=counts_df.index)
+    else:
+        ratios_df = rates_df.mul(intervals, axis=1)
     avg_ratios_df = ratios_df.mean()
 
     # Replace NaN with None
