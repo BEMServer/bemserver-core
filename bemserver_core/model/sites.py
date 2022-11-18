@@ -309,7 +309,7 @@ class Zone(AuthMixin, Base):
 
 
 class SitePropertyData(AuthMixin, Base):
-    __tablename__ = "site_property_data"
+    __tablename__ = "site_prop_data"
     __table_args__ = (sqla.UniqueConstraint("site_id", "site_prop_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
