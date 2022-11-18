@@ -157,4 +157,4 @@ def config_from_pyfile(celery_app, filename, silent=False):
 
 celery = BEMServerCoreCelery("BEMServer Core", task_cls=BEMServerCoreTask)
 celery.config_from_object(DefaultCeleryConfig)
-config_from_envvar(celery, "BEMSERVER_CELERY_SETTINGS", silent=True)
+config_from_envvar(celery, "BEMSERVER_CELERY_SETTINGS_FILE", silent=True)
