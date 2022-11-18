@@ -27,7 +27,9 @@ bemserver-core version).
 
 Create an automatic revision file::
 
-    $ alembic --config bemserver/alembic.ini revision --autogenerate -m "Message" --rev-id "Revision ID"
+    $ alembic --config bemserver_core/alembic.ini revision \
+        --autogenerate -m "Message" \
+        --rev-id "Revision ID"
 
 Automatic generation may not be perfect, so revision files should be checked
 manually.
