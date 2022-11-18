@@ -8,7 +8,7 @@ attrs==22.1.0
     # via pytest
 coverage[toml]==6.5.0
     # via pytest-cov
-exceptiongroup==1.0.0rc9
+exceptiongroup==1.0.4
     # via pytest
 iniconfig==1.1.1
     # via pytest
@@ -20,7 +20,7 @@ pluggy==1.0.0
     # via pytest
 port-for==0.6.2
     # via pytest-postgresql
-psutil==5.9.2
+psutil==5.9.4
     # via mirakuru
 pyparsing==3.0.9
     # via packaging
