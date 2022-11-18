@@ -583,7 +583,7 @@ def init_db_timeseries():
             TimeseriesProperty(
                 name="Interval",
                 description="Expected interval",
-                value_type=PropertyType.integer,
+                value_type=PropertyType.float,
                 unit_symbol="s",
             ),
             TimeseriesDataState(name="Raw"),

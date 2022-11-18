@@ -220,15 +220,19 @@ def timeseries_properties(bemservercore):
         ts_p_2 = model.TimeseriesProperty.get(name="Max").first()
         ts_p_3 = model.TimeseriesProperty.get(name="Interval").first()
         ts_p_4 = model.TimeseriesProperty.new(
+            name="Revision",
+            value_type=PropertyType.integer,
+        )
+        ts_p_5 = model.TimeseriesProperty.new(
             name="IsCalibrated",
             value_type=PropertyType.boolean,
         )
-        ts_p_5 = model.TimeseriesProperty.new(
+        ts_p_6 = model.TimeseriesProperty.new(
             name="Label",
             value_type=PropertyType.string,
         )
         db.session.commit()
-    return (ts_p_1, ts_p_2, ts_p_3, ts_p_4, ts_p_5)
+    return (ts_p_1, ts_p_2, ts_p_3, ts_p_4, ts_p_5, ts_p_6)
 
 
 @pytest.fixture(params=[2])

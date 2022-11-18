@@ -662,9 +662,9 @@ class TestTimeseriesPropertyDataModel:
 
         ts_1 = timeseries[0]
         tsp_1 = timeseries_properties[0]
-        tsp_3 = timeseries_properties[2]
         tsp_4 = timeseries_properties[3]
         tsp_5 = timeseries_properties[4]
+        tsp_6 = timeseries_properties[5]
 
         with CurrentUser(admin_user):
             # Property value is expected to be a float.
@@ -691,42 +691,20 @@ class TestTimeseriesPropertyDataModel:
                 db.session.rollback()
 
             # Property value is expected to be an integer.
-            assert tsp_3.value_type is PropertyType.integer
-            tspd_3 = TimeseriesPropertyData.new(
-                timeseries_id=ts_1.id,
-                property_id=tsp_3.id,
-                value=42,
-            )
-            db.session.commit()
-            assert tspd_3.value == "42"
-            tspd_3.value = "666"
-            db.session.add(tspd_3)
-            db.session.commit()
-            assert tspd_3.value == "666"
-            # Invalid property value types.
-            for val in ["bad", "4.2", 4.2, None]:
-                tspd_3.value = val
-                db.session.add(tspd_3)
-                with pytest.raises(PropertyTypeInvalidError):
-                    db.session.commit()
-                assert tspd_3.value == val
-                db.session.rollback()
-
-            # Property value is expected to be a boolean.
-            assert tsp_4.value_type is PropertyType.boolean
+            assert tsp_4.value_type is PropertyType.integer
             tspd_4 = TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=tsp_4.id,
-                value="true",
+                value=42,
             )
             db.session.commit()
-            assert tspd_4.value == "true"
-            tspd_4.value = "false"
+            assert tspd_4.value == "42"
+            tspd_4.value = "666"
             db.session.add(tspd_4)
             db.session.commit()
-            assert tspd_4.value == "false"
+            assert tspd_4.value == "666"
             # Invalid property value types.
-            for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
+            for val in ["bad", "4.2", 4.2, None]:
                 tspd_4.value = val
                 db.session.add(tspd_4)
                 with pytest.raises(PropertyTypeInvalidError):
@@ -734,23 +712,45 @@ class TestTimeseriesPropertyDataModel:
                 assert tspd_4.value == val
                 db.session.rollback()
 
-            # Property value is expected to be a string.
-            assert tsp_5.value_type is PropertyType.string
+            # Property value is expected to be a boolean.
+            assert tsp_5.value_type is PropertyType.boolean
             tspd_5 = TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=tsp_5.id,
+                value="true",
+            )
+            db.session.commit()
+            assert tspd_5.value == "true"
+            tspd_5.value = "false"
+            db.session.add(tspd_5)
+            db.session.commit()
+            assert tspd_5.value == "false"
+            # Invalid property value types.
+            for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
+                tspd_5.value = val
+                db.session.add(tspd_5)
+                with pytest.raises(PropertyTypeInvalidError):
+                    db.session.commit()
+                assert tspd_5.value == val
+                db.session.rollback()
+
+            # Property value is expected to be a string.
+            assert tsp_6.value_type is PropertyType.string
+            tspd_6 = TimeseriesPropertyData.new(
+                timeseries_id=ts_1.id,
+                property_id=tsp_6.id,
                 value=12,
             )
             db.session.commit()
-            assert tspd_5.value == "12"
+            assert tspd_6.value == "12"
             for val, exp_res in [
                 ("everything works", "everything works"),
                 (True, "true"),
             ]:
-                tspd_5.value = val
-                db.session.add(tspd_5)
+                tspd_6.value = val
+                db.session.add(tspd_6)
                 db.session.commit()
-                assert tspd_5.value == exp_res
+                assert tspd_6.value == exp_res
 
     def test_timseries_property_data_cannot_change_timeseries_or_property(
         self, users, timeseries, timeseries_properties
