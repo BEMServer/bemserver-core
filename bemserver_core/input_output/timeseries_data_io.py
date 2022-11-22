@@ -17,6 +17,7 @@ from bemserver_core.model import (
 from bemserver_core.authorization import auth, get_current_user
 from bemserver_core.time_utils import floor, ceil, PERIODS, make_pandas_freq
 from bemserver_core.exceptions import (
+    TimeseriesDataIOInvalidTimeseriesIDTypeError,
     TimeseriesDataIOInvalidBucketWidthError,
     TimeseriesDataIOInvalidAggregationError,
     TimeseriesDataCSVIOError,
@@ -48,6 +49,14 @@ class TimeseriesDataIO:
         :param TimeseriesDataState data_state: Timeseries data state
         :param Campaign campaign: Campaign
         """
+        # Ensure columns labels are of right type
+        try:
+            data_df.columns = data_df.columns.astype(str if campaign else int)
+        except TypeError as exc:
+            raise TimeseriesDataIOInvalidTimeseriesIDTypeError(
+                "Wrong timeseries ID type"
+            ) from exc
+
         timeseries = data_df.columns
         if campaign is None:
             timeseries = Timeseries.get_many_by_id(timeseries)

@@ -20,6 +20,7 @@ from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
     BEMServerCorePeriodError,
+    TimeseriesDataIOInvalidTimeseriesIDTypeError,
     TimeseriesDataIOInvalidBucketWidthError,
     TimeseriesDataIOInvalidAggregationError,
     TimeseriesDataCSVIOError,
@@ -203,6 +204,47 @@ class TestTimeseriesDataIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(TimeseriesNotFoundError):
+                tsdio.set_timeseries_data(data_df, ds_1, campaign)
+
+    @pytest.mark.parametrize("for_campaign", (True, False))
+    def test_timeseries_data_io_import_set_timeseries_data_columns_type_error(
+        self, users, campaigns, timeseries, for_campaign
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign = campaigns[0] if for_campaign else None
+        ts_0 = timeseries[0]
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        index = pd.DatetimeIndex(
+            [
+                "2020-01-01T00:00:00+00:00",
+                "2020-01-01T01:00:00+00:00",
+                "2020-01-01T02:00:00+00:00",
+                "2020-01-01T03:00:00+00:00",
+            ],
+            name="timestamp",
+        )
+        val_0 = [0, 1, 2, 3]
+
+        data_df = pd.DataFrame(
+            # Purposely pass wrong types
+            {ts_0.id if for_campaign else ts_0.name: val_0},
+            index=index,
+        )
+
+        # Passing int instead of string results in int being cast to str. The
+        # query is fine but the TS are not found.
+        # Passing str instead of int results in cast error before query.
+        expected_exc = (
+            TimeseriesNotFoundError
+            if for_campaign
+            else TimeseriesDataIOInvalidTimeseriesIDTypeError
+        )
+        with CurrentUser(admin_user):
+            with pytest.raises(expected_exc):
                 tsdio.set_timeseries_data(data_df, ds_1, campaign)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
