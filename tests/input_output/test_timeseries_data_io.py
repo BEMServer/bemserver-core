@@ -247,6 +247,39 @@ class TestTimeseriesDataIO:
             with pytest.raises(expected_exc):
                 tsdio.set_timeseries_data(data_df, ds_1, campaign)
 
+    @pytest.mark.parametrize("for_campaign", (True, False))
+    def test_timeseries_data_io_import_set_timeseries_data_empty_dataframe(
+        self, users, campaigns, timeseries, for_campaign
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign = campaigns[0] if for_campaign else None
+        ts_0 = timeseries[0]
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        # Empty dataframe
+        index = pd.DatetimeIndex([])
+        data_df = pd.DataFrame({}, index=index)
+
+        # Nothing happens. No crash.
+        with CurrentUser(admin_user):
+            tsdio.set_timeseries_data(data_df, ds_1, campaign)
+
+        index = pd.DatetimeIndex(["2020-01-01T00:00:00+00:00"])
+        val_0 = [np.nan]
+
+        # Not exactly empty but NaN-only dataframe
+        data_df = pd.DataFrame(
+            {ts_0.name if for_campaign else ts_0.id: val_0},
+            index=index,
+        )
+
+        # Nothing happens. No crash.
+        with CurrentUser(admin_user):
+            tsdio.set_timeseries_data(data_df, ds_1, campaign)
+
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     def test_timeseries_data_io_get_timeseries_data_as_admin(
         self,

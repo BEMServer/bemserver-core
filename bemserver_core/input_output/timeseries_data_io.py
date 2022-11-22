@@ -84,6 +84,10 @@ class TimeseriesDataIO:
             for row in data_df.reset_index().to_dict(orient="records")
             if pd.notna(row["value"])
         ]
+        # Ensure values array is not empty (otherwise the query crashes)
+        if not data_rows:
+            return
+
         query = (
             sqla.dialects.postgresql.insert(TimeseriesData)
             .values(data_rows)
