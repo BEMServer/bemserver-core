@@ -74,15 +74,19 @@ class BaseIO:
             raise BEMServerCoreIOError(f'Unknown zone: "{zone_name}"') from exc
 
 
-class BaseCSVIO(BaseIO):
-    """Base class for CSV IO classes"""
+class BaseFileIO(BaseIO):
+    """Base class for file IO classes"""
 
     @staticmethod
-    def _enforce_iterator(csv_file):
+    def _enforce_iterator(in_file):
         # If input is not a text stream, then it is a plain string
-        if not isinstance(csv_file, io.TextIOBase):
-            csv_file = io.StringIO(csv_file)
-        return csv_file
+        if not isinstance(in_file, io.TextIOBase):
+            in_file = io.StringIO(in_file)
+        return in_file
+
+
+class BaseCSVIO(BaseFileIO):
+    """Base class for CSV IO classes"""
 
     @classmethod
     def csv_dict_reader(cls, csv_file):
@@ -98,3 +102,7 @@ class BaseCSVIO(BaseIO):
         missing_fields = required_field_names - set(reader.fieldnames)
         if missing_fields:
             raise BEMServerCoreCSVIOError(f"Missing columns: {list(missing_fields)}")
+
+
+class BaseJSONIO(BaseFileIO):
+    """Base class for JSON IO classes"""

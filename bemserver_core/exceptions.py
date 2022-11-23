@@ -21,6 +21,10 @@ class BEMServerCoreCSVIOError(BEMServerCoreIOError):
     """CSV IO error"""
 
 
+class BEMServerCoreJSONIOError(BEMServerCoreIOError):
+    """JSON IO error"""
+
+
 class SitesCSVIOError(BEMServerCoreCSVIOError):
     """Sites CSV IO error"""
 
@@ -51,6 +55,10 @@ class TimeseriesDataIOInvalidAggregationError(TimeseriesDataIOError):
 
 class TimeseriesDataCSVIOError(BEMServerCoreCSVIOError, TimeseriesDataIOError):
     """Timeseries data CSV IO error"""
+
+
+class TimeseriesDataJSONIOError(BEMServerCoreJSONIOError, TimeseriesDataIOError):
+    """Timeseries data JSON IO error"""
 
 
 class BEMServerAuthorizationError(BEMServerCoreIOError):
