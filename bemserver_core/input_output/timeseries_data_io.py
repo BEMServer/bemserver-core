@@ -340,17 +340,21 @@ class TimeseriesDataIO:
         db.session.commit()
 
 
-def to_utc_datetime(timestamp_str):
-    """Create UTC datetime from timezone aware datetime as string"""
-    timestamp_dt = pd.to_datetime(timestamp_str)
-    try:
-        return timestamp_dt.astimezone(dt.timezone.utc)
-    except TypeError as exc:
-        if timestamp_dt.tzinfo is None:
-            raise TimeseriesDataIODatetimeError(
-                "Invalid or TZ-naive timestamp"
-            ) from exc
-        raise
+def to_utc_series(dt_series):
+    """Create UTC datetime from timezone aware datetime series"""
+
+    def to_utc_datetime(timestamp_dt):
+        try:
+            return timestamp_dt.astimezone(dt.timezone.utc)
+        except TypeError as exc:
+            if timestamp_dt.tzinfo is None:
+                raise TimeseriesDataIODatetimeError(
+                    "Invalid or TZ-naive timestamp"
+                ) from exc
+            raise
+
+    # We can't just use tz_convert because it would silently swallow naive datetimes
+    return dt_series.apply(to_utc_datetime)
 
 
 class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
@@ -386,10 +390,10 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
 
         # Index
         try:
-            index = pd.Series(data_df.index).apply(to_utc_datetime)
+            index = pd.to_datetime(pd.Series(data_df.index))
         except dateutil.parser._parser.ParserError as exc:
             raise TimeseriesDataCSVIOError("Invalid timestamp") from exc
-        data_df.index = pd.DatetimeIndex(index, name="timestamp")
+        data_df.index = pd.DatetimeIndex(to_utc_series(index), name="timestamp")
 
         # Values
         try:
