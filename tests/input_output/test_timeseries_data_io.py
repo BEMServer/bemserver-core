@@ -20,6 +20,7 @@ from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
     BEMServerCorePeriodError,
+    TimeseriesDataIODatetimeError,
     TimeseriesDataIOInvalidTimeseriesIDTypeError,
     TimeseriesDataIOInvalidBucketWidthError,
     TimeseriesDataIOInvalidAggregationError,
@@ -1730,24 +1731,26 @@ class TestTimeseriesDataCSVIO:
                 tsdcsvio.import_csv(io.StringIO(csv_file), ds_1.id, campaign)
 
     @pytest.mark.parametrize(
-        "row",
+        "row_error",
         (
             # Value not float
-            "2020-01-01T00:00:00+00:00,a",
+            ("2020-01-01T00:00:00+00:00,a", TimeseriesDataCSVIOError),
             # Naive datetime
-            "2020-01-01T00:00:00,12",
+            ("2020-01-01T00:00:00,12", TimeseriesDataIODatetimeError),
             # Invalid timestamp
-            "dummy,1",
+            ("dummy,1", TimeseriesDataCSVIOError),
+            ("0,1", TimeseriesDataIODatetimeError),
         ),
     )
     @pytest.mark.usefixtures("timeseries")
     @pytest.mark.parametrize("for_campaign", (True, False))
     def test_timeseries_data_io_import_csv_row_error(
-        self, users, campaigns, for_campaign, row
+        self, users, campaigns, for_campaign, row_error
     ):
         admin_user = users[0]
         assert admin_user.is_admin
         campaign = campaigns[0] if for_campaign else None
+        row, exc_cls = row_error
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
@@ -1756,7 +1759,7 @@ class TestTimeseriesDataCSVIO:
         csv_file = header + row
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesDataCSVIOError):
+            with pytest.raises(exc_cls):
                 tsdcsvio.import_csv(io.StringIO(csv_file), ds_1, campaign)
 
     @pytest.mark.usefixtures("timeseries")

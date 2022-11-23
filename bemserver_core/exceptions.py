@@ -33,6 +33,10 @@ class TimeseriesDataIOError(BEMServerCoreIOError):
     """Timeseries data IO error"""
 
 
+class TimeseriesDataIODatetimeError(BEMServerCoreIOError):
+    """Timeseries data IO datetime error"""
+
+
 class TimeseriesDataIOInvalidTimeseriesIDTypeError(TimeseriesDataIOError):
     """Timeseries data IO invalid timeseries ID type error"""
 

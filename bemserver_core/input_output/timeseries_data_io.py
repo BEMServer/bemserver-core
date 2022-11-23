@@ -17,6 +17,7 @@ from bemserver_core.model import (
 from bemserver_core.authorization import auth, get_current_user
 from bemserver_core.time_utils import floor, ceil, PERIODS, make_pandas_freq
 from bemserver_core.exceptions import (
+    TimeseriesDataIODatetimeError,
     TimeseriesDataIOInvalidTimeseriesIDTypeError,
     TimeseriesDataIOInvalidBucketWidthError,
     TimeseriesDataIOInvalidAggregationError,
@@ -339,14 +340,16 @@ class TimeseriesDataIO:
         db.session.commit()
 
 
-def to_aware_datetime(timestamp_str):
+def to_utc_datetime(timestamp_str):
     """Create UTC datetime from timezone aware datetime as string"""
     timestamp_dt = pd.to_datetime(timestamp_str)
     try:
         return timestamp_dt.astimezone(dt.timezone.utc)
     except TypeError as exc:
         if timestamp_dt.tzinfo is None:
-            raise TimeseriesDataCSVIOError("Timestamps must be TZ-aware") from exc
+            raise TimeseriesDataIODatetimeError(
+                "Invalid or TZ-naive timestamp"
+            ) from exc
         raise
 
 
@@ -383,7 +386,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
 
         # Index
         try:
-            index = pd.Series(data_df.index).apply(to_aware_datetime)
+            index = pd.Series(data_df.index).apply(to_utc_datetime)
         except dateutil.parser._parser.ParserError as exc:
             raise TimeseriesDataCSVIOError("Invalid timestamp") from exc
         data_df.index = pd.DatetimeIndex(index, name="timestamp")
