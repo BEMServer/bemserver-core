@@ -401,15 +401,6 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         except ValueError as exc:
             raise TimeseriesDataCSVIOError("Invalid values") from exc
 
-        # Cast timeseries ID to int if needed
-        if campaign is None:
-            invalid_timeseries = [ts for ts in data_df.columns if not ts.isdecimal()]
-            if invalid_timeseries:
-                raise TimeseriesDataCSVIOError(
-                    f"Invalid timeseries IDs: {invalid_timeseries}"
-                )
-            data_df.columns = [int(col_name) for col_name in data_df.columns]
-
         # Insert data
         cls.set_timeseries_data(data_df, data_state=data_state, campaign=campaign)
 

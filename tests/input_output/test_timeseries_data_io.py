@@ -1763,7 +1763,7 @@ class TestTimeseriesDataCSVIO:
                 tsdcsvio.import_csv(io.StringIO(csv_file), ds_1, campaign)
 
     @pytest.mark.usefixtures("timeseries")
-    def test_timeseries_data_io_import_invalid_ts_id(self, users):
+    def test_timeseries_data_io_import_csv_invalid_ts_id(self, users):
         """Check timeseries IDs provided as (non-decimal) strings instead of integers"""
         admin_user = users[0]
         assert admin_user.is_admin
@@ -1774,7 +1774,7 @@ class TestTimeseriesDataCSVIO:
         csv_file = "Datetime,Timeseries 0\n2020-01-01T00:00:00+00:00,1"
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesDataCSVIOError):
+            with pytest.raises(TimeseriesDataIOInvalidTimeseriesIDTypeError):
                 tsdcsvio.import_csv(io.StringIO(csv_file), ds_1.id)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
