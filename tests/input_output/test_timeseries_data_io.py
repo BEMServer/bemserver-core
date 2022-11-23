@@ -1738,7 +1738,7 @@ class TestTimeseriesDataCSVIO:
             # Naive datetime
             ("2020-01-01T00:00:00,12", TimeseriesDataIODatetimeError),
             # Invalid timestamp
-            ("dummy,1", TimeseriesDataCSVIOError),
+            ("dummy,1", TimeseriesDataIODatetimeError),
             ("0,1", TimeseriesDataIODatetimeError),
         ),
     )
