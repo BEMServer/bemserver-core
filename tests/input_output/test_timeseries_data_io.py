@@ -20,6 +20,8 @@ from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
     BEMServerCorePeriodError,
+    TimeseriesDataIODatetimeError,
+    TimeseriesDataIOInvalidTimeseriesIDTypeError,
     TimeseriesDataIOInvalidBucketWidthError,
     TimeseriesDataIOInvalidAggregationError,
     TimeseriesDataCSVIOError,
@@ -204,6 +206,80 @@ class TestTimeseriesDataIO:
         with CurrentUser(admin_user):
             with pytest.raises(TimeseriesNotFoundError):
                 tsdio.set_timeseries_data(data_df, ds_1, campaign)
+
+    @pytest.mark.parametrize("for_campaign", (True, False))
+    def test_timeseries_data_io_import_set_timeseries_data_columns_type_error(
+        self, users, campaigns, timeseries, for_campaign
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign = campaigns[0] if for_campaign else None
+        ts_0 = timeseries[0]
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        index = pd.DatetimeIndex(
+            [
+                "2020-01-01T00:00:00+00:00",
+                "2020-01-01T01:00:00+00:00",
+                "2020-01-01T02:00:00+00:00",
+                "2020-01-01T03:00:00+00:00",
+            ],
+            name="timestamp",
+        )
+        val_0 = [0, 1, 2, 3]
+
+        data_df = pd.DataFrame(
+            # Purposely pass wrong types
+            {ts_0.id if for_campaign else ts_0.name: val_0},
+            index=index,
+        )
+
+        # Passing int instead of string results in int being cast to str. The
+        # query is fine but the TS are not found.
+        # Passing str instead of int results in cast error before query.
+        expected_exc = (
+            TimeseriesNotFoundError
+            if for_campaign
+            else TimeseriesDataIOInvalidTimeseriesIDTypeError
+        )
+        with CurrentUser(admin_user):
+            with pytest.raises(expected_exc):
+                tsdio.set_timeseries_data(data_df, ds_1, campaign)
+
+    @pytest.mark.parametrize("for_campaign", (True, False))
+    def test_timeseries_data_io_import_set_timeseries_data_empty_dataframe(
+        self, users, campaigns, timeseries, for_campaign
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign = campaigns[0] if for_campaign else None
+        ts_0 = timeseries[0]
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        # Empty dataframe
+        index = pd.DatetimeIndex([])
+        data_df = pd.DataFrame({}, index=index)
+
+        # Nothing happens. No crash.
+        with CurrentUser(admin_user):
+            tsdio.set_timeseries_data(data_df, ds_1, campaign)
+
+        index = pd.DatetimeIndex(["2020-01-01T00:00:00+00:00"])
+        val_0 = [np.nan]
+
+        # Not exactly empty but NaN-only dataframe
+        data_df = pd.DataFrame(
+            {ts_0.name if for_campaign else ts_0.id: val_0},
+            index=index,
+        )
+
+        # Nothing happens. No crash.
+        with CurrentUser(admin_user):
+            tsdio.set_timeseries_data(data_df, ds_1, campaign)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     def test_timeseries_data_io_get_timeseries_data_as_admin(
@@ -1655,24 +1731,26 @@ class TestTimeseriesDataCSVIO:
                 tsdcsvio.import_csv(io.StringIO(csv_file), ds_1.id, campaign)
 
     @pytest.mark.parametrize(
-        "row",
+        "row_error",
         (
             # Value not float
-            "2020-01-01T00:00:00+00:00,a",
+            ("2020-01-01T00:00:00+00:00,a", TimeseriesDataCSVIOError),
             # Naive datetime
-            "2020-01-01T00:00:00,12",
+            ("2020-01-01T00:00:00,12", TimeseriesDataIODatetimeError),
             # Invalid timestamp
-            "dummy,1",
+            ("dummy,1", TimeseriesDataIODatetimeError),
+            ("0,1", TimeseriesDataIODatetimeError),
         ),
     )
     @pytest.mark.usefixtures("timeseries")
     @pytest.mark.parametrize("for_campaign", (True, False))
     def test_timeseries_data_io_import_csv_row_error(
-        self, users, campaigns, for_campaign, row
+        self, users, campaigns, for_campaign, row_error
     ):
         admin_user = users[0]
         assert admin_user.is_admin
         campaign = campaigns[0] if for_campaign else None
+        row, exc_cls = row_error
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
@@ -1681,11 +1759,11 @@ class TestTimeseriesDataCSVIO:
         csv_file = header + row
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesDataCSVIOError):
+            with pytest.raises(exc_cls):
                 tsdcsvio.import_csv(io.StringIO(csv_file), ds_1, campaign)
 
     @pytest.mark.usefixtures("timeseries")
-    def test_timeseries_data_io_import_invalid_ts_id(self, users):
+    def test_timeseries_data_io_import_csv_invalid_ts_id(self, users):
         """Check timeseries IDs provided as (non-decimal) strings instead of integers"""
         admin_user = users[0]
         assert admin_user.is_admin
@@ -1696,7 +1774,7 @@ class TestTimeseriesDataCSVIO:
         csv_file = "Datetime,Timeseries 0\n2020-01-01T00:00:00+00:00,1"
 
         with CurrentUser(admin_user):
-            with pytest.raises(TimeseriesDataCSVIOError):
+            with pytest.raises(TimeseriesDataIOInvalidTimeseriesIDTypeError):
                 tsdcsvio.import_csv(io.StringIO(csv_file), ds_1.id)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)

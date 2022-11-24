@@ -17,6 +17,8 @@ from bemserver_core.model import (
 from bemserver_core.authorization import auth, get_current_user
 from bemserver_core.time_utils import floor, ceil, PERIODS, make_pandas_freq
 from bemserver_core.exceptions import (
+    TimeseriesDataIODatetimeError,
+    TimeseriesDataIOInvalidTimeseriesIDTypeError,
     TimeseriesDataIOInvalidBucketWidthError,
     TimeseriesDataIOInvalidAggregationError,
     TimeseriesDataCSVIOError,
@@ -48,6 +50,14 @@ class TimeseriesDataIO:
         :param TimeseriesDataState data_state: Timeseries data state
         :param Campaign campaign: Campaign
         """
+        # Ensure columns labels are of right type
+        try:
+            data_df.columns = data_df.columns.astype(str if campaign else int)
+        except TypeError as exc:
+            raise TimeseriesDataIOInvalidTimeseriesIDTypeError(
+                "Wrong timeseries ID type"
+            ) from exc
+
         timeseries = data_df.columns
         if campaign is None:
             timeseries = Timeseries.get_many_by_id(timeseries)
@@ -75,6 +85,10 @@ class TimeseriesDataIO:
             for row in data_df.reset_index().to_dict(orient="records")
             if pd.notna(row["value"])
         ]
+        # Ensure values array is not empty (otherwise the query crashes)
+        if not data_rows:
+            return
+
         query = (
             sqla.dialects.postgresql.insert(TimeseriesData)
             .values(data_rows)
@@ -326,15 +340,28 @@ class TimeseriesDataIO:
         db.session.commit()
 
 
-def to_aware_datetime(timestamp_str):
-    """Create UTC datetime from timezone aware datetime as string"""
-    timestamp_dt = pd.to_datetime(timestamp_str)
+def to_utc_index(series):
+    """Create UTC datetime index from timezone aware datetime list"""
+
+    def to_utc_datetime(timestamp_dt):
+        try:
+            return timestamp_dt.astimezone(dt.timezone.utc)
+        except TypeError as exc:
+            if timestamp_dt.tzinfo is None:
+                raise TimeseriesDataIODatetimeError(
+                    "Invalid or TZ-naive timestamp"
+                ) from exc
+            raise
+
     try:
-        return timestamp_dt.astimezone(dt.timezone.utc)
-    except TypeError as exc:
-        if timestamp_dt.tzinfo is None:
-            raise TimeseriesDataCSVIOError("Timestamps must be TZ-aware") from exc
-        raise
+        index = pd.to_datetime(pd.Series(series))
+    except dateutil.parser._parser.ParserError as exc:
+        raise TimeseriesDataIODatetimeError("Invalid timestamp") from exc
+
+    # We can't just use tz_convert because it would silently swallow naive datetimes
+    index = index.apply(to_utc_datetime)
+
+    return pd.DatetimeIndex(index, name="timestamp")
 
 
 class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
@@ -369,26 +396,13 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             raise TimeseriesDataCSVIOError("Empty file") from exc
 
         # Index
-        try:
-            index = pd.Series(data_df.index).apply(to_aware_datetime)
-        except dateutil.parser._parser.ParserError as exc:
-            raise TimeseriesDataCSVIOError("Invalid timestamp") from exc
-        data_df.index = pd.DatetimeIndex(index, name="timestamp")
+        data_df.index = to_utc_index(data_df.index)
 
         # Values
         try:
             data_df = data_df.astype(float)
         except ValueError as exc:
             raise TimeseriesDataCSVIOError("Invalid values") from exc
-
-        # Cast timeseries ID to int if needed
-        if campaign is None:
-            invalid_timeseries = [ts for ts in data_df.columns if not ts.isdecimal()]
-            if invalid_timeseries:
-                raise TimeseriesDataCSVIOError(
-                    f"Invalid timeseries IDs: {invalid_timeseries}"
-                )
-            data_df.columns = [int(col_name) for col_name in data_df.columns]
 
         # Insert data
         cls.set_timeseries_data(data_df, data_state=data_state, campaign=campaign)
