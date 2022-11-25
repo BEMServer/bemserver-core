@@ -242,7 +242,7 @@ def timeseries(request, bemservercore, campaigns, campaign_scopes):
         for i in range(request.param):
             ts_i = model.Timeseries(
                 name=f"Timeseries {i+1}",
-                description=f"Test timeseries #{i}",
+                description=f"Test timeseries #{i+1}",
                 campaign=campaigns[i % len(campaigns)],
                 campaign_scope=campaign_scopes[i % len(campaign_scopes)],
             )
