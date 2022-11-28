@@ -385,9 +385,13 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         try:
             header = next(reader)
         except StopIteration as exc:
-            raise TimeseriesDataCSVIOError("Missing headers line") from exc
+            raise TimeseriesDataCSVIOError("Missing headers") from exc
+        if not header:
+            raise TimeseriesDataCSVIOError("Missing headers")
         if "" in header:
             raise TimeseriesDataCSVIOError("Empty timeseries name or trailing comma")
+        if header[0] != "Datetime":
+            raise TimeseriesDataCSVIOError("Invalid file")
         # Rewind cursor, otherwise header is alreay consumed and not passed to read_csv
         csv_file.seek(0)
 

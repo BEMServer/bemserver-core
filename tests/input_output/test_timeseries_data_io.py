@@ -1710,6 +1710,10 @@ class TestTimeseriesDataCSVIO:
         (
             # Empty file
             ("", TimeseriesDataCSVIOError),
+            # Missing headers
+            ("\n", TimeseriesDataCSVIOError),
+            # Wrong (e.g. JSON) file format
+            ('{"1": {"2020-01-01T00:00:00+00:00": 0}}', TimeseriesDataCSVIOError),
             # Empty TS name
             ("Datetime,1,\n", TimeseriesDataCSVIOError),
             # Unknown TS
