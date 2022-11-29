@@ -170,6 +170,32 @@ has_permission(user: User, "delete", event:Event) if
     has_role(user, "member", event.campaign_scope);
 
 
+resource TimeseriesByEvent {
+    permissions = ["create", "read", "update", "delete"];
+}
+
+# TODO: Oso issue: using campaign scope twice in permission triggers an error
+# in Oso when building the query:
+# "Type `CampaignScope` occurs more than once as the target of a relation"
+# Let's check only event and ensure in code that timeseries is in the same
+# campaign scope.
+# When/if fixed in Oso, check that TS/event relations are refreshed before
+# Oso performs the test.
+
+has_permission(user: User, "create", tbe:TimeseriesByEvent) if
+#    tbe.timeseries.campaign_scope = tbe.event.campaign_scope and
+    has_permission(user, "update", tbe.event);
+has_permission(user: User, "read", tbe:TimeseriesByEvent) if
+#    tbe.timeseries.campaign_scope = tbe.event.campaign_scope and
+    has_permission(user, "read", tbe.event);
+has_permission(user: User, "update", tbe:TimeseriesByEvent) if
+#    tbe.timeseries.campaign_scope = tbe.event.campaign_scope and
+    has_permission(user, "update", tbe.event);
+has_permission(user: User, "delete", tbe:TimeseriesByEvent) if
+#    tbe.timeseries.campaign_scope = tbe.event.campaign_scope and
+    has_permission(user, "update", tbe.event);
+
+
 resource StructuralElementProperty{
     permissions = ["create", "read", "update", "delete"];
     roles = ["user"];

@@ -4,10 +4,13 @@ import sqlalchemy as sqla
 
 import pytest
 
-from bemserver_core.model import EventCategory, EventLevel, Event
+from bemserver_core.model import EventCategory, EventLevel, Event, TimeseriesByEvent
 from bemserver_core.authorization import CurrentUser
 from bemserver_core.database import db
-from bemserver_core.exceptions import BEMServerAuthorizationError
+from bemserver_core.exceptions import (
+    BEMServerAuthorizationError,
+    BEMServerCoreCampaignScopeError,
+)
 
 
 class TestEventLevelModel:
@@ -87,6 +90,18 @@ class TestEventCategoryModel:
 
 
 class TestEventModel:
+    @pytest.mark.usefixtures("timeseries_by_events")
+    def test_events_delete_cascade(self, users, events):
+        admin_user = users[0]
+        event_1 = events[0]
+
+        with CurrentUser(admin_user):
+            assert len(list(TimeseriesByEvent.get())) == 2
+
+            event_1.delete()
+            db.session.commit()
+            assert len(list(TimeseriesByEvent.get())) == 1
+
     @pytest.mark.usefixtures("as_admin")
     def test_event_read_only_fields(self, campaign_scopes, event_categories):
         """Check campaign_scope and timestamp can't be modified
@@ -216,3 +231,81 @@ class TestEventModel:
             db.session.commit()
             event_2.delete()
             db.session.commit()
+
+
+class TestTimeseriesByEventModel:
+    @pytest.mark.parametrize("timeseries", (4,), indirect=True)
+    def test_timeseries_by_event_authorizations_as_admin(
+        self, users, timeseries, events
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
+        ts_4 = timeseries[3]
+        event_1 = events[0]
+
+        with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreCampaignScopeError):
+                TimeseriesByEvent.new(timeseries_id=ts_2.id, event_id=event_1.id)
+                db.session.flush()
+            db.session.rollback()
+            tbe_1 = TimeseriesByEvent.new(timeseries_id=ts_1.id, event_id=event_1.id)
+            db.session.add(tbe_1)
+            db.session.flush()
+            TimeseriesByEvent.get_by_id(tbe_1.id)
+            tbes = list(TimeseriesByEvent.get())
+            assert len(tbes) == 1
+            tbe_1.update(timeseries_id=ts_4.id)
+            db.session.flush()
+            with pytest.raises(BEMServerCoreCampaignScopeError):
+                tbe_1.update(timeseries_id=ts_2.id)
+                db.session.flush()
+            db.session.rollback()
+            tbe_1 = TimeseriesByEvent.new(timeseries_id=ts_1.id, event_id=event_1.id)
+            db.session.flush()
+            tbe_1.delete()
+            db.session.flush()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.parametrize("timeseries", (5,), indirect=True)
+    def test_timeseries_by_event_authorizations_as_user(
+        self, users, timeseries, events, timeseries_by_events
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
+        ts_5 = timeseries[4]
+        event_1 = events[0]
+        event_2 = events[1]
+        tbe_1 = timeseries_by_events[0]
+        tbe_2 = timeseries_by_events[1]
+
+        assert (
+            ts_2.campaign_scope_id
+            == ts_5.campaign_scope_id
+            == event_2.campaign_scope_id
+        )
+
+        with CurrentUser(user_1):
+            tbe_l = list(TimeseriesByEvent.get())
+            assert len(tbe_l) == 1
+            assert tbe_l[0] == tbe_2
+            TimeseriesByEvent.get_by_id(tbe_2.id)
+            tbe = TimeseriesByEvent.new(timeseries_id=ts_5.id, event_id=event_2.id)
+            tbe.delete()
+            tbe_2.update(timeseries_id=ts_5.id)
+            tbe_2.delete()
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesByEvent.get_by_id(tbe_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                TimeseriesByEvent.new(timeseries_id=ts_1.id, event_id=event_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tbe_1.update(timeseries_id=ts_5.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                tbe_1.delete()

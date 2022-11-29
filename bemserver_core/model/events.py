@@ -4,6 +4,8 @@ import sqlalchemy.orm as sqlaorm
 
 from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.authorization import auth, AuthMixin, Relation
+from bemserver_core.exceptions import BEMServerCoreCampaignScopeError
+from .timeseries import Timeseries
 
 
 class EventCategory(AuthMixin, Base):
@@ -55,6 +57,54 @@ class Event(AuthMixin, Base):
                     kind="one",
                     other_type="CampaignScope",
                     my_field="campaign_scope_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
+class TimeseriesByEvent(AuthMixin, Base):
+    __tablename__ = "ts_by_events"
+    __table_args__ = (sqla.UniqueConstraint("event_id", "timeseries_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
+    event_id = sqla.Column(sqla.ForeignKey("events.id"), nullable=False)
+
+    event = sqla.orm.relationship(
+        "Event",
+        backref=sqla.orm.backref("timeseries_by_event", cascade="all, delete-orphan"),
+    )
+    timeseries = sqla.orm.relationship(
+        "Timeseries",
+        backref=sqla.orm.backref("timeseries_by_event", cascade="all, delete-orphan"),
+    )
+
+    def _before_flush(self):
+        # Ensure TS and Event are in same Campaign scope
+        if self.timeseries_id and self.event_id:
+            timeseries = Timeseries.get_by_id(self.timeseries_id)
+            event = Event.get_by_id(self.event_id)
+            if timeseries.campaign_scope != event.campaign_scope:
+                raise BEMServerCoreCampaignScopeError(
+                    "Event and timeseries must be in same campaign scope"
+                )
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "timeseries": Relation(
+                    kind="one",
+                    other_type="Timeseries",
+                    my_field="timeseries_id",
+                    other_field="id",
+                ),
+                "event": Relation(
+                    kind="one",
+                    other_type="Event",
+                    my_field="event_id",
                     other_field="id",
                 ),
             },

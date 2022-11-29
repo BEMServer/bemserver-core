@@ -322,6 +322,21 @@ def events(bemservercore, campaign_scopes, event_categories):
 
 
 @pytest.fixture
+def timeseries_by_events(bemservercore, timeseries, events):
+    with OpenBar():
+        tbs_1 = model.TimeseriesByEvent.new(
+            timeseries_id=timeseries[0].id,
+            event_id=events[0].id,
+        )
+        tbs_2 = model.TimeseriesByEvent.new(
+            timeseries_id=timeseries[1].id,
+            event_id=events[1].id,
+        )
+        db.session.commit()
+    return (tbs_1, tbs_2)
+
+
+@pytest.fixture
 def structural_element_properties(bemservercore):
     with OpenBar():
         sep_1 = model.StructuralElementProperty.new(

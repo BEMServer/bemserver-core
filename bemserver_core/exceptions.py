@@ -13,6 +13,10 @@ class TimeseriesNotFoundError(BEMServerCoreError):
     """Timeseries not found"""
 
 
+class BEMServerCoreCampaignScopeError(BEMServerCoreError):
+    """Campaign scope error"""
+
+
 class BEMServerCoreIOError(BEMServerCoreError):
     """Base IO error"""
 
