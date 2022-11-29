@@ -42,6 +42,10 @@ class Event(AuthMixin, Base):
     source = sqla.Column(sqla.String, nullable=False)
     description = sqla.Column(sqla.String())
 
+    campaign_scope = sqla.orm.relationship(
+        "CampaignScope", backref=sqla.orm.backref("sites", cascade="all, delete-orphan")
+    )
+
     @classmethod
     def register_class(cls):
         auth.register_class(
