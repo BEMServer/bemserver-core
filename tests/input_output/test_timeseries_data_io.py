@@ -1,5 +1,4 @@
-"""Timeseries CSV I/O tests"""
-import io
+"""Timeseries I/O tests"""
 import json
 import datetime as dt
 from zoneinfo import ZoneInfo
@@ -1575,10 +1574,9 @@ class TestTimeseriesDataIO:
 class TestTimeseriesDataCSVIO:
     @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
-    @pytest.mark.parametrize("mode", ("str", "textiobase"))
     @pytest.mark.parametrize("for_campaign", (True, False))
     def test_timeseries_data_io_import_csv_as_admin(
-        self, users, campaigns, timeseries, mode, for_campaign
+        self, users, campaigns, timeseries, for_campaign
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -1597,7 +1595,7 @@ class TestTimeseriesDataCSVIO:
         else:
             header = f"Datetime,{ts_0.id},{ts_2.id}\n"
 
-        csv_file = header + (
+        csv_data = header + (
             "2020-01-01T00:00:00+00:00,0,10\n"
             "2020-01-01T01:00:00+00:00,1,11\n"
             "2020-01-01T02:00:00+00:00,2,12\n"
@@ -1605,11 +1603,8 @@ class TestTimeseriesDataCSVIO:
             "2020-01-01T04:00:00+01:00,3,13\n"
         )
 
-        if mode == "textiobase":
-            csv_file = io.StringIO(csv_file)
-
         with CurrentUser(admin_user):
-            tsdcsvio.import_csv(csv_file, ds_1, campaign)
+            tsdcsvio.import_csv(csv_data, ds_1, campaign)
 
         # Check TSBDS are correctly auto-created
         tsbds_l = (
@@ -1677,7 +1672,7 @@ class TestTimeseriesDataCSVIO:
             campaign = None
             header = f"Datetime,{ts_0.id},{ts_2.id}\n"
 
-        csv_file = header + (
+        csv_data = header + (
             "2020-01-01T00:00:00+00:00,0,10\n"
             "2020-01-01T01:00:00+00:00,1,11\n"
             "2020-01-01T02:00:00+00:00,2,12\n"
@@ -1686,7 +1681,7 @@ class TestTimeseriesDataCSVIO:
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
-                tsdcsvio.import_csv(csv_file, ds_1, campaign)
+                tsdcsvio.import_csv(csv_data, ds_1, campaign)
 
         if for_campaign:
             campaign = campaigns[1]
@@ -1695,7 +1690,7 @@ class TestTimeseriesDataCSVIO:
             campaign = None
             header = f"Datetime,{ts_1.id}\n"
 
-        csv_file = header + (
+        csv_data = header + (
             "2020-01-01T00:00:00+00:00,0\n"
             "2020-01-01T01:00:00+00:00,1\n"
             "2020-01-01T02:00:00+00:00,2\n"
@@ -1703,10 +1698,10 @@ class TestTimeseriesDataCSVIO:
         )
 
         with CurrentUser(user_1):
-            tsdcsvio.import_csv(csv_file, ds_1, campaign)
+            tsdcsvio.import_csv(csv_data, ds_1, campaign)
 
     @pytest.mark.parametrize(
-        "file_error",
+        "data_error",
         (
             # Empty file
             ("", TimeseriesDataCSVIOError),
@@ -1721,20 +1716,20 @@ class TestTimeseriesDataCSVIO:
         ),
     )
     @pytest.mark.parametrize("for_campaign", (True, False))
-    def test_timeseries_data_io_import_csv_file_error(
-        self, users, campaigns, for_campaign, file_error
+    def test_timeseries_data_io_import_csv_error(
+        self, users, campaigns, for_campaign, data_error
     ):
         admin_user = users[0]
         assert admin_user.is_admin
         campaign = campaigns[0] if for_campaign else None
-        csv_file, exc_cls = file_error
+        csv_data, exc_cls = data_error
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
         with CurrentUser(admin_user):
             with pytest.raises(exc_cls):
-                tsdcsvio.import_csv(io.StringIO(csv_file), ds_1.id, campaign)
+                tsdcsvio.import_csv(csv_data, ds_1.id, campaign)
 
     @pytest.mark.parametrize(
         "row_error",
@@ -1762,11 +1757,11 @@ class TestTimeseriesDataCSVIO:
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
         header = "Datetime,Timeseries 0\n" if for_campaign else "Datetime,1\n"
-        csv_file = header + row
+        csv_data = header + row
 
         with CurrentUser(admin_user):
             with pytest.raises(exc_cls):
-                tsdcsvio.import_csv(io.StringIO(csv_file), ds_1, campaign)
+                tsdcsvio.import_csv(csv_data, ds_1, campaign)
 
     @pytest.mark.usefixtures("timeseries")
     def test_timeseries_data_io_import_csv_invalid_ts_id(self, users):
@@ -1777,11 +1772,11 @@ class TestTimeseriesDataCSVIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        csv_file = "Datetime,Timeseries 0\n2020-01-01T00:00:00+00:00,1"
+        csv_data = "Datetime,Timeseries 0\n2020-01-01T00:00:00+00:00,1"
 
         with CurrentUser(admin_user):
             with pytest.raises(TimeseriesDataIOInvalidTimeseriesIDTypeError):
-                tsdcsvio.import_csv(io.StringIO(csv_file), ds_1.id)
+                tsdcsvio.import_csv(csv_data, ds_1.id)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.parametrize("col_label", ("id", "name"))
@@ -2116,10 +2111,9 @@ class TestTimeseriesDataCSVIO:
 class TestTimeseriesDataJSONIO:
     @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
-    @pytest.mark.parametrize("mode", ("str", "textiobase"))
     @pytest.mark.parametrize("for_campaign", (True, False))
     def test_timeseries_data_io_import_json_as_admin(
-        self, users, campaigns, timeseries, mode, for_campaign
+        self, users, campaigns, timeseries, for_campaign
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -2140,7 +2134,7 @@ class TestTimeseriesDataJSONIO:
         else:
             labels = [ts.id for ts in ts_l]
 
-        json_file = {
+        json_data = {
             labels[0]: {
                 "2020-01-01T00:00:00+00:00": 0,
                 "2020-01-01T01:00:00+00:00": 1,
@@ -2154,13 +2148,10 @@ class TestTimeseriesDataJSONIO:
                 "2020-01-01T03:00:00+00:00": 13,
             },
         }
-        json_file = json.dumps(json_file)
-
-        if mode == "textiobase":
-            json_file = io.StringIO(json_file)
+        json_data = json.dumps(json_data)
 
         with CurrentUser(admin_user):
-            tsdjsonio.import_json(json_file, ds_1, campaign)
+            tsdjsonio.import_json(json_data, ds_1, campaign)
 
         # Check TSBDS are correctly auto-created
         tsbds_l = (
@@ -2230,7 +2221,7 @@ class TestTimeseriesDataJSONIO:
             campaign = None
             labels = [ts.id for ts in ts_l]
 
-        json_file = {
+        json_data = {
             labels[0]: {
                 "2020-01-01T00:00:00+00:00": 0,
                 "2020-01-01T01:00:00+00:00": 1,
@@ -2244,11 +2235,11 @@ class TestTimeseriesDataJSONIO:
                 "2020-01-01T03:00:00+00:00": 13,
             },
         }
-        json_file = json.dumps(json_file)
+        json_data = json.dumps(json_data)
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
-                tsdjsonio.import_json(json_file, ds_1, campaign)
+                tsdjsonio.import_json(json_data, ds_1, campaign)
 
         ts_l = [ts_1]
 
@@ -2259,7 +2250,7 @@ class TestTimeseriesDataJSONIO:
             campaign = None
             labels = [ts.id for ts in ts_l]
 
-        json_file = {
+        json_data = {
             labels[0]: {
                 "2020-01-01T00:00:00+00:00": 0,
                 "2020-01-01T01:00:00+00:00": 1,
@@ -2267,13 +2258,13 @@ class TestTimeseriesDataJSONIO:
                 "2020-01-01T03:00:00+00:00": 3,
             },
         }
-        json_file = json.dumps(json_file)
+        json_data = json.dumps(json_data)
 
         with CurrentUser(user_1):
-            tsdjsonio.import_json(json_file, ds_1, campaign)
+            tsdjsonio.import_json(json_data, ds_1, campaign)
 
     @pytest.mark.parametrize(
-        "file_error",
+        "data_error",
         (
             # Empty file
             ("", TimeseriesDataJSONIOError),
@@ -2289,20 +2280,20 @@ class TestTimeseriesDataJSONIO:
         ),
     )
     @pytest.mark.parametrize("for_campaign", (True,))  # False))
-    def test_timeseries_data_io_import_json_file_error(
-        self, users, campaigns, for_campaign, file_error
+    def test_timeseries_data_io_import_json_error(
+        self, users, campaigns, for_campaign, data_error
     ):
         admin_user = users[0]
         assert admin_user.is_admin
         campaign = campaigns[0] if for_campaign else None
-        json_file, exc_cls = file_error
+        json_data, exc_cls = data_error
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
         with CurrentUser(admin_user):
             with pytest.raises(exc_cls):
-                tsdjsonio.import_json(io.StringIO(json_file), ds_1.id, campaign)
+                tsdjsonio.import_json(json_data, ds_1.id, campaign)
 
     @pytest.mark.usefixtures("timeseries")
     def test_timeseries_data_io_import_json_invalid_ts_id(self, users):
@@ -2313,11 +2304,11 @@ class TestTimeseriesDataJSONIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        json_file = '{"Timeseries 0": {"2020-01-01T00:00:00+00:00": 1}}'
+        json_data = '{"Timeseries 0": {"2020-01-01T00:00:00+00:00": 1}}'
 
         with CurrentUser(admin_user):
             with pytest.raises(TimeseriesDataIOInvalidTimeseriesIDTypeError):
-                tsdjsonio.import_json(io.StringIO(json_file), ds_1.id)
+                tsdjsonio.import_json(json_data, ds_1.id)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.parametrize("col_label", ("id", "name"))

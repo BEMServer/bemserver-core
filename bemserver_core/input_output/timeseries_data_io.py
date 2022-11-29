@@ -1,4 +1,5 @@
 """Timeseries data I/O"""
+import io
 import datetime as dt
 from zoneinfo import ZoneInfo
 import json
@@ -368,20 +369,18 @@ def to_utc_index(series):
 
 class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
     @classmethod
-    def import_csv(cls, csv_file, data_state, campaign=None):
+    def import_csv(cls, csv_data, data_state, campaign=None):
         """Import CSV file
 
-        :param srt|TextIOBase csv_file: CSV as string or text stream
+        :param srt csv_data: CSV as string
         :param TimeseriesDataState data_state: Timeseries data state
         :param Campaign campaign: Campaign
 
         If campaign is None, the CSV header is expected to contain timeseries IDs.
         Otherwise, timeseries names are expected.
         """
-        csv_file = cls._enforce_iterator(csv_file)
-
         # Check header first. Some errors are hard to catch in or after pandas read_csv
-        reader = csv.reader(csv_file)
+        reader = csv.reader(io.StringIO(csv_data))
         try:
             header = next(reader)
         except StopIteration as exc:
@@ -392,12 +391,10 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             raise TimeseriesDataCSVIOError("Empty timeseries name or trailing comma")
         if header[0] != "Datetime":
             raise TimeseriesDataCSVIOError("Invalid file")
-        # Rewind cursor, otherwise header is alreay consumed and not passed to read_csv
-        csv_file.seek(0)
 
         # Load CSV into DataFrame
         try:
-            data_df = pd.read_csv(csv_file, index_col=0)
+            data_df = pd.read_csv(io.StringIO(csv_data), index_col=0)
         except pd.errors.EmptyDataError as exc:
             raise TimeseriesDataCSVIOError("Empty file") from exc
 
@@ -424,11 +421,9 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         timezone="UTC",
         col_label="id",
     ):
-        """Export timeseries data as CSV file
+        """Export timeseries data as CSV string
 
         See ``TimeseriesDataIO.get_timeseries_data``.
-
-        Returns csv as a string.
         """
         data_df = cls.get_timeseries_data(
             start_dt,
@@ -458,11 +453,9 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         timezone="UTC",
         col_label="id",
     ):
-        """Bucket timeseries data and export as CSV file
+        """Bucket timeseries data and export as CSV string
 
         See ``TimeseriesDataIO.get_timeseries_buckets_data``.
-
-        Returns csv as a string.
         """
         data_df = cls.get_timeseries_buckets_data(
             start_dt,
@@ -484,10 +477,10 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
 
 class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
     @classmethod
-    def import_json(cls, json_file, data_state, campaign=None):
+    def import_json(cls, json_data, data_state, campaign=None):
         """Import JSON file
 
-        :param srt|TextIOBase json_file: JSON as string or text stream
+        :param srt json_data: JSON as string or text stream
         :param TimeseriesDataState data_state: Timeseries data state
         :param Campaign campaign: Campaign
 
@@ -496,7 +489,7 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
         """
         # Load JSON into DataFrame
         try:
-            data_df = pd.read_json(json_file, orient="columns", dtype=float)
+            data_df = pd.read_json(json_data, orient="columns", dtype=float)
         except ValueError as exc:
             raise TimeseriesDataJSONIOError("Wrong JSON file") from exc
 
@@ -543,11 +536,9 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
         timezone="UTC",
         col_label="id",
     ):
-        """Export timeseries data as JSON file
+        """Export timeseries data as JSON string
 
         See ``TimeseriesDataIO.get_timeseries_data``.
-
-        Returns json as a string.
         """
         data_df = cls.get_timeseries_data(
             start_dt,
@@ -573,11 +564,9 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
         timezone="UTC",
         col_label="id",
     ):
-        """Bucket timeseries data and export as JSON file
+        """Bucket timeseries data and export as JSON string
 
         See ``TimeseriesDataIO.get_timeseries_buckets_data``.
-
-        Returns json as a string.
         """
         data_df = cls.get_timeseries_buckets_data(
             start_dt,

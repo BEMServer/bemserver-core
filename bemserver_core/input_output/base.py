@@ -74,8 +74,8 @@ class BaseIO:
             raise BEMServerCoreIOError(f'Unknown zone: "{zone_name}"') from exc
 
 
-class BaseFileIO(BaseIO):
-    """Base class for file IO classes"""
+class BaseFileIOMixin:
+    """Mixin for file IO classes"""
 
     @staticmethod
     def _enforce_iterator(in_file):
@@ -85,7 +85,7 @@ class BaseFileIO(BaseIO):
         return in_file
 
 
-class BaseCSVIO(BaseFileIO):
+class BaseCSVIO(BaseIO):
     """Base class for CSV IO classes"""
 
     @classmethod
@@ -104,5 +104,9 @@ class BaseCSVIO(BaseFileIO):
             raise BEMServerCoreCSVIOError(f"Missing columns: {list(missing_fields)}")
 
 
-class BaseJSONIO(BaseFileIO):
+class BaseCSVFileIO(BaseCSVIO, BaseFileIOMixin):
+    """Base class for CSV file IO classes"""
+
+
+class BaseJSONIO(BaseIO):
     """Base class for JSON IO classes"""
