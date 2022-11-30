@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+0.2.0 (2022-11-30)
+++++++++++++++++++
+
+Features:
+
+- Timeseries data IO: JSON I/O
+- Timeseries data IO: improve error handling
+
 0.1.0 (2022-11-18)
 ++++++++++++++++++
 
