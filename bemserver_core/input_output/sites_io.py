@@ -4,7 +4,7 @@ import sqlalchemy as sqla
 from bemserver_core.database import db
 from bemserver_core import model
 from bemserver_core.exceptions import SitesCSVIOError, PropertyTypeInvalidError
-from .base import BaseCSVIO
+from .base import BaseCSVFileIO
 
 
 def _get_se_property_by_name(model_cls, name):
@@ -23,7 +23,7 @@ def _get_se_properties(model_cls, reader, known_fields):
     return {pn: _get_se_property_by_name(model_cls, pn) for pn in property_names}
 
 
-class SitesCSVIO(BaseCSVIO):
+class SitesCSVIO(BaseCSVFileIO):
 
     SITE_FIELDS = {"Name", "Description", "IFC_ID"}
     BUILDING_FIELDS = {"Site", "Name", "Description", "IFC_ID"}

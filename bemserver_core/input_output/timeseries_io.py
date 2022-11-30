@@ -4,7 +4,7 @@ import sqlalchemy as sqla
 from bemserver_core.database import db
 from bemserver_core import model
 from bemserver_core.exceptions import TimeseriesCSVIOError, PropertyTypeInvalidError
-from .base import BaseCSVIO
+from .base import BaseCSVFileIO
 
 
 def _get_ts_property_by_name(model_cls, name):
@@ -19,7 +19,7 @@ def _get_ts_properties(model_cls, reader, known_fields):
     return {pn: _get_ts_property_by_name(model_cls, pn) for pn in property_names}
 
 
-class TimeseriesCSVIO(BaseCSVIO):
+class TimeseriesCSVIO(BaseCSVFileIO):
 
     TS_FIELDS = {
         "Campaign scope",

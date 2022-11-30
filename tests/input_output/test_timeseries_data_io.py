@@ -1,5 +1,5 @@
-"""Timeseries CSV I/O tests"""
-import io
+"""Timeseries I/O tests"""
+import json
 import datetime as dt
 from zoneinfo import ZoneInfo
 
@@ -14,7 +14,7 @@ from bemserver_core.model import (
     TimeseriesDataState,
     TimeseriesByDataState,
 )
-from bemserver_core.input_output import tsdio, tsdcsvio
+from bemserver_core.input_output import tsdio, tsdcsvio, tsdjsonio
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.exceptions import (
@@ -25,6 +25,7 @@ from bemserver_core.exceptions import (
     TimeseriesDataIOInvalidBucketWidthError,
     TimeseriesDataIOInvalidAggregationError,
     TimeseriesDataCSVIOError,
+    TimeseriesDataJSONIOError,
     TimeseriesNotFoundError,
 )
 
@@ -1573,10 +1574,9 @@ class TestTimeseriesDataIO:
 class TestTimeseriesDataCSVIO:
     @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
-    @pytest.mark.parametrize("mode", ("str", "textiobase"))
     @pytest.mark.parametrize("for_campaign", (True, False))
     def test_timeseries_data_io_import_csv_as_admin(
-        self, users, campaigns, timeseries, mode, for_campaign
+        self, users, campaigns, timeseries, for_campaign
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -1595,7 +1595,7 @@ class TestTimeseriesDataCSVIO:
         else:
             header = f"Datetime,{ts_0.id},{ts_2.id}\n"
 
-        csv_file = header + (
+        csv_data = header + (
             "2020-01-01T00:00:00+00:00,0,10\n"
             "2020-01-01T01:00:00+00:00,1,11\n"
             "2020-01-01T02:00:00+00:00,2,12\n"
@@ -1603,11 +1603,8 @@ class TestTimeseriesDataCSVIO:
             "2020-01-01T04:00:00+01:00,3,13\n"
         )
 
-        if mode == "textiobase":
-            csv_file = io.StringIO(csv_file)
-
         with CurrentUser(admin_user):
-            tsdcsvio.import_csv(csv_file, ds_1, campaign)
+            tsdcsvio.import_csv(csv_data, ds_1, campaign)
 
         # Check TSBDS are correctly auto-created
         tsbds_l = (
@@ -1675,7 +1672,7 @@ class TestTimeseriesDataCSVIO:
             campaign = None
             header = f"Datetime,{ts_0.id},{ts_2.id}\n"
 
-        csv_file = header + (
+        csv_data = header + (
             "2020-01-01T00:00:00+00:00,0,10\n"
             "2020-01-01T01:00:00+00:00,1,11\n"
             "2020-01-01T02:00:00+00:00,2,12\n"
@@ -1684,7 +1681,7 @@ class TestTimeseriesDataCSVIO:
 
         with CurrentUser(user_1):
             with pytest.raises(BEMServerAuthorizationError):
-                tsdcsvio.import_csv(csv_file, ds_1, campaign)
+                tsdcsvio.import_csv(csv_data, ds_1, campaign)
 
         if for_campaign:
             campaign = campaigns[1]
@@ -1693,7 +1690,7 @@ class TestTimeseriesDataCSVIO:
             campaign = None
             header = f"Datetime,{ts_1.id}\n"
 
-        csv_file = header + (
+        csv_data = header + (
             "2020-01-01T00:00:00+00:00,0\n"
             "2020-01-01T01:00:00+00:00,1\n"
             "2020-01-01T02:00:00+00:00,2\n"
@@ -1701,13 +1698,17 @@ class TestTimeseriesDataCSVIO:
         )
 
         with CurrentUser(user_1):
-            tsdcsvio.import_csv(csv_file, ds_1, campaign)
+            tsdcsvio.import_csv(csv_data, ds_1, campaign)
 
     @pytest.mark.parametrize(
-        "file_error",
+        "data_error",
         (
             # Empty file
             ("", TimeseriesDataCSVIOError),
+            # Missing headers
+            ("\n", TimeseriesDataCSVIOError),
+            # Wrong (e.g. JSON) file format
+            ('{"1": {"2020-01-01T00:00:00+00:00": 0}}', TimeseriesDataCSVIOError),
             # Empty TS name
             ("Datetime,1,\n", TimeseriesDataCSVIOError),
             # Unknown TS
@@ -1715,20 +1716,20 @@ class TestTimeseriesDataCSVIO:
         ),
     )
     @pytest.mark.parametrize("for_campaign", (True, False))
-    def test_timeseries_data_io_import_csv_file_error(
-        self, users, campaigns, for_campaign, file_error
+    def test_timeseries_data_io_import_csv_error(
+        self, users, campaigns, for_campaign, data_error
     ):
         admin_user = users[0]
         assert admin_user.is_admin
         campaign = campaigns[0] if for_campaign else None
-        csv_file, exc_cls = file_error
+        csv_data, exc_cls = data_error
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
         with CurrentUser(admin_user):
             with pytest.raises(exc_cls):
-                tsdcsvio.import_csv(io.StringIO(csv_file), ds_1.id, campaign)
+                tsdcsvio.import_csv(csv_data, ds_1.id, campaign)
 
     @pytest.mark.parametrize(
         "row_error",
@@ -1756,11 +1757,11 @@ class TestTimeseriesDataCSVIO:
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
         header = "Datetime,Timeseries 0\n" if for_campaign else "Datetime,1\n"
-        csv_file = header + row
+        csv_data = header + row
 
         with CurrentUser(admin_user):
             with pytest.raises(exc_cls):
-                tsdcsvio.import_csv(io.StringIO(csv_file), ds_1, campaign)
+                tsdcsvio.import_csv(csv_data, ds_1, campaign)
 
     @pytest.mark.usefixtures("timeseries")
     def test_timeseries_data_io_import_csv_invalid_ts_id(self, users):
@@ -1771,11 +1772,11 @@ class TestTimeseriesDataCSVIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        csv_file = "Datetime,Timeseries 0\n2020-01-01T00:00:00+00:00,1"
+        csv_data = "Datetime,Timeseries 0\n2020-01-01T00:00:00+00:00,1"
 
         with CurrentUser(admin_user):
             with pytest.raises(TimeseriesDataIOInvalidTimeseriesIDTypeError):
-                tsdcsvio.import_csv(io.StringIO(csv_file), ds_1.id)
+                tsdcsvio.import_csv(csv_data, ds_1.id)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.parametrize("col_label", ("id", "name"))
@@ -1893,7 +1894,6 @@ class TestTimeseriesDataCSVIO:
             if col_label == "name":
                 header = f"Datetime,{ts_1.name},{ts_3.name}\n"
             else:
-                ts_l = (ts_1.id, ts_3.id)
                 header = f"Datetime,{ts_1.id},{ts_3.id}\n"
 
             ts_l = (ts_1, ts_3)
@@ -2090,8 +2090,6 @@ class TestTimeseriesDataCSVIO:
                     start_dt, end_dt, ts_l, ds_1, 1, "day", col_label=col_label
                 )
 
-            # Export CSV: UTC avg
-
             if col_label == "name":
                 header = f"Datetime,{ts_1.name},{ts_3.name}\n"
             else:
@@ -2099,6 +2097,7 @@ class TestTimeseriesDataCSVIO:
 
             ts_l = (ts_1, ts_3)
 
+            # Export CSV: UTC avg
             data = tsdcsvio.export_csv_bucket(
                 start_dt, end_dt, ts_l, ds_1, 1, "day", col_label=col_label
             )
@@ -2107,3 +2106,618 @@ class TestTimeseriesDataCSVIO:
                 "2020-01-02T00:00:00+0000,35.5,81.0\n"
                 "2020-01-03T00:00:00+0000,59.5,\n"
             )
+
+
+class TestTimeseriesDataJSONIO:
+    @pytest.mark.parametrize("campaigns", (2,), indirect=True)
+    @pytest.mark.parametrize("timeseries", (3,), indirect=True)
+    @pytest.mark.parametrize("for_campaign", (True, False))
+    def test_timeseries_data_io_import_json_as_admin(
+        self, users, campaigns, timeseries, for_campaign
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        ts_0 = timeseries[0]
+        ts_2 = timeseries[2]
+        campaign = campaigns[0] if for_campaign else None
+
+        assert not db.session.query(TimeseriesByDataState).all()
+        assert not db.session.query(TimeseriesData).all()
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        ts_l = [ts_0, ts_2]
+
+        if for_campaign:
+            labels = [ts.name for ts in ts_l]
+        else:
+            labels = [ts.id for ts in ts_l]
+
+        json_data = {
+            labels[0]: {
+                "2020-01-01T00:00:00+00:00": 0,
+                "2020-01-01T01:00:00+00:00": 1,
+                "2020-01-01T02:00:00+00:00": 2,
+                "2020-01-01T03:00:00+00:00": 3,
+            },
+            labels[1]: {
+                "2020-01-01T00:00:00+00:00": 10,
+                "2020-01-01T01:00:00+00:00": 11,
+                "2020-01-01T02:00:00+00:00": 12,
+                "2020-01-01T03:00:00+00:00": 13,
+            },
+        }
+        json_data = json.dumps(json_data)
+
+        with CurrentUser(admin_user):
+            tsdjsonio.import_json(json_data, ds_1, campaign)
+
+        # Check TSBDS are correctly auto-created
+        tsbds_l = (
+            db.session.query(TimeseriesByDataState)
+            .order_by(TimeseriesByDataState.id)
+            .all()
+        )
+        assert all(tsbds.data_state_id == ds_1.id for tsbds in tsbds_l)
+        tsbds_0 = tsbds_l[0]
+        tsbds_2 = tsbds_l[1]
+        assert tsbds_0.timeseries == ts_0
+        assert tsbds_2.timeseries == ts_2
+
+        # Check timeseries data is written
+        data = (
+            db.session.query(
+                TimeseriesData.timestamp,
+                TimeseriesData.timeseries_by_data_state_id,
+                TimeseriesData.value,
+            )
+            .order_by(
+                TimeseriesData.timeseries_by_data_state_id,
+                TimeseriesData.timestamp,
+            )
+            .all()
+        )
+
+        timestamps = [
+            dt.datetime(2020, 1, 1, i, tzinfo=dt.timezone.utc) for i in range(4)
+        ]
+
+        expected = [
+            (timestamp, tsbds_0.id, float(idx))
+            for idx, timestamp in enumerate(timestamps)
+        ] + [
+            (timestamp, tsbds_2.id, float(idx) + 10)
+            for idx, timestamp in enumerate(timestamps)
+        ]
+
+        assert data == expected
+
+    @pytest.mark.parametrize("timeseries", (3,), indirect=True)
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.parametrize("for_campaign", (True, False))
+    def test_timeseries_data_io_import_json_as_user(
+        self, users, timeseries, campaigns, for_campaign
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+        ts_0 = timeseries[0]
+        ts_1 = timeseries[1]
+        ts_2 = timeseries[2]
+
+        assert not db.session.query(TimeseriesData).all()
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        ts_l = [ts_0, ts_2]
+
+        if for_campaign:
+            campaign = campaigns[0]
+            labels = [ts.name for ts in ts_l]
+        else:
+            campaign = None
+            labels = [ts.id for ts in ts_l]
+
+        json_data = {
+            labels[0]: {
+                "2020-01-01T00:00:00+00:00": 0,
+                "2020-01-01T01:00:00+00:00": 1,
+                "2020-01-01T02:00:00+00:00": 2,
+                "2020-01-01T03:00:00+00:00": 3,
+            },
+            labels[1]: {
+                "2020-01-01T00:00:00+00:00": 10,
+                "2020-01-01T01:00:00+00:00": 11,
+                "2020-01-01T02:00:00+00:00": 12,
+                "2020-01-01T03:00:00+00:00": 13,
+            },
+        }
+        json_data = json.dumps(json_data)
+
+        with CurrentUser(user_1):
+            with pytest.raises(BEMServerAuthorizationError):
+                tsdjsonio.import_json(json_data, ds_1, campaign)
+
+        ts_l = [ts_1]
+
+        if for_campaign:
+            campaign = campaigns[1]
+            labels = [ts.name for ts in ts_l]
+        else:
+            campaign = None
+            labels = [ts.id for ts in ts_l]
+
+        json_data = {
+            labels[0]: {
+                "2020-01-01T00:00:00+00:00": 0,
+                "2020-01-01T01:00:00+00:00": 1,
+                "2020-01-01T02:00:00+00:00": 2,
+                "2020-01-01T03:00:00+00:00": 3,
+            },
+        }
+        json_data = json.dumps(json_data)
+
+        with CurrentUser(user_1):
+            tsdjsonio.import_json(json_data, ds_1, campaign)
+
+    @pytest.mark.parametrize(
+        "data_error",
+        (
+            # Empty file
+            ("", TimeseriesDataJSONIOError),
+            # Invalid file
+            ("dummy", TimeseriesDataJSONIOError),
+            # Empty TS name
+            ('{"": []}', TimeseriesDataJSONIOError),
+            # Unknown TS
+            ('{"1324564": []}', TimeseriesNotFoundError),
+            # Invalid timestamp
+            ('{"1324564": {"dummy": 1}}', TimeseriesDataIODatetimeError),
+            ('{"1324564": [{"dummy": 1}]}', TimeseriesDataIODatetimeError),
+        ),
+    )
+    @pytest.mark.parametrize("for_campaign", (True,))  # False))
+    def test_timeseries_data_io_import_json_error(
+        self, users, campaigns, for_campaign, data_error
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign = campaigns[0] if for_campaign else None
+        json_data, exc_cls = data_error
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        with CurrentUser(admin_user):
+            with pytest.raises(exc_cls):
+                tsdjsonio.import_json(json_data, ds_1.id, campaign)
+
+    @pytest.mark.usefixtures("timeseries")
+    def test_timeseries_data_io_import_json_invalid_ts_id(self, users):
+        """Check timeseries IDs provided as (non-decimal) strings instead of integers"""
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        json_data = '{"Timeseries 0": {"2020-01-01T00:00:00+00:00": 1}}'
+
+        with CurrentUser(admin_user):
+            with pytest.raises(TimeseriesDataIOInvalidTimeseriesIDTypeError):
+                tsdjsonio.import_json(json_data, ds_1.id)
+
+    @pytest.mark.parametrize("timeseries", (5,), indirect=True)
+    @pytest.mark.parametrize("col_label", ("id", "name"))
+    def test_timeseries_data_io_export_json_as_admin(
+        self, users, timeseries, col_label
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        ts_0 = timeseries[0]
+        ts_2 = timeseries[2]
+        ts_4 = timeseries[4]
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        end_dt = start_dt + dt.timedelta(hours=3)
+
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values_1 = range(3)
+        create_timeseries_data(ts_0, ds_1, timestamps, values_1)
+        values_2 = [10 + 2 * i for i in range(2)]
+        create_timeseries_data(ts_4, ds_1, timestamps[:2], values_2)
+
+        ts_l = (ts_0, ts_2, ts_4)
+
+        with CurrentUser(admin_user):
+
+            labels = [str(getattr(ts, col_label)) for ts in ts_l]
+
+            data = tsdjsonio.export_json(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                col_label=col_label,
+            )
+            expected = {
+                labels[0]: {
+                    "2020-01-01T00:00:00+00:00": 0.0,
+                    "2020-01-01T01:00:00+00:00": 1.0,
+                    "2020-01-01T02:00:00+00:00": 2.0,
+                },
+                labels[2]: {
+                    "2020-01-01T00:00:00+00:00": 10.0,
+                    "2020-01-01T01:00:00+00:00": 12.0,
+                },
+            }
+            assert json.loads(data) == expected
+
+            data = tsdjsonio.export_json(
+                None,
+                None,
+                ts_l,
+                ds_1,
+                col_label=col_label,
+            )
+            expected = {
+                labels[0]: {
+                    "2020-01-01T00:00:00+00:00": 0.0,
+                    "2020-01-01T01:00:00+00:00": 1.0,
+                    "2020-01-01T02:00:00+00:00": 2.0,
+                },
+                labels[2]: {
+                    "2020-01-01T00:00:00+00:00": 10.0,
+                    "2020-01-01T01:00:00+00:00": 12.0,
+                },
+            }
+            assert json.loads(data) == expected
+
+            data = tsdjsonio.export_json(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                timezone="Europe/Paris",
+                col_label=col_label,
+            )
+            expected = {
+                labels[0]: {
+                    "2020-01-01T01:00:00+01:00": 0.0,
+                    "2020-01-01T02:00:00+01:00": 1.0,
+                    "2020-01-01T03:00:00+01:00": 2.0,
+                },
+                labels[2]: {
+                    "2020-01-01T01:00:00+01:00": 10.0,
+                    "2020-01-01T02:00:00+01:00": 12.0,
+                },
+            }
+            assert json.loads(data) == expected
+
+    @pytest.mark.parametrize("campaigns", (2,), indirect=True)
+    @pytest.mark.parametrize("timeseries", (5,), indirect=True)
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.parametrize("col_label", ("id", "name"))
+    def test_timeseries_data_io_export_json_as_user(self, users, timeseries, col_label):
+        user_1 = users[1]
+        assert not user_1.is_admin
+        ts_0 = timeseries[0]
+        ts_1 = timeseries[1]
+        ts_2 = timeseries[2]
+        ts_3 = timeseries[3]
+        ts_4 = timeseries[4]
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        end_dt = start_dt + dt.timedelta(hours=3)
+
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values_1 = range(3)
+        create_timeseries_data(ts_1, ds_1, timestamps, values_1)
+        values_2 = [10 + 2 * i for i in range(2)]
+        create_timeseries_data(ts_3, ds_1, timestamps[:2], values_2)
+
+        with CurrentUser(user_1):
+
+            ts_l = (ts_0, ts_2, ts_4)
+
+            with pytest.raises(BEMServerAuthorizationError):
+                data = tsdjsonio.export_json(
+                    start_dt, end_dt, ts_l, ds_1, col_label=col_label
+                )
+
+            ts_l = (ts_1, ts_3)
+
+            labels = [str(getattr(ts, col_label)) for ts in ts_l]
+
+            data = tsdjsonio.export_json(
+                start_dt, end_dt, ts_l, ds_1, col_label=col_label
+            )
+            expected = {
+                labels[0]: {
+                    "2020-01-01T00:00:00+00:00": 0.0,
+                    "2020-01-01T01:00:00+00:00": 1.0,
+                    "2020-01-01T02:00:00+00:00": 2.0,
+                },
+                labels[1]: {
+                    "2020-01-01T00:00:00+00:00": 10.0,
+                    "2020-01-01T01:00:00+00:00": 12.0,
+                },
+            }
+            assert json.loads(data) == expected
+
+    @pytest.mark.parametrize("timeseries", (5,), indirect=True)
+    @pytest.mark.parametrize("col_label", ("id", "name"))
+    def test_timeseries_data_io_export_json_bucket_as_admin(
+        self, users, timeseries, col_label
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        ts_0 = timeseries[0]
+        ts_2 = timeseries[2]
+        ts_4 = timeseries[4]
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        end_dt = start_dt + dt.timedelta(hours=24 * 3)
+
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values_1 = range(24 * 3)
+        create_timeseries_data(ts_0, ds_1, timestamps, values_1)
+        values_2 = [10 + 2 * i for i in range(24 * 2)]
+        create_timeseries_data(ts_4, ds_1, timestamps[: 24 * 2], values_2)
+
+        ts_l = (ts_0, ts_2, ts_4)
+
+        labels = [str(getattr(ts, col_label)) for ts in ts_l]
+
+        with CurrentUser(admin_user):
+
+            # Export JSON: UTC avg
+            data = tsdjsonio.export_json_bucket(
+                start_dt, end_dt, ts_l, ds_1, 1, "day", col_label=col_label
+            )
+            expected = {
+                labels[0]: {
+                    "2020-01-01T00:00:00+00:00": 11.5,
+                    "2020-01-02T00:00:00+00:00": 35.5,
+                    "2020-01-03T00:00:00+00:00": 59.5,
+                },
+                labels[1]: {
+                    "2020-01-01T00:00:00+00:00": None,
+                    "2020-01-02T00:00:00+00:00": None,
+                    "2020-01-03T00:00:00+00:00": None,
+                },
+                labels[2]: {
+                    "2020-01-01T00:00:00+00:00": 33.0,
+                    "2020-01-02T00:00:00+00:00": 81.0,
+                    "2020-01-03T00:00:00+00:00": None,
+                },
+            }
+            assert json.loads(data) == expected
+
+            # Export JSON: local TZ avg
+            data = tsdjsonio.export_json_bucket(
+                start_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
+                end_dt.replace(tzinfo=ZoneInfo("Europe/Paris")),
+                ts_l,
+                ds_1,
+                1,
+                "day",
+                timezone="Europe/Paris",
+                col_label=col_label,
+            )
+            expected = {
+                labels[0]: {
+                    "2020-01-01T00:00:00+01:00": 11.0,
+                    "2020-01-02T00:00:00+01:00": 34.5,
+                    "2020-01-03T00:00:00+01:00": 58.5,
+                },
+                labels[1]: {
+                    "2020-01-01T00:00:00+01:00": None,
+                    "2020-01-02T00:00:00+01:00": None,
+                    "2020-01-03T00:00:00+01:00": None,
+                },
+                labels[2]: {
+                    "2020-01-01T00:00:00+01:00": 32.0,
+                    "2020-01-02T00:00:00+01:00": 79.0,
+                    "2020-01-03T00:00:00+01:00": 104.0,
+                },
+            }
+            assert json.loads(data) == expected
+
+            # Export JSON: UTC sum
+            data = tsdjsonio.export_json_bucket(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                1,
+                "day",
+                "sum",
+                col_label=col_label,
+            )
+            expected = {
+                labels[0]: {
+                    "2020-01-01T00:00:00+00:00": 276.0,
+                    "2020-01-02T00:00:00+00:00": 852.0,
+                    "2020-01-03T00:00:00+00:00": 1428.0,
+                },
+                labels[1]: {
+                    "2020-01-01T00:00:00+00:00": None,
+                    "2020-01-02T00:00:00+00:00": None,
+                    "2020-01-03T00:00:00+00:00": None,
+                },
+                labels[2]: {
+                    "2020-01-01T00:00:00+00:00": 792.0,
+                    "2020-01-02T00:00:00+00:00": 1944.0,
+                    "2020-01-03T00:00:00+00:00": None,
+                },
+            }
+            assert json.loads(data) == expected
+
+            # Export JSON: UTC min
+            data = tsdjsonio.export_json_bucket(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                1,
+                "day",
+                "min",
+                col_label=col_label,
+            )
+            expected = {
+                labels[0]: {
+                    "2020-01-01T00:00:00+00:00": 0.0,
+                    "2020-01-02T00:00:00+00:00": 24.0,
+                    "2020-01-03T00:00:00+00:00": 48.0,
+                },
+                labels[1]: {
+                    "2020-01-01T00:00:00+00:00": None,
+                    "2020-01-02T00:00:00+00:00": None,
+                    "2020-01-03T00:00:00+00:00": None,
+                },
+                labels[2]: {
+                    "2020-01-01T00:00:00+00:00": 10.0,
+                    "2020-01-02T00:00:00+00:00": 58.0,
+                    "2020-01-03T00:00:00+00:00": None,
+                },
+            }
+            assert json.loads(data) == expected
+
+            # Export JSON: UTC max
+            data = tsdjsonio.export_json_bucket(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                1,
+                "day",
+                "max",
+                col_label=col_label,
+            )
+            expected = {
+                labels[0]: {
+                    "2020-01-01T00:00:00+00:00": 23.0,
+                    "2020-01-02T00:00:00+00:00": 47.0,
+                    "2020-01-03T00:00:00+00:00": 71.0,
+                },
+                labels[1]: {
+                    "2020-01-01T00:00:00+00:00": None,
+                    "2020-01-02T00:00:00+00:00": None,
+                    "2020-01-03T00:00:00+00:00": None,
+                },
+                labels[2]: {
+                    "2020-01-01T00:00:00+00:00": 56.0,
+                    "2020-01-02T00:00:00+00:00": 104.0,
+                    "2020-01-03T00:00:00+00:00": None,
+                },
+            }
+            assert json.loads(data) == expected
+
+            # Export JSON: no timeseries
+            data = tsdjsonio.export_json_bucket(
+                start_dt,
+                end_dt,
+                [],
+                ds_1,
+                1,
+                "day",
+                col_label=col_label,
+            )
+            expected = {}
+            assert json.loads(data) == expected
+
+            # Export JSON: invalid aggregation
+            with pytest.raises(TimeseriesDataIOInvalidAggregationError):
+                tsdjsonio.export_json_bucket(
+                    start_dt,
+                    end_dt,
+                    ts_l,
+                    ds_1,
+                    1,
+                    "day",
+                    "lol",
+                    col_label=col_label,
+                )
+
+    @pytest.mark.parametrize("campaigns", (2,), indirect=True)
+    @pytest.mark.parametrize("timeseries", (5,), indirect=True)
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.parametrize("col_label", ("id", "name"))
+    def test_timeseries_data_io_export_json_bucket_as_user(
+        self, users, timeseries, col_label
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+        ts_0 = timeseries[0]
+        ts_1 = timeseries[1]
+        ts_2 = timeseries[2]
+        ts_3 = timeseries[3]
+        ts_4 = timeseries[4]
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        end_dt = start_dt + dt.timedelta(hours=24 * 3)
+
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        values_1 = range(24 * 3)
+        create_timeseries_data(ts_1, ds_1, timestamps, values_1)
+        values_2 = [10 + 2 * i for i in range(24 * 2)]
+        create_timeseries_data(ts_3, ds_1, timestamps[: 24 * 2], values_2)
+
+        with CurrentUser(user_1):
+
+            ts_l = (ts_0, ts_2, ts_4)
+
+            with pytest.raises(BEMServerAuthorizationError):
+                data = tsdjsonio.export_json_bucket(
+                    start_dt, end_dt, ts_l, ds_1, 1, "day", col_label=col_label
+                )
+
+            ts_l = (ts_1, ts_3)
+
+            labels = [str(getattr(ts, col_label)) for ts in ts_l]
+
+            # Export JSON: UTC avg
+            data = tsdjsonio.export_json_bucket(
+                start_dt, end_dt, ts_l, ds_1, 1, "day", col_label=col_label
+            )
+            expected = {
+                labels[0]: {
+                    "2020-01-01T00:00:00+00:00": 11.5,
+                    "2020-01-02T00:00:00+00:00": 35.5,
+                    "2020-01-03T00:00:00+00:00": 59.5,
+                },
+                labels[1]: {
+                    "2020-01-01T00:00:00+00:00": 33.0,
+                    "2020-01-02T00:00:00+00:00": 81.0,
+                    "2020-01-03T00:00:00+00:00": None,
+                },
+            }
+            assert json.loads(data) == expected

@@ -1,6 +1,8 @@
 """Timeseries data I/O"""
+import io
 import datetime as dt
 from zoneinfo import ZoneInfo
+import json
 import csv
 
 import sqlalchemy as sqla
@@ -22,9 +24,10 @@ from bemserver_core.exceptions import (
     TimeseriesDataIOInvalidBucketWidthError,
     TimeseriesDataIOInvalidAggregationError,
     TimeseriesDataCSVIOError,
+    TimeseriesDataJSONIOError,
 )
 
-from .base import BaseCSVIO
+from .base import BaseCSVIO, BaseJSONIO
 
 
 AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max", "count")
@@ -366,32 +369,32 @@ def to_utc_index(series):
 
 class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
     @classmethod
-    def import_csv(cls, csv_file, data_state, campaign=None):
+    def import_csv(cls, csv_data, data_state, campaign=None):
         """Import CSV file
 
-        :param srt|TextIOBase csv_file: CSV as string or text stream
+        :param srt csv_data: CSV as string
         :param TimeseriesDataState data_state: Timeseries data state
         :param Campaign campaign: Campaign
 
         If campaign is None, the CSV header is expected to contain timeseries IDs.
         Otherwise, timeseries names are expected.
         """
-        csv_file = cls._enforce_iterator(csv_file)
-
         # Check header first. Some errors are hard to catch in or after pandas read_csv
-        reader = csv.reader(csv_file)
+        reader = csv.reader(io.StringIO(csv_data))
         try:
             header = next(reader)
         except StopIteration as exc:
-            raise TimeseriesDataCSVIOError("Missing headers line") from exc
+            raise TimeseriesDataCSVIOError("Missing headers") from exc
+        if not header:
+            raise TimeseriesDataCSVIOError("Missing headers")
         if "" in header:
             raise TimeseriesDataCSVIOError("Empty timeseries name or trailing comma")
-        # Rewind cursor, otherwise header is alreay consumed and not passed to read_csv
-        csv_file.seek(0)
+        if header[0] != "Datetime":
+            raise TimeseriesDataCSVIOError("Invalid file")
 
         # Load CSV into DataFrame
         try:
-            data_df = pd.read_csv(csv_file, index_col=0)
+            data_df = pd.read_csv(io.StringIO(csv_data), index_col=0)
         except pd.errors.EmptyDataError as exc:
             raise TimeseriesDataCSVIOError("Empty file") from exc
 
@@ -418,11 +421,9 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         timezone="UTC",
         col_label="id",
     ):
-        """Export timeseries data as CSV file
+        """Export timeseries data as CSV string
 
         See ``TimeseriesDataIO.get_timeseries_data``.
-
-        Returns csv as a string.
         """
         data_df = cls.get_timeseries_data(
             start_dt,
@@ -452,11 +453,9 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         timezone="UTC",
         col_label="id",
     ):
-        """Bucket timeseries data and export as CSV file
+        """Bucket timeseries data and export as CSV string
 
         See ``TimeseriesDataIO.get_timeseries_buckets_data``.
-
-        Returns csv as a string.
         """
         data_df = cls.get_timeseries_buckets_data(
             start_dt,
@@ -476,5 +475,113 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         return data_df.to_csv(date_format="%Y-%m-%dT%H:%M:%S%z")
 
 
+class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
+    @classmethod
+    def import_json(cls, json_data, data_state, campaign=None):
+        """Import JSON file
+
+        :param srt json_data: JSON as string or text stream
+        :param TimeseriesDataState data_state: Timeseries data state
+        :param Campaign campaign: Campaign
+
+        If campaign is None, the JSON header is expected to contain timeseries IDs.
+        Otherwise, timeseries names are expected.
+        """
+        # Load JSON into DataFrame
+        try:
+            data_df = pd.read_json(json_data, orient="columns", dtype=float)
+        except ValueError as exc:
+            raise TimeseriesDataJSONIOError("Wrong JSON file") from exc
+
+        # Check empty column name
+        if pd.NaT in data_df.columns:
+            raise TimeseriesDataJSONIOError("Wrong timeseries ID")
+
+        # Index
+        data_df.index = to_utc_index(data_df.index)
+
+        # Insert data
+        cls.set_timeseries_data(data_df, data_state=data_state, campaign=campaign)
+
+    @staticmethod
+    def _df_to_json(data_df, dropna=False):
+        """Serialize dataframe to json
+
+        pandas to_json has a few shortcomings
+        - can't drop NaN values
+        - will convert datetimes to UTC
+        """
+        data_df.index = pd.Series(data_df.index).apply(lambda x: x.isoformat())
+
+        ret = {}
+        for col in data_df.columns:
+            val = data_df[col]
+            if dropna:
+                val = val.dropna()
+            else:
+                val = val.replace([np.nan], [None])
+            if not val.empty:
+                ret[str(col)] = val.to_dict()
+
+        return json.dumps(ret)
+
+    @classmethod
+    def export_json(
+        cls,
+        start_dt,
+        end_dt,
+        timeseries,
+        data_state,
+        *,
+        timezone="UTC",
+        col_label="id",
+    ):
+        """Export timeseries data as JSON string
+
+        See ``TimeseriesDataIO.get_timeseries_data``.
+        """
+        data_df = cls.get_timeseries_data(
+            start_dt,
+            end_dt,
+            timeseries,
+            data_state,
+            timezone=timezone,
+            col_label=col_label,
+        )
+        return cls._df_to_json(data_df, dropna=True)
+
+    @classmethod
+    def export_json_bucket(
+        cls,
+        start_dt,
+        end_dt,
+        timeseries,
+        data_state,
+        bucket_width_value,
+        bucket_width_unit,
+        aggregation="avg",
+        *,
+        timezone="UTC",
+        col_label="id",
+    ):
+        """Bucket timeseries data and export as JSON string
+
+        See ``TimeseriesDataIO.get_timeseries_buckets_data``.
+        """
+        data_df = cls.get_timeseries_buckets_data(
+            start_dt,
+            end_dt,
+            timeseries,
+            data_state,
+            bucket_width_value,
+            bucket_width_unit,
+            aggregation,
+            timezone=timezone,
+            col_label=col_label,
+        )
+        return cls._df_to_json(data_df)
+
+
 tsdio = TimeseriesDataIO()
 tsdcsvio = TimeseriesDataCSVIO()
+tsdjsonio = TimeseriesDataJSONIO()
