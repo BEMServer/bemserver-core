@@ -136,6 +136,32 @@ def check_missing_ts_data(
             if not c_scope.timeseries:
                 continue
 
+            logger.debug("Querying for already missing timeseries")
+
+            # Check current status: which timeseries are already missing
+            ts_status_missing = {}
+            for ts in c_scope.timeseries:
+                query = (
+                    db.session.query(Event)
+                    .join(TimeseriesByEvent)
+                    .filter(TimeseriesByEvent.timeseries_id == ts.id)
+                    .filter(
+                        sqla.or_(
+                            Event.category == "Data missing",
+                            Event.category == "Data present",
+                        )
+                    )
+                    .order_by(sqla.desc(Event.timestamp))
+                    .limit(1)
+                )
+                tbes = list(query)
+                ts_status_missing[(ts.id, ts.name)] = (
+                    bool(tbes) and tbes[0].category == "Data missing"
+                )
+
+            logger.debug("Timeseries missing status: %s", ts_status_missing)
+
+            # Compute completeness
             completeness = compute_completeness(
                 start_dt,
                 end_dt,
@@ -162,11 +188,21 @@ def check_missing_ts_data(
                 # or no data in check period, whatever the expected interval
                 or ts_info["avg_count"] == 0
             ]
+
             logger.debug("Missing timeseries: %s", missing_ts)
 
-            if missing_ts:
+            new_missing_ts = [ts for ts in missing_ts if not ts_status_missing[ts]]
+            already_missing_ts = [ts for ts in missing_ts if ts_status_missing[ts]]
+            new_present_ts = [
+                ts
+                for ts, missing in ts_status_missing.items()
+                if missing and ts not in missing_ts
+            ]
 
-                logger.debug("Creating event")
+            # Create Event for newly missing data
+            if new_missing_ts:
+
+                logger.debug("Creating new missing timeseries event")
 
                 event = Event.new(
                     campaign_scope_id=c_scope.id,
@@ -174,19 +210,64 @@ def check_missing_ts_data(
                     level="WARNING",
                     timestamp=datetime,
                     source=SERVICE_NAME,
-                    description=f"Missing timeseries: {[m[1] for m in missing_ts]}",
+                    description=(
+                        f"Timeseries newly missing: {[ts[1] for ts in new_missing_ts]}"
+                    ),
                 )
                 db.session.flush()
 
                 logger.debug("Creating timeseries x event associations")
 
-                for ts_id, _ts_name in missing_ts:
+                for ts_id, _ts_name in new_missing_ts:
                     TimeseriesByEvent.new(event_id=event.id, timeseries_id=ts_id)
 
-                # TODO: add Event for (formerly missing) present data?
+            # Create Event for already missing data
+            if already_missing_ts:
 
-                logger.debug("Committing")
-                db.session.commit()
+                logger.debug("Creating already missing timeseries event")
+
+                event = Event.new(
+                    campaign_scope_id=c_scope.id,
+                    category="Data missing",
+                    level="INFO",
+                    timestamp=datetime,
+                    source=SERVICE_NAME,
+                    description=(
+                        "Timeseries still missing: "
+                        f"{[ts[1] for ts in already_missing_ts]}"
+                    ),
+                )
+                db.session.flush()
+
+                logger.debug("Creating timeseries x event associations")
+
+                for ts_id, _ts_name in already_missing_ts:
+                    TimeseriesByEvent.new(event_id=event.id, timeseries_id=ts_id)
+
+            # Create Event for (formerly missing) present data
+            if new_present_ts:
+
+                logger.debug("Creating present timeseries event")
+
+                event = Event.new(
+                    campaign_scope_id=c_scope.id,
+                    category="Data present",
+                    level="INFO",
+                    timestamp=datetime,
+                    source=SERVICE_NAME,
+                    description=(
+                        f"Timeseries present: {[ts[1] for ts in new_present_ts]}"
+                    ),
+                )
+                db.session.flush()
+
+                logger.debug("Creating timeseries x event associations")
+
+                for ts_id, _ts_name in new_present_ts:
+                    TimeseriesByEvent.new(event_id=event.id, timeseries_id=ts_id)
+
+            logger.debug("Committing")
+            db.session.commit()
 
 
 @celery.task(name="CheckMissing")

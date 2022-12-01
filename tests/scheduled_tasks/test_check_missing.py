@@ -1,6 +1,7 @@
 """Check missing data task tests"""
 import datetime as dt
 
+import sqlalchemy as sqla
 import pandas as pd
 
 import pytest
@@ -250,6 +251,9 @@ class TestCheckMissingScheduledTask:
         # None, no data
         ts_3 = timeseries[3]
 
+        assert ts_0.campaign_scope_id == ts_2.campaign_scope_id
+        assert ts_1.campaign_scope_id == ts_3.campaign_scope_id
+
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
             interval_prop = TimeseriesProperty.get(name="Interval").first()
@@ -289,62 +293,36 @@ class TestCheckMissingScheduledTask:
 
         with OpenBar():
 
-            # Min ratio = 40 % -> 1 TS with missing data
-
-            assert not list(Event.get())
-
-            check_missing_ts_data(end_dt, "day", 1, min_completeness_ratio=0.4)
-
-            events = list(Event.get())
-            assert len(events) == 1
-            event_1 = events[0]
-            assert event_1.campaign_scope_id == ts_3.campaign_scope.id
-            assert event_1.category == "Data missing"
-            assert event_1.level == "WARNING"
-            assert event_1.timestamp == end_dt
-            assert event_1.source == "BEMServer - Check missing data"
-            assert event_1.description == "Missing timeseries: ['Timeseries 4']"
-
-            tbes = list(TimeseriesByEvent.get())
-            assert len(tbes) == 1
-            tbe_1 = tbes[0]
-            assert tbe_1.event_id == event_1.id
-            assert tbe_1.timeseries_id == ts_3.id
-
-            event_1.delete()
-            db.session.flush()
-
             # Min ratio = 90 % -> 2 TS with missing data (different campaign scope)
 
             assert not list(Event.get())
             assert not list(TimeseriesByEvent.get())
 
-            check_missing_ts_data(end_dt, "day", 1, min_completeness_ratio=0.9)
+            check_dt_1 = end_dt
+            check_missing_ts_data(check_dt_1, "day", 1, min_completeness_ratio=0.9)
 
-            events = list(Event.get())
+            events = list(Event.get(category="Data missing"))
             assert len(events) == 2
             event_1 = events[0]
-            assert event_1.campaign_scope_id == ts_2.campaign_scope.id
+            assert event_1.campaign_scope_id == ts_0.campaign_scope.id
             assert event_1.category == "Data missing"
             assert event_1.level == "WARNING"
-            assert event_1.timestamp == end_dt
+            assert event_1.timestamp == check_dt_1
             assert event_1.source == "BEMServer - Check missing data"
-            assert event_1.description == "Missing timeseries: ['Timeseries 3']"
+            assert event_1.description == "Timeseries newly missing: ['Timeseries 3']"
+            tbes = list(TimeseriesByEvent.get(event=event_1))
+            assert len(tbes) == 1
+            assert tbes[0].timeseries_id == ts_2.id
             event_2 = events[1]
-            assert event_2.campaign_scope_id == ts_3.campaign_scope.id
+            assert event_2.campaign_scope_id == ts_1.campaign_scope.id
             assert event_2.category == "Data missing"
             assert event_2.level == "WARNING"
-            assert event_2.timestamp == end_dt
+            assert event_2.timestamp == check_dt_1
             assert event_2.source == "BEMServer - Check missing data"
-            assert event_2.description == "Missing timeseries: ['Timeseries 4']"
-
-            tbes = list(TimeseriesByEvent.get())
-            assert len(tbes) == 2
-            assert {tbe.timeseries_id for tbe in tbes} == {ts_2.id, ts_3.id}
-
-            event_1.delete()
-            event_2.delete()
-            db.session.flush()
+            assert event_2.description == "Timeseries newly missing: ['Timeseries 4']"
+            tbes = list(TimeseriesByEvent.get(event=event_2))
+            assert len(tbes) == 1
+            assert tbes[0].timeseries_id == ts_3.id
 
             # Min ratio = 90 % -> 3 TS with missing data (2 in same campaign scope)
 
@@ -355,35 +333,146 @@ class TestCheckMissingScheduledTask:
                 value="600",
             )
 
-            assert not list(Event.get())
-            assert not list(TimeseriesByEvent.get())
+            check_dt_2 = end_dt + dt.timedelta(seconds=1)
+            check_missing_ts_data(check_dt_2, "day", 1, min_completeness_ratio=0.9)
 
-            check_missing_ts_data(end_dt, "day", 1, min_completeness_ratio=0.9)
-
-            events = list(Event.get())
-            assert len(events) == 2
-            event_1 = events[0]
-            assert event_1.campaign_scope_id == ts_2.campaign_scope.id
-            assert event_1.category == "Data missing"
-            assert event_1.level == "WARNING"
-            assert event_1.timestamp == end_dt
-            assert event_1.source == "BEMServer - Check missing data"
-            assert event_1.description == "Missing timeseries: ['Timeseries 3']"
-            event_2 = events[1]
-            assert event_2.campaign_scope_id == ts_3.campaign_scope.id
-            assert event_2.category == "Data missing"
-            assert event_2.level == "WARNING"
-            assert event_2.timestamp == end_dt
-            assert event_2.source == "BEMServer - Check missing data"
-            assert (
-                event_2.description
-                == "Missing timeseries: ['Timeseries 2', 'Timeseries 4']"
+            # TS 0 Campaign scope
+            # 1 newly missing event from last iteration (TS 2)
+            # 1 already missing event (TS 2)
+            # 0 present event (TS 0 was never missing)
+            events = list(
+                Event.get(
+                    category="Data missing",
+                    campaign_scope_id=ts_0.campaign_scope_id,
+                ).order_by(sqla.asc(Event.timestamp))
             )
-            tbes = list(TimeseriesByEvent.get())
-            assert len(tbes) == 3
-            tbe = list(TimeseriesByEvent.get(timeseries_id=ts_1.id))[0]
-            assert tbe.event_id == event_2.id
-            tbe = list(TimeseriesByEvent.get(timeseries_id=ts_2.id))[0]
-            assert tbe.event_id == event_1.id
-            tbe = list(TimeseriesByEvent.get(timeseries_id=ts_3.id))[0]
-            assert tbe.event_id == event_2.id
+            assert len(events) == 2
+            # Already existing event from last check (TS 2 missing)
+            assert events[0] == event_1
+            # New event (TS 2 still missing)
+            event_3 = events[1]
+            assert event_3.timestamp == check_dt_2
+            assert event_3.level == "INFO"
+            assert event_3.source == "BEMServer - Check missing data"
+            assert event_3.description == "Timeseries still missing: ['Timeseries 3']"
+            events = list(
+                Event.get(
+                    category="Data present",
+                    campaign_scope_id=ts_0.campaign_scope_id,
+                )
+            )
+            # No event because TS 0 was never missing
+            assert not events
+
+            # TS 1 Campaign scope
+            # 1 newly missing event from last iteration (TS 3)
+            # 1 newly missing event (TS 1)
+            # 1 already missing event (TS 3)
+            events = list(
+                Event.get(
+                    category="Data missing",
+                    campaign_scope_id=ts_1.campaign_scope_id,
+                    level="WARNING",
+                ).order_by(sqla.asc(Event.timestamp))
+            )
+            assert len(events) == 2
+            # Already existing event from last check (TS 3 missing)
+            assert events[0] == event_2
+            # New event (TS 1 missing)
+            event_4 = events[1]
+            assert event_4.timestamp == check_dt_2
+            assert event_4.source == "BEMServer - Check missing data"
+            assert event_4.description == "Timeseries newly missing: ['Timeseries 2']"
+            tbes = list(TimeseriesByEvent.get(event=event_4))
+            assert len(tbes) == 1
+            assert tbes[0].timeseries_id == ts_1.id
+            events = list(
+                Event.get(
+                    category="Data missing",
+                    campaign_scope_id=ts_1.campaign_scope_id,
+                    level="INFO",
+                ).order_by(sqla.asc(Event.timestamp))
+            )
+            assert len(events) == 1
+            # New event (TS 3 still missing)
+            event_5 = events[0]
+            assert event_5.timestamp == check_dt_2
+            assert event_5.level == "INFO"
+            assert event_5.source == "BEMServer - Check missing data"
+            assert event_5.description == "Timeseries still missing: ['Timeseries 4']"
+            tbes = list(TimeseriesByEvent.get(event=event_5))
+            assert len(tbes) == 1
+            assert tbes[0].timeseries_id == ts_3.id
+            events = list(
+                Event.get(
+                    category="Data present",
+                    campaign_scope_id=ts_1.campaign_scope_id,
+                )
+            )
+            assert not events
+
+            # Min ratio = 40 % -> 1 TS with missing data (TS 3)
+
+            check_dt_3 = end_dt + dt.timedelta(seconds=2)
+            check_missing_ts_data(check_dt_3, "day", 1, min_completeness_ratio=0.4)
+
+            # TS 0 Campaign scope
+            # 1 present event (TS 2)
+            events = list(
+                Event.get(
+                    category="Data missing",
+                    campaign_scope_id=ts_0.campaign_scope_id,
+                    timestamp=check_dt_3,
+                )
+            )
+            assert not events
+            events = list(
+                Event.get(
+                    category="Data present",
+                    campaign_scope_id=ts_0.campaign_scope_id,
+                    timestamp=check_dt_3,
+                )
+            )
+            assert len(events) == 1
+            # TS 0 never gets a present event because it was never missing
+            event_6 = events[0]
+            assert event_6.level == "INFO"
+            assert event_6.source == "BEMServer - Check missing data"
+            assert event_6.description == "Timeseries present: ['Timeseries 3']"
+            tbes = list(TimeseriesByEvent.get(event=event_6))
+            assert len(tbes) == 1
+            assert tbes[0].timeseries_id == ts_2.id
+
+            # TS 1 Campaign scope
+            # 1 already missing event (TS 3)
+            # 1 present event (TS 1)
+            events = list(
+                Event.get(
+                    category="Data missing",
+                    campaign_scope_id=ts_1.campaign_scope_id,
+                    timestamp=check_dt_3,
+                )
+            )
+            assert len(events) == 1
+            event_7 = events[0]
+            assert event_7.level == "INFO"
+            assert event_7.source == "BEMServer - Check missing data"
+            assert event_7.description == "Timeseries still missing: ['Timeseries 4']"
+            tbes = list(TimeseriesByEvent.get(event=event_7))
+            assert len(tbes) == 1
+            assert tbes[0].timeseries_id == ts_3.id
+            events = list(
+                Event.get(
+                    category="Data present",
+                    campaign_scope_id=ts_1.campaign_scope_id,
+                    timestamp=check_dt_3,
+                )
+            )
+            assert len(events) == 1
+            event_8 = events[0]
+            assert event_8.level == "INFO"
+            assert event_8.source == "BEMServer - Check missing data"
+            assert event_8.description == "Timeseries present: ['Timeseries 2']"
+            tbes = list(TimeseriesByEvent.get(event=event_8))
+            assert len(tbes) == 1
+            assert tbes[0].timeseries_id == ts_1.id
