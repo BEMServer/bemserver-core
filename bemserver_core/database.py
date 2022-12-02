@@ -119,6 +119,20 @@ class Base:
         return wrapper
 
     @classmethod
+    def _filter_bool_none_as_false(cls, query, field, value):
+        """Filter query by boolean value where Null is considered False
+
+        :param sqlalchemy.orm.Query query: Query to filter
+        :param sqlalchemy.schema.Column: Field to filter on
+        :param boolean value: Whether to get True or False/Null values
+
+        Returns filtered query.
+        """
+        if value is True:
+            return query.filter(field.is_(True))
+        return query.filter(sqla.or_(field.is_(False), field.is_(None)))
+
+    @classmethod
     def get(cls, **kwargs):
         """Get objects"""
         return cls._add_sort_query_filter(

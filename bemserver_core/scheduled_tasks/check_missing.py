@@ -71,15 +71,9 @@ class ST_CheckMissingByCampaign(AuthMixin, Base):
 
         # Apply a special filter for is_enabled attribute (None is considered as False).
         if is_enabled is not None:
-            if is_enabled:
-                query = query.filter(check_missing_subq.is_enabled == is_enabled)
-            else:
-                query = query.filter(
-                    sqla.or_(
-                        check_missing_subq.is_enabled == is_enabled,
-                        check_missing_subq.is_enabled.is_(None),
-                    )
-                )
+            query = cls._filter_bool_none_as_false(
+                query, check_missing_subq.is_enabled, is_enabled
+            )
 
         # Apply sort on final result.
         if sort is not None:
