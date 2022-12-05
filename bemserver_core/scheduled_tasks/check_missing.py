@@ -4,7 +4,14 @@ from zoneinfo import ZoneInfo
 
 import sqlalchemy as sqla
 
-from bemserver_core.model import TimeseriesDataState, Campaign, Event, TimeseriesByEvent
+from bemserver_core.model import (
+    TimeseriesDataState,
+    Campaign,
+    EventCategory,
+    EventLevel,
+    Event,
+    TimeseriesByEvent,
+)
 from bemserver_core.database import Base, db
 from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.process.completeness import compute_completeness
@@ -117,6 +124,10 @@ def check_missing_ts_data(
     logger.debug("Check interval: [%s - %s]", start_dt, end_dt)
 
     ds_raw = TimeseriesDataState.get(name="Raw").first()
+    ec_data_missing = EventCategory.get(name="Data missing").first()
+    ec_data_present = EventCategory.get(name="Data present").first()
+    el_warning = EventLevel.get(name="WARNING").first()
+    el_info = EventLevel.get(name="INFO").first()
 
     for cbc in ST_CheckMissingByCampaign.get():
         campaign = cbc.campaign
@@ -141,8 +152,8 @@ def check_missing_ts_data(
                     .filter(TimeseriesByEvent.timeseries_id == ts.id)
                     .filter(
                         sqla.or_(
-                            Event.category == "Data missing",
-                            Event.category == "Data present",
+                            Event.category_id == ec_data_missing.id,
+                            Event.category_id == ec_data_present.id,
                         )
                     )
                     .order_by(sqla.desc(Event.timestamp))
@@ -150,7 +161,7 @@ def check_missing_ts_data(
                 )
                 tbes = list(query)
                 ts_status_missing[(ts.id, ts.name)] = (
-                    bool(tbes) and tbes[0].category == "Data missing"
+                    bool(tbes) and tbes[0].category_id == ec_data_missing.id
                 )
 
             logger.debug("Timeseries missing status: %s", ts_status_missing)
@@ -200,8 +211,8 @@ def check_missing_ts_data(
 
                 event = Event.new(
                     campaign_scope_id=c_scope.id,
-                    category="Data missing",
-                    level="WARNING",
+                    category_id=ec_data_missing.id,
+                    level_id=el_warning.id,
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
@@ -222,8 +233,8 @@ def check_missing_ts_data(
 
                 event = Event.new(
                     campaign_scope_id=c_scope.id,
-                    category="Data missing",
-                    level="INFO",
+                    category_id=ec_data_missing.id,
+                    level_id=el_info.id,
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
@@ -245,8 +256,8 @@ def check_missing_ts_data(
 
                 event = Event.new(
                     campaign_scope_id=c_scope.id,
-                    category="Data present",
-                    level="INFO",
+                    category_id=ec_data_present.id,
+                    level_id=el_info.id,
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
