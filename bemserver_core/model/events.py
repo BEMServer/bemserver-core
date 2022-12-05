@@ -1,6 +1,5 @@
 """Event"""
 import sqlalchemy as sqla
-import sqlalchemy.orm as sqlaorm
 
 from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.authorization import auth, AuthMixin, Relation
@@ -11,14 +10,16 @@ from .timeseries import Timeseries
 class EventCategory(AuthMixin, Base):
     __tablename__ = "event_categs"
 
-    id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
+    id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
+    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
     description = sqla.Column(sqla.String(250))
 
 
 class EventLevel(AuthMixin, Base):
     __tablename__ = "event_levels"
 
-    id = sqla.Column(sqla.String(80), primary_key=True, nullable=False)
+    id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
+    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
     description = sqla.Column(sqla.String(250))
 
 
@@ -27,23 +28,19 @@ class Event(AuthMixin, Base):
 
     id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
     campaign_scope_id = sqla.Column(sqla.ForeignKey("c_scopes.id"), nullable=False)
-
-    @sqlaorm.declared_attr
-    def category(cls):
-        return sqla.Column(
-            sqla.String, sqla.ForeignKey("event_categs.id"), nullable=False
-        )
-
-    @sqlaorm.declared_attr
-    def level(cls):
-        return sqla.Column(
-            sqla.String, sqla.ForeignKey("event_levels.id"), nullable=False
-        )
-
+    category_id = sqla.Column(sqla.ForeignKey("event_categs.id"), nullable=False)
+    level_id = sqla.Column(sqla.ForeignKey("event_levels.id"), nullable=False)
     timestamp = sqla.Column(sqla.DateTime(timezone=True), nullable=False)
     source = sqla.Column(sqla.String, nullable=False)
     description = sqla.Column(sqla.String())
 
+    category = sqla.orm.relationship(
+        "EventCategory",
+        backref=sqla.orm.backref("events", cascade="all, delete-orphan"),
+    )
+    level = sqla.orm.relationship(
+        "EventLevel", backref=sqla.orm.backref("events", cascade="all, delete-orphan")
+    )
     campaign_scope = sqla.orm.relationship(
         "CampaignScope", backref=sqla.orm.backref("sites", cascade="all, delete-orphan")
     )
@@ -132,13 +129,13 @@ def init_db_events():
     """
     db.session.add_all(
         [
-            EventCategory(id="Data missing"),
-            EventCategory(id="Data present"),
-            EventCategory(id="Data outliers"),
-            EventLevel(id="INFO", description="Information"),
-            EventLevel(id="WARNING", description="Warning"),
-            EventLevel(id="ERROR", description="Error"),
-            EventLevel(id="CRITICAL", description="Critical"),
+            EventCategory(name="Data missing"),
+            EventCategory(name="Data present"),
+            EventCategory(name="Data outliers"),
+            EventLevel(name="INFO", description="Information"),
+            EventLevel(name="WARNING", description="Warning"),
+            EventLevel(name="ERROR", description="Error"),
+            EventLevel(name="CRITICAL", description="Critical"),
         ]
     )
     db.session.commit()

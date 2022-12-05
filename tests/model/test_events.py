@@ -21,7 +21,7 @@ class TestEventLevelModel:
         with CurrentUser(admin_user):
             nb_event_levels = len(list(EventLevel.get()))
             event_level_1 = EventLevel.new(
-                id="TEST",
+                name="Level 1",
                 description="Event level 1",
             )
             db.session.add(event_level_1)
@@ -29,7 +29,10 @@ class TestEventLevelModel:
             EventLevel.get_by_id(event_level_1.id)
             event_levels = list(EventLevel.get())
             assert len(event_levels) == nb_event_levels + 1
-            event_level_1.update(name="Super event_level 1")
+            event_level_1.update(
+                name="Event level 1",
+                description="Super event_level 1",
+            )
             event_level_1.delete()
             db.session.commit()
 
@@ -42,11 +45,11 @@ class TestEventLevelModel:
             event_level_1 = EventLevel.get_by_id(event_levels[0].id)
             with pytest.raises(BEMServerAuthorizationError):
                 EventLevel.new(
-                    id="TEST",
+                    name="Level 1",
                     description="Event level 1",
                 )
             with pytest.raises(BEMServerAuthorizationError):
-                event_level_1.update(name="Super event_level 1")
+                event_level_1.update(description="Super event_level 1")
             with pytest.raises(BEMServerAuthorizationError):
                 event_level_1.delete()
 
@@ -60,7 +63,7 @@ class TestEventCategoryModel:
             event_categories = list(EventCategory.get())
             nb_categs = len(event_categories)
             event_category_1 = EventCategory.new(
-                id="TEST",
+                name="Category 1",
                 description="Event category 1",
             )
             db.session.add(event_category_1)
@@ -68,23 +71,27 @@ class TestEventCategoryModel:
             EventCategory.get_by_id(event_category_1.id)
             event_categories = list(EventCategory.get())
             assert len(event_categories) == nb_categs + 1
-            event_category_1.update(name="Super event_category 1")
+            event_category_1.update(
+                name="Event_category 1",
+                description="Super event_category 1",
+            )
             event_category_1.delete()
             db.session.commit()
 
-    def test_event_category_authorizations_as_user(self, users, event_categories):
+    def test_event_category_authorizations_as_user(self, users):
         user_1 = users[1]
         assert not user_1.is_admin
 
         with CurrentUser(user_1):
+            event_categories = list(EventCategory.get())
             event_category_1 = EventCategory.get_by_id(event_categories[0].id)
             with pytest.raises(BEMServerAuthorizationError):
                 EventCategory.new(
-                    id="TEST",
+                    name="Category 1",
                     description="Event category 1",
                 )
             with pytest.raises(BEMServerAuthorizationError):
-                event_category_1.update(name="Super event_category 1")
+                event_category_1.update(description="Super event_category 1")
             with pytest.raises(BEMServerAuthorizationError):
                 event_category_1.delete()
 
@@ -103,7 +110,9 @@ class TestEventModel:
             assert len(list(TimeseriesByEvent.get())) == 1
 
     @pytest.mark.usefixtures("as_admin")
-    def test_event_read_only_fields(self, campaign_scopes, event_categories):
+    def test_event_read_only_fields(
+        self, campaign_scopes, event_categories, event_levels
+    ):
         """Check campaign_scope and timestamp can't be modified
 
         This is kind of a "framework test".
@@ -111,6 +120,7 @@ class TestEventModel:
         campaign_scope_1 = campaign_scopes[0]
         campaign_scope_2 = campaign_scopes[1]
         ec_1 = event_categories[0]
+        el_1 = event_levels[0]
 
         timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
         timestamp_2 = dt.datetime(2020, 6, 1, tzinfo=dt.timezone.utc)
@@ -118,9 +128,9 @@ class TestEventModel:
         evt_1 = Event.new(
             campaign_scope_id=campaign_scope_1.id,
             timestamp=timestamp_1,
-            category=ec_1.id,
+            category_id=ec_1.id,
+            level_id=el_1.id,
             source="src",
-            level="ERROR",
         )
         db.session.commit()
 
@@ -130,7 +140,7 @@ class TestEventModel:
             sqla.exc.IntegrityError,
             match="timestamp cannot be modified",
         ):
-            db.session.commit()
+            db.session.flush()
         db.session.rollback()
         evt_1.update(campaign_scope_id=campaign_scope_2.id)
         db.session.add(evt_1)
@@ -138,7 +148,7 @@ class TestEventModel:
             sqla.exc.IntegrityError,
             match="campaign_scope_id cannot be modified",
         ):
-            db.session.commit()
+            db.session.flush()
         db.session.rollback()
 
         tse_list = list(Event.get(campaign_scope_id=1))
@@ -151,11 +161,7 @@ class TestEventModel:
         assert tse_list == []
 
     def test_event_authorizations_as_admin(
-        self,
-        users,
-        campaign_scopes,
-        events,
-        event_categories,
+        self, users, campaign_scopes, events, event_categories, event_levels
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -163,6 +169,8 @@ class TestEventModel:
         event_1 = events[0]
         event_2 = events[1]
         ec_1 = event_categories[0]
+        el_1 = event_levels[0]
+        el_2 = event_levels[1]
 
         with CurrentUser(admin_user):
             events = list(Event.get())
@@ -173,12 +181,12 @@ class TestEventModel:
             Event.new(
                 campaign_scope_id=campaign_scope_1.id,
                 timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
-                category=ec_1.id,
+                category_id=ec_1.id,
+                level_id=el_1.id,
                 source="src",
-                level="ERROR",
             )
             db.session.commit()
-            event_2.update(level="WARNING")
+            event_2.update(level_id=el_2.id)
             db.session.commit()
             event_2.delete()
             db.session.commit()
@@ -186,7 +194,7 @@ class TestEventModel:
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
     def test_event_authorizations_as_user(
-        self, users, campaign_scopes, events, event_categories
+        self, users, campaign_scopes, events, event_categories, event_levels
     ):
         user_1 = users[1]
         assert not user_1.is_admin
@@ -195,6 +203,8 @@ class TestEventModel:
         event_1 = events[0]
         event_2 = events[1]
         ec_1 = event_categories[0]
+        el_1 = event_levels[0]
+        el_2 = event_levels[1]
 
         with CurrentUser(user_1):
 
@@ -209,9 +219,9 @@ class TestEventModel:
                 Event.new(
                     campaign_scope_id=campaign_scope_1.id,
                     timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
-                    category=ec_1.id,
+                    category_id=ec_1.id,
+                    level_id=el_1.id,
                     source="src",
-                    level="ERROR",
                 )
             with pytest.raises(BEMServerAuthorizationError):
                 event_1.update(level="WARNING")
@@ -222,12 +232,12 @@ class TestEventModel:
             Event.new(
                 campaign_scope_id=campaign_scope_2.id,
                 timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
-                category=ec_1.id,
+                category_id=ec_1.id,
+                level_id=el_1.id,
                 source="src",
-                level="ERROR",
             )
             db.session.commit()
-            event_2.update(level="WARNING")
+            event_2.update(level_id=el_2.id)
             db.session.commit()
             event_2.delete()
             db.session.commit()

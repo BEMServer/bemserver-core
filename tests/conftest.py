@@ -294,28 +294,37 @@ def timeseries_by_data_states(request, bemservercore, timeseries):
 @pytest.fixture
 def event_categories(bemservercore):
     with OpenBar():
-        ec_1 = model.EventCategory.new(id="Custom event category 1")
-        ec_2 = model.EventCategory.new(id="Custom event category 2")
+        ec_1 = model.EventCategory.new(name="Custom event category 1")
+        ec_2 = model.EventCategory.new(name="Custom event category 2")
         db.session.commit()
     return (ec_1, ec_2)
 
 
 @pytest.fixture
-def events(bemservercore, campaign_scopes, event_categories):
+def event_levels(bemservercore):
+    with OpenBar():
+        el_1 = model.EventLevel.get(name="WARNING").first()
+        el_2 = model.EventLevel.get(name="INFO").first()
+        db.session.commit()
+    return (el_1, el_2)
+
+
+@pytest.fixture
+def events(bemservercore, campaign_scopes, event_categories, event_levels):
     with OpenBar():
         ts_event_1 = model.Event.new(
             campaign_scope_id=campaign_scopes[0].id,
             timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
-            category=event_categories[0].id,
+            category_id=event_categories[0].id,
+            level_id=event_levels[0].id,
             source="src",
-            level="ERROR",
         )
         ts_event_2 = model.Event.new(
             campaign_scope_id=campaign_scopes[1].id,
             timestamp=dt.datetime(2020, 1, 15, tzinfo=dt.timezone.utc),
-            category=event_categories[0].id,
+            category_id=event_categories[1].id,
+            level_id=event_levels[1].id,
             source="src",
-            level="WARNING",
         )
         db.session.commit()
     return (ts_event_1, ts_event_2)
