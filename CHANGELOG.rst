@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+0.2.1 (2022-12-06)
+++++++++++++++++++
+
+Features:
+
+- Event model
+- Check missing data scheduled task
+
+Other changes:
+
+- Support Python 3.11
+
 0.2.0 (2022-11-30)
 ++++++++++++++++++
 
