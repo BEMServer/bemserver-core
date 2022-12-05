@@ -67,17 +67,17 @@ class TestTimeseriesPropertyModel:
         assert admin_user.is_admin
 
         with CurrentUser(admin_user):
-            sep = TimeseriesProperty(
+            ts_prop = TimeseriesProperty(
                 name="New property",
                 value_type=PropertyType.integer,
             )
-            assert sep.id is None
-            sep.value_type = PropertyType.float
-            db.session.add(sep)
+            assert ts_prop.id is None
+            ts_prop.value_type = PropertyType.float
+            db.session.add(ts_prop)
             db.session.commit()
-            assert sep.id is not None
-            sep.value_type = PropertyType.boolean
-            db.session.add(sep)
+            assert ts_prop.id is not None
+            ts_prop.value_type = PropertyType.boolean
+            db.session.add(ts_prop)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="value_type cannot be modified",
