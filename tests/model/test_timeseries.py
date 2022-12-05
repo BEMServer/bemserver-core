@@ -18,6 +18,7 @@ from bemserver_core.model import (
     TimeseriesByZone,
     EnergyConsumptionTimeseriesBySite,
     EnergyConsumptionTimeseriesByBuilding,
+    TimeseriesByEvent,
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
@@ -156,6 +157,7 @@ class TestTimeseriesModel:
     @pytest.mark.usefixtures("timeseries_property_data")
     @pytest.mark.usefixtures("energy_consumption_timeseries_by_sites")
     @pytest.mark.usefixtures("energy_consumption_timeseries_by_buildings")
+    @pytest.mark.usefixtures("timeseries_by_events")
     def test_timeseries_delete_cascade(
         self, users, timeseries, timeseries_by_data_states
     ):
@@ -182,6 +184,7 @@ class TestTimeseriesModel:
             assert len(list(db.session.query(TimeseriesData))) == 1
             assert len(list(EnergyConsumptionTimeseriesBySite.get())) == 2
             assert len(list(EnergyConsumptionTimeseriesByBuilding.get())) == 2
+            assert len(list(TimeseriesByEvent.get())) == 2
 
             ts_1.delete()
             db.session.commit()
@@ -195,6 +198,7 @@ class TestTimeseriesModel:
             assert len(list(db.session.query(TimeseriesData))) == 0
             assert len(list(EnergyConsumptionTimeseriesBySite.get())) == 1
             assert len(list(EnergyConsumptionTimeseriesByBuilding.get())) == 1
+            assert len(list(TimeseriesByEvent.get())) == 1
 
     @pytest.mark.usefixtures("as_admin")
     def test_timeseries_get_timeseries_by_data_states(self, timeseries):

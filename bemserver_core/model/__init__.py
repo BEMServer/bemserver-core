@@ -39,6 +39,12 @@ from .timeseries import (
     TimeseriesByZone,
 )
 from .timeseries_data import TimeseriesData  # noqa
+from .events import (  # noqa
+    EventCategory,
+    EventLevel,
+    Event,
+    TimeseriesByEvent,
+)
 from .energy import (
     EnergySource,
     EnergyEndUse,
@@ -81,6 +87,10 @@ __all__ = [
     "TimeseriesByStorey",
     "TimeseriesBySpace",
     "TimeseriesByZone",
+    "EventCategory",
+    "EventLevel",
+    "Event",
+    "TimeseriesByEvent",
     "EnergySource",
     "EnergyEndUse",
     "EnergyConsumptionTimeseriesBySite",
@@ -122,6 +132,10 @@ AUTH_MODEL_CLASSES = [
     TimeseriesByStorey,
     TimeseriesBySpace,
     TimeseriesByZone,
+    EventCategory,
+    EventLevel,
+    Event,
+    TimeseriesByEvent,
     EnergySource,
     EnergyEndUse,
     EnergyConsumptionTimeseriesBySite,

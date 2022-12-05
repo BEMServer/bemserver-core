@@ -14,6 +14,7 @@ from bemserver_core.model import (
     Space,
     Zone,
     Timeseries,
+    Event,
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
@@ -172,6 +173,7 @@ class TestUserGroupByCampaignModel:
 class TestCampaignScopeModel:
     @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
     @pytest.mark.usefixtures("timeseries")
+    @pytest.mark.usefixtures("events")
     def test_campaign_scope_delete_cascade(self, users, campaign_scopes):
         admin_user = users[0]
         cs_1 = campaign_scopes[0]
@@ -179,11 +181,13 @@ class TestCampaignScopeModel:
         with CurrentUser(admin_user):
             assert len(list(UserGroupByCampaignScope.get())) == 3
             assert len(list(Timeseries.get())) == 2
+            assert len(list(Event.get())) == 2
 
             cs_1.delete()
             db.session.commit()
             assert len(list(UserGroupByCampaignScope.get())) == 2
             assert len(list(Timeseries.get())) == 1
+            assert len(list(Event.get())) == 1
 
     @pytest.mark.usefixtures("as_admin")
     def test_campaign_scope_read_only_fields(self, campaigns):
