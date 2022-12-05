@@ -809,3 +809,17 @@ def st_cleanups_by_timeseries(bemservercore, timeseries):
         )
         db.session.commit()
     return (st_cbt_1, st_cbt_2)
+
+
+@pytest.fixture
+def st_check_missings_by_campaigns(bemservercore, campaigns):
+    with OpenBar():
+        st_cbc_1 = scheduled_tasks.ST_CheckMissingByCampaign.new(
+            campaign_id=campaigns[0].id
+        )
+        st_cbc_2 = scheduled_tasks.ST_CheckMissingByCampaign.new(
+            campaign_id=campaigns[1].id,
+            is_enabled=False,
+        )
+        db.session.commit()
+    return (st_cbc_1, st_cbc_2)

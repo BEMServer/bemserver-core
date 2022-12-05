@@ -60,15 +60,9 @@ class ST_CleanupByCampaign(AuthMixin, Base):
 
         # Apply a special filter for is_enabled attribute (None is considered as False).
         if is_enabled is not None:
-            if is_enabled:
-                query = query.filter(cleanup_subq.is_enabled == is_enabled)
-            else:
-                query = query.filter(
-                    sqla.or_(
-                        cleanup_subq.is_enabled == is_enabled,
-                        cleanup_subq.is_enabled.is_(None),
-                    )
-                )
+            query = cls._filter_bool_none_as_false(
+                query, cleanup_subq.is_enabled, is_enabled
+            )
 
         # Apply sort on final result.
         if sort is not None:
