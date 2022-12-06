@@ -119,6 +119,7 @@ def check_missing_ts_data(
         start_dt = floor(datetime - offset, period, period_multiplier)
     except BEMServerCorePeriodError as exc:
         logger.critical(str(exc))
+        raise
     end_dt = start_dt + offset
 
     logger.debug("Check interval: [%s - %s]", start_dt, end_dt)
