@@ -38,6 +38,20 @@ Also, Alembic is meant to detect changes in database tables, not rows, so rows
 that are created by default in the code must be set and updated manually. This
 is the case, for instance, for default timeseries properties and data states.
 
+To check the migration file, use ``pg_dump`` to dump the database from both
+migration files and ``bemserver_setup_db`` command. They should only differ by
+alembic related tables::
+
+    $ dropdb bemserver
+    $ createdb bemserver
+    $ bemserver_db_upgrade
+    $ pg_dump bemserver > dump_migration.sql
+
+    $ dropdb bemserver
+    $ createdb bemserver
+    $ bemserver_setup_db
+    $ pg_dump bemserver > dump_setup_db.sql
+
 Once a revision file is ready, it can be committed to the repository.
 
 Manage Migrations
