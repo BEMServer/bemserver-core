@@ -47,7 +47,7 @@ markupsafe==2.1.1
     # via mako
 numpy==1.23.4
     # via pandas
-oso==0.26.3
+oso==0.26.4
     # via bemserver-core (setup.py)
 packaging==21.3
     # via redis
