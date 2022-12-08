@@ -346,6 +346,81 @@ def timeseries_by_events(bemservercore, timeseries, events):
 
 
 @pytest.fixture
+def events_by_sites(bemservercore, events, sites):
+    with OpenBar():
+        ebs_1 = model.EventBySite.new(
+            event_id=events[0].id,
+            site_id=sites[0].id,
+        )
+        ebs_2 = model.EventBySite.new(
+            event_id=events[1].id,
+            site_id=sites[1].id,
+        )
+        db.session.commit()
+    return (ebs_1, ebs_2)
+
+
+@pytest.fixture
+def events_by_buildings(bemservercore, events, buildings):
+    with OpenBar():
+        ebb_1 = model.EventByBuilding.new(
+            event_id=events[0].id,
+            building_id=buildings[0].id,
+        )
+        ebb_2 = model.EventByBuilding.new(
+            event_id=events[1].id,
+            building_id=buildings[1].id,
+        )
+        db.session.commit()
+    return (ebb_1, ebb_2)
+
+
+@pytest.fixture
+def events_by_storeys(bemservercore, events, storeys):
+    with OpenBar():
+        ebs_1 = model.EventByStorey.new(
+            event_id=events[0].id,
+            storey_id=storeys[0].id,
+        )
+        ebs_2 = model.EventByStorey.new(
+            event_id=events[1].id,
+            storey_id=storeys[1].id,
+        )
+        db.session.commit()
+    return (ebs_1, ebs_2)
+
+
+@pytest.fixture
+def events_by_spaces(bemservercore, events, spaces):
+    with OpenBar():
+        ebs_1 = model.EventBySpace.new(
+            event_id=events[0].id,
+            space_id=spaces[0].id,
+        )
+        ebs_2 = model.EventBySpace.new(
+            event_id=events[1].id,
+            space_id=spaces[1].id,
+        )
+        db.session.commit()
+    return (ebs_1, ebs_2)
+
+
+@pytest.fixture
+def events_by_zones(bemservercore, events, zones):
+    with OpenBar():
+        ebz_1 = model.EventByZone.new(
+            event_id=events[0].id,
+            zone_id=zones[0].id,
+        )
+        ebz_2 = model.EventByZone.new(
+            event_id=events[1].id,
+            zone_id=zones[1].id,
+        )
+        db.session.commit()
+    return (ebz_1, ebz_2)
+
+
+@pytest.fixture
 def structural_element_properties(bemservercore):
     with OpenBar():
         sep_1 = model.StructuralElementProperty.new(

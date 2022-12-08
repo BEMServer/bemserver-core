@@ -194,6 +194,111 @@ has_relation(event: Event, "event", tbs: TimeseriesByEvent) if
     event = tbs.event;
 
 
+# Application code ensures event and site are in the same campaign scope.
+# So we only check event.
+resource EventBySite {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["reader", "writer"];
+    relations = {
+        event: Event
+    };
+
+    "reader" if "reader" on "event";
+    "writer" if "writer" on "event";
+
+    "read" if "reader";
+    "create" if "writer";
+    "update" if "writer";
+    "delete" if "writer";
+}
+has_relation(event: Event, "event", ebs: EventBySite) if
+    event = ebs.event;
+
+
+# Application code ensures event and building are in the same campaign scope.
+# So we only check event.
+resource EventByBuilding {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["reader", "writer"];
+    relations = {
+        event: Event
+    };
+
+    "reader" if "reader" on "event";
+    "writer" if "writer" on "event";
+
+    "read" if "reader";
+    "create" if "writer";
+    "update" if "writer";
+    "delete" if "writer";
+}
+has_relation(event: Event, "event", ebb: EventByBuilding) if
+    event = ebb.event;
+
+
+# Application code ensures event and storey are in the same campaign scope.
+# So we only check event.
+resource EventByStorey {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["reader", "writer"];
+    relations = {
+        event: Event
+    };
+
+    "reader" if "reader" on "event";
+    "writer" if "writer" on "event";
+
+    "read" if "reader";
+    "create" if "writer";
+    "update" if "writer";
+    "delete" if "writer";
+}
+has_relation(event: Event, "event", ebs: EventByStorey) if
+    event = ebs.event;
+
+
+# Application code ensures event and space are in the same campaign scope.
+# So we only check event.
+resource EventBySpace {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["reader", "writer"];
+    relations = {
+        event: Event
+    };
+
+    "reader" if "reader" on "event";
+    "writer" if "writer" on "event";
+
+    "read" if "reader";
+    "create" if "writer";
+    "update" if "writer";
+    "delete" if "writer";
+}
+has_relation(event: Event, "event", ebs: EventBySpace) if
+    event = ebs.event;
+
+
+# Application code ensures event and zone are in the same campaign scope.
+# So we only check event.
+resource EventByZone {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["reader", "writer"];
+    relations = {
+        event: Event
+    };
+
+    "reader" if "reader" on "event";
+    "writer" if "writer" on "event";
+
+    "read" if "reader";
+    "create" if "writer";
+    "update" if "writer";
+    "delete" if "writer";
+}
+has_relation(event: Event, "event", ebz: EventByZone) if
+    event = ebz.event;
+
+
 resource StructuralElementProperty{
     permissions = ["create", "read", "update", "delete"];
     roles = ["user"];
