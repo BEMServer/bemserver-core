@@ -39,7 +39,7 @@ class CampaignScope(AuthMixin, Base):
     description = sqla.Column(sqla.String(500))
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
 
-    campaigns = sqla.orm.relationship(
+    campaign = sqla.orm.relationship(
         Campaign,
         backref=sqla.orm.backref("campaign_scopes", cascade="all, delete-orphan"),
     )
