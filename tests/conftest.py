@@ -40,8 +40,8 @@ def postgresql_db(postgresql):
 
 @pytest.fixture
 def timescale_db(postgresql_db):
-    with sqla.create_engine(postgresql_db).connect() as connection:
-        connection.execute("CREATE EXTENSION IF NOT EXISTS timescaledb;")
+    with sqla.create_engine(postgresql_db).begin() as connection:
+        connection.execute(sqla.text("CREATE EXTENSION IF NOT EXISTS timescaledb;"))
     yield postgresql_db
 
 

@@ -166,7 +166,7 @@ class Base:
         """Hook executed before DB session flush"""
 
 
-SESSION_FACTORY = sessionmaker()
+SESSION_FACTORY = sessionmaker(future=True)
 DB_SESSION = scoped_session(SESSION_FACTORY)
 metadata = sqla.MetaData(naming_convention=NAMING_CONVENTION)
 Base = declarative_base(metadata=metadata, cls=Base)
