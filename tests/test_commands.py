@@ -16,8 +16,10 @@ class TestCommands:
         with sqla.create_engine(timescale_db).connect() as connection:
             assert not list(
                 connection.execute(
-                    "select table_name from information_schema.tables "
-                    "where table_schema='public';"
+                    sqla.text(
+                        "select table_name from information_schema.tables "
+                        "where table_schema='public';"
+                    )
                 )
             )
 
@@ -33,8 +35,10 @@ class TestCommands:
         with sqla.create_engine(timescale_db).connect() as connection:
             assert list(
                 connection.execute(
-                    "select * from information_schema.tables "
-                    "where table_schema='public';"
+                    sqla.text(
+                        "select * from information_schema.tables "
+                        "where table_schema='public';"
+                    )
                 )
             )
 
@@ -42,7 +46,7 @@ class TestCommands:
 
         # Check there is no user in DB
         with sqla.create_engine(database).connect() as connection:
-            assert not list(connection.execute("select * from users;"))
+            assert not list(connection.execute(sqla.text("select * from users;")))
 
         # Run command
         runner = CliRunner()
@@ -63,4 +67,4 @@ class TestCommands:
 
         # Check user is created
         with sqla.create_engine(database).connect() as connection:
-            assert list(connection.execute("select * from users;"))
+            assert list(connection.execute(sqla.text("select * from users;")))
