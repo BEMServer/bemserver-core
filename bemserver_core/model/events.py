@@ -74,11 +74,11 @@ class TimeseriesByEvent(AuthMixin, Base):
 
     event = sqla.orm.relationship(
         "Event",
-        backref=sqla.orm.backref("timeseries_by_event", cascade="all, delete-orphan"),
+        backref=sqla.orm.backref("timeseries_by_events", cascade="all, delete-orphan"),
     )
     timeseries = sqla.orm.relationship(
         "Timeseries",
-        backref=sqla.orm.backref("timeseries_by_event", cascade="all, delete-orphan"),
+        backref=sqla.orm.backref("timeseries_by_events", cascade="all, delete-orphan"),
     )
 
     def _before_flush(self):
