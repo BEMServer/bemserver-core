@@ -362,11 +362,11 @@ class TimeseriesBySite(AuthMixin, Base):
 
     site = sqla.orm.relationship(
         "Site",
-        backref=sqla.orm.backref("timeseries_by_site", cascade="all, delete-orphan"),
+        backref=sqla.orm.backref("timeseries_by_sites", cascade="all, delete-orphan"),
     )
     timeseries = sqla.orm.relationship(
         "Timeseries",
-        backref=sqla.orm.backref("timeseries_by_site", cascade="all, delete-orphan"),
+        backref=sqla.orm.backref("timeseries_by_sites", cascade="all, delete-orphan"),
     )
 
     @classmethod
@@ -401,13 +401,13 @@ class TimeseriesByBuilding(AuthMixin, Base):
     building = sqla.orm.relationship(
         "Building",
         backref=sqla.orm.backref(
-            "timeseries_by_building", cascade="all, delete-orphan"
+            "timeseries_by_buildings", cascade="all, delete-orphan"
         ),
     )
     timeseries = sqla.orm.relationship(
         "Timeseries",
         backref=sqla.orm.backref(
-            "timeseries_by_building", cascade="all, delete-orphan"
+            "timeseries_by_buildings", cascade="all, delete-orphan"
         ),
     )
 
@@ -442,11 +442,11 @@ class TimeseriesByStorey(AuthMixin, Base):
 
     storey = sqla.orm.relationship(
         "Storey",
-        backref=sqla.orm.backref("timeseries_by_storey", cascade="all, delete-orphan"),
+        backref=sqla.orm.backref("timeseries_by_storeys", cascade="all, delete-orphan"),
     )
     timeseries = sqla.orm.relationship(
         "Timeseries",
-        backref=sqla.orm.backref("timeseries_by_storey", cascade="all, delete-orphan"),
+        backref=sqla.orm.backref("timeseries_by_storeys", cascade="all, delete-orphan"),
     )
 
     @classmethod
@@ -480,11 +480,11 @@ class TimeseriesBySpace(AuthMixin, Base):
 
     space = sqla.orm.relationship(
         "Space",
-        backref=sqla.orm.backref("timeseries_by_space", cascade="all, delete-orphan"),
+        backref=sqla.orm.backref("timeseries_by_spaces", cascade="all, delete-orphan"),
     )
     timeseries = sqla.orm.relationship(
         "Timeseries",
-        backref=sqla.orm.backref("timeseries_by_space", cascade="all, delete-orphan"),
+        backref=sqla.orm.backref("timeseries_by_spaces", cascade="all, delete-orphan"),
     )
 
     @classmethod
@@ -518,11 +518,11 @@ class TimeseriesByZone(AuthMixin, Base):
 
     zone = sqla.orm.relationship(
         "Zone",
-        backref=sqla.orm.backref("timeseries_by_zone", cascade="all, delete-orphan"),
+        backref=sqla.orm.backref("timeseries_by_zones", cascade="all, delete-orphan"),
     )
     timeseries = sqla.orm.relationship(
         "Timeseries",
-        backref=sqla.orm.backref("timeseries_by_zone", cascade="all, delete-orphan"),
+        backref=sqla.orm.backref("timeseries_by_zones", cascade="all, delete-orphan"),
     )
 
     @classmethod
