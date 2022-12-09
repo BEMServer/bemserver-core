@@ -509,7 +509,7 @@ class TimeseriesBySpace(AuthMixin, Base):
 
 
 class TimeseriesByZone(AuthMixin, Base):
-    __tablename__ = "timeseries_by_zones"
+    __tablename__ = "ts_by_zones"
     __table_args__ = (sqla.UniqueConstraint("zone_id", "timeseries_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
