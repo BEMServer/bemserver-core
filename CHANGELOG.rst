@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+0.3.0 (2022-12-09)
+++++++++++++++++++
+
+Features:
+
+- Add EventBySite, EventByBuilding,...
+- Fix tables relation and backref names for consistency
+- Enable and fix SQLAlchemy 2.0 compatibilty warnings
+
+Other changes:
+
+- Fix CI to test Python 3.11
+
+
 0.2.1 (2022-12-06)
 ++++++++++++++++++
 
@@ -12,6 +26,8 @@ Features:
 Other changes:
 
 - Support Python 3.11
+
+The migration revision for this release was named 0.3 by mistake.
 
 0.2.0 (2022-11-30)
 ++++++++++++++++++
