@@ -158,42 +158,145 @@ resource EventLevel{
 
 resource Event {
     permissions = ["create", "read", "update", "delete"];
+    roles = ["reader", "writer"];
+    relations = {
+        campaign_scope: CampaignScope
+    };
+
+    "reader" if "member" on "campaign_scope";
+    "writer" if "member" on "campaign_scope";
+
+    "read" if "reader";
+    "create" if "writer";
+    "update" if "writer";
+    "delete" if "writer";
 }
-
-has_permission(user: User, "create", event:Event) if
-    has_role(user, "member", event.campaign_scope);
-has_permission(user: User, "read", event:Event) if
-    has_role(user, "member", event.campaign_scope);
-has_permission(user: User, "update", event:Event) if
-    has_role(user, "member", event.campaign_scope);
-has_permission(user: User, "delete", event:Event) if
-    has_role(user, "member", event.campaign_scope);
+has_relation(cs: CampaignScope, "campaign_scope", event: Event) if
+    cs = event.campaign_scope;
 
 
+# Application code ensures event and timeseries are in the same campaign scope.
+# So we only check event.
+# Checking event and timeseries would trigger an Oso error:
+# "Type `CampaignScope` occurs more than once as the target of a relation"
 resource TimeseriesByEvent {
     permissions = ["create", "read", "update", "delete"];
+    relations = {
+        event: Event
+    };
+
+    "read" if "read" on "event";
+    "create" if "writer" on "event";
+    "update" if "writer" on "event";
+    "delete" if "writer" on "event";
 }
+has_relation(event: Event, "event", tbs: TimeseriesByEvent) if
+    event = tbs.event;
 
-# TODO: Oso issue: using campaign scope twice in permission triggers an error
-# in Oso when building the query:
-# "Type `CampaignScope` occurs more than once as the target of a relation"
-# Let's check only event and ensure in code that timeseries is in the same
-# campaign scope.
-# When/if fixed in Oso, check that TS/event relations are refreshed before
-# Oso performs the test.
 
-has_permission(user: User, "create", tbe:TimeseriesByEvent) if
-#    tbe.timeseries.campaign_scope = tbe.event.campaign_scope and
-    has_permission(user, "update", tbe.event);
-has_permission(user: User, "read", tbe:TimeseriesByEvent) if
-#    tbe.timeseries.campaign_scope = tbe.event.campaign_scope and
-    has_permission(user, "read", tbe.event);
-has_permission(user: User, "update", tbe:TimeseriesByEvent) if
-#    tbe.timeseries.campaign_scope = tbe.event.campaign_scope and
-    has_permission(user, "update", tbe.event);
-has_permission(user: User, "delete", tbe:TimeseriesByEvent) if
-#    tbe.timeseries.campaign_scope = tbe.event.campaign_scope and
-    has_permission(user, "update", tbe.event);
+# Application code ensures event and site are in the same campaign scope.
+# So we only check event.
+resource EventBySite {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["reader", "writer"];
+    relations = {
+        event: Event
+    };
+
+    "reader" if "reader" on "event";
+    "writer" if "writer" on "event";
+
+    "read" if "reader";
+    "create" if "writer";
+    "update" if "writer";
+    "delete" if "writer";
+}
+has_relation(event: Event, "event", ebs: EventBySite) if
+    event = ebs.event;
+
+
+# Application code ensures event and building are in the same campaign scope.
+# So we only check event.
+resource EventByBuilding {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["reader", "writer"];
+    relations = {
+        event: Event
+    };
+
+    "reader" if "reader" on "event";
+    "writer" if "writer" on "event";
+
+    "read" if "reader";
+    "create" if "writer";
+    "update" if "writer";
+    "delete" if "writer";
+}
+has_relation(event: Event, "event", ebb: EventByBuilding) if
+    event = ebb.event;
+
+
+# Application code ensures event and storey are in the same campaign scope.
+# So we only check event.
+resource EventByStorey {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["reader", "writer"];
+    relations = {
+        event: Event
+    };
+
+    "reader" if "reader" on "event";
+    "writer" if "writer" on "event";
+
+    "read" if "reader";
+    "create" if "writer";
+    "update" if "writer";
+    "delete" if "writer";
+}
+has_relation(event: Event, "event", ebs: EventByStorey) if
+    event = ebs.event;
+
+
+# Application code ensures event and space are in the same campaign scope.
+# So we only check event.
+resource EventBySpace {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["reader", "writer"];
+    relations = {
+        event: Event
+    };
+
+    "reader" if "reader" on "event";
+    "writer" if "writer" on "event";
+
+    "read" if "reader";
+    "create" if "writer";
+    "update" if "writer";
+    "delete" if "writer";
+}
+has_relation(event: Event, "event", ebs: EventBySpace) if
+    event = ebs.event;
+
+
+# Application code ensures event and zone are in the same campaign scope.
+# So we only check event.
+resource EventByZone {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["reader", "writer"];
+    relations = {
+        event: Event
+    };
+
+    "reader" if "reader" on "event";
+    "writer" if "writer" on "event";
+
+    "read" if "reader";
+    "create" if "writer";
+    "update" if "writer";
+    "delete" if "writer";
+}
+has_relation(event: Event, "event", ebz: EventByZone) if
+    event = ebz.event;
 
 
 resource StructuralElementProperty{

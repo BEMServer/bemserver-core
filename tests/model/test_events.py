@@ -4,11 +4,22 @@ import sqlalchemy as sqla
 
 import pytest
 
-from bemserver_core.model import EventCategory, EventLevel, Event, TimeseriesByEvent
+from bemserver_core.model import (
+    EventCategory,
+    EventLevel,
+    Event,
+    TimeseriesByEvent,
+    EventBySite,
+    EventByBuilding,
+    EventByStorey,
+    EventBySpace,
+    EventByZone,
+)
 from bemserver_core.authorization import CurrentUser
 from bemserver_core.database import db
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
+    BEMServerCoreCampaignError,
     BEMServerCoreCampaignScopeError,
 )
 
@@ -319,3 +330,333 @@ class TestTimeseriesByEventModel:
                 tbe_1.update(timeseries_id=ts_5.id)
             with pytest.raises(BEMServerAuthorizationError):
                 tbe_1.delete()
+
+
+class TestEventBySiteModel:
+    def test_event_by_site_authorizations_as_admin(self, users, sites, events):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        site_1 = sites[0]
+        site_2 = sites[1]
+        event_1 = events[0]
+
+        with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreCampaignError):
+                EventBySite.new(site_id=site_2.id, event_id=event_1.id)
+                db.session.flush()
+            db.session.rollback()
+            ebs_1 = EventBySite.new(site_id=site_1.id, event_id=event_1.id)
+            db.session.add(ebs_1)
+            db.session.flush()
+            EventBySite.get_by_id(ebs_1.id)
+            ebss = list(EventBySite.get())
+            assert len(ebss) == 1
+            ebs_1.update(site_id=site_1.id)
+            db.session.flush()
+            with pytest.raises(BEMServerCoreCampaignError):
+                ebs_1.update(site_id=site_2.id)
+                db.session.flush()
+            db.session.rollback()
+            ebs_1 = EventBySite.new(site_id=site_1.id, event_id=event_1.id)
+            db.session.flush()
+            ebs_1.delete()
+            db.session.flush()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    def test_event_by_site_authorizations_as_user(
+        self, users, sites, events, events_by_sites
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        site_1 = sites[0]
+        site_2 = sites[1]
+        event_1 = events[0]
+        event_2 = events[1]
+        ebs_1 = events_by_sites[0]
+        ebs_2 = events_by_sites[1]
+
+        with CurrentUser(user_1):
+            ebs_l = list(EventBySite.get())
+            assert len(ebs_l) == 1
+            assert ebs_l[0] == ebs_2
+            EventBySite.get_by_id(ebs_2.id)
+            ebs_2.update(site_id=site_2.id)
+            ebs_2.delete()
+            ebs = EventBySite.new(site_id=site_2.id, event_id=event_2.id)
+            ebs.delete()
+            with pytest.raises(BEMServerAuthorizationError):
+                EventBySite.get_by_id(ebs_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                EventBySite.new(site_id=site_1.id, event_id=event_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ebs_1.update(site_id=site_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ebs_1.delete()
+
+
+class TestEventByBuildingModel:
+    def test_event_by_building_authorizations_as_admin(self, users, buildings, events):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        building_1 = buildings[0]
+        building_2 = buildings[1]
+        event_1 = events[0]
+
+        with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreCampaignError):
+                EventByBuilding.new(building_id=building_2.id, event_id=event_1.id)
+                db.session.flush()
+            db.session.rollback()
+            ebb_1 = EventByBuilding.new(building_id=building_1.id, event_id=event_1.id)
+            db.session.add(ebb_1)
+            db.session.flush()
+            EventByBuilding.get_by_id(ebb_1.id)
+            ebbs = list(EventByBuilding.get())
+            assert len(ebbs) == 1
+            ebb_1.update(building_id=building_1.id)
+            db.session.flush()
+            with pytest.raises(BEMServerCoreCampaignError):
+                ebb_1.update(building_id=building_2.id)
+                db.session.flush()
+            db.session.rollback()
+            ebb_1 = EventByBuilding.new(building_id=building_1.id, event_id=event_1.id)
+            db.session.flush()
+            ebb_1.delete()
+            db.session.flush()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    def test_event_by_building_authorizations_as_user(
+        self, users, buildings, events, events_by_buildings
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        building_1 = buildings[0]
+        building_2 = buildings[1]
+        event_1 = events[0]
+        event_2 = events[1]
+        ebb_1 = events_by_buildings[0]
+        ebb_2 = events_by_buildings[1]
+
+        with CurrentUser(user_1):
+            ebb_l = list(EventByBuilding.get())
+            assert len(ebb_l) == 1
+            assert ebb_l[0] == ebb_2
+            EventByBuilding.get_by_id(ebb_2.id)
+            ebb_2.update(building_id=building_2.id)
+            ebb_2.delete()
+            ebb = EventByBuilding.new(building_id=building_2.id, event_id=event_2.id)
+            ebb.delete()
+            with pytest.raises(BEMServerAuthorizationError):
+                EventByBuilding.get_by_id(ebb_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                EventByBuilding.new(building_id=building_1.id, event_id=event_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ebb_1.update(building_id=building_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ebb_1.delete()
+
+
+class TestEventByStoreyModel:
+    def test_event_by_storey_authorizations_as_admin(self, users, storeys, events):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        storey_1 = storeys[0]
+        storey_2 = storeys[1]
+        event_1 = events[0]
+
+        with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreCampaignError):
+                EventByStorey.new(storey_id=storey_2.id, event_id=event_1.id)
+                db.session.flush()
+            db.session.rollback()
+            ebs_1 = EventByStorey.new(storey_id=storey_1.id, event_id=event_1.id)
+            db.session.add(ebs_1)
+            db.session.flush()
+            EventByStorey.get_by_id(ebs_1.id)
+            ebss = list(EventByStorey.get())
+            assert len(ebss) == 1
+            ebs_1.update(storey_id=storey_1.id)
+            db.session.flush()
+            with pytest.raises(BEMServerCoreCampaignError):
+                ebs_1.update(storey_id=storey_2.id)
+                db.session.flush()
+            db.session.rollback()
+            ebs_1 = EventByStorey.new(storey_id=storey_1.id, event_id=event_1.id)
+            db.session.flush()
+            ebs_1.delete()
+            db.session.flush()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    def test_event_by_storey_authorizations_as_user(
+        self, users, storeys, events, events_by_storeys
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        storey_1 = storeys[0]
+        storey_2 = storeys[1]
+        event_1 = events[0]
+        event_2 = events[1]
+        ebs_1 = events_by_storeys[0]
+        ebs_2 = events_by_storeys[1]
+
+        with CurrentUser(user_1):
+            ebs_l = list(EventByStorey.get())
+            assert len(ebs_l) == 1
+            assert ebs_l[0] == ebs_2
+            EventByStorey.get_by_id(ebs_2.id)
+            ebs_2.update(storey_id=storey_2.id)
+            ebs_2.delete()
+            ebs = EventByStorey.new(storey_id=storey_2.id, event_id=event_2.id)
+            ebs.delete()
+            with pytest.raises(BEMServerAuthorizationError):
+                EventByStorey.get_by_id(ebs_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                EventByStorey.new(storey_id=storey_1.id, event_id=event_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ebs_1.update(storey_id=storey_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ebs_1.delete()
+
+
+class TestEventBySpaceModel:
+    def test_event_by_space_authorizations_as_admin(self, users, spaces, events):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        space_1 = spaces[0]
+        space_2 = spaces[1]
+        event_1 = events[0]
+
+        with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreCampaignError):
+                EventBySpace.new(space_id=space_2.id, event_id=event_1.id)
+                db.session.flush()
+            db.session.rollback()
+            ebs_1 = EventBySpace.new(space_id=space_1.id, event_id=event_1.id)
+            db.session.add(ebs_1)
+            db.session.flush()
+            EventBySpace.get_by_id(ebs_1.id)
+            ebss = list(EventBySpace.get())
+            assert len(ebss) == 1
+            ebs_1.update(space_id=space_1.id)
+            db.session.flush()
+            with pytest.raises(BEMServerCoreCampaignError):
+                ebs_1.update(space_id=space_2.id)
+                db.session.flush()
+            db.session.rollback()
+            ebs_1 = EventBySpace.new(space_id=space_1.id, event_id=event_1.id)
+            db.session.flush()
+            ebs_1.delete()
+            db.session.flush()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    def test_event_by_space_authorizations_as_user(
+        self, users, spaces, events, events_by_spaces
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        space_1 = spaces[0]
+        space_2 = spaces[1]
+        event_1 = events[0]
+        event_2 = events[1]
+        ebs_1 = events_by_spaces[0]
+        ebs_2 = events_by_spaces[1]
+
+        with CurrentUser(user_1):
+            ebs_l = list(EventBySpace.get())
+            assert len(ebs_l) == 1
+            assert ebs_l[0] == ebs_2
+            EventBySpace.get_by_id(ebs_2.id)
+            ebs_2.update(space_id=space_2.id)
+            ebs_2.delete()
+            ebs = EventBySpace.new(space_id=space_2.id, event_id=event_2.id)
+            ebs.delete()
+            with pytest.raises(BEMServerAuthorizationError):
+                EventBySpace.get_by_id(ebs_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                EventBySpace.new(space_id=space_1.id, event_id=event_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ebs_1.update(space_id=space_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ebs_1.delete()
+
+
+class TestEventByZoneModel:
+    def test_event_by_zone_authorizations_as_admin(self, users, zones, events):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        zone_1 = zones[0]
+        zone_2 = zones[1]
+        event_1 = events[0]
+
+        with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreCampaignError):
+                EventByZone.new(zone_id=zone_2.id, event_id=event_1.id)
+                db.session.flush()
+            db.session.rollback()
+            ebz_1 = EventByZone.new(zone_id=zone_1.id, event_id=event_1.id)
+            db.session.add(ebz_1)
+            db.session.flush()
+            EventByZone.get_by_id(ebz_1.id)
+            ebzs = list(EventByZone.get())
+            assert len(ebzs) == 1
+            ebz_1.update(zone_id=zone_1.id)
+            db.session.flush()
+            with pytest.raises(BEMServerCoreCampaignError):
+                ebz_1.update(zone_id=zone_2.id)
+                db.session.flush()
+            db.session.rollback()
+            ebz_1 = EventByZone.new(zone_id=zone_1.id, event_id=event_1.id)
+            db.session.flush()
+            ebz_1.delete()
+            db.session.flush()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    def test_event_by_zone_authorizations_as_user(
+        self, users, zones, events, events_by_zones
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        zone_1 = zones[0]
+        zone_2 = zones[1]
+        event_1 = events[0]
+        event_2 = events[1]
+        ebz_1 = events_by_zones[0]
+        ebz_2 = events_by_zones[1]
+
+        with CurrentUser(user_1):
+            ebz_l = list(EventByZone.get())
+            assert len(ebz_l) == 1
+            assert ebz_l[0] == ebz_2
+            EventByZone.get_by_id(ebz_2.id)
+            ebz_2.update(zone_id=zone_2.id)
+            ebz_2.delete()
+            ebz = EventByZone.new(zone_id=zone_2.id, event_id=event_2.id)
+            ebz.delete()
+            with pytest.raises(BEMServerAuthorizationError):
+                EventByZone.get_by_id(ebz_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                EventByZone.new(zone_id=zone_1.id, event_id=event_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ebz_1.update(zone_id=zone_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ebz_1.delete()
