@@ -21,7 +21,6 @@ class TestEnergySourceModel:
         with CurrentUser(admin_user):
             nb_ts_properties = len(list(EnergySource.get()))
             energy_source_1 = EnergySource.new(name="Custom")
-            db.session.add(energy_source_1)
             db.session.commit()
             assert EnergySource.get_by_id(energy_source_1.id) == energy_source_1
             assert len(list(EnergySource.get())) == nb_ts_properties + 1
@@ -54,7 +53,6 @@ class TestEnergyEndUseModel:
         with CurrentUser(admin_user):
             nb_ts_properties = len(list(EnergyEndUse.get()))
             energy_end_use_1 = EnergyEndUse.new(name="Custom")
-            db.session.add(energy_end_use_1)
             db.session.commit()
             assert EnergyEndUse.get_by_id(energy_end_use_1.id) == energy_end_use_1
             assert len(list(EnergyEndUse.get())) == nb_ts_properties + 1
@@ -117,7 +115,6 @@ class TestEnergyConsumptionTimeseriesBySiteModel:
                 timeseries_id=ts_1.id,
                 wh_conversion_factor=1000,
             )
-            db.session.add(ectbs_1)
             db.session.commit()
             EnergyConsumptionTimeseriesBySite.get_by_id(ectbs_1.id)
             ectbs_l = list(EnergyConsumptionTimeseriesBySite.get())
@@ -196,7 +193,6 @@ class TestEnergyConsumptionTimeseriesByBuildingModel:
                 timeseries_id=ts_1.id,
                 wh_conversion_factor=1000,
             )
-            db.session.add(ectbb_1)
             db.session.commit()
             EnergyConsumptionTimeseriesByBuilding.get_by_id(ectbb_1.id)
             ectbb_l = list(EnergyConsumptionTimeseriesByBuilding.get())

@@ -7,7 +7,6 @@ import pandas as pd
 import pytest
 from tests.utils import create_timeseries_data
 
-from bemserver_core.database import db
 from bemserver_core.model import (
     TimeseriesDataState,
     TimeseriesProperty,
@@ -35,32 +34,31 @@ class TestCleanupProcess:
             ds_1 = TimeseriesDataState.get(name="Raw").first()
             ts_p_min = TimeseriesProperty.get(name="Min").first()
             ts_p_max = TimeseriesProperty.get(name="Max").first()
-            tsp_0_min = TimeseriesPropertyData(
+            TimeseriesPropertyData.new(
                 timeseries_id=ts_0.id,
                 property_id=ts_p_min.id,
                 value="12",
             )
-            tsp_0_max = TimeseriesPropertyData(
+            TimeseriesPropertyData.new(
                 timeseries_id=ts_0.id,
                 property_id=ts_p_max.id,
                 value="42",
             )
-            tsp_1_min = TimeseriesPropertyData(
+            TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=ts_p_min.id,
                 value="12",
             )
-            tsp_3_min = TimeseriesPropertyData(
+            TimeseriesPropertyData.new(
                 timeseries_id=ts_3.id,
                 property_id=ts_p_min.id,
                 value="12",
             )
-            tsp_3_max = TimeseriesPropertyData(
+            TimeseriesPropertyData.new(
                 timeseries_id=ts_3.id,
                 property_id=ts_p_max.id,
                 value="42",
             )
-            db.session.add_all((tsp_0_min, tsp_0_max, tsp_1_min, tsp_3_min, tsp_3_max))
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc)

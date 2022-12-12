@@ -33,13 +33,12 @@ class TestEnergyConsumption:
 
         timeseries = []
         for i in range(9):
-            ts_i = Timeseries(
+            ts_i = Timeseries.new(
                 name=f"Timeseries {i+1}",
                 campaign=campaign,
                 campaign_scope=campaign_scope,
             )
             timeseries.append(ts_i)
-        db.session.add_all(timeseries)
         db.session.flush()
 
         create_timeseries_data(timeseries[0], ds_clean, timestamps, [71, 71])
@@ -97,75 +96,62 @@ class TestEnergyConsumption:
             end_use_heating = EnergyEndUse.get(name="heating").first()
             end_use_cooling = EnergyEndUse.get(name="cooling").first()
 
-            ectbs_all_all = EnergyConsumptionTimeseriesBySite.new(
+            EnergyConsumptionTimeseriesBySite.new(
                 site_id=sites[0].id,
                 source_id=source_all.id,
                 end_use_id=end_use_all.id,
                 timeseries_id=timeseries[0].id,
             )
-            ectbs_all_heating = EnergyConsumptionTimeseriesBySite.new(
+            EnergyConsumptionTimeseriesBySite.new(
                 site_id=sites[0].id,
                 source_id=source_all.id,
                 end_use_id=end_use_heating.id,
                 timeseries_id=timeseries[1].id,
             )
-            ectbs_all_cooling = EnergyConsumptionTimeseriesBySite.new(
+            EnergyConsumptionTimeseriesBySite.new(
                 site_id=sites[0].id,
                 source_id=source_all.id,
                 end_use_id=end_use_cooling.id,
                 timeseries_id=timeseries[2].id,
             )
-            ectbs_elec_all = EnergyConsumptionTimeseriesBySite.new(
+            EnergyConsumptionTimeseriesBySite.new(
                 site_id=sites[0].id,
                 source_id=source_elec.id,
                 end_use_id=end_use_all.id,
                 timeseries_id=timeseries[3].id,
             )
-            ectbs_elec_heating = EnergyConsumptionTimeseriesBySite.new(
+            EnergyConsumptionTimeseriesBySite.new(
                 site_id=sites[0].id,
                 source_id=source_elec.id,
                 end_use_id=end_use_heating.id,
                 timeseries_id=timeseries[4].id,
             )
-            ectbs_elec_cooling = EnergyConsumptionTimeseriesBySite.new(
+            EnergyConsumptionTimeseriesBySite.new(
                 site_id=sites[0].id,
                 source_id=source_elec.id,
                 end_use_id=end_use_cooling.id,
                 timeseries_id=timeseries[5].id,
             )
-            ectbs_gas_all = EnergyConsumptionTimeseriesBySite.new(
+            EnergyConsumptionTimeseriesBySite.new(
                 site_id=sites[0].id,
                 source_id=source_gas.id,
                 end_use_id=end_use_all.id,
                 timeseries_id=timeseries[6].id,
                 wh_conversion_factor=1000,
             )
-            ectbs_gas_heating = EnergyConsumptionTimeseriesBySite.new(
+            EnergyConsumptionTimeseriesBySite.new(
                 site_id=sites[0].id,
                 source_id=source_gas.id,
                 end_use_id=end_use_heating.id,
                 timeseries_id=timeseries[7].id,
                 wh_conversion_factor=1000,
             )
-            ectbs_gas_cooling = EnergyConsumptionTimeseriesBySite.new(
+            EnergyConsumptionTimeseriesBySite.new(
                 site_id=sites[0].id,
                 source_id=source_gas.id,
                 end_use_id=end_use_cooling.id,
                 timeseries_id=timeseries[8].id,
                 wh_conversion_factor=1000,
-            )
-            db.session.add_all(
-                (
-                    ectbs_all_all,
-                    ectbs_all_heating,
-                    ectbs_all_cooling,
-                    ectbs_elec_all,
-                    ectbs_elec_heating,
-                    ectbs_elec_cooling,
-                    ectbs_gas_all,
-                    ectbs_gas_heating,
-                    ectbs_gas_cooling,
-                )
             )
 
         with CurrentUser(admin_user):
@@ -201,75 +187,62 @@ class TestEnergyConsumption:
             end_use_heating = EnergyEndUse.get(name="heating").first()
             end_use_cooling = EnergyEndUse.get(name="cooling").first()
 
-            ectbs_all_all = EnergyConsumptionTimeseriesByBuilding.new(
+            EnergyConsumptionTimeseriesByBuilding.new(
                 building_id=buildings[0].id,
                 source_id=source_all.id,
                 end_use_id=end_use_all.id,
                 timeseries_id=timeseries[0].id,
             )
-            ectbs_all_heating = EnergyConsumptionTimeseriesByBuilding.new(
+            EnergyConsumptionTimeseriesByBuilding.new(
                 building_id=buildings[0].id,
                 source_id=source_all.id,
                 end_use_id=end_use_heating.id,
                 timeseries_id=timeseries[1].id,
             )
-            ectbs_all_cooling = EnergyConsumptionTimeseriesByBuilding.new(
+            EnergyConsumptionTimeseriesByBuilding.new(
                 building_id=buildings[0].id,
                 source_id=source_all.id,
                 end_use_id=end_use_cooling.id,
                 timeseries_id=timeseries[2].id,
             )
-            ectbs_elec_all = EnergyConsumptionTimeseriesByBuilding.new(
+            EnergyConsumptionTimeseriesByBuilding.new(
                 building_id=buildings[0].id,
                 source_id=source_elec.id,
                 end_use_id=end_use_all.id,
                 timeseries_id=timeseries[3].id,
             )
-            ectbs_elec_heating = EnergyConsumptionTimeseriesByBuilding.new(
+            EnergyConsumptionTimeseriesByBuilding.new(
                 building_id=buildings[0].id,
                 source_id=source_elec.id,
                 end_use_id=end_use_heating.id,
                 timeseries_id=timeseries[4].id,
             )
-            ectbs_elec_cooling = EnergyConsumptionTimeseriesByBuilding.new(
+            EnergyConsumptionTimeseriesByBuilding.new(
                 building_id=buildings[0].id,
                 source_id=source_elec.id,
                 end_use_id=end_use_cooling.id,
                 timeseries_id=timeseries[5].id,
             )
-            ectbs_gas_all = EnergyConsumptionTimeseriesByBuilding.new(
+            EnergyConsumptionTimeseriesByBuilding.new(
                 building_id=buildings[0].id,
                 source_id=source_gas.id,
                 end_use_id=end_use_all.id,
                 timeseries_id=timeseries[6].id,
                 wh_conversion_factor=1000,
             )
-            ectbs_gas_heating = EnergyConsumptionTimeseriesByBuilding.new(
+            EnergyConsumptionTimeseriesByBuilding.new(
                 building_id=buildings[0].id,
                 source_id=source_gas.id,
                 end_use_id=end_use_heating.id,
                 timeseries_id=timeseries[7].id,
                 wh_conversion_factor=1000,
             )
-            ectbs_gas_cooling = EnergyConsumptionTimeseriesByBuilding.new(
+            EnergyConsumptionTimeseriesByBuilding.new(
                 building_id=buildings[0].id,
                 source_id=source_gas.id,
                 end_use_id=end_use_cooling.id,
                 timeseries_id=timeseries[8].id,
                 wh_conversion_factor=1000,
-            )
-            db.session.add_all(
-                (
-                    ectbs_all_all,
-                    ectbs_all_heating,
-                    ectbs_all_cooling,
-                    ectbs_elec_all,
-                    ectbs_elec_heating,
-                    ectbs_elec_cooling,
-                    ectbs_gas_all,
-                    ectbs_gas_heating,
-                    ectbs_gas_cooling,
-                )
             )
 
         with CurrentUser(admin_user):

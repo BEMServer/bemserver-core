@@ -85,7 +85,6 @@ class TestStructuralElementPropertyModel:
 
         with CurrentUser(admin_user):
             sep_1 = StructuralElementProperty.new(name="Area")
-            db.session.add(sep_1)
             db.session.commit()
             StructuralElementProperty.get_by_id(sep_1.id)
             seps = list(StructuralElementProperty.get())
@@ -119,17 +118,12 @@ class TestStructuralElementPropertyModel:
         assert admin_user.is_admin
 
         with CurrentUser(admin_user):
-            sep = StructuralElementProperty(
+            sep = StructuralElementProperty.new(
                 name="New property",
                 value_type=PropertyType.integer,
             )
-            assert sep.id is None
-            sep.value_type = PropertyType.float
-            db.session.add(sep)
-            db.session.commit()
-            assert sep.id is not None
+            db.session.flush()
             sep.value_type = PropertyType.boolean
-            db.session.add(sep)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="value_type cannot be modified",
@@ -149,13 +143,11 @@ class TestSitePropertyModel:
 
         with CurrentUser(admin_user):
             site_p_1 = SiteProperty.new(structural_element_property_id=sep_1.id)
-            db.session.add(site_p_1)
             db.session.commit()
             SiteProperty.get_by_id(site_p_1.id)
             site_ps = list(SiteProperty.get())
             assert len(site_ps) == 1
             site_p_1.update(structural_element_property_id=sep_2.id)
-            db.session.add(site_p_1)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="struct_elem_prop_id cannot be modified",
@@ -194,16 +186,11 @@ class TestSitePropertyModel:
         sep_2 = structural_element_properties[1]
 
         with CurrentUser(admin_user):
-            sp = SiteProperty(
+            sp = SiteProperty.new(
                 structural_element_property_id=sep_1.id,
             )
-            assert sp.id is None
+            db.session.flush()
             sp.structural_element_property_id = sep_2.id
-            db.session.add(sp)
-            db.session.commit()
-            assert sp.id is not None
-            sp.structural_element_property_id = sep_1.id
-            db.session.add(sp)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="struct_elem_prop_id cannot be modified",
@@ -223,13 +210,11 @@ class TestBuildingPropertyModel:
 
         with CurrentUser(admin_user):
             building_p_1 = BuildingProperty.new(structural_element_property_id=sep_1.id)
-            db.session.add(building_p_1)
             db.session.commit()
             BuildingProperty.get_by_id(building_p_1.id)
             building_ps = list(BuildingProperty.get())
             assert len(building_ps) == 1
             building_p_1.update(structural_element_property_id=sep_2.id)
-            db.session.add(building_p_1)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="struct_elem_prop_id cannot be modified",
@@ -268,16 +253,11 @@ class TestBuildingPropertyModel:
         sep_2 = structural_element_properties[1]
 
         with CurrentUser(admin_user):
-            bp = BuildingProperty(
+            bp = BuildingProperty.new(
                 structural_element_property_id=sep_1.id,
             )
-            assert bp.id is None
+            db.session.flush()
             bp.structural_element_property_id = sep_2.id
-            db.session.add(bp)
-            db.session.commit()
-            assert bp.id is not None
-            bp.structural_element_property_id = sep_1.id
-            db.session.add(bp)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="struct_elem_prop_id cannot be modified",
@@ -297,13 +277,11 @@ class TestStoreyPropertyModel:
 
         with CurrentUser(admin_user):
             storey_p_1 = StoreyProperty.new(structural_element_property_id=sep_1.id)
-            db.session.add(storey_p_1)
             db.session.commit()
             StoreyProperty.get_by_id(storey_p_1.id)
             storey_ps = list(StoreyProperty.get())
             assert len(storey_ps) == 1
             storey_p_1.update(structural_element_property_id=sep_2.id)
-            db.session.add(storey_p_1)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="struct_elem_prop_id cannot be modified",
@@ -342,16 +320,11 @@ class TestStoreyPropertyModel:
         sep_2 = structural_element_properties[1]
 
         with CurrentUser(admin_user):
-            sp = StoreyProperty(
+            sp = StoreyProperty.new(
                 structural_element_property_id=sep_1.id,
             )
-            assert sp.id is None
+            db.session.flush()
             sp.structural_element_property_id = sep_2.id
-            db.session.add(sp)
-            db.session.commit()
-            assert sp.id is not None
-            sp.structural_element_property_id = sep_1.id
-            db.session.add(sp)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="struct_elem_prop_id cannot be modified",
@@ -371,13 +344,11 @@ class TestSpacePropertyModel:
 
         with CurrentUser(admin_user):
             space_p_1 = SpaceProperty.new(structural_element_property_id=sep_1.id)
-            db.session.add(space_p_1)
             db.session.commit()
             SpaceProperty.get_by_id(space_p_1.id)
             space_ps = list(SpaceProperty.get())
             assert len(space_ps) == 1
             space_p_1.update(structural_element_property_id=sep_2.id)
-            db.session.add(space_p_1)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="struct_elem_prop_id cannot be modified",
@@ -416,16 +387,11 @@ class TestSpacePropertyModel:
         sep_2 = structural_element_properties[1]
 
         with CurrentUser(admin_user):
-            sp = SpaceProperty(
+            sp = SpaceProperty.new(
                 structural_element_property_id=sep_1.id,
             )
-            assert sp.id is None
+            db.session.flush()
             sp.structural_element_property_id = sep_2.id
-            db.session.add(sp)
-            db.session.commit()
-            assert sp.id is not None
-            sp.structural_element_property_id = sep_1.id
-            db.session.add(sp)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="struct_elem_prop_id cannot be modified",
@@ -445,13 +411,11 @@ class TestZonePropertyModel:
 
         with CurrentUser(admin_user):
             zone_p_1 = ZoneProperty.new(structural_element_property_id=sep_1.id)
-            db.session.add(zone_p_1)
             db.session.commit()
             ZoneProperty.get_by_id(zone_p_1.id)
             zone_ps = list(ZoneProperty.get())
             assert len(zone_ps) == 1
             zone_p_1.update(structural_element_property_id=sep_2.id)
-            db.session.add(zone_p_1)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="struct_elem_prop_id cannot be modified",
@@ -490,16 +454,11 @@ class TestZonePropertyModel:
         sep_2 = structural_element_properties[1]
 
         with CurrentUser(admin_user):
-            zp = ZoneProperty(
+            zp = ZoneProperty.new(
                 structural_element_property_id=sep_1.id,
             )
-            assert zp.id is None
+            db.session.flush()
             zp.structural_element_property_id = sep_2.id
-            db.session.add(zp)
-            db.session.commit()
-            assert zp.id is not None
-            zp.structural_element_property_id = sep_1.id
-            db.session.add(zp)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="struct_elem_prop_id cannot be modified",
@@ -547,7 +506,6 @@ class TestSiteModel:
                 name="Site 1",
                 campaign_id=campaign_1.id,
             )
-            db.session.add(site_1)
             db.session.commit()
 
             site = Site.get_by_id(site_1.id)
@@ -648,7 +606,6 @@ class TestBuildingModel:
                 name="Building 1",
                 site_id=site_1.id,
             )
-            db.session.add(building_1)
             db.session.commit()
 
             building = Building.get_by_id(building_1.id)
@@ -758,7 +715,6 @@ class TestStoreyModel:
                 name="Storey 1",
                 building_id=building_1.id,
             )
-            db.session.add(storey_1)
             db.session.commit()
 
             storey = Storey.get_by_id(storey_1.id)
@@ -876,7 +832,6 @@ class TestSpaceModel:
                 name="Space 1",
                 storey_id=storey_1.id,
             )
-            db.session.add(space_1)
             db.session.commit()
 
             space = Space.get_by_id(space_1.id)
@@ -945,7 +900,6 @@ class TestZoneModel:
                 name="Zone 1",
                 campaign_id=campaign_1.id,
             )
-            db.session.add(zone_1)
             db.session.commit()
 
             zone = Zone.get_by_id(zone_1.id)
@@ -1004,7 +958,6 @@ class TestSitePropertyDataModel:
                 site_property_id=site_p_1.id,
                 value=12,
             )
-            db.session.add(spd_1)
             db.session.commit()
             SitePropertyData.get_by_id(spd_1.id)
             spds = list(SitePropertyData.get())
@@ -1071,13 +1024,11 @@ class TestSitePropertyDataModel:
             db.session.commit()
             assert site_pd_1.value == "42"
             site_pd_1.value = "666"
-            db.session.add(site_pd_1)
             db.session.commit()
             assert site_pd_1.value == "666"
             # Invalid property value types.
             for val in ["bad", "4.2", 4.2, False, None]:
                 site_pd_1.value = val
-                db.session.add(site_pd_1)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert site_pd_1.value == val
@@ -1094,13 +1045,11 @@ class TestSitePropertyDataModel:
             assert site_pd_2.value == "4.2"
             for val, exp_res in [("66.6", "66.6"), (42, "42")]:
                 site_pd_2.value = val
-                db.session.add(site_pd_2)
                 db.session.commit()
                 assert site_pd_2.value == exp_res
             # Invalid property value types.
             for val in ["bad", False, None]:
                 site_pd_2.value = val
-                db.session.add(site_pd_2)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert site_pd_2.value == val
@@ -1118,13 +1067,11 @@ class TestSitePropertyDataModel:
             db.session.commit()
             assert site_pd_3.value == "true"
             site_pd_3.value = "false"
-            db.session.add(site_pd_3)
             db.session.commit()
             assert site_pd_3.value == "false"
             # Invalid property value types.
             for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
                 site_pd_3.value = val
-                db.session.add(site_pd_3)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert site_pd_3.value == val
@@ -1146,7 +1093,6 @@ class TestSitePropertyDataModel:
                 (True, "true"),
             ]:
                 site_pd_4.value = val
-                db.session.add(site_pd_4)
                 db.session.commit()
                 assert site_pd_4.value == exp_res
 
@@ -1162,32 +1108,26 @@ class TestSitePropertyDataModel:
         site_p_2 = site_properties[1]
 
         with CurrentUser(admin_user):
-            spd = SitePropertyData(
+
+            spd = SitePropertyData.new(
                 site_id=site_1.id,
                 site_property_id=site_p_1.id,
                 value=12,
             )
-            assert spd.id is None
-            spd.site_property_id = site_p_2.id
-            db.session.add(spd)
             db.session.commit()
-            assert spd.id is not None
             spd.site_id = site_2.id
-            db.session.add(spd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="site_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
-            spd.site_property_id = site_p_1.id
-            db.session.add(spd)
+            spd.site_property_id = site_p_2.id
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="site_prop_id cannot be modified",
             ):
                 db.session.commit()
-            db.session.rollback()
 
 
 class TestBuildingPropertyDataModel:
@@ -1207,7 +1147,6 @@ class TestBuildingPropertyDataModel:
                 building_property_id=building_p_1.id,
                 value=12,
             )
-            db.session.add(bpd_1)
             db.session.commit()
             BuildingPropertyData.get_by_id(bpd_1.id)
             bpds = list(BuildingPropertyData.get())
@@ -1275,13 +1214,11 @@ class TestBuildingPropertyDataModel:
             db.session.commit()
             assert building_pd_1.value == "42"
             building_pd_1.value = "666"
-            db.session.add(building_pd_1)
             db.session.commit()
             assert building_pd_1.value == "666"
             # Invalid property value types.
             for val in ["bad", "4.2", 4.2, False, None]:
                 building_pd_1.value = val
-                db.session.add(building_pd_1)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert building_pd_1.value == val
@@ -1301,13 +1238,11 @@ class TestBuildingPropertyDataModel:
             assert building_pd_2.value == "4.2"
             for val, exp_res in [("66.6", "66.6"), (42, "42")]:
                 building_pd_2.value = val
-                db.session.add(building_pd_2)
                 db.session.commit()
                 assert building_pd_2.value == exp_res
             # Invalid property value types.
             for val in ["bad", False, None]:
                 building_pd_2.value = val
-                db.session.add(building_pd_2)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert building_pd_2.value == val
@@ -1326,13 +1261,11 @@ class TestBuildingPropertyDataModel:
             db.session.commit()
             assert building_pd_3.value == "true"
             building_pd_3.value = "false"
-            db.session.add(building_pd_3)
             db.session.commit()
             assert building_pd_3.value == "false"
             # Invalid property value types.
             for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
                 building_pd_3.value = val
-                db.session.add(building_pd_3)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert building_pd_3.value == val
@@ -1355,7 +1288,6 @@ class TestBuildingPropertyDataModel:
                 (True, "true"),
             ]:
                 building_pd_4.value = val
-                db.session.add(building_pd_4)
                 db.session.commit()
                 assert building_pd_4.value == exp_res
 
@@ -1371,32 +1303,25 @@ class TestBuildingPropertyDataModel:
         building_p_2 = building_properties[1]
 
         with CurrentUser(admin_user):
-            bpd = BuildingPropertyData(
+            bpd = BuildingPropertyData.new(
                 building_id=building_1.id,
                 building_property_id=building_p_1.id,
                 value=12,
             )
-            assert bpd.id is None
-            bpd.building_property_id = building_p_2.id
-            db.session.add(bpd)
             db.session.commit()
-            assert bpd.id is not None
             bpd.building_id = building_2.id
-            db.session.add(bpd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="building_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
-            bpd.building_property_id = building_p_1.id
-            db.session.add(bpd)
+            bpd.building_property_id = building_p_2.id
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="building_prop_id cannot be modified",
             ):
                 db.session.commit()
-            db.session.rollback()
 
 
 class TestStoreyPropertyDataModel:
@@ -1416,7 +1341,6 @@ class TestStoreyPropertyDataModel:
                 storey_property_id=storey_p_1.id,
                 value=12,
             )
-            db.session.add(spd_1)
             db.session.commit()
             StoreyPropertyData.get_by_id(spd_1.id)
             spds = list(StoreyPropertyData.get())
@@ -1484,13 +1408,11 @@ class TestStoreyPropertyDataModel:
             db.session.commit()
             assert storey_pd_1.value == "42"
             storey_pd_1.value = "666"
-            db.session.add(storey_pd_1)
             db.session.commit()
             assert storey_pd_1.value == "666"
             # Invalid property value types.
             for val in ["bad", "4.2", 4.2, False, None]:
                 storey_pd_1.value = val
-                db.session.add(storey_pd_1)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert storey_pd_1.value == val
@@ -1509,13 +1431,11 @@ class TestStoreyPropertyDataModel:
             assert storey_pd_2.value == "4.2"
             for val, exp_res in [("66.6", "66.6"), (42, "42")]:
                 storey_pd_2.value = val
-                db.session.add(storey_pd_2)
                 db.session.commit()
                 assert storey_pd_2.value == exp_res
             # Invalid property value types.
             for val in ["bad", False, None]:
                 storey_pd_2.value = val
-                db.session.add(storey_pd_2)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert storey_pd_2.value == val
@@ -1534,13 +1454,11 @@ class TestStoreyPropertyDataModel:
             db.session.commit()
             assert storey_pd_3.value == "true"
             storey_pd_3.value = "false"
-            db.session.add(storey_pd_3)
             db.session.commit()
             assert storey_pd_3.value == "false"
             # Invalid property value types.
             for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
                 storey_pd_3.value = val
-                db.session.add(storey_pd_3)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert storey_pd_3.value == val
@@ -1562,7 +1480,6 @@ class TestStoreyPropertyDataModel:
                 (True, "true"),
             ]:
                 storey_pd_4.value = val
-                db.session.add(storey_pd_4)
                 db.session.commit()
                 assert storey_pd_4.value == exp_res
 
@@ -1578,32 +1495,25 @@ class TestStoreyPropertyDataModel:
         storey_p_2 = storey_properties[1]
 
         with CurrentUser(admin_user):
-            spd = StoreyPropertyData(
+            spd = StoreyPropertyData.new(
                 storey_id=storey_1.id,
                 storey_property_id=storey_p_1.id,
                 value=12,
             )
-            assert spd.id is None
-            spd.storey_property_id = storey_p_2.id
-            db.session.add(spd)
             db.session.commit()
-            assert spd.id is not None
             spd.storey_id = storey_2.id
-            db.session.add(spd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="storey_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
-            spd.storey_property_id = storey_p_1.id
-            db.session.add(spd)
+            spd.storey_property_id = storey_p_2.id
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="storey_prop_id cannot be modified",
             ):
                 db.session.commit()
-            db.session.rollback()
 
 
 class TestSpacePropertyDataModel:
@@ -1623,7 +1533,6 @@ class TestSpacePropertyDataModel:
                 space_property_id=space_p_1.id,
                 value=12,
             )
-            db.session.add(spd_1)
             db.session.commit()
             SpacePropertyData.get_by_id(spd_1.id)
             spds = list(SpacePropertyData.get())
@@ -1690,13 +1599,11 @@ class TestSpacePropertyDataModel:
             db.session.commit()
             assert space_pd_1.value == "42"
             space_pd_1.value = "666"
-            db.session.add(space_pd_1)
             db.session.commit()
             assert space_pd_1.value == "666"
             # Invalid property value types.
             for val in ["bad", "4.2", 4.2, False, None]:
                 space_pd_1.value = val
-                db.session.add(space_pd_1)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert space_pd_1.value == val
@@ -1715,13 +1622,11 @@ class TestSpacePropertyDataModel:
             assert space_pd_2.value == "4.2"
             for val, exp_res in [("66.6", "66.6"), (42, "42")]:
                 space_pd_2.value = val
-                db.session.add(space_pd_2)
                 db.session.commit()
                 assert space_pd_2.value == exp_res
             # Invalid property value types.
             for val in ["bad", False, None]:
                 space_pd_2.value = val
-                db.session.add(space_pd_2)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert space_pd_2.value == val
@@ -1739,13 +1644,11 @@ class TestSpacePropertyDataModel:
             db.session.commit()
             assert space_pd_3.value == "true"
             space_pd_3.value = "false"
-            db.session.add(space_pd_3)
             db.session.commit()
             assert space_pd_3.value == "false"
             # Invalid property value types.
             for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
                 space_pd_3.value = val
-                db.session.add(space_pd_3)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert space_pd_3.value == val
@@ -1767,7 +1670,6 @@ class TestSpacePropertyDataModel:
                 (True, "true"),
             ]:
                 space_pd_4.value = val
-                db.session.add(space_pd_4)
                 db.session.commit()
                 assert space_pd_4.value == exp_res
 
@@ -1783,32 +1685,25 @@ class TestSpacePropertyDataModel:
         space_p_2 = space_properties[1]
 
         with CurrentUser(admin_user):
-            spd = SpacePropertyData(
+            spd = SpacePropertyData.new(
                 space_id=space_1.id,
                 space_property_id=space_p_1.id,
                 value=12,
             )
-            assert spd.id is None
-            spd.space_property_id = space_p_2.id
-            db.session.add(spd)
             db.session.commit()
-            assert spd.id is not None
             spd.space_id = space_2.id
-            db.session.add(spd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="space_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
-            spd.space_property_id = space_p_1.id
-            db.session.add(spd)
+            spd.space_property_id = space_p_2.id
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="space_prop_id cannot be modified",
             ):
                 db.session.commit()
-            db.session.rollback()
 
 
 class TestZonePropertyDataModel:
@@ -1828,7 +1723,6 @@ class TestZonePropertyDataModel:
                 zone_property_id=zone_p_1.id,
                 value=12,
             )
-            db.session.add(zpd_1)
             db.session.commit()
             ZonePropertyData.get_by_id(zpd_1.id)
             zpds = list(ZonePropertyData.get())
@@ -1895,13 +1789,11 @@ class TestZonePropertyDataModel:
             db.session.commit()
             assert zone_pd_1.value == "42"
             zone_pd_1.value = "666"
-            db.session.add(zone_pd_1)
-            db.session.commit()
+            db.session.flush()
             assert zone_pd_1.value == "666"
             # Invalid property value types.
             for val in ["bad", "4.2", 4.2, False, None]:
                 zone_pd_1.value = val
-                db.session.add(zone_pd_1)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert zone_pd_1.value == val
@@ -1918,13 +1810,11 @@ class TestZonePropertyDataModel:
             assert zone_pd_2.value == "4.2"
             for val, exp_res in [("66.6", "66.6"), (42, "42")]:
                 zone_pd_2.value = val
-                db.session.add(zone_pd_2)
                 db.session.commit()
                 assert zone_pd_2.value == exp_res
             # Invalid property value types.
             for val in ["bad", False, None]:
                 zone_pd_2.value = val
-                db.session.add(zone_pd_2)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert zone_pd_2.value == val
@@ -1942,13 +1832,11 @@ class TestZonePropertyDataModel:
             db.session.commit()
             assert zone_pd_3.value == "true"
             zone_pd_3.value = "false"
-            db.session.add(zone_pd_3)
             db.session.commit()
             assert zone_pd_3.value == "false"
             # Invalid property value types.
             for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
                 zone_pd_3.value = val
-                db.session.add(zone_pd_3)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert zone_pd_3.value == val
@@ -1970,7 +1858,6 @@ class TestZonePropertyDataModel:
                 (True, "true"),
             ]:
                 zone_pd_4.value = val
-                db.session.add(zone_pd_4)
                 db.session.commit()
                 assert zone_pd_4.value == exp_res
 
@@ -1986,29 +1873,22 @@ class TestZonePropertyDataModel:
         zone_p_2 = zone_properties[1]
 
         with CurrentUser(admin_user):
-            zpd = ZonePropertyData(
+            zpd = ZonePropertyData.new(
                 zone_id=zone_1.id,
                 zone_property_id=zone_p_1.id,
                 value=12,
             )
-            assert zpd.id is None
-            zpd.zone_property_id = zone_p_2.id
-            db.session.add(zpd)
             db.session.commit()
-            assert zpd.id is not None
             zpd.zone_id = zone_2.id
-            db.session.add(zpd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="zone_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
-            zpd.zone_property_id = zone_p_1.id
-            db.session.add(zpd)
+            zpd.zone_property_id = zone_p_2.id
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="zone_prop_id cannot be modified",
             ):
                 db.session.commit()
-            db.session.rollback()

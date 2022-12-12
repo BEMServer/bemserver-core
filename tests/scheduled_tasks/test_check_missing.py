@@ -198,7 +198,6 @@ class TestST_CheckMissingByCampaignModel:
 
         with CurrentUser(admin_user):
             st_cbc_1 = ST_CheckMissingByCampaign.new(campaign_id=campaign_1.id)
-            db.session.add(st_cbc_1)
             db.session.commit()
             st_cbc = ST_CheckMissingByCampaign.get_by_id(st_cbc_1.id)
             assert st_cbc.id == st_cbc_1.id
