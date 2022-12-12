@@ -38,7 +38,6 @@ class TestTimeseriesPropertyModel:
         with CurrentUser(admin_user):
             nb_ts_properties = len(list(TimeseriesProperty.get()))
             ts_property_1 = TimeseriesProperty.new(name="Custom")
-            db.session.add(ts_property_1)
             db.session.commit()
             assert TimeseriesProperty.get_by_id(ts_property_1.id) == ts_property_1
             assert len(list(TimeseriesProperty.get())) == nb_ts_properties + 1
@@ -67,17 +66,12 @@ class TestTimeseriesPropertyModel:
         assert admin_user.is_admin
 
         with CurrentUser(admin_user):
-            ts_prop = TimeseriesProperty(
+            ts_prop = TimeseriesProperty.new(
                 name="New property",
                 value_type=PropertyType.integer,
             )
-            assert ts_prop.id is None
-            ts_prop.value_type = PropertyType.float
-            db.session.add(ts_prop)
-            db.session.commit()
-            assert ts_prop.id is not None
+            db.session.flush()
             ts_prop.value_type = PropertyType.boolean
-            db.session.add(ts_prop)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="value_type cannot be modified",
@@ -97,12 +91,11 @@ class TestTimeseriesDataStateModel:
 
             ts_data_state_1 = TimeseriesByDataState.get()[0]
 
-            tsd = TimeseriesData(
+            TimeseriesData.new(
                 timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
                 timeseries_by_data_state_id=tsbds_1.id,
                 value=12,
             )
-            db.session.add(tsd)
             db.session.commit()
 
             assert len(list(TimeseriesByDataState.get())) == 2
@@ -122,7 +115,6 @@ class TestTimeseriesDataStateModel:
             ts_data_state_1 = TimeseriesDataState.new(
                 name="Quality",
             )
-            db.session.add(ts_data_state_1)
             db.session.commit()
             TimeseriesDataState.get_by_id(ts_data_state_1.id)
             ts_data_states = list(TimeseriesDataState.get())
@@ -166,12 +158,11 @@ class TestTimeseriesModel:
         tsbds_1 = timeseries_by_data_states[0]
 
         with CurrentUser(admin_user):
-            tsd = TimeseriesData(
+            TimeseriesData.new(
                 timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
                 timeseries_by_data_state_id=tsbds_1.id,
                 value=12,
             )
-            db.session.add(tsd)
             db.session.commit()
 
             assert len(list(TimeseriesBySite.get())) == 2
@@ -267,22 +258,21 @@ class TestTimeseriesModel:
         with OpenBar():
             ts_p_1 = TimeseriesProperty.get(name="Min").first()
             ts_p_2 = TimeseriesProperty.get(name="Max").first()
-            ts_1_p_1 = TimeseriesPropertyData(
+            TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=ts_p_1.id,
                 value="12",
             )
-            ts_1_p_2 = TimeseriesPropertyData(
+            TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=ts_p_2.id,
                 value="42",
             )
-            ts_2_p_2 = TimeseriesPropertyData(
+            TimeseriesPropertyData.new(
                 timeseries_id=ts_2.id,
                 property_id=ts_p_2.id,
                 value="69",
             )
-            db.session.add_all((ts_1_p_1, ts_1_p_2, ts_2_p_2))
 
         assert Timeseries.get_property_for_many_timeseries(timeseries_ids, "Min") == {
             1: "12",
@@ -312,7 +302,6 @@ class TestTimeseriesModel:
         db.session.commit()
 
         ts_1.update(campaign_id=campaign_2.id)
-        db.session.add(ts_1)
         with pytest.raises(
             sqla.exc.IntegrityError,
             match="campaign_id cannot be modified",
@@ -320,7 +309,6 @@ class TestTimeseriesModel:
             db.session.commit()
         db.session.rollback()
         ts_1.update(campaign_scope_id=campaign_scope_2.id)
-        db.session.add(ts_1)
         with pytest.raises(
             sqla.exc.IntegrityError,
             match="campaign_scope_id cannot be modified",
@@ -544,7 +532,6 @@ class TestTimeseriesModel:
                 campaign_id=campaign_1.id,
                 campaign_scope_id=cs_1.id,
             )
-            db.session.add(ts_1)
             db.session.commit()
 
             ts = Timeseries.get_by_id(ts_1.id)
@@ -609,7 +596,6 @@ class TestTimeseriesPropertyDataModel:
                 property_id=tsp_1.id,
                 value=12,
             )
-            db.session.add(tspd_1)
             db.session.commit()
 
             tspd = TimeseriesPropertyData.get_by_id(tspd_1.id)
@@ -682,13 +668,11 @@ class TestTimeseriesPropertyDataModel:
             assert tspd_1.value == "4.2"
             for val, exp_res in [("66.6", "66.6"), (42, "42")]:
                 tspd_1.value = val
-                db.session.add(tspd_1)
                 db.session.commit()
                 assert tspd_1.value == exp_res
             # Invalid property value types.
             for val in ["bad", None]:
                 tspd_1.value = val
-                db.session.add(tspd_1)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert tspd_1.value == val
@@ -704,13 +688,11 @@ class TestTimeseriesPropertyDataModel:
             db.session.commit()
             assert tspd_4.value == "42"
             tspd_4.value = "666"
-            db.session.add(tspd_4)
             db.session.commit()
             assert tspd_4.value == "666"
             # Invalid property value types.
             for val in ["bad", "4.2", 4.2, None]:
                 tspd_4.value = val
-                db.session.add(tspd_4)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert tspd_4.value == val
@@ -726,13 +708,11 @@ class TestTimeseriesPropertyDataModel:
             db.session.commit()
             assert tspd_5.value == "true"
             tspd_5.value = "false"
-            db.session.add(tspd_5)
             db.session.commit()
             assert tspd_5.value == "false"
             # Invalid property value types.
             for val in [True, False, 1, 0, "1", "0", "bad", 42, None]:
                 tspd_5.value = val
-                db.session.add(tspd_5)
                 with pytest.raises(PropertyTypeInvalidError):
                     db.session.commit()
                 assert tspd_5.value == val
@@ -752,11 +732,10 @@ class TestTimeseriesPropertyDataModel:
                 (True, "true"),
             ]:
                 tspd_6.value = val
-                db.session.add(tspd_6)
                 db.session.commit()
                 assert tspd_6.value == exp_res
 
-    def test_timseries_property_data_cannot_change_timeseries_or_property(
+    def test_timeseries_property_data_cannot_change_timeseries_or_property(
         self, users, timeseries, timeseries_properties
     ):
         admin_user = users[0]
@@ -768,26 +747,20 @@ class TestTimeseriesPropertyDataModel:
         ts_p_2 = timeseries_properties[1]
 
         with CurrentUser(admin_user):
-            tspd = TimeseriesPropertyData(
+            tspd = TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=ts_p_1.id,
                 value=12,
             )
-            assert tspd.id is None
-            tspd.property_id = ts_p_2.id
-            db.session.add(tspd)
             db.session.commit()
-            assert tspd.id is not None
             tspd.timeseries_id = ts_2.id
-            db.session.add(tspd)
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="timeseries_id cannot be modified",
             ):
                 db.session.commit()
             db.session.rollback()
-            tspd.property_id = ts_p_1.id
-            db.session.add(tspd)
+            tspd.property_id = ts_p_2.id
             with pytest.raises(
                 sqla.exc.IntegrityError,
                 match="property_id cannot be modified",
@@ -804,12 +777,11 @@ class TestTimeseriesByDataStateModel:
         tsbds_1 = timeseries_by_data_states[0]
 
         with CurrentUser(admin_user):
-            tsd = TimeseriesData(
+            TimeseriesData.new(
                 timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
                 timeseries_by_data_state_id=tsbds_1.id,
                 value=12,
             )
-            db.session.add(tsd)
             db.session.commit()
 
             assert len(list(db.session.query(TimeseriesData))) == 1
@@ -892,7 +864,6 @@ class TestTimeseriesBySiteModel:
 
         with CurrentUser(admin_user):
             tbs_1 = TimeseriesBySite.new(timeseries_id=ts_1.id, site_id=site_1.id)
-            db.session.add(tbs_1)
             db.session.commit()
             TimeseriesBySite.get_by_id(tbs_1.id)
             tbss = list(TimeseriesBySite.get())
@@ -947,7 +918,6 @@ class TestTimeseriesByBuildingModel:
             tbb_1 = TimeseriesByBuilding.new(
                 timeseries_id=ts_1.id, building_id=building_1.id
             )
-            db.session.add(tbb_1)
             db.session.commit()
             TimeseriesByBuilding.get_by_id(tbb_1.id)
             tbbs = list(TimeseriesByBuilding.get())
@@ -1002,7 +972,6 @@ class TestTimeseriesByStoreyModel:
 
         with CurrentUser(admin_user):
             tbs_1 = TimeseriesByStorey.new(timeseries_id=ts_1.id, storey_id=storey_1.id)
-            db.session.add(tbs_1)
             db.session.commit()
             TimeseriesByStorey.get_by_id(tbs_1.id)
             tbss = list(TimeseriesByStorey.get())
@@ -1055,7 +1024,6 @@ class TestTimeseriesBySpaceModel:
 
         with CurrentUser(admin_user):
             tbs_1 = TimeseriesBySpace.new(timeseries_id=ts_1.id, space_id=space_1.id)
-            db.session.add(tbs_1)
             db.session.commit()
             TimeseriesBySpace.get_by_id(tbs_1.id)
             tbss = list(TimeseriesBySpace.get())
@@ -1106,7 +1074,6 @@ class TestTimeseriesByZoneModel:
 
         with CurrentUser(admin_user):
             tbz_1 = TimeseriesByZone.new(timeseries_id=ts_1.id, zone_id=zone_1.id)
-            db.session.add(tbz_1)
             db.session.commit()
             TimeseriesByZone.get_by_id(tbz_1.id)
             tbzs = list(TimeseriesByZone.get())

@@ -35,7 +35,6 @@ class TestEventLevelModel:
                 name="Level 1",
                 description="Event level 1",
             )
-            db.session.add(event_level_1)
             db.session.commit()
             EventLevel.get_by_id(event_level_1.id)
             event_levels = list(EventLevel.get())
@@ -77,7 +76,6 @@ class TestEventCategoryModel:
                 name="Category 1",
                 description="Event category 1",
             )
-            db.session.add(event_category_1)
             db.session.commit()
             EventCategory.get_by_id(event_category_1.id)
             event_categories = list(EventCategory.get())
@@ -146,7 +144,6 @@ class TestEventModel:
         db.session.commit()
 
         evt_1.update(timestamp=timestamp_2)
-        db.session.add(evt_1)
         with pytest.raises(
             sqla.exc.IntegrityError,
             match="timestamp cannot be modified",
@@ -154,7 +151,6 @@ class TestEventModel:
             db.session.flush()
         db.session.rollback()
         evt_1.update(campaign_scope_id=campaign_scope_2.id)
-        db.session.add(evt_1)
         with pytest.raises(
             sqla.exc.IntegrityError,
             match="campaign_scope_id cannot be modified",
@@ -273,7 +269,6 @@ class TestTimeseriesByEventModel:
                 db.session.flush()
             db.session.rollback()
             tbe_1 = TimeseriesByEvent.new(timeseries_id=ts_1.id, event_id=event_1.id)
-            db.session.add(tbe_1)
             db.session.flush()
             TimeseriesByEvent.get_by_id(tbe_1.id)
             tbes = list(TimeseriesByEvent.get())
@@ -347,7 +342,6 @@ class TestEventBySiteModel:
                 db.session.flush()
             db.session.rollback()
             ebs_1 = EventBySite.new(site_id=site_1.id, event_id=event_1.id)
-            db.session.add(ebs_1)
             db.session.flush()
             EventBySite.get_by_id(ebs_1.id)
             ebss = list(EventBySite.get())
@@ -413,7 +407,6 @@ class TestEventByBuildingModel:
                 db.session.flush()
             db.session.rollback()
             ebb_1 = EventByBuilding.new(building_id=building_1.id, event_id=event_1.id)
-            db.session.add(ebb_1)
             db.session.flush()
             EventByBuilding.get_by_id(ebb_1.id)
             ebbs = list(EventByBuilding.get())
@@ -479,7 +472,6 @@ class TestEventByStoreyModel:
                 db.session.flush()
             db.session.rollback()
             ebs_1 = EventByStorey.new(storey_id=storey_1.id, event_id=event_1.id)
-            db.session.add(ebs_1)
             db.session.flush()
             EventByStorey.get_by_id(ebs_1.id)
             ebss = list(EventByStorey.get())
@@ -545,7 +537,6 @@ class TestEventBySpaceModel:
                 db.session.flush()
             db.session.rollback()
             ebs_1 = EventBySpace.new(space_id=space_1.id, event_id=event_1.id)
-            db.session.add(ebs_1)
             db.session.flush()
             EventBySpace.get_by_id(ebs_1.id)
             ebss = list(EventBySpace.get())
@@ -611,7 +602,6 @@ class TestEventByZoneModel:
                 db.session.flush()
             db.session.rollback()
             ebz_1 = EventByZone.new(zone_id=zone_1.id, event_id=event_1.id)
-            db.session.add(ebz_1)
             db.session.flush()
             EventByZone.get_by_id(ebz_1.id)
             ebzs = list(EventByZone.get())

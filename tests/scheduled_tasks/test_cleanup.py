@@ -174,7 +174,6 @@ class TestST_CleanupByCampaignModel:
 
         with CurrentUser(admin_user):
             st_cbc_1 = ST_CleanupByCampaign.new(campaign_id=campaign_1.id)
-            db.session.add(st_cbc_1)
             db.session.commit()
             st_cbc = ST_CleanupByCampaign.get_by_id(st_cbc_1.id)
             assert st_cbc.id == st_cbc_1.id
@@ -228,17 +227,14 @@ class TestST_CleanupByTimeseriesModel:
             assert st_cbt_1 is not None
             assert st_cbt_1.last_timestamp is None
             st_cbt_1.last_timestamp = dt.datetime(2022, 1, 1, tzinfo=dt.timezone.utc)
-            db.session.add(st_cbt_1)
             st_cbt_4 = ST_CleanupByTimeseries.new(
                 timeseries_id=ts_4.id,
                 last_timestamp=dt.datetime(2022, 9, 22, tzinfo=dt.timezone.utc),
             )
-            db.session.add(st_cbt_4)
             st_cbt_7 = ST_CleanupByTimeseries.new(
                 timeseries_id=ts_7.id,
                 last_timestamp=dt.datetime(2022, 9, 22, tzinfo=dt.timezone.utc),
             )
-            db.session.add(st_cbt_7)
             db.session.commit()
 
             assert len(list(ST_CleanupByTimeseries.get())) < len(timeseries)
@@ -347,22 +343,18 @@ class TestST_CleanupByTimeseriesModel:
             assert st_cbt_1 is not None
             assert st_cbt_1.last_timestamp is None
             st_cbt_1.last_timestamp = st_cbt_1_last_timestamp
-            db.session.add(st_cbt_1)
-            st_cbt_5 = ST_CleanupByTimeseries.new(
+            ST_CleanupByTimeseries.new(
                 timeseries_id=ts_5.id,
                 last_timestamp=st_cbt_5_last_timestamp,
             )
-            db.session.add(st_cbt_5)
-            st_cbt_8 = ST_CleanupByTimeseries.new(
+            ST_CleanupByTimeseries.new(
                 timeseries_id=ts_8.id,
                 last_timestamp=st_cbt_8_last_timestamp,
             )
-            db.session.add(st_cbt_8)
-            st_cbt_9 = ST_CleanupByTimeseries.new(
+            ST_CleanupByTimeseries.new(
                 timeseries_id=ts_9.id,
                 last_timestamp=st_cbt_9_last_timestamp,
             )
-            db.session.add(st_cbt_9)
             db.session.commit()
 
         with CurrentUser(user_1):
@@ -454,7 +446,6 @@ class TestST_CleanupByTimeseriesModel:
 
         with CurrentUser(admin_user):
             st_cbt_1 = ST_CleanupByTimeseries.new(timeseries_id=ts_1.id)
-            db.session.add(st_cbt_1)
             db.session.commit()
             st_cbt = ST_CleanupByTimeseries.get_by_id(st_cbt_1.id)
             assert st_cbt.id == st_cbt_1.id

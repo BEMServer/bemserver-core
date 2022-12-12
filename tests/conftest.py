@@ -136,7 +136,6 @@ def campaigns(request, bemservercore):
                 end_time=dt.datetime(2020, 2, 1, tzinfo=dt.timezone.utc),
             )
             campaigns.append(campaign_i)
-        db.session.add_all(campaigns)
         db.session.commit()
         return campaigns
 
@@ -240,14 +239,13 @@ def timeseries(request, bemservercore, campaigns, campaign_scopes):
     with OpenBar():
         ts_l = []
         for i in range(request.param):
-            ts_i = model.Timeseries(
+            ts_i = model.Timeseries.new(
                 name=f"Timeseries {i+1}",
                 description=f"Test timeseries #{i+1}",
                 campaign=campaigns[i % len(campaigns)],
                 campaign_scope=campaign_scopes[i % len(campaign_scopes)],
             )
             ts_l.append(ts_i)
-        db.session.add_all(ts_l)
         db.session.commit()
         return ts_l
 
@@ -258,20 +256,19 @@ def timeseries_property_data(request, bemservercore, timeseries_properties, time
         tspd_l = []
         for ts in timeseries:
             tspd_l.append(
-                model.TimeseriesPropertyData(
+                model.TimeseriesPropertyData.new(
                     timeseries_id=ts.id,
                     property_id=timeseries_properties[0].id,
                     value="12",
                 )
             )
             tspd_l.append(
-                model.TimeseriesPropertyData(
+                model.TimeseriesPropertyData.new(
                     timeseries_id=ts.id,
                     property_id=timeseries_properties[1].id,
                     value="42",
                 )
             )
-        db.session.add_all(tspd_l)
         db.session.commit()
         return tspd_l
 
@@ -281,12 +278,11 @@ def timeseries_by_data_states(request, bemservercore, timeseries):
     with OpenBar():
         ts_l = []
         for i in range(request.param):
-            ts_i = model.TimeseriesByDataState(
+            ts_i = model.TimeseriesByDataState.new(
                 timeseries=timeseries[i % len(timeseries)],
                 data_state_id=1,
             )
             ts_l.append(ts_i)
-        db.session.add_all(ts_l)
         db.session.commit()
         return ts_l
 

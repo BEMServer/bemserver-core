@@ -72,7 +72,6 @@ class TestCampaignModel:
             )
             assert campaign_1.id is None
             assert campaign_1.timezone is None
-            db.session.add(campaign_1)
             db.session.commit()
             assert campaign_1.id is not None
             assert campaign_1.timezone == "UTC"
@@ -129,7 +128,6 @@ class TestUserGroupByCampaignModel:
                 user_group_id=user_group_1.id,
                 campaign_id=campaign_1.id,
             )
-            db.session.add(ugbc_1)
             db.session.commit()
 
             ugbc = UserGroupByCampaign.get_by_id(ugbc_1.id)
@@ -205,7 +203,6 @@ class TestCampaignScopeModel:
         db.session.commit()
 
         cs_1.update(campaign_id=campaign_2.id)
-        db.session.add(cs_1)
         with pytest.raises(
             sqla.exc.IntegrityError,
             match="campaign_id cannot be modified",
@@ -229,7 +226,6 @@ class TestCampaignScopeModel:
                 name="Campaign scope 1",
                 campaign_id=campaign_1.id,
             )
-            db.session.add(campaign_scope_1)
             db.session.commit()
 
             campaign_scope = CampaignScope.get_by_id(campaign_scope_1.id)
@@ -284,7 +280,6 @@ class TestUserGroupByCampaignScopeModel:
                 user_group_id=user_group_1.id,
                 campaign_scope_id=campaign_scope_1.id,
             )
-            db.session.add(ugbcs_1)
             db.session.commit()
 
             ugbcs = UserGroupByCampaignScope.get_by_id(ugbcs_1.id)
