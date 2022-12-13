@@ -1,4 +1,4 @@
-""" Global conftest"""
+"""Global conftest"""
 import datetime as dt
 
 import sqlalchemy as sqla
@@ -405,6 +405,25 @@ def events_by_zones(bemservercore, events, zones):
         )
         db.session.commit()
     return (ebz_1, ebz_2)
+
+
+@pytest.fixture
+def notifications(bemservercore, events, users):
+    with OpenBar():
+        notif_1 = model.Notification.new(
+            event_id=events[0].id,
+            user_id=users[0].id,
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            read=False,
+        )
+        notif_2 = model.Notification.new(
+            event_id=events[1].id,
+            user_id=users[1].id,
+            timestamp=dt.datetime(2021, 1, 1, tzinfo=dt.timezone.utc),
+            read=True,
+        )
+        db.session.commit()
+    return (notif_1, notif_2)
 
 
 @pytest.fixture

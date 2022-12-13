@@ -7,6 +7,7 @@ from bemserver_core.model import (
     UserByUserGroup,
     UserGroupByCampaign,
     UserGroupByCampaignScope,
+    Notification,
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
@@ -35,16 +36,19 @@ class TestUserModel:
         assert not user.check_password("rosebud")
 
     @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("notifications")
     def test_user_delete_cascade(self, users):
         admin_user = users[0]
         user_1 = users[1]
 
         with CurrentUser(admin_user):
             assert len(list(UserByUserGroup.get())) == 2
+            assert len(list(Notification.get())) == 2
 
             user_1.delete()
             db.session.commit()
             assert len(list(UserByUserGroup.get())) == 1
+            assert len(list(Notification.get())) == 1
 
     def test_user_authorizations_as_admin(self, users):
         admin_user = users[0]

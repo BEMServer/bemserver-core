@@ -291,6 +291,17 @@ has_relation(event: Event, "event", ebz: EventByZone) if
     event = ebz.event;
 
 
+resource Notification{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["owner"];
+
+    "read" if "owner";
+    "update" if "owner";
+}
+has_role(user: User, "owner", notif: Notification) if
+    user = notif.user;
+
+
 resource StructuralElementProperty{
     permissions = ["create", "read", "update", "delete"];
     roles = ["user"];

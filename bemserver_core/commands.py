@@ -28,6 +28,7 @@ def setup_db():
     database.init_db_functions()
     model.events.init_db_events_triggers()
     model.events.init_db_events()
+    model.notifications.init_db_events_triggers()
     model.campaigns.init_db_campaigns_triggers()
     model.timeseries.init_db_timeseries_triggers()
     model.timeseries.init_db_timeseries()

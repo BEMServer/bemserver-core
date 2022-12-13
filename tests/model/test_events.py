@@ -15,6 +15,7 @@ from bemserver_core.model import (
     EventByStorey,
     EventBySpace,
     EventByZone,
+    Notification,
 )
 from bemserver_core.authorization import CurrentUser
 from bemserver_core.database import db
@@ -89,16 +90,19 @@ class TestEventCategoryModel:
 
 class TestEventModel:
     @pytest.mark.usefixtures("timeseries_by_events")
-    def test_events_delete_cascade(self, users, events):
+    @pytest.mark.usefixtures("notifications")
+    def test_event_delete_cascade(self, users, events):
         admin_user = users[0]
         event_1 = events[0]
 
         with CurrentUser(admin_user):
             assert len(list(TimeseriesByEvent.get())) == 2
+            assert len(list(Notification.get())) == 2
 
             event_1.delete()
             db.session.commit()
             assert len(list(TimeseriesByEvent.get())) == 1
+            assert len(list(Notification.get())) == 1
 
     @pytest.mark.usefixtures("as_admin")
     def test_event_read_only_fields(self, campaign_scopes, event_categories):
