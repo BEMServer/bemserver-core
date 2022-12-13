@@ -1,4 +1,5 @@
 """Event tests"""
+import enum
 import datetime as dt
 import sqlalchemy as sqla
 
@@ -22,6 +23,27 @@ from bemserver_core.exceptions import (
     BEMServerCoreCampaignError,
     BEMServerCoreCampaignScopeError,
 )
+
+
+class TestEventLevelEnum:
+    def test_event_level_enum_order(self):
+        assert (
+            EventLevelEnum.DEBUG
+            < EventLevelEnum.INFO
+            < EventLevelEnum.WARNING
+            < EventLevelEnum.ERROR
+            < EventLevelEnum.CRITICAL
+        )
+
+        with pytest.raises(TypeError):
+            EventLevelEnum.DEBUG > 0  # noqa: B015 Pointless comparison.
+
+        class OtherEnum(enum.Enum):
+            A = 1
+            B = 2
+
+        with pytest.raises(TypeError):
+            EventLevelEnum.DEBUG > OtherEnum.A  # noqa: B015 Pointless comparison.
 
 
 class TestEventCategoryModel:
@@ -123,6 +145,50 @@ class TestEventModel:
         assert tse_list == [evt_1]
         tse_list = list(Event.get(timestamp=timestamp_2))
         assert tse_list == []
+
+    @pytest.mark.usefixtures("as_admin")
+    def test_event_order_by_level(self, campaign_scopes, event_categories):
+        """Check campaign_scope and timestamp can't be modified
+
+        This is kind of a "framework test".
+        """
+        campaign_scope_1 = campaign_scopes[0]
+        ec_1 = event_categories[0]
+
+        timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
+
+        evt_1 = Event.new(
+            campaign_scope_id=campaign_scope_1.id,
+            timestamp=timestamp_1,
+            category_id=ec_1.id,
+            level=EventLevelEnum.WARNING,
+            source="src",
+        )
+        evt_2 = Event.new(
+            campaign_scope_id=campaign_scope_1.id,
+            timestamp=timestamp_1,
+            category_id=ec_1.id,
+            level=EventLevelEnum.DEBUG,
+            source="src",
+        )
+        evt_3 = Event.new(
+            campaign_scope_id=campaign_scope_1.id,
+            timestamp=timestamp_1,
+            category_id=ec_1.id,
+            level=EventLevelEnum.INFO,
+            source="src",
+        )
+        db.session.flush()
+
+        events = list(Event.get().order_by(Event.level))
+        assert events == [evt_2, evt_3, evt_1]
+
+        events = list(
+            Event.get()
+            .filter(Event.level >= EventLevelEnum.INFO)
+            .order_by(sqla.desc(Event.level))
+        )
+        assert events == [evt_1, evt_3]
 
     def test_event_authorizations_as_admin(
         self, users, campaign_scopes, events, event_categories

@@ -1,5 +1,6 @@
 """Event"""
 import enum
+from functools import total_ordering
 
 import sqlalchemy as sqla
 
@@ -13,6 +14,7 @@ from .timeseries import Timeseries
 from .sites import Site, Building, Storey, Space, Zone
 
 
+@total_ordering
 class EventLevelEnum(enum.Enum):
     """Event levels enum"""
 
@@ -21,6 +23,11 @@ class EventLevelEnum(enum.Enum):
     WARNING = 30
     ERROR = 40
     CRITICAL = 50
+
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value < other.value
+        return NotImplemented
 
 
 class EventCategory(AuthMixin, Base):
