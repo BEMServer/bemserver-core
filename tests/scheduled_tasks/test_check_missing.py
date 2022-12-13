@@ -11,8 +11,8 @@ from bemserver_core.model import (
     TimeseriesDataState,
     TimeseriesProperty,
     TimeseriesPropertyData,
+    EventLevelEnum,
     EventCategory,
-    EventLevel,
     Event,
     TimeseriesByEvent,
 )
@@ -259,8 +259,6 @@ class TestCheckMissingScheduledTask:
             ds_1 = TimeseriesDataState.get(name="Raw").first()
             ec_data_missing = EventCategory.get(name="Data missing").first()
             ec_data_present = EventCategory.get(name="Data present").first()
-            el_warning = EventLevel.get(name="WARNING").first()
-            el_info = EventLevel.get(name="INFO").first()
             interval_prop = TimeseriesProperty.get(name="Interval").first()
             TimeseriesPropertyData.new(
                 timeseries_id=ts_0.id,
@@ -311,7 +309,7 @@ class TestCheckMissingScheduledTask:
             event_1 = events[0]
             assert event_1.campaign_scope_id == ts_0.campaign_scope.id
             assert event_1.category == ec_data_missing
-            assert event_1.level == el_warning
+            assert event_1.level == EventLevelEnum.WARNING
             assert event_1.timestamp == check_dt_1
             assert event_1.source == "BEMServer - Check missing data"
             assert event_1.description == "Timeseries newly missing: ['Timeseries 3']"
@@ -321,7 +319,7 @@ class TestCheckMissingScheduledTask:
             event_2 = events[1]
             assert event_2.campaign_scope_id == ts_1.campaign_scope.id
             assert event_2.category == ec_data_missing
-            assert event_2.level == el_warning
+            assert event_2.level == EventLevelEnum.WARNING
             assert event_2.timestamp == check_dt_1
             assert event_2.source == "BEMServer - Check missing data"
             assert event_2.description == "Timeseries newly missing: ['Timeseries 4']"
@@ -357,7 +355,7 @@ class TestCheckMissingScheduledTask:
             # New event (TS 2 still missing)
             event_3 = events[1]
             assert event_3.timestamp == check_dt_2
-            assert event_3.level == el_info
+            assert event_3.level == EventLevelEnum.INFO
             assert event_3.source == "BEMServer - Check missing data"
             assert event_3.description == "Timeseries still missing: ['Timeseries 3']"
             events = list(
@@ -377,7 +375,7 @@ class TestCheckMissingScheduledTask:
                 Event.get(
                     category=ec_data_missing,
                     campaign_scope_id=ts_1.campaign_scope_id,
-                    level=el_warning,
+                    level=EventLevelEnum.WARNING,
                 ).order_by(sqla.asc(Event.timestamp))
             )
             assert len(events) == 2
@@ -395,14 +393,14 @@ class TestCheckMissingScheduledTask:
                 Event.get(
                     category=ec_data_missing,
                     campaign_scope_id=ts_1.campaign_scope_id,
-                    level=el_info,
+                    level=EventLevelEnum.INFO,
                 ).order_by(sqla.asc(Event.timestamp))
             )
             assert len(events) == 1
             # New event (TS 3 still missing)
             event_5 = events[0]
             assert event_5.timestamp == check_dt_2
-            assert event_5.level == el_info
+            assert event_5.level == EventLevelEnum.INFO
             assert event_5.source == "BEMServer - Check missing data"
             assert event_5.description == "Timeseries still missing: ['Timeseries 4']"
             tbes = list(TimeseriesByEvent.get(event=event_5))
@@ -441,7 +439,7 @@ class TestCheckMissingScheduledTask:
             assert len(events) == 1
             # TS 0 never gets a present event because it was never missing
             event_6 = events[0]
-            assert event_6.level == el_info
+            assert event_6.level == EventLevelEnum.INFO
             assert event_6.source == "BEMServer - Check missing data"
             assert event_6.description == "Timeseries present: ['Timeseries 3']"
             tbes = list(TimeseriesByEvent.get(event=event_6))
@@ -460,7 +458,7 @@ class TestCheckMissingScheduledTask:
             )
             assert len(events) == 1
             event_7 = events[0]
-            assert event_7.level == el_info
+            assert event_7.level == EventLevelEnum.INFO
             assert event_7.source == "BEMServer - Check missing data"
             assert event_7.description == "Timeseries still missing: ['Timeseries 4']"
             tbes = list(TimeseriesByEvent.get(event=event_7))
@@ -475,7 +473,7 @@ class TestCheckMissingScheduledTask:
             )
             assert len(events) == 1
             event_8 = events[0]
-            assert event_8.level == el_info
+            assert event_8.level == EventLevelEnum.INFO
             assert event_8.source == "BEMServer - Check missing data"
             assert event_8.description == "Timeseries present: ['Timeseries 2']"
             tbes = list(TimeseriesByEvent.get(event=event_8))

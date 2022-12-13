@@ -148,14 +148,6 @@ resource EventCategory{
 }
 
 
-resource EventLevel{
-    permissions = ["create", "read", "update", "delete"];
-    roles = ["user"];
-
-    "read" if "user";
-}
-
-
 resource Event {
     permissions = ["create", "read", "update", "delete"];
     roles = ["reader", "writer"];

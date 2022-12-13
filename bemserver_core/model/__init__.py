@@ -40,8 +40,8 @@ from .timeseries import (
 )
 from .timeseries_data import TimeseriesData  # noqa
 from .events import (  # noqa
+    EventLevelEnum,
     EventCategory,
-    EventLevel,
     Event,
     TimeseriesByEvent,
     EventBySite,
@@ -92,8 +92,8 @@ __all__ = [
     "TimeseriesByStorey",
     "TimeseriesBySpace",
     "TimeseriesByZone",
+    "EventLevelEnum",
     "EventCategory",
-    "EventLevel",
     "Event",
     "TimeseriesByEvent",
     "EventBySite",
@@ -143,7 +143,6 @@ AUTH_MODEL_CLASSES = [
     TimeseriesBySpace,
     TimeseriesByZone,
     EventCategory,
-    EventLevel,
     Event,
     TimeseriesByEvent,
     EventBySite,

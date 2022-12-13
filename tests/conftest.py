@@ -297,29 +297,20 @@ def event_categories(bemservercore):
 
 
 @pytest.fixture
-def event_levels(bemservercore):
-    with OpenBar():
-        el_1 = model.EventLevel.get(name="WARNING").first()
-        el_2 = model.EventLevel.get(name="INFO").first()
-        db.session.commit()
-    return (el_1, el_2)
-
-
-@pytest.fixture
-def events(bemservercore, campaign_scopes, event_categories, event_levels):
+def events(bemservercore, campaign_scopes, event_categories):
     with OpenBar():
         ts_event_1 = model.Event.new(
             campaign_scope_id=campaign_scopes[0].id,
             timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
             category_id=event_categories[0].id,
-            level_id=event_levels[0].id,
+            level=model.EventLevelEnum.WARNING,
             source="src",
         )
         ts_event_2 = model.Event.new(
             campaign_scope_id=campaign_scopes[1].id,
             timestamp=dt.datetime(2020, 1, 15, tzinfo=dt.timezone.utc),
             category_id=event_categories[1].id,
-            level_id=event_levels[1].id,
+            level=model.EventLevelEnum.DEBUG,
             source="src",
         )
         db.session.commit()
