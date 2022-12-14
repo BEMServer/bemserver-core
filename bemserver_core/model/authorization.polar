@@ -167,6 +167,19 @@ has_relation(cs: CampaignScope, "campaign_scope", event: Event) if
     cs = event.campaign_scope;
 
 
+resource EventCategoryByUser {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["owner"];
+
+    "create" if "owner";
+    "read" if "owner";
+    "update" if "owner";
+    "delete" if "owner";
+}
+has_role(user: User, "owner", ecbu: EventCategoryByUser ) if
+    user = ecbu.user;
+
+
 # Application code ensures event and timeseries are in the same campaign scope.
 # So we only check event.
 # Checking event and timeseries would trigger an Oso error:

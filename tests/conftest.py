@@ -318,6 +318,23 @@ def events(bemservercore, campaign_scopes, event_categories):
 
 
 @pytest.fixture
+def event_categories_by_users(bemservercore, event_categories, users):
+    with OpenBar():
+        ecbu_1 = model.EventCategoryByUser.new(
+            category_id=event_categories[0].id,
+            user_id=users[0].id,
+            notification_level=model.EventLevelEnum.WARNING,
+        )
+        ecbu_2 = model.EventCategoryByUser.new(
+            category_id=event_categories[1].id,
+            user_id=users[1].id,
+            notification_level=model.EventLevelEnum.DEBUG,
+        )
+        db.session.commit()
+    return (ecbu_1, ecbu_2)
+
+
+@pytest.fixture
 def timeseries_by_events(bemservercore, timeseries, events):
     with OpenBar():
         tbs_1 = model.TimeseriesByEvent.new(

@@ -220,6 +220,51 @@ class Event(AuthMixin, Base):
         return query
 
 
+class EventCategoryByUser(AuthMixin, Base):
+    """EventCategory x User associations"""
+
+    __tablename__ = "event_categs_by_users"
+    __table_args__ = (sqla.UniqueConstraint("user_id", "category_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    user_id = sqla.Column(sqla.ForeignKey("users.id"), nullable=False)
+    category_id = sqla.Column(sqla.ForeignKey("event_categs.id"), nullable=False)
+    notification_level = sqla.Column(sqla.Enum(EventLevelEnum), nullable=False)
+
+    user = sqla.orm.relationship(
+        "User",
+        backref=sqla.orm.backref(
+            "event_categories_by_users", cascade="all, delete-orphan"
+        ),
+    )
+    category = sqla.orm.relationship(
+        "EventCategory",
+        backref=sqla.orm.backref(
+            "event_categories_by_users", cascade="all, delete-orphan"
+        ),
+    )
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "user": Relation(
+                    kind="one",
+                    other_type="User",
+                    my_field="user_id",
+                    other_field="id",
+                ),
+                "event_category": Relation(
+                    kind="one",
+                    other_type="EventCategory",
+                    my_field="category_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
 class TimeseriesByEvent(AuthMixin, Base):
     __tablename__ = "ts_by_events"
     __table_args__ = (sqla.UniqueConstraint("event_id", "timeseries_id"),)
@@ -519,6 +564,7 @@ def init_db_events_triggers():
     make_columns_read_only(
         Event.timestamp,
         Event.campaign_scope_id,
+        EventCategoryByUser.user_id,
     )
     db.session.commit()
 
