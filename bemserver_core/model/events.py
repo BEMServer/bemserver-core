@@ -10,7 +10,6 @@ from bemserver_core.exceptions import (
     BEMServerCoreCampaignError,
     BEMServerCoreCampaignScopeError,
 )
-from .timeseries import Timeseries
 from .sites import Site, Building, Storey, Space, Zone
 
 
@@ -92,6 +91,8 @@ class TimeseriesByEvent(AuthMixin, Base):
     def _before_flush(self):
         # Ensure TS and Event are in same Campaign scope
         if self.timeseries_id and self.event_id:
+            from .timeseries import Timeseries  # noqa: avoid cyclic import
+
             timeseries = Timeseries.get_by_id(self.timeseries_id)
             event = Event.get_by_id(self.event_id)
             if timeseries.campaign_scope != event.campaign_scope:

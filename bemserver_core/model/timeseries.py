@@ -12,6 +12,7 @@ from bemserver_core.model.campaigns import (
 from bemserver_core.model.sites import Site, Building, Storey, Space, Zone
 from bemserver_core.common import PropertyType
 from bemserver_core.exceptions import TimeseriesNotFoundError
+from .events import Event, TimeseriesByEvent
 
 
 class TimeseriesProperty(AuthMixin, Base):
@@ -84,6 +85,7 @@ class Timeseries(AuthMixin, Base):
         storey_id=None,
         space_id=None,
         zone_id=None,
+        event_id=None,
         **kwargs,
     ):
         if "campaign_id" in kwargs:
@@ -198,6 +200,12 @@ class Timeseries(AuthMixin, Base):
             Zone.get_by_id(zone_id)
             zone = sqla.orm.aliased(Zone)
             query = query.join(TimeseriesByZone).join(zone).filter(zone.id == zone_id)
+        if event_id is not None:
+            Event.get_by_id(event_id)
+            event = sqla.orm.aliased(Event)
+            query = (
+                query.join(TimeseriesByEvent).join(event).filter(event.id == event_id)
+            )
         return query
 
     def get_timeseries_by_data_state(self, data_state):
