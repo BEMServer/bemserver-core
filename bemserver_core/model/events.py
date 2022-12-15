@@ -1,4 +1,7 @@
 """Event"""
+import enum
+from functools import total_ordering
+
 import sqlalchemy as sqla
 
 from bemserver_core.database import Base, db, make_columns_read_only
@@ -11,16 +14,24 @@ from .timeseries import Timeseries
 from .sites import Site, Building, Storey, Space, Zone
 
 
+@total_ordering
+class EventLevelEnum(enum.Enum):
+    """Event levels enum"""
+
+    DEBUG = 10
+    INFO = 20
+    WARNING = 30
+    ERROR = 40
+    CRITICAL = 50
+
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value < other.value
+        return NotImplemented
+
+
 class EventCategory(AuthMixin, Base):
     __tablename__ = "event_categs"
-
-    id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
-    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
-    description = sqla.Column(sqla.String(250))
-
-
-class EventLevel(AuthMixin, Base):
-    __tablename__ = "event_levels"
 
     id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
@@ -33,7 +44,7 @@ class Event(AuthMixin, Base):
     id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
     campaign_scope_id = sqla.Column(sqla.ForeignKey("c_scopes.id"), nullable=False)
     category_id = sqla.Column(sqla.ForeignKey("event_categs.id"), nullable=False)
-    level_id = sqla.Column(sqla.ForeignKey("event_levels.id"), nullable=False)
+    level = sqla.Column(sqla.Enum(EventLevelEnum), nullable=False)
     timestamp = sqla.Column(sqla.DateTime(timezone=True), nullable=False)
     source = sqla.Column(sqla.String, nullable=False)
     description = sqla.Column(sqla.String())
@@ -41,9 +52,6 @@ class Event(AuthMixin, Base):
     category = sqla.orm.relationship(
         "EventCategory",
         backref=sqla.orm.backref("events", cascade="all, delete-orphan"),
-    )
-    level = sqla.orm.relationship(
-        "EventLevel", backref=sqla.orm.backref("events", cascade="all, delete-orphan")
     )
     campaign_scope = sqla.orm.relationship(
         "CampaignScope", backref=sqla.orm.backref("sites", cascade="all, delete-orphan")
@@ -376,10 +384,6 @@ def init_db_events():
             EventCategory(name="Data missing"),
             EventCategory(name="Data present"),
             EventCategory(name="Data outliers"),
-            EventLevel(name="INFO", description="Information"),
-            EventLevel(name="WARNING", description="Warning"),
-            EventLevel(name="ERROR", description="Error"),
-            EventLevel(name="CRITICAL", description="Critical"),
         ]
     )
     db.session.commit()

@@ -7,8 +7,8 @@ import sqlalchemy as sqla
 from bemserver_core.model import (
     TimeseriesDataState,
     Campaign,
+    EventLevelEnum,
     EventCategory,
-    EventLevel,
     Event,
     TimeseriesByEvent,
 )
@@ -127,8 +127,6 @@ def check_missing_ts_data(
     ds_raw = TimeseriesDataState.get(name="Raw").first()
     ec_data_missing = EventCategory.get(name="Data missing").first()
     ec_data_present = EventCategory.get(name="Data present").first()
-    el_warning = EventLevel.get(name="WARNING").first()
-    el_info = EventLevel.get(name="INFO").first()
 
     for cbc in ST_CheckMissingByCampaign.get():
         campaign = cbc.campaign
@@ -213,7 +211,7 @@ def check_missing_ts_data(
                 event = Event.new(
                     campaign_scope_id=c_scope.id,
                     category_id=ec_data_missing.id,
-                    level_id=el_warning.id,
+                    level=EventLevelEnum.WARNING,
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
@@ -235,7 +233,7 @@ def check_missing_ts_data(
                 event = Event.new(
                     campaign_scope_id=c_scope.id,
                     category_id=ec_data_missing.id,
-                    level_id=el_info.id,
+                    level=EventLevelEnum.INFO,
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
@@ -258,7 +256,7 @@ def check_missing_ts_data(
                 event = Event.new(
                     campaign_scope_id=c_scope.id,
                     category_id=ec_data_present.id,
-                    level_id=el_info.id,
+                    level=EventLevelEnum.INFO,
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
