@@ -13,6 +13,7 @@ from bemserver_core.model.campaigns import (
     UserGroupByCampaignScope,
 )
 from bemserver_core.model.sites import Site, Building, Storey, Space, Zone
+from bemserver_core.model.notifications import Notification
 from bemserver_core.exceptions import (
     BEMServerCoreCampaignError,
     BEMServerCoreCampaignScopeError,
@@ -33,6 +34,9 @@ class EventLevelEnum(enum.Enum):
         if self.__class__ is other.__class__:
             return self.value < other.value
         return NotImplemented
+
+
+DEFAULT_NOTIFICATION_EVENT_LEVEL = EventLevelEnum.WARNING
 
 
 class EventCategory(AuthMixin, Base):
@@ -218,6 +222,36 @@ class Event(AuthMixin, Base):
         Zone.get_by_id(zone_id)
         query = query.join(EventByZone).join(Zone).filter(Zone.id == zone_id)
         return query
+
+    def notify(self, timestamp):
+
+        ecbu_q = sqla.orm.aliased(
+            EventCategoryByUser,
+            alias=EventCategoryByUser.get(category_id=self.category_id).subquery(),
+        )
+
+        query = (
+            db.session.query(User)
+            .join(UserByUserGroup)
+            .join(UserGroup)
+            .join(UserGroupByCampaignScope)
+            .join(CampaignScope, CampaignScope.id == self.campaign_scope_id)
+            .outerjoin(ecbu_q)
+        )
+
+        if self.level >= DEFAULT_NOTIFICATION_EVENT_LEVEL:
+            level_filter = sqla.or_(
+                ecbu_q.notification_level <= self.level,
+                ecbu_q.notification_level == None,  # noqa
+            )
+        else:
+            level_filter = ecbu_q.notification_level <= self.level
+
+        query = query.filter(level_filter)
+
+        for user in list(query):
+            Notification.new(user=user, event=self, timestamp=timestamp)
+        db.session.commit()
 
 
 class EventCategoryByUser(AuthMixin, Base):

@@ -515,6 +515,74 @@ class TestEventModel:
             event_2.delete()
             db.session.commit()
 
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.usefixtures("as_admin")
+    def test_event_notify(self, users, campaign_scopes, event_categories):
+
+        user_0 = users[0]
+        user_1 = users[1]
+
+        EventCategoryByUser.new(
+            category_id=event_categories[0].id,
+            user_id=user_0.id,
+            notification_level=EventLevelEnum.DEBUG,
+        )
+
+        db.session.flush()
+
+        assert len(list(Notification.get())) == 0
+
+        # Notify INFO: only user_0 is notified
+        event_i = Event.new(
+            campaign_scope_id=campaign_scopes[0].id,
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            category_id=event_categories[0].id,
+            level=EventLevelEnum.INFO,
+            source="src",
+        )
+        event_i.notify(dt.datetime.now())
+        notifs = list(Notification.get())
+        assert len(notifs) == 1
+        assert notifs[0].user_id == user_0.id
+        assert notifs[0].event_id == event_i.id
+
+        db.session.query(Notification).delete()
+
+        # Notify WARNING: both users are notified
+        event_w = Event.new(
+            campaign_scope_id=campaign_scopes[0].id,
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            category_id=event_categories[0].id,
+            level=EventLevelEnum.WARNING,
+            source="src",
+        )
+        event_w.notify(dt.datetime.now())
+        notifs = list(Notification.get().order_by("user_id"))
+        assert len(notifs) == 2
+        assert notifs[0].user_id == user_0.id
+        assert notifs[0].event_id == event_w.id
+        assert notifs[1].user_id == user_1.id
+        assert notifs[1].event_id == event_w.id
+
+        db.session.query(Notification).delete()
+
+        # Notify ERROR: both users are notified
+        event_e = Event.new(
+            campaign_scope_id=campaign_scopes[0].id,
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            category_id=event_categories[0].id,
+            level=EventLevelEnum.ERROR,
+            source="src",
+        )
+        event_e.notify(dt.datetime.now())
+        notifs = list(Notification.get().order_by("user_id"))
+        assert len(notifs) == 2
+        assert notifs[0].user_id == user_0.id
+        assert notifs[0].event_id == event_e.id
+        assert notifs[1].user_id == user_1.id
+        assert notifs[1].event_id == event_e.id
+
 
 class TestTimeseriesByEventModel:
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
