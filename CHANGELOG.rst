@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+0.4.0 (2022-12-15)
+++++++++++++++++++
+
+Features:
+
+- Replace EventLevel table with EventLevelEnum
+- Add Timeseries.get event_id filter
+
 0.3.0 (2022-12-09)
 ++++++++++++++++++
 
