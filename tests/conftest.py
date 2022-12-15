@@ -299,14 +299,14 @@ def event_categories(bemservercore):
 @pytest.fixture
 def events(bemservercore, campaign_scopes, event_categories):
     with OpenBar():
-        ts_event_1 = model.Event.new(
+        event_1 = model.Event.new(
             campaign_scope_id=campaign_scopes[0].id,
             timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
             category_id=event_categories[0].id,
             level=model.EventLevelEnum.WARNING,
             source="src",
         )
-        ts_event_2 = model.Event.new(
+        event_2 = model.Event.new(
             campaign_scope_id=campaign_scopes[1].id,
             timestamp=dt.datetime(2020, 1, 15, tzinfo=dt.timezone.utc),
             category_id=event_categories[1].id,
@@ -314,7 +314,7 @@ def events(bemservercore, campaign_scopes, event_categories):
             source="src",
         )
         db.session.commit()
-    return (ts_event_1, ts_event_2)
+    return (event_1, event_2)
 
 
 @pytest.fixture
