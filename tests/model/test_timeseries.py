@@ -333,17 +333,18 @@ class TestTimeseriesModel:
     @pytest.mark.usefixtures("timeseries_by_storeys")
     @pytest.mark.usefixtures("timeseries_by_spaces")
     @pytest.mark.usefixtures("timeseries_by_zones")
+    @pytest.mark.usefixtures("timeseries_by_events")
     def test_timeseries_filters_as_admin(
         self,
         users,
         timeseries,
         campaigns,
-        campaign_scopes,
         sites,
         buildings,
         storeys,
         spaces,
         zones,
+        events,
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -358,6 +359,7 @@ class TestTimeseriesModel:
         storey_1 = storeys[0]
         space_1 = spaces[0]
         zone_1 = zones[0]
+        event_1 = events[0]
 
         with CurrentUser(admin_user):
 
@@ -390,6 +392,10 @@ class TestTimeseriesModel:
             assert ts_l[0] == ts_1
 
             ts_l = list(Timeseries.get(zone_id=zone_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_1
+
+            ts_l = list(Timeseries.get(event_id=event_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
 
