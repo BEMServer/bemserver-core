@@ -161,7 +161,7 @@ class Timeseries(AuthMixin, Base):
                     query.join(TimeseriesByStorey)
                     .join(storey)
                     .join(building_storey, building_storey.id == storey.building_id)
-                    .filter(building_storey.id == storey_id)
+                    .filter(building_storey.id == building_id)
                     .union(
                         query.join(TimeseriesBySpace)
                         .join(space)
