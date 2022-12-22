@@ -1,6 +1,14 @@
 Changelog
 ---------
 
+0.5.0 (2022-12-22)
+++++++++++++++++++
+
+Features:
+
+- Split Timeseries site_id/... and event_id filters into separate functions
+- Add Event campaign_id, user_id, timeseries_id and site_id/... filters
+
 0.4.0 (2022-12-15)
 ++++++++++++++++++
 
