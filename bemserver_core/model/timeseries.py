@@ -10,9 +10,9 @@ from bemserver_core.model.campaigns import (
     UserGroupByCampaignScope,
 )
 from bemserver_core.model.sites import Site, Building, Storey, Space, Zone
+from bemserver_core.model.events import Event, TimeseriesByEvent
 from bemserver_core.common import PropertyType
 from bemserver_core.exceptions import TimeseriesNotFoundError
-from .events import Event, TimeseriesByEvent
 
 
 class TimeseriesProperty(AuthMixin, Base):

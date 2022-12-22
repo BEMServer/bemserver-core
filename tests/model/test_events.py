@@ -190,6 +190,59 @@ class TestEventModel:
         )
         assert events == [evt_1, evt_3]
 
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.usefixtures("timeseries_by_events")
+    def test_event_filters_as_admin(self, users, campaigns, events, timeseries):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        event_1 = events[0]
+        event_2 = events[1]
+        timeseries_1 = timeseries[0]
+
+        with CurrentUser(admin_user):
+            events = list(Event.get())
+            assert set(events) == {event_1, event_2}
+            events = list(Event.get(campaign_id=campaign_1.id))
+            assert set(events) == {event_1}
+            events = list(Event.get(user_id=admin_user.id))
+            assert set(events) == {event_1}
+            events = list(Event.get(timeseries_id=timeseries_1.id))
+            assert set(events) == {event_1}
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.usefixtures("timeseries_by_events")
+    def test_event_filters_as_user(self, users, campaigns, events, timeseries):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        user_1 = users[1]
+        assert not user_1.is_admin
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
+        event_2 = events[1]
+        timeseries_1 = timeseries[0]
+        timeseries_2 = timeseries[1]
+
+        with CurrentUser(user_1):
+            events = list(Event.get())
+            assert set(events) == {event_2}
+            with pytest.raises(BEMServerAuthorizationError):
+                events = list(Event.get(campaign_id=campaign_1.id))
+            with pytest.raises(BEMServerAuthorizationError):
+                events = list(Event.get(user_id=admin_user.id))
+            with pytest.raises(BEMServerAuthorizationError):
+                events = list(Event.get(timeseries_id=timeseries_1.id))
+            events = list(Event.get(campaign_id=campaign_2.id))
+            assert set(events) == {event_2}
+            events = list(Event.get(user_id=user_1.id))
+            assert set(events) == {event_2}
+            events = list(Event.get(timeseries_id=timeseries_2.id))
+            assert set(events) == {event_2}
+
     def test_event_authorizations_as_admin(
         self, users, campaign_scopes, events, event_categories
     ):
@@ -236,8 +289,8 @@ class TestEventModel:
 
             events = list(Event.get())
             assert events == [event_2]
-            events = list(Event.get(campaign_scope_id=campaign_scope_1.id))
-            assert not events
+            with pytest.raises(BEMServerAuthorizationError):
+                events = list(Event.get(campaign_scope_id=campaign_scope_1.id))
             assert Event.get_by_id(event_2.id) == event_2
 
             # Not member of campaign_scope

@@ -6,11 +6,17 @@ import sqlalchemy as sqla
 
 from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.authorization import auth, AuthMixin, Relation
+from bemserver_core.model.users import User, UserGroup, UserByUserGroup
+from bemserver_core.model.campaigns import (
+    Campaign,
+    CampaignScope,
+    UserGroupByCampaignScope,
+)
+from bemserver_core.model.sites import Site, Building, Storey, Space, Zone
 from bemserver_core.exceptions import (
     BEMServerCoreCampaignError,
     BEMServerCoreCampaignScopeError,
 )
-from .sites import Site, Building, Storey, Space, Zone
 
 
 @total_ordering
@@ -69,6 +75,37 @@ class Event(AuthMixin, Base):
                 ),
             },
         )
+
+    @classmethod
+    def get(cls, campaign_id=None, user_id=None, timeseries_id=None, **kwargs):
+        if "campaign_scope_id" in kwargs:
+            CampaignScope.get_by_id(kwargs["campaign_scope_id"])
+        query = super().get(**kwargs)
+        if campaign_id is not None:
+            Campaign.get_by_id(campaign_id)
+            cs = sqla.orm.aliased(CampaignScope)
+            query = query.join(cs, cls.campaign_scope_id == cs.id).filter(
+                cs.campaign_id == campaign_id
+            )
+        if user_id is not None:
+            User.get_by_id(user_id)
+            cs = sqla.orm.aliased(CampaignScope)
+            ubug = sqla.orm.aliased(UserByUserGroup)
+            query = (
+                query.join(cs, cls.campaign_scope_id == cs.id)
+                .join(sqla.orm.aliased(UserGroupByCampaignScope))
+                .join(sqla.orm.aliased(UserGroup))
+                .join(ubug)
+                .filter(ubug.user_id == user_id)
+            )
+        if timeseries_id is not None:
+            from .timeseries import Timeseries  # noqa: avoid cyclic import
+
+            Timeseries.get_by_id(timeseries_id)
+            query = query.join(TimeseriesByEvent).filter(
+                TimeseriesByEvent.timeseries_id == timeseries_id
+            )
+        return query
 
 
 class TimeseriesByEvent(AuthMixin, Base):
