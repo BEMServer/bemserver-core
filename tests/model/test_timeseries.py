@@ -328,10 +328,6 @@ class TestTimeseriesModel:
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
     @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
-    @pytest.mark.usefixtures("timeseries_by_sites")
-    @pytest.mark.usefixtures("timeseries_by_buildings")
-    @pytest.mark.usefixtures("timeseries_by_storeys")
-    @pytest.mark.usefixtures("timeseries_by_spaces")
     @pytest.mark.usefixtures("timeseries_by_zones")
     @pytest.mark.usefixtures("timeseries_by_events")
     def test_timeseries_filters_as_admin(
@@ -345,6 +341,10 @@ class TestTimeseriesModel:
         spaces,
         zones,
         events,
+        timeseries_by_sites,
+        timeseries_by_buildings,
+        timeseries_by_storeys,
+        timeseries_by_spaces,
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -360,6 +360,10 @@ class TestTimeseriesModel:
         space_1 = spaces[0]
         zone_1 = zones[0]
         event_1 = events[0]
+        tbsi_1 = timeseries_by_sites[0]
+        tbb_1 = timeseries_by_buildings[0]
+        tbst_1 = timeseries_by_storeys[0]
+        tbsp_1 = timeseries_by_spaces[0]
 
         with CurrentUser(admin_user):
 
@@ -375,34 +379,70 @@ class TestTimeseriesModel:
             assert len(ts_l) == 1
             assert ts_l[0] == ts_2
 
-            ts_l = list(Timeseries.get(site_id=site_1.id))
+            ts_l = list(Timeseries.get_by_site(site_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
 
-            ts_l = list(Timeseries.get(building_id=building_1.id))
+            ts_l = list(Timeseries.get_by_building(building_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
 
-            ts_l = list(Timeseries.get(storey_id=storey_1.id))
+            ts_l = list(Timeseries.get_by_storey(storey_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
 
-            ts_l = list(Timeseries.get(space_id=space_1.id))
+            ts_l = list(Timeseries.get_by_space(space_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
 
-            ts_l = list(Timeseries.get(zone_id=zone_1.id))
+            ts_l = list(Timeseries.get_by_zone(zone_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
 
-            ts_l = list(Timeseries.get(event_id=event_1.id))
+            ts_l = list(Timeseries.get_by_event(event_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
+
+            db.session.delete(tbst_1)
+            db.session.commit()
+
+            ts_l = list(Timeseries.get_by_storey(storey_1.id, recurse=False))
+            assert not len(ts_l)
+            ts_l = list(Timeseries.get_by_storey(storey_1.id, recurse=True))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_1
+
+            db.session.delete(tbb_1)
+            db.session.commit()
+
+            ts_l = list(Timeseries.get_by_building(building_1.id, recurse=False))
+            assert not len(ts_l)
+            ts_l = list(Timeseries.get_by_building(building_1.id, recurse=True))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_1
+
+            db.session.delete(tbsi_1)
+            db.session.commit()
+
+            ts_l = list(Timeseries.get_by_site(site_1.id, recurse=False))
+            assert not list(ts_l)
+            ts_l = list(Timeseries.get_by_site(site_1.id, recurse=True))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_1
+
+            db.session.delete(tbsp_1)
+            db.session.commit()
+
+            assert not list(Timeseries.get_by_space(space_1.id))
+            assert not list(Timeseries.get_by_storey(storey_1.id))
+            assert not list(Timeseries.get_by_building(building_1.id))
+            assert not list(Timeseries.get_by_site(site_1.id))
 
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
     @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
     @pytest.mark.usefixtures("timeseries_by_zones")
+    @pytest.mark.usefixtures("timeseries_by_events")
     def test_timeseries_filters_as_user(
         self,
         users,
@@ -414,6 +454,7 @@ class TestTimeseriesModel:
         storeys,
         spaces,
         zones,
+        events,
         timeseries_by_sites,
         timeseries_by_buildings,
         timeseries_by_storeys,
@@ -440,6 +481,8 @@ class TestTimeseriesModel:
         zone_2 = zones[1]
         zone_1 = zones[0]
         zone_2 = zones[1]
+        event_1 = events[0]
+        event_2 = events[1]
         tbsi_2 = timeseries_by_sites[1]
         tbb_2 = timeseries_by_buildings[1]
         tbst_2 = timeseries_by_storeys[1]
@@ -466,63 +509,75 @@ class TestTimeseriesModel:
             assert ts_l[0] == ts_2
 
             with pytest.raises(BEMServerAuthorizationError):
-                ts_l = list(Timeseries.get(site_id=site_1.id))
-            ts_l = list(Timeseries.get(site_id=site_2.id))
+                ts_l = list(Timeseries.get_by_site(site_1.id))
+            ts_l = list(Timeseries.get_by_site(site_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_2
 
             with pytest.raises(BEMServerAuthorizationError):
-                ts_l = list(Timeseries.get(building_id=building_1.id))
-            ts_l = list(Timeseries.get(building_id=building_2.id))
+                ts_l = list(Timeseries.get_by_building(building_1.id))
+            ts_l = list(Timeseries.get_by_building(building_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_2
 
             with pytest.raises(BEMServerAuthorizationError):
-                ts_l = list(Timeseries.get(storey_id=storey_1.id))
-            ts_l = list(Timeseries.get(storey_id=storey_2.id))
+                ts_l = list(Timeseries.get_by_storey(storey_1.id))
+            ts_l = list(Timeseries.get_by_storey(storey_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_2
 
             with pytest.raises(BEMServerAuthorizationError):
-                ts_l = list(Timeseries.get(space_id=space_1.id))
-            ts_l = list(Timeseries.get(space_id=space_2.id))
+                ts_l = list(Timeseries.get_by_space(space_1.id))
+            ts_l = list(Timeseries.get_by_space(space_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_2
 
             with pytest.raises(BEMServerAuthorizationError):
-                ts_l = list(Timeseries.get(zone_id=zone_1.id))
-            ts_l = list(Timeseries.get(zone_id=zone_2.id))
+                ts_l = list(Timeseries.get_by_zone(zone_1.id))
+            ts_l = list(Timeseries.get_by_zone(zone_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_2
+
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_l = list(Timeseries.get_by_event(event_1.id))
+            ts_l = list(Timeseries.get_by_event(event_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_2
 
             db.session.delete(tbst_2)
             db.session.commit()
 
-            ts_l = list(Timeseries.get(storey_id=storey_2.id))
+            ts_l = list(Timeseries.get_by_storey(storey_2.id, recurse=False))
+            assert not len(ts_l)
+            ts_l = list(Timeseries.get_by_storey(storey_2.id, recurse=True))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_2
 
             db.session.delete(tbb_2)
             db.session.commit()
 
-            ts_l = list(Timeseries.get(building_id=building_2.id))
+            ts_l = list(Timeseries.get_by_building(building_2.id, recurse=False))
+            assert not len(ts_l)
+            ts_l = list(Timeseries.get_by_building(building_2.id, recurse=True))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_2
 
             db.session.delete(tbsi_2)
             db.session.commit()
 
-            ts_l = list(Timeseries.get(site_id=site_2.id))
+            ts_l = list(Timeseries.get_by_site(site_2.id, recurse=False))
+            assert not list(ts_l)
+            ts_l = list(Timeseries.get_by_site(site_2.id, recurse=True))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_2
 
             db.session.delete(tbsp_2)
             db.session.commit()
 
-            assert not list(Timeseries.get(space_id=space_2.id))
-            assert not list(Timeseries.get(storey_id=storey_2.id))
-            assert not list(Timeseries.get(building_id=building_2.id))
-            assert not list(Timeseries.get(site_id=site_2.id))
+            assert not list(Timeseries.get_by_space(space_2.id))
+            assert not list(Timeseries.get_by_storey(storey_2.id))
+            assert not list(Timeseries.get_by_building(building_2.id))
+            assert not list(Timeseries.get_by_site(site_2.id))
 
     def test_timeseries_authorizations_as_admin(
         self, users, campaigns, campaign_scopes

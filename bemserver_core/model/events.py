@@ -6,11 +6,17 @@ import sqlalchemy as sqla
 
 from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.authorization import auth, AuthMixin, Relation
+from bemserver_core.model.users import User, UserGroup, UserByUserGroup
+from bemserver_core.model.campaigns import (
+    Campaign,
+    CampaignScope,
+    UserGroupByCampaignScope,
+)
+from bemserver_core.model.sites import Site, Building, Storey, Space, Zone
 from bemserver_core.exceptions import (
     BEMServerCoreCampaignError,
     BEMServerCoreCampaignScopeError,
 )
-from .sites import Site, Building, Storey, Space, Zone
 
 
 @total_ordering
@@ -69,6 +75,149 @@ class Event(AuthMixin, Base):
                 ),
             },
         )
+
+    @classmethod
+    def get(cls, campaign_id=None, user_id=None, timeseries_id=None, **kwargs):
+        if "campaign_scope_id" in kwargs:
+            CampaignScope.get_by_id(kwargs["campaign_scope_id"])
+        query = super().get(**kwargs)
+        if campaign_id is not None:
+            Campaign.get_by_id(campaign_id)
+            cs = sqla.orm.aliased(CampaignScope)
+            query = query.join(cs, cls.campaign_scope_id == cs.id).filter(
+                cs.campaign_id == campaign_id
+            )
+        if user_id is not None:
+            User.get_by_id(user_id)
+            cs = sqla.orm.aliased(CampaignScope)
+            ubug = sqla.orm.aliased(UserByUserGroup)
+            query = (
+                query.join(cs, cls.campaign_scope_id == cs.id)
+                .join(sqla.orm.aliased(UserGroupByCampaignScope))
+                .join(sqla.orm.aliased(UserGroup))
+                .join(ubug)
+                .filter(ubug.user_id == user_id)
+            )
+        if timeseries_id is not None:
+            from .timeseries import Timeseries  # noqa: avoid cyclic import
+
+            Timeseries.get_by_id(timeseries_id)
+            query = query.join(TimeseriesByEvent).filter(
+                TimeseriesByEvent.timeseries_id == timeseries_id
+            )
+        return query
+
+    @classmethod
+    def get_by_site(cls, site_id, recurse=False):
+        base_query = cls.get()
+        Site.get_by_id(site_id)
+
+        query = base_query.join(EventBySite).join(Site).filter(Site.id == site_id)
+
+        if recurse:
+            site_alias = sqla.orm.aliased(Site)
+            building_ts_q = (
+                base_query.join(EventByBuilding)
+                .join(Building)
+                .join(site_alias, site_alias.id == Building.site_id)
+                .filter(site_alias.id == site_id)
+            )
+            building_alias = sqla.orm.aliased(Building)
+            site_alias = sqla.orm.aliased(Site)
+            storey_ts_q = (
+                base_query.join(EventByStorey)
+                .join(Storey)
+                .join(building_alias, building_alias.id == Storey.building_id)
+                .join(site_alias, site_alias.id == building_alias.site_id)
+                .filter(site_alias.id == site_id)
+            )
+            site_alias = sqla.orm.aliased(Site)
+            building_alias = sqla.orm.aliased(Building)
+            storey_alias = sqla.orm.aliased(Storey)
+            space_ts_q = (
+                base_query.join(EventBySpace)
+                .join(Space)
+                .join(storey_alias, storey_alias.id == Space.storey_id)
+                .join(
+                    building_alias,
+                    building_alias.id == storey_alias.building_id,
+                )
+                .join(site_alias, site_alias.id == building_alias.site_id)
+                .filter(site_alias.id == site_id)
+            )
+            query = query.union(building_ts_q).union(storey_ts_q).union(space_ts_q)
+
+        return query
+
+    @classmethod
+    def get_by_building(cls, building_id, recurse=False):
+        base_query = cls.get()
+        Building.get_by_id(building_id)
+
+        query = (
+            base_query.join(EventByBuilding)
+            .join(Building)
+            .filter(Building.id == building_id)
+        )
+
+        if recurse:
+            building_alias = sqla.orm.aliased(Building)
+            storey_ts_q = (
+                base_query.join(EventByStorey)
+                .join(Storey)
+                .join(building_alias, building_alias.id == Storey.building_id)
+                .filter(building_alias.id == building_id)
+            )
+            building_alias = sqla.orm.aliased(Building)
+            storey_alias = sqla.orm.aliased(Storey)
+            space_ts_q = (
+                base_query.join(EventBySpace)
+                .join(Space)
+                .join(storey_alias, storey_alias.id == Space.storey_id)
+                .join(
+                    building_alias,
+                    building_alias.id == storey_alias.building_id,
+                )
+                .filter(building_alias.id == building_id)
+            )
+            query = query.union(storey_ts_q).union(space_ts_q)
+
+        return query
+
+    @classmethod
+    def get_by_storey(cls, storey_id, recurse=False):
+        base_query = cls.get()
+        Storey.get_by_id(storey_id)
+
+        query = (
+            base_query.join(EventByStorey).join(Storey).filter(Storey.id == storey_id)
+        )
+
+        if recurse:
+            storey_alias = sqla.orm.aliased(Storey)
+            space_ts_q = (
+                base_query.join(EventBySpace)
+                .join(Space)
+                .join(storey_alias, storey_alias.id == Space.storey_id)
+                .filter(storey_alias.id == storey_id)
+            )
+            query = query.union(space_ts_q)
+
+        return query
+
+    @classmethod
+    def get_by_space(cls, space_id):
+        query = cls.get()
+        Space.get_by_id(space_id)
+        query = query.join(EventBySpace).join(Space).filter(Space.id == space_id)
+        return query
+
+    @classmethod
+    def get_by_zone(cls, zone_id):
+        query = cls.get()
+        Zone.get_by_id(zone_id)
+        query = query.join(EventByZone).join(Zone).filter(Zone.id == zone_id)
+        return query
 
 
 class TimeseriesByEvent(AuthMixin, Base):

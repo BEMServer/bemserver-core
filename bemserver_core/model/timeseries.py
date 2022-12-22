@@ -10,9 +10,9 @@ from bemserver_core.model.campaigns import (
     UserGroupByCampaignScope,
 )
 from bemserver_core.model.sites import Site, Building, Storey, Space, Zone
+from bemserver_core.model.events import Event, TimeseriesByEvent
 from bemserver_core.common import PropertyType
 from bemserver_core.exceptions import TimeseriesNotFoundError
-from .events import Event, TimeseriesByEvent
 
 
 class TimeseriesProperty(AuthMixin, Base):
@@ -76,18 +76,7 @@ class Timeseries(AuthMixin, Base):
         )
 
     @classmethod
-    def get(
-        cls,
-        *,
-        user_id=None,
-        site_id=None,
-        building_id=None,
-        storey_id=None,
-        space_id=None,
-        zone_id=None,
-        event_id=None,
-        **kwargs,
-    ):
+    def get(cls, user_id=None, **kwargs):
         if "campaign_id" in kwargs:
             Campaign.get_by_id(kwargs["campaign_id"])
         if "campaign_scope_id" in kwargs:
@@ -104,108 +93,127 @@ class Timeseries(AuthMixin, Base):
                 .join(ubug)
                 .filter(ubug.user_id == user_id)
             )
-        if site_id is not None:
-            Site.get_by_id(site_id)
-            site = sqla.orm.aliased(Site)
-            building = sqla.orm.aliased(Building)
-            site_building = sqla.orm.aliased(Site)
-            storey = sqla.orm.aliased(Storey)
-            building_storey = sqla.orm.aliased(Building)
-            site_storey = sqla.orm.aliased(Site)
-            space = sqla.orm.aliased(Space)
-            site_space = sqla.orm.aliased(Site)
-            building_space = sqla.orm.aliased(Building)
-            storey_space = sqla.orm.aliased(Storey)
-            query = (
-                query.join(TimeseriesBySite)
-                .join(site)
-                .filter(site.id == site_id)
-                .union(
-                    query.join(TimeseriesByBuilding)
-                    .join(building)
-                    .join(site_building, site_building.id == building.site_id)
-                    .filter(site_building.id == site_id)
-                    .union(
-                        query.join(TimeseriesByStorey)
-                        .join(storey)
-                        .join(building_storey, building_storey.id == storey.building_id)
-                        .join(site_storey, site_storey.id == building_storey.site_id)
-                        .filter(site_storey.id == site_id)
-                        .union(
-                            query.join(TimeseriesBySpace)
-                            .join(space)
-                            .join(storey_space, storey_space.id == space.storey_id)
-                            .join(
-                                building_space,
-                                building_space.id == storey_space.building_id,
-                            )
-                            .join(site_space, site_space.id == building_space.site_id)
-                            .filter(site_space.id == site_id)
-                        )
-                    )
+        return query
+
+    @classmethod
+    def get_by_site(cls, site_id, recurse=False):
+        base_query = cls.get()
+        Site.get_by_id(site_id)
+
+        query = base_query.join(TimeseriesBySite).join(Site).filter(Site.id == site_id)
+
+        if recurse:
+            site_alias = sqla.orm.aliased(Site)
+            building_ts_q = (
+                base_query.join(TimeseriesByBuilding)
+                .join(Building)
+                .join(site_alias, site_alias.id == Building.site_id)
+                .filter(site_alias.id == site_id)
+            )
+            building_alias = sqla.orm.aliased(Building)
+            site_alias = sqla.orm.aliased(Site)
+            storey_ts_q = (
+                base_query.join(TimeseriesByStorey)
+                .join(Storey)
+                .join(building_alias, building_alias.id == Storey.building_id)
+                .join(site_alias, site_alias.id == building_alias.site_id)
+                .filter(site_alias.id == site_id)
+            )
+            site_alias = sqla.orm.aliased(Site)
+            building_alias = sqla.orm.aliased(Building)
+            storey_alias = sqla.orm.aliased(Storey)
+            space_ts_q = (
+                base_query.join(TimeseriesBySpace)
+                .join(Space)
+                .join(storey_alias, storey_alias.id == Space.storey_id)
+                .join(
+                    building_alias,
+                    building_alias.id == storey_alias.building_id,
                 )
+                .join(site_alias, site_alias.id == building_alias.site_id)
+                .filter(site_alias.id == site_id)
             )
-        if building_id is not None:
-            Building.get_by_id(building_id)
-            building = sqla.orm.aliased(Building)
-            storey = sqla.orm.aliased(Storey)
-            building_storey = sqla.orm.aliased(Building)
-            space = sqla.orm.aliased(Space)
-            building_space = sqla.orm.aliased(Building)
-            storey_space = sqla.orm.aliased(Storey)
-            query = (
-                query.join(TimeseriesByBuilding)
-                .join(building)
-                .filter(building.id == building_id)
-                .union(
-                    query.join(TimeseriesByStorey)
-                    .join(storey)
-                    .join(building_storey, building_storey.id == storey.building_id)
-                    .filter(building_storey.id == storey_id)
-                    .union(
-                        query.join(TimeseriesBySpace)
-                        .join(space)
-                        .join(storey_space, storey_space.id == space.storey_id)
-                        .join(
-                            building_space,
-                            building_space.id == storey_space.building_id,
-                        )
-                        .filter(building_space.id == building_id)
-                    )
+            query = query.union(building_ts_q).union(storey_ts_q).union(space_ts_q)
+
+        return query
+
+    @classmethod
+    def get_by_building(cls, building_id, recurse=False):
+        base_query = cls.get()
+        Building.get_by_id(building_id)
+
+        query = (
+            base_query.join(TimeseriesByBuilding)
+            .join(Building)
+            .filter(Building.id == building_id)
+        )
+
+        if recurse:
+            building_alias = sqla.orm.aliased(Building)
+            storey_ts_q = (
+                base_query.join(TimeseriesByStorey)
+                .join(Storey)
+                .join(building_alias, building_alias.id == Storey.building_id)
+                .filter(building_alias.id == building_id)
+            )
+            building_alias = sqla.orm.aliased(Building)
+            storey_alias = sqla.orm.aliased(Storey)
+            space_ts_q = (
+                base_query.join(TimeseriesBySpace)
+                .join(Space)
+                .join(storey_alias, storey_alias.id == Space.storey_id)
+                .join(
+                    building_alias,
+                    building_alias.id == storey_alias.building_id,
                 )
+                .filter(building_alias.id == building_id)
             )
-        if storey_id is not None:
-            Storey.get_by_id(storey_id)
-            storey = sqla.orm.aliased(Storey)
-            space = sqla.orm.aliased(Space)
-            storey_space = sqla.orm.aliased(Storey)
-            query = (
-                query.join(TimeseriesByStorey)
-                .join(storey)
-                .filter(storey.id == storey_id)
-                .union(
-                    query.join(TimeseriesBySpace)
-                    .join(space)
-                    .join(storey_space, storey_space.id == space.storey_id)
-                    .filter(storey_space.id == storey_id)
-                )
+            query = query.union(storey_ts_q).union(space_ts_q)
+
+        return query
+
+    @classmethod
+    def get_by_storey(cls, storey_id, recurse=False):
+        base_query = cls.get()
+        Storey.get_by_id(storey_id)
+
+        query = (
+            base_query.join(TimeseriesByStorey)
+            .join(Storey)
+            .filter(Storey.id == storey_id)
+        )
+
+        if recurse:
+            storey_alias = sqla.orm.aliased(Storey)
+            space_ts_q = (
+                base_query.join(TimeseriesBySpace)
+                .join(Space)
+                .join(storey_alias, storey_alias.id == Space.storey_id)
+                .filter(storey_alias.id == storey_id)
             )
-        if space_id is not None:
-            Space.get_by_id(space_id)
-            space = sqla.orm.aliased(Space)
-            query = (
-                query.join(TimeseriesBySpace).join(space).filter(space.id == space_id)
-            )
-        if zone_id is not None:
-            Zone.get_by_id(zone_id)
-            zone = sqla.orm.aliased(Zone)
-            query = query.join(TimeseriesByZone).join(zone).filter(zone.id == zone_id)
-        if event_id is not None:
-            Event.get_by_id(event_id)
-            event = sqla.orm.aliased(Event)
-            query = (
-                query.join(TimeseriesByEvent).join(event).filter(event.id == event_id)
-            )
+            query = query.union(space_ts_q)
+
+        return query
+
+    @classmethod
+    def get_by_space(cls, space_id):
+        query = cls.get()
+        Space.get_by_id(space_id)
+        query = query.join(TimeseriesBySpace).join(Space).filter(Space.id == space_id)
+        return query
+
+    @classmethod
+    def get_by_zone(cls, zone_id):
+        query = cls.get()
+        Zone.get_by_id(zone_id)
+        query = query.join(TimeseriesByZone).join(Zone).filter(Zone.id == zone_id)
+        return query
+
+    @classmethod
+    def get_by_event(cls, event_id):
+        query = cls.get()
+        Event.get_by_id(event_id)
+        query = query.join(TimeseriesByEvent).join(Event).filter(Event.id == event_id)
         return query
 
     def get_timeseries_by_data_state(self, data_state):

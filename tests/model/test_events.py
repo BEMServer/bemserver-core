@@ -190,6 +190,236 @@ class TestEventModel:
         )
         assert events == [evt_1, evt_3]
 
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.usefixtures("events_by_zones")
+    @pytest.mark.usefixtures("timeseries_by_events")
+    def test_event_filters_as_admin(
+        self,
+        users,
+        campaigns,
+        events,
+        timeseries,
+        sites,
+        buildings,
+        storeys,
+        spaces,
+        zones,
+        events_by_sites,
+        events_by_buildings,
+        events_by_storeys,
+        events_by_spaces,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        event_1 = events[0]
+        event_2 = events[1]
+        timeseries_1 = timeseries[0]
+        site_1 = sites[0]
+        building_1 = buildings[0]
+        storey_1 = storeys[0]
+        space_1 = spaces[0]
+        zone_1 = zones[0]
+        ebsi_1 = events_by_sites[0]
+        ebb_1 = events_by_buildings[0]
+        ebst_1 = events_by_storeys[0]
+        ebsp_1 = events_by_spaces[0]
+
+        with CurrentUser(admin_user):
+            events = list(Event.get())
+            assert set(events) == {event_1, event_2}
+            events = list(Event.get(campaign_id=campaign_1.id))
+            assert set(events) == {event_1}
+            events = list(Event.get(user_id=admin_user.id))
+            assert set(events) == {event_1}
+            events = list(Event.get(timeseries_id=timeseries_1.id))
+            assert set(events) == {event_1}
+
+            ts_l = list(Event.get_by_site(site_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_1
+
+            ts_l = list(Event.get_by_building(building_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_1
+
+            ts_l = list(Event.get_by_storey(storey_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_1
+
+            ts_l = list(Event.get_by_space(space_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_1
+
+            ts_l = list(Event.get_by_zone(zone_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_1
+
+            db.session.delete(ebst_1)
+            db.session.commit()
+
+            ts_l = list(Event.get_by_storey(storey_1.id, recurse=False))
+            assert not len(ts_l)
+            ts_l = list(Event.get_by_storey(storey_1.id, recurse=True))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_1
+
+            db.session.delete(ebb_1)
+            db.session.commit()
+
+            ts_l = list(Event.get_by_building(building_1.id, recurse=False))
+            assert not len(ts_l)
+            ts_l = list(Event.get_by_building(building_1.id, recurse=True))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_1
+
+            db.session.delete(ebsi_1)
+            db.session.commit()
+
+            ts_l = list(Event.get_by_site(site_1.id, recurse=False))
+            assert not list(ts_l)
+            ts_l = list(Event.get_by_site(site_1.id, recurse=True))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_1
+
+            db.session.delete(ebsp_1)
+            db.session.commit()
+
+            assert not list(Event.get_by_space(space_1.id))
+            assert not list(Event.get_by_storey(storey_1.id))
+            assert not list(Event.get_by_building(building_1.id))
+            assert not list(Event.get_by_site(site_1.id))
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.usefixtures("events_by_zones")
+    @pytest.mark.usefixtures("timeseries_by_events")
+    def test_event_filters_as_user(
+        self,
+        users,
+        campaigns,
+        events,
+        timeseries,
+        sites,
+        buildings,
+        storeys,
+        spaces,
+        zones,
+        events_by_sites,
+        events_by_buildings,
+        events_by_storeys,
+        events_by_spaces,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        user_1 = users[1]
+        assert not user_1.is_admin
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
+        event_2 = events[1]
+        timeseries_1 = timeseries[0]
+        timeseries_2 = timeseries[1]
+        site_1 = sites[0]
+        site_2 = sites[1]
+        building_1 = buildings[0]
+        building_2 = buildings[1]
+        storey_1 = storeys[0]
+        storey_2 = storeys[1]
+        space_1 = spaces[0]
+        space_2 = spaces[1]
+        zone_1 = zones[0]
+        zone_2 = zones[1]
+        zone_1 = zones[0]
+        zone_2 = zones[1]
+        ebsi_2 = events_by_sites[1]
+        ebb_2 = events_by_buildings[1]
+        ebst_2 = events_by_storeys[1]
+        ebsp_2 = events_by_spaces[1]
+
+        with CurrentUser(user_1):
+            events = list(Event.get())
+            assert set(events) == {event_2}
+            with pytest.raises(BEMServerAuthorizationError):
+                events = list(Event.get(campaign_id=campaign_1.id))
+            with pytest.raises(BEMServerAuthorizationError):
+                events = list(Event.get(user_id=admin_user.id))
+            with pytest.raises(BEMServerAuthorizationError):
+                events = list(Event.get(timeseries_id=timeseries_1.id))
+            events = list(Event.get(campaign_id=campaign_2.id))
+            assert set(events) == {event_2}
+            events = list(Event.get(user_id=user_1.id))
+            assert set(events) == {event_2}
+            events = list(Event.get(timeseries_id=timeseries_2.id))
+            assert set(events) == {event_2}
+
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_l = list(Event.get_by_site(site_1.id))
+            ts_l = list(Event.get_by_site(site_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_2
+
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_l = list(Event.get_by_building(building_1.id))
+            ts_l = list(Event.get_by_building(building_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_2
+
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_l = list(Event.get_by_storey(storey_1.id))
+            ts_l = list(Event.get_by_storey(storey_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_2
+
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_l = list(Event.get_by_space(space_1.id))
+            ts_l = list(Event.get_by_space(space_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_2
+
+            with pytest.raises(BEMServerAuthorizationError):
+                ts_l = list(Event.get_by_zone(zone_1.id))
+            ts_l = list(Event.get_by_zone(zone_2.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_2
+
+            db.session.delete(ebst_2)
+            db.session.commit()
+
+            ts_l = list(Event.get_by_storey(storey_2.id, recurse=False))
+            assert not len(ts_l)
+            ts_l = list(Event.get_by_storey(storey_2.id, recurse=True))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_2
+
+            db.session.delete(ebb_2)
+            db.session.commit()
+
+            ts_l = list(Event.get_by_building(building_2.id, recurse=False))
+            assert not len(ts_l)
+            ts_l = list(Event.get_by_building(building_2.id, recurse=True))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_2
+
+            db.session.delete(ebsi_2)
+            db.session.commit()
+
+            ts_l = list(Event.get_by_site(site_2.id, recurse=False))
+            assert not list(ts_l)
+            ts_l = list(Event.get_by_site(site_2.id, recurse=True))
+            assert len(ts_l) == 1
+            assert ts_l[0] == event_2
+
+            db.session.delete(ebsp_2)
+            db.session.commit()
+
+            assert not list(Event.get_by_space(space_2.id))
+            assert not list(Event.get_by_storey(storey_2.id))
+            assert not list(Event.get_by_building(building_2.id))
+            assert not list(Event.get_by_site(site_2.id))
+
     def test_event_authorizations_as_admin(
         self, users, campaign_scopes, events, event_categories
     ):
@@ -236,8 +466,8 @@ class TestEventModel:
 
             events = list(Event.get())
             assert events == [event_2]
-            events = list(Event.get(campaign_scope_id=campaign_scope_1.id))
-            assert not events
+            with pytest.raises(BEMServerAuthorizationError):
+                events = list(Event.get(campaign_scope_id=campaign_scope_1.id))
             assert Event.get_by_id(event_2.id) == event_2
 
             # Not member of campaign_scope
