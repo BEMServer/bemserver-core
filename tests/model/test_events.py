@@ -1,6 +1,8 @@
 """Event tests"""
 import enum
 import datetime as dt
+from unittest import mock
+
 import sqlalchemy as sqla
 
 import pytest
@@ -18,13 +20,18 @@ from bemserver_core.model import (
     EventByZone,
     Notification,
 )
+from bemserver_core.model.events import notify as notify_task
 from bemserver_core.authorization import CurrentUser
 from bemserver_core.database import db
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
     BEMServerCoreCampaignError,
     BEMServerCoreCampaignScopeError,
+    BEMServerCoreTaskError,
 )
+
+
+DUMMY_ID = 69
 
 
 class TestEventLevelEnum:
@@ -582,6 +589,79 @@ class TestEventModel:
         assert notifs[0].event_id == event_e.id
         assert notifs[1].user_id == user_1.id
         assert notifs[1].event_id == event_e.id
+
+
+def test_event_notify_task(events):
+
+    evt_1 = events[0]
+    dt_1 = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+
+    with pytest.raises(BEMServerCoreTaskError):
+        notify_task(DUMMY_ID, dt_1)
+
+    with mock.patch.object(evt_1, "notify") as event_notify_mock:
+        notify_task(evt_1.id, dt_1)
+        event_notify_mock.assert_called_once()
+        event_notify_mock.assert_called_with(dt_1)
+
+
+@pytest.mark.usefixtures("users_by_user_groups")
+@pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+@pytest.mark.usefixtures("as_admin")
+@mock.patch("bemserver_core.model.events.notify.delay")
+def test_event_after_insert(notify_delay_mock, campaign_scopes, event_categories):
+    """Test notify task paarmeters and call time"""
+
+    campaign_scope_1 = campaign_scopes[0]
+    ec_1 = event_categories[0]
+    dt_1 = dt.datetime(2020, 1, 1)
+
+    Event.new(
+        campaign_scope_id=campaign_scope_1.id,
+        timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+        category_id=ec_1.id,
+        level=EventLevelEnum.WARNING,
+        source="src",
+    )
+
+    # Flush. Notify not called.
+    with mock.patch("datetime.datetime") as dt_patch:
+        dt_patch.now.return_value = dt_1
+        db.session.flush()
+    notify_delay_mock.assert_not_called()
+
+    # Commit. Notify called.
+    db.session.commit()
+    notify_delay_mock.assert_called_once()
+    notify_delay_mock.assert_called_with(1, dt_1)
+
+    # Commit after flush + delete. Notify not called.
+    notify_delay_mock.reset_mock()
+    event = Event.new(
+        campaign_scope_id=campaign_scope_1.id,
+        timestamp=dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc),
+        category_id=ec_1.id,
+        level=EventLevelEnum.WARNING,
+        source="src",
+    )
+    db.session.flush()
+    event.delete()
+    db.session.commit()
+    notify_delay_mock.assert_not_called()
+
+    # Commit after flush + rollback. Notify not called.
+    notify_delay_mock.reset_mock()
+    Event.new(
+        campaign_scope_id=campaign_scope_1.id,
+        timestamp=dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc),
+        category_id=ec_1.id,
+        level=EventLevelEnum.WARNING,
+        source="src",
+    )
+    db.session.flush()
+    db.session.rollback()
+    db.session.commit()
+    notify_delay_mock.assert_not_called()
 
 
 class TestTimeseriesByEventModel:

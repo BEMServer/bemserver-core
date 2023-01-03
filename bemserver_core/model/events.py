@@ -1,6 +1,7 @@
 """Event"""
 import enum
 from functools import total_ordering
+import datetime as dt
 
 import sqlalchemy as sqla
 
@@ -14,9 +15,11 @@ from bemserver_core.model.campaigns import (
 )
 from bemserver_core.model.sites import Site, Building, Storey, Space, Zone
 from bemserver_core.model.notifications import Notification
+from bemserver_core.celery import celery, logger
 from bemserver_core.exceptions import (
     BEMServerCoreCampaignError,
     BEMServerCoreCampaignScopeError,
+    BEMServerCoreTaskError,
 )
 
 
@@ -252,6 +255,36 @@ class Event(AuthMixin, Base):
         for user in list(query):
             Notification.new(user=user, event=self, timestamp=timestamp)
         db.session.commit()
+
+
+@sqla.event.listens_for(Event, "after_insert")
+def event_after_insert(_mapper, _connection, target):
+    """Callback executed on insert event
+
+    Notify event. Since the notification is created in a separate thread, we
+    want to ensure the event is committed to database, so we register a callback
+    to run on the next commit event of the session.
+
+    https://stackoverflow.com/questions/25078815/
+    """
+    timestamp = dt.datetime.now(tz=dt.timezone.utc)
+
+    @sqla.event.listens_for(db.session, "after_commit", once=True)
+    def event_after_commit_after_insert(_session):
+        """Callback executed on commit event after an insert"""
+        # Ensure the event has not been deleted or rolled-back since flush
+        if sqla.inspect(target).persistent:
+            notify.delay(target.id, timestamp)
+
+
+@celery.task(name="Notify")
+def notify(event_id, timestamp):
+    """Create notifications for an event with a given timestamp"""
+    logger.info("Notify event %s", event_id)
+    event = Event.get_by_id(event_id)
+    if event is None:
+        raise BEMServerCoreTaskError(f"Unknown event ID {event_id}")
+    event.notify(timestamp)
 
 
 class EventCategoryByUser(AuthMixin, Base):
