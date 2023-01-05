@@ -1,5 +1,6 @@
 """Global conftest"""
 import datetime as dt
+from unittest import mock
 
 import sqlalchemy as sqla
 
@@ -12,6 +13,13 @@ from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core import model, scheduled_tasks
 from bemserver_core.commands import setup_db
 from bemserver_core.common import PropertyType
+
+
+@pytest.fixture(scope="session", autouse=True)
+def inhibit_celery():
+    """Inhibit celery tasks by mocking the method launching tasks"""
+    with mock.patch("bemserver_core.celery.BEMServerCoreTask.apply_async"):
+        yield
 
 
 postgresql_proc = ppf.postgresql_proc(
