@@ -56,10 +56,10 @@ class Event(AuthMixin, Base):
     id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
     campaign_scope_id = sqla.Column(sqla.ForeignKey("c_scopes.id"), nullable=False)
     category_id = sqla.Column(sqla.ForeignKey("event_categs.id"), nullable=False)
-    level = sqla.Column(sqla.Enum(EventLevelEnum), nullable=False)
     timestamp = sqla.Column(sqla.DateTime(timezone=True), nullable=False)
     source = sqla.Column(sqla.String, nullable=False)
     description = sqla.Column(sqla.String())
+    level = sqla.Column(sqla.Enum(EventLevelEnum), nullable=False)
 
     category = sqla.orm.relationship(
         "EventCategory",
