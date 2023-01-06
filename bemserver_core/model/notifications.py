@@ -6,7 +6,7 @@ from bemserver_core.authorization import auth, AuthMixin, Relation
 
 
 class Notification(AuthMixin, Base):
-    __tablename__ = "notifications"
+    __tablename__ = "notifs"
 
     id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
     user_id = sqla.Column(sqla.ForeignKey("users.id"), nullable=False)
@@ -16,10 +16,10 @@ class Notification(AuthMixin, Base):
 
     user = sqla.orm.relationship(
         "User",
-        backref=sqla.orm.backref("notifications", cascade="all, delete-orphan"),
+        backref=sqla.orm.backref("notifs", cascade="all, delete-orphan"),
     )
     event = sqla.orm.relationship(
-        "Event", backref=sqla.orm.backref("notifications", cascade="all, delete-orphan")
+        "Event", backref=sqla.orm.backref("notifs", cascade="all, delete-orphan")
     )
 
     @classmethod
