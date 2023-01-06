@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+0.6.0 (2022-01-06)
+++++++++++++++++++
+
+Features:
+
+- Add Notification
+- Add EventCategoryByUser
+- Create notifications on event creation, asynchronously (Celery)
+
 0.5.0 (2022-12-22)
 ++++++++++++++++++
 
