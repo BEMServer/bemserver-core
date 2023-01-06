@@ -1,6 +1,7 @@
 """Event"""
 import enum
 from functools import total_ordering
+import datetime as dt
 
 import sqlalchemy as sqla
 
@@ -13,9 +14,12 @@ from bemserver_core.model.campaigns import (
     UserGroupByCampaignScope,
 )
 from bemserver_core.model.sites import Site, Building, Storey, Space, Zone
+from bemserver_core.model.notifications import Notification
+from bemserver_core.celery import celery, logger
 from bemserver_core.exceptions import (
     BEMServerCoreCampaignError,
     BEMServerCoreCampaignScopeError,
+    BEMServerCoreTaskError,
 )
 
 
@@ -33,6 +37,9 @@ class EventLevelEnum(enum.Enum):
         if self.__class__ is other.__class__:
             return self.value < other.value
         return NotImplemented
+
+
+DEFAULT_NOTIFICATION_EVENT_LEVEL = EventLevelEnum.WARNING
 
 
 class EventCategory(AuthMixin, Base):
@@ -218,6 +225,111 @@ class Event(AuthMixin, Base):
         Zone.get_by_id(zone_id)
         query = query.join(EventByZone).join(Zone).filter(Zone.id == zone_id)
         return query
+
+    def notify(self, timestamp):
+
+        ecbu_q = sqla.orm.aliased(
+            EventCategoryByUser,
+            alias=EventCategoryByUser.get(category_id=self.category_id).subquery(),
+        )
+
+        query = (
+            db.session.query(User)
+            .join(UserByUserGroup)
+            .join(UserGroup)
+            .join(UserGroupByCampaignScope)
+            .join(CampaignScope, CampaignScope.id == self.campaign_scope_id)
+            .outerjoin(ecbu_q)
+        )
+
+        if self.level >= DEFAULT_NOTIFICATION_EVENT_LEVEL:
+            level_filter = sqla.or_(
+                ecbu_q.notification_level <= self.level,
+                ecbu_q.notification_level == None,  # noqa
+            )
+        else:
+            level_filter = ecbu_q.notification_level <= self.level
+
+        query = query.filter(level_filter)
+
+        for user in list(query):
+            Notification.new(user=user, event=self, timestamp=timestamp)
+        db.session.commit()
+
+
+@sqla.event.listens_for(Event, "after_insert")
+def event_after_insert(_mapper, _connection, target):
+    """Callback executed on insert event
+
+    Notify event. Since the notification is created in a separate thread, we
+    want to ensure the event is committed to database, so we register a callback
+    to run on the next commit event of the session.
+
+    https://stackoverflow.com/questions/25078815/
+    """
+    timestamp = dt.datetime.now(tz=dt.timezone.utc)
+
+    @sqla.event.listens_for(db.session, "after_commit", once=True)
+    def event_after_commit_after_insert(_session):
+        """Callback executed on commit event after an insert"""
+        # Ensure the event has not been deleted or rolled-back since flush
+        if sqla.inspect(target).persistent:
+            notify.delay(target.id, timestamp)
+
+
+@celery.task(name="Notify")
+def notify(event_id, timestamp):
+    """Create notifications for an event with a given timestamp"""
+    logger.info("Notify event %s", event_id)
+    event = Event.get_by_id(event_id)
+    if event is None:
+        raise BEMServerCoreTaskError(f"Unknown event ID {event_id}")
+    event.notify(timestamp)
+
+
+class EventCategoryByUser(AuthMixin, Base):
+    """EventCategory x User associations"""
+
+    __tablename__ = "event_categs_by_users"
+    __table_args__ = (sqla.UniqueConstraint("user_id", "category_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    user_id = sqla.Column(sqla.ForeignKey("users.id"), nullable=False)
+    category_id = sqla.Column(sqla.ForeignKey("event_categs.id"), nullable=False)
+    notification_level = sqla.Column(sqla.Enum(EventLevelEnum), nullable=False)
+
+    user = sqla.orm.relationship(
+        "User",
+        backref=sqla.orm.backref(
+            "event_categories_by_users", cascade="all, delete-orphan"
+        ),
+    )
+    category = sqla.orm.relationship(
+        "EventCategory",
+        backref=sqla.orm.backref(
+            "event_categories_by_users", cascade="all, delete-orphan"
+        ),
+    )
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "user": Relation(
+                    kind="one",
+                    other_type="User",
+                    my_field="user_id",
+                    other_field="id",
+                ),
+                "event_category": Relation(
+                    kind="one",
+                    other_type="EventCategory",
+                    my_field="category_id",
+                    other_field="id",
+                ),
+            },
+        )
 
 
 class TimeseriesByEvent(AuthMixin, Base):
@@ -519,6 +631,7 @@ def init_db_events_triggers():
     make_columns_read_only(
         Event.timestamp,
         Event.campaign_scope_id,
+        EventCategoryByUser.user_id,
     )
     db.session.commit()
 

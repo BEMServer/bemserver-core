@@ -167,6 +167,19 @@ has_relation(cs: CampaignScope, "campaign_scope", event: Event) if
     cs = event.campaign_scope;
 
 
+resource EventCategoryByUser {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["owner"];
+
+    "create" if "owner";
+    "read" if "owner";
+    "update" if "owner";
+    "delete" if "owner";
+}
+has_role(user: User, "owner", ecbu: EventCategoryByUser ) if
+    user = ecbu.user;
+
+
 # Application code ensures event and timeseries are in the same campaign scope.
 # So we only check event.
 # Checking event and timeseries would trigger an Oso error:
@@ -289,6 +302,17 @@ resource EventByZone {
 }
 has_relation(event: Event, "event", ebz: EventByZone) if
     event = ebz.event;
+
+
+resource Notification{
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["owner"];
+
+    "read" if "owner";
+    "update" if "owner";
+}
+has_role(user: User, "owner", notif: Notification) if
+    user = notif.user;
 
 
 resource StructuralElementProperty{

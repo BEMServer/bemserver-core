@@ -75,3 +75,7 @@ class BEMServerAuthorizationError(BEMServerCoreIOError):
 
 class PropertyTypeInvalidError(BEMServerCoreError):
     """Invalid property value type: cast error"""
+
+
+class BEMServerCoreTaskError(BEMServerCoreError):
+    """Error in task execution"""

@@ -1,5 +1,6 @@
-""" Global conftest"""
+"""Global conftest"""
 import datetime as dt
+from unittest import mock
 
 import sqlalchemy as sqla
 
@@ -12,6 +13,13 @@ from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core import model, scheduled_tasks
 from bemserver_core.commands import setup_db
 from bemserver_core.common import PropertyType
+
+
+@pytest.fixture(scope="session", autouse=True)
+def inhibit_celery():
+    """Inhibit celery tasks by mocking the method launching tasks"""
+    with mock.patch("bemserver_core.celery.BEMServerCoreTask.apply_async"):
+        yield
 
 
 postgresql_proc = ppf.postgresql_proc(
@@ -299,14 +307,14 @@ def event_categories(bemservercore):
 @pytest.fixture
 def events(bemservercore, campaign_scopes, event_categories):
     with OpenBar():
-        ts_event_1 = model.Event.new(
+        event_1 = model.Event.new(
             campaign_scope_id=campaign_scopes[0].id,
             timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
             category_id=event_categories[0].id,
             level=model.EventLevelEnum.WARNING,
             source="src",
         )
-        ts_event_2 = model.Event.new(
+        event_2 = model.Event.new(
             campaign_scope_id=campaign_scopes[1].id,
             timestamp=dt.datetime(2020, 1, 15, tzinfo=dt.timezone.utc),
             category_id=event_categories[1].id,
@@ -314,7 +322,24 @@ def events(bemservercore, campaign_scopes, event_categories):
             source="src",
         )
         db.session.commit()
-    return (ts_event_1, ts_event_2)
+    return (event_1, event_2)
+
+
+@pytest.fixture
+def event_categories_by_users(bemservercore, event_categories, users):
+    with OpenBar():
+        ecbu_1 = model.EventCategoryByUser.new(
+            category_id=event_categories[0].id,
+            user_id=users[0].id,
+            notification_level=model.EventLevelEnum.WARNING,
+        )
+        ecbu_2 = model.EventCategoryByUser.new(
+            category_id=event_categories[1].id,
+            user_id=users[1].id,
+            notification_level=model.EventLevelEnum.DEBUG,
+        )
+        db.session.commit()
+    return (ecbu_1, ecbu_2)
 
 
 @pytest.fixture
@@ -405,6 +430,25 @@ def events_by_zones(bemservercore, events, zones):
         )
         db.session.commit()
     return (ebz_1, ebz_2)
+
+
+@pytest.fixture
+def notifications(bemservercore, events, users):
+    with OpenBar():
+        notif_1 = model.Notification.new(
+            event_id=events[0].id,
+            user_id=users[0].id,
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            read=False,
+        )
+        notif_2 = model.Notification.new(
+            event_id=events[1].id,
+            user_id=users[1].id,
+            timestamp=dt.datetime(2021, 1, 1, tzinfo=dt.timezone.utc),
+            read=True,
+        )
+        db.session.commit()
+    return (notif_1, notif_2)
 
 
 @pytest.fixture

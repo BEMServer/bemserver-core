@@ -1,6 +1,8 @@
 """Event tests"""
 import enum
 import datetime as dt
+from unittest import mock
+
 import sqlalchemy as sqla
 
 import pytest
@@ -9,20 +11,27 @@ from bemserver_core.model import (
     EventLevelEnum,
     EventCategory,
     Event,
+    EventCategoryByUser,
     TimeseriesByEvent,
     EventBySite,
     EventByBuilding,
     EventByStorey,
     EventBySpace,
     EventByZone,
+    Notification,
 )
+from bemserver_core.model.events import notify as notify_task
 from bemserver_core.authorization import CurrentUser
 from bemserver_core.database import db
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
     BEMServerCoreCampaignError,
     BEMServerCoreCampaignScopeError,
+    BEMServerCoreTaskError,
 )
+
+
+DUMMY_ID = 69
 
 
 class TestEventLevelEnum:
@@ -47,6 +56,18 @@ class TestEventLevelEnum:
 
 
 class TestEventCategoryModel:
+    @pytest.mark.usefixtures("event_categories_by_users")
+    def test_event_category_delete_cascade(self, users, event_categories):
+        admin_user = users[0]
+        ec_1 = event_categories[0]
+
+        with CurrentUser(admin_user):
+            assert len(list(EventCategoryByUser.get())) == 2
+
+            ec_1.delete()
+            db.session.commit()
+            assert len(list(EventCategoryByUser.get())) == 1
+
     def test_event_category_authorizations_as_admin(self, users):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -89,16 +110,19 @@ class TestEventCategoryModel:
 
 class TestEventModel:
     @pytest.mark.usefixtures("timeseries_by_events")
-    def test_events_delete_cascade(self, users, events):
+    @pytest.mark.usefixtures("notifications")
+    def test_event_delete_cascade(self, users, events):
         admin_user = users[0]
         event_1 = events[0]
 
         with CurrentUser(admin_user):
             assert len(list(TimeseriesByEvent.get())) == 2
+            assert len(list(Notification.get())) == 2
 
             event_1.delete()
             db.session.commit()
             assert len(list(TimeseriesByEvent.get())) == 1
+            assert len(list(Notification.get())) == 1
 
     @pytest.mark.usefixtures("as_admin")
     def test_event_read_only_fields(self, campaign_scopes, event_categories):
@@ -497,6 +521,147 @@ class TestEventModel:
             db.session.commit()
             event_2.delete()
             db.session.commit()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.usefixtures("as_admin")
+    def test_event_notify(self, users, campaign_scopes, event_categories):
+
+        user_0 = users[0]
+        user_1 = users[1]
+
+        EventCategoryByUser.new(
+            category_id=event_categories[0].id,
+            user_id=user_0.id,
+            notification_level=EventLevelEnum.DEBUG,
+        )
+
+        db.session.flush()
+
+        assert len(list(Notification.get())) == 0
+
+        # Notify INFO: only user_0 is notified
+        event_i = Event.new(
+            campaign_scope_id=campaign_scopes[0].id,
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            category_id=event_categories[0].id,
+            level=EventLevelEnum.INFO,
+            source="src",
+        )
+        event_i.notify(dt.datetime.now())
+        notifs = list(Notification.get())
+        assert len(notifs) == 1
+        assert notifs[0].user_id == user_0.id
+        assert notifs[0].event_id == event_i.id
+
+        db.session.query(Notification).delete()
+
+        # Notify WARNING: both users are notified
+        event_w = Event.new(
+            campaign_scope_id=campaign_scopes[0].id,
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            category_id=event_categories[0].id,
+            level=EventLevelEnum.WARNING,
+            source="src",
+        )
+        event_w.notify(dt.datetime.now())
+        notifs = list(Notification.get().order_by("user_id"))
+        assert len(notifs) == 2
+        assert notifs[0].user_id == user_0.id
+        assert notifs[0].event_id == event_w.id
+        assert notifs[1].user_id == user_1.id
+        assert notifs[1].event_id == event_w.id
+
+        db.session.query(Notification).delete()
+
+        # Notify ERROR: both users are notified
+        event_e = Event.new(
+            campaign_scope_id=campaign_scopes[0].id,
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            category_id=event_categories[0].id,
+            level=EventLevelEnum.ERROR,
+            source="src",
+        )
+        event_e.notify(dt.datetime.now())
+        notifs = list(Notification.get().order_by("user_id"))
+        assert len(notifs) == 2
+        assert notifs[0].user_id == user_0.id
+        assert notifs[0].event_id == event_e.id
+        assert notifs[1].user_id == user_1.id
+        assert notifs[1].event_id == event_e.id
+
+
+def test_event_notify_task(events):
+
+    evt_1 = events[0]
+    dt_1 = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+
+    with pytest.raises(BEMServerCoreTaskError):
+        notify_task(DUMMY_ID, dt_1)
+
+    with mock.patch.object(evt_1, "notify") as event_notify_mock:
+        notify_task(evt_1.id, dt_1)
+        event_notify_mock.assert_called_once()
+        event_notify_mock.assert_called_with(dt_1)
+
+
+@pytest.mark.usefixtures("users_by_user_groups")
+@pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+@pytest.mark.usefixtures("as_admin")
+@mock.patch("bemserver_core.model.events.notify.delay")
+def test_event_after_insert(notify_delay_mock, campaign_scopes, event_categories):
+    """Test notify task paarmeters and call time"""
+
+    campaign_scope_1 = campaign_scopes[0]
+    ec_1 = event_categories[0]
+    dt_1 = dt.datetime(2020, 1, 1)
+
+    Event.new(
+        campaign_scope_id=campaign_scope_1.id,
+        timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+        category_id=ec_1.id,
+        level=EventLevelEnum.WARNING,
+        source="src",
+    )
+
+    # Flush. Notify not called.
+    with mock.patch("datetime.datetime") as dt_patch:
+        dt_patch.now.return_value = dt_1
+        db.session.flush()
+    notify_delay_mock.assert_not_called()
+
+    # Commit. Notify called.
+    db.session.commit()
+    notify_delay_mock.assert_called_once()
+    notify_delay_mock.assert_called_with(1, dt_1)
+
+    # Commit after flush + delete. Notify not called.
+    notify_delay_mock.reset_mock()
+    event = Event.new(
+        campaign_scope_id=campaign_scope_1.id,
+        timestamp=dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc),
+        category_id=ec_1.id,
+        level=EventLevelEnum.WARNING,
+        source="src",
+    )
+    db.session.flush()
+    event.delete()
+    db.session.commit()
+    notify_delay_mock.assert_not_called()
+
+    # Commit after flush + rollback. Notify not called.
+    notify_delay_mock.reset_mock()
+    Event.new(
+        campaign_scope_id=campaign_scope_1.id,
+        timestamp=dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc),
+        category_id=ec_1.id,
+        level=EventLevelEnum.WARNING,
+        source="src",
+    )
+    db.session.flush()
+    db.session.rollback()
+    db.session.commit()
+    notify_delay_mock.assert_not_called()
 
 
 class TestTimeseriesByEventModel:
@@ -899,3 +1064,76 @@ class TestEventByZoneModel:
                 ebz_1.update(zone_id=zone_1.id)
             with pytest.raises(BEMServerAuthorizationError):
                 ebz_1.delete()
+
+
+class TestEventCategoryByUserModel:
+    def test_event_category_by_user_authorizations_as_admin(
+        self, users, event_categories
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        ec_1 = event_categories[0]
+
+        with CurrentUser(admin_user):
+            ecbus = list(EventCategoryByUser.get())
+            assert not ecbus
+            ecbu_1 = EventCategoryByUser.new(
+                user_id=admin_user.id,
+                category_id=ec_1.id,
+                notification_level=EventLevelEnum.WARNING,
+            )
+            db.session.flush()
+            assert EventCategoryByUser.get_by_id(ecbu_1.id) == ecbu_1
+            db.session.commit()
+            ecbu_1.update(notification_level=EventLevelEnum.DEBUG)
+            db.session.commit()
+            ecbu_1.delete()
+            db.session.commit()
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    def test_event_category_by_user_authorizations_as_user(
+        self, users, event_categories, event_categories_by_users
+    ):
+        user_0 = users[0]
+        user_1 = users[1]
+        assert not user_1.is_admin
+        ec_1 = event_categories[0]
+        ecbu_1 = event_categories_by_users[0]
+        ecbu_2 = event_categories_by_users[1]
+        assert ecbu_2.user == user_1
+
+        with CurrentUser(user_1):
+
+            ecbus = list(EventCategoryByUser.get())
+            assert ecbus == [ecbu_2]
+            assert EventCategoryByUser.get_by_id(ecbu_2.id) == ecbu_2
+            ecbu_3 = EventCategoryByUser.new(
+                user_id=user_1.id,
+                category_id=ec_1.id,
+                notification_level=EventLevelEnum.WARNING,
+            )
+            ecbu_2.update(notification_level=EventLevelEnum.INFO)
+            ecbu_2.delete()
+            db.session.commit()
+
+            with pytest.raises(BEMServerAuthorizationError):
+                EventCategoryByUser.new(
+                    user_id=user_0.id,
+                    category_id=ec_1.id,
+                    notification_level=EventLevelEnum.WARNING,
+                )
+            with pytest.raises(BEMServerAuthorizationError):
+                EventCategoryByUser.get_by_id(ecbu_1.id)
+            with pytest.raises(BEMServerAuthorizationError):
+                ecbu_1.update(notification_level=EventLevelEnum.INFO)
+            with pytest.raises(BEMServerAuthorizationError):
+                ecbu_1.delete()
+
+            # Test read-only user_id field
+            ecbu_3.update(user_id=user_0.id)
+            with pytest.raises(
+                sqla.exc.IntegrityError,
+                match="user_id cannot be modified",
+            ):
+                db.session.flush()
