@@ -400,7 +400,7 @@ class TestTimeseriesModel:
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
 
-            ts_l = list(Timeseries.get_by_event(event_1.id))
+            ts_l = list(Timeseries.get(event_id=event_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
 
@@ -418,6 +418,10 @@ class TestTimeseriesModel:
             assert not list(
                 Timeseries.get(site_id=site_1.id, building_id=building_2.id)
             )
+
+            ts_l = list(Timeseries.get(site_id=site_1.id, event_id=event_1.id))
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_1
 
             db.session.delete(tbst_1)
             db.session.commit()
@@ -555,8 +559,8 @@ class TestTimeseriesModel:
             assert ts_l[0] == ts_2
 
             with pytest.raises(BEMServerAuthorizationError):
-                ts_l = list(Timeseries.get_by_event(event_1.id))
-            ts_l = list(Timeseries.get_by_event(event_2.id))
+                ts_l = list(Timeseries.get(event_id=event_1.id))
+            ts_l = list(Timeseries.get(event_id=event_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_2
 

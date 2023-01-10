@@ -87,6 +87,7 @@ class Timeseries(AuthMixin, Base):
         recurse_storey_id=None,
         space_id=None,
         zone_id=None,
+        event_id=None,
         **kwargs,
     ):
         if "campaign_id" in kwargs:
@@ -134,6 +135,8 @@ class Timeseries(AuthMixin, Base):
             query = cls._filter_by_space(query, space_id)
         if zone_id is not None:
             query = cls._filter_by_zone(query, zone_id)
+        if event_id is not None:
+            query = cls._filter_by_event(query, event_id)
         return query
 
     @staticmethod
@@ -247,11 +250,12 @@ class Timeseries(AuthMixin, Base):
         query = base_query.join(TimeseriesByZone).join(Zone).filter(Zone.id == zone_id)
         return query
 
-    @classmethod
-    def get_by_event(cls, event_id):
-        query = cls.get()
+    @staticmethod
+    def _filter_by_event(base_query, event_id):
         Event.get_by_id(event_id)
-        query = query.join(TimeseriesByEvent).join(Event).filter(Event.id == event_id)
+        query = (
+            base_query.join(TimeseriesByEvent).join(Event).filter(Event.id == event_id)
+        )
         return query
 
     def get_timeseries_by_data_state(self, data_state):
