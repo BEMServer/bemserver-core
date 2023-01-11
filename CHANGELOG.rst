@@ -1,7 +1,16 @@
 Changelog
 ---------
 
-0.6.0 (2023-01-06)
+0.7.0 (2023-01-11)
+++++++++++++++++++
+
+Features:
+
+- Rework Timeseries event filter
+- Rework Timeseries site,... filters
+- Rework Event site,... filters
+
+0.6.0(2023-01-06)
 ++++++++++++++++++
 
 Features:
