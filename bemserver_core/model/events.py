@@ -84,7 +84,21 @@ class Event(AuthMixin, Base):
         )
 
     @classmethod
-    def get(cls, campaign_id=None, user_id=None, timeseries_id=None, **kwargs):
+    def get(
+        cls,
+        campaign_id=None,
+        user_id=None,
+        timeseries_id=None,
+        site_id=None,
+        recurse_site_id=None,
+        building_id=None,
+        recurse_building_id=None,
+        storey_id=None,
+        recurse_storey_id=None,
+        space_id=None,
+        zone_id=None,
+        **kwargs,
+    ):
         if "campaign_scope_id" in kwargs:
             CampaignScope.get_by_id(kwargs["campaign_scope_id"])
         query = super().get(**kwargs)
@@ -112,11 +126,39 @@ class Event(AuthMixin, Base):
             query = query.join(TimeseriesByEvent).filter(
                 TimeseriesByEvent.timeseries_id == timeseries_id
             )
+        if site_id is not None:
+            if recurse_site_id is not None:
+                raise ValueError(
+                    "site_id and recurse_site_id are mutually exclusive arguments."
+                )
+            query = cls._filter_by_site(query, site_id)
+        if recurse_site_id is not None:
+            query = cls._filter_by_site(query, recurse_site_id, recurse=True)
+        if building_id is not None:
+            if recurse_building_id is not None:
+                raise ValueError(
+                    "building_id and recurse_building_id "
+                    "are mutually exclusive arguments."
+                )
+            query = cls._filter_by_building(query, building_id)
+        if recurse_building_id is not None:
+            query = cls._filter_by_building(query, recurse_building_id, recurse=True)
+        if storey_id is not None:
+            if recurse_storey_id is not None:
+                raise ValueError(
+                    "storey_id and recurse_storey_id are mutually exclusive arguments."
+                )
+            query = cls._filter_by_storey(query, storey_id)
+        if recurse_storey_id is not None:
+            query = cls._filter_by_storey(query, recurse_storey_id, recurse=True)
+        if space_id is not None:
+            query = cls._filter_by_space(query, space_id)
+        if zone_id is not None:
+            query = cls._filter_by_zone(query, zone_id)
         return query
 
-    @classmethod
-    def get_by_site(cls, site_id, recurse=False):
-        base_query = cls.get()
+    @staticmethod
+    def _filter_by_site(base_query, site_id, recurse=False):
         Site.get_by_id(site_id)
 
         query = base_query.join(EventBySite).join(Site).filter(Site.id == site_id)
@@ -156,9 +198,8 @@ class Event(AuthMixin, Base):
 
         return query
 
-    @classmethod
-    def get_by_building(cls, building_id, recurse=False):
-        base_query = cls.get()
+    @staticmethod
+    def _filter_by_building(base_query, building_id, recurse=False):
         Building.get_by_id(building_id)
 
         query = (
@@ -191,9 +232,8 @@ class Event(AuthMixin, Base):
 
         return query
 
-    @classmethod
-    def get_by_storey(cls, storey_id, recurse=False):
-        base_query = cls.get()
+    @staticmethod
+    def _filter_by_storey(base_query, storey_id, recurse=False):
         Storey.get_by_id(storey_id)
 
         query = (
@@ -212,18 +252,16 @@ class Event(AuthMixin, Base):
 
         return query
 
-    @classmethod
-    def get_by_space(cls, space_id):
-        query = cls.get()
+    @staticmethod
+    def _filter_by_space(base_query, space_id):
         Space.get_by_id(space_id)
-        query = query.join(EventBySpace).join(Space).filter(Space.id == space_id)
+        query = base_query.join(EventBySpace).join(Space).filter(Space.id == space_id)
         return query
 
-    @classmethod
-    def get_by_zone(cls, zone_id):
-        query = cls.get()
+    @staticmethod
+    def _filter_by_zone(base_query, zone_id):
         Zone.get_by_id(zone_id)
-        query = query.join(EventByZone).join(Zone).filter(Zone.id == zone_id)
+        query = base_query.join(EventByZone).join(Zone).filter(Zone.id == zone_id)
         return query
 
     def notify(self, timestamp):

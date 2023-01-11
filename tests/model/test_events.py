@@ -243,6 +243,7 @@ class TestEventModel:
         timeseries_1 = timeseries[0]
         site_1 = sites[0]
         building_1 = buildings[0]
+        building_2 = buildings[1]
         storey_1 = storeys[0]
         space_1 = spaces[0]
         zone_1 = zones[0]
@@ -261,60 +262,71 @@ class TestEventModel:
             events = list(Event.get(timeseries_id=timeseries_1.id))
             assert set(events) == {event_1}
 
-            ts_l = list(Event.get_by_site(site_1.id))
+            ts_l = list(Event.get(site_id=site_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_1
 
-            ts_l = list(Event.get_by_building(building_1.id))
+            ts_l = list(Event.get(building_id=building_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_1
 
-            ts_l = list(Event.get_by_storey(storey_1.id))
+            ts_l = list(Event.get(storey_id=storey_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_1
 
-            ts_l = list(Event.get_by_space(space_1.id))
+            ts_l = list(Event.get(space_id=space_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_1
 
-            ts_l = list(Event.get_by_zone(zone_1.id))
+            ts_l = list(Event.get(zone_id=zone_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_1
+
+            # Can't filter by both site and recurse site
+            with pytest.raises(ValueError):
+                Event.get(site_id=site_1.id, recurse_site_id=site_1.id)
+            with pytest.raises(ValueError):
+                Event.get(building_id=building_1.id, recurse_building_id=building_1.id)
+            with pytest.raises(ValueError):
+                Event.get(storey_id=storey_1.id, recurse_storey_id=storey_1.id)
+
+            # Can filter by site and building (even though it doesn't make much sense)
+            assert not list(Event.get(site_id=site_1.id, building_id=building_2.id))
 
             db.session.delete(ebst_1)
             db.session.commit()
 
-            ts_l = list(Event.get_by_storey(storey_1.id, recurse=False))
+            ts_l = list(Event.get(storey_id=storey_1.id))
             assert not len(ts_l)
-            ts_l = list(Event.get_by_storey(storey_1.id, recurse=True))
+            ts_l = list(Event.get(recurse_storey_id=storey_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_1
 
             db.session.delete(ebb_1)
             db.session.commit()
 
-            ts_l = list(Event.get_by_building(building_1.id, recurse=False))
+            ts_l = list(Event.get(building_id=building_1.id))
             assert not len(ts_l)
-            ts_l = list(Event.get_by_building(building_1.id, recurse=True))
+            ts_l = list(Event.get(recurse_building_id=building_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_1
 
             db.session.delete(ebsi_1)
             db.session.commit()
 
-            ts_l = list(Event.get_by_site(site_1.id, recurse=False))
+            ts_l = list(Event.get(site_id=site_1.id))
             assert not list(ts_l)
-            ts_l = list(Event.get_by_site(site_1.id, recurse=True))
+            ts_l = list(Event.get(recurse_site_id=site_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_1
 
             db.session.delete(ebsp_1)
             db.session.commit()
 
-            assert not list(Event.get_by_space(space_1.id))
-            assert not list(Event.get_by_storey(storey_1.id))
-            assert not list(Event.get_by_building(building_1.id))
-            assert not list(Event.get_by_site(site_1.id))
+            assert not list(Event.get(space_id=space_1.id))
+            assert not list(Event.get(storey_id=storey_1.id))
+            assert not list(Event.get(building_id=building_1.id))
+            assert not list(Event.get(site_id=site_1.id))
 
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
@@ -380,69 +392,69 @@ class TestEventModel:
             assert set(events) == {event_2}
 
             with pytest.raises(BEMServerAuthorizationError):
-                ts_l = list(Event.get_by_site(site_1.id))
-            ts_l = list(Event.get_by_site(site_2.id))
+                ts_l = list(Event.get(site_id=site_1.id))
+            ts_l = list(Event.get(site_id=site_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_2
 
             with pytest.raises(BEMServerAuthorizationError):
-                ts_l = list(Event.get_by_building(building_1.id))
-            ts_l = list(Event.get_by_building(building_2.id))
+                ts_l = list(Event.get(building_id=building_1.id))
+            ts_l = list(Event.get(building_id=building_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_2
 
             with pytest.raises(BEMServerAuthorizationError):
-                ts_l = list(Event.get_by_storey(storey_1.id))
-            ts_l = list(Event.get_by_storey(storey_2.id))
+                ts_l = list(Event.get(storey_id=storey_1.id))
+            ts_l = list(Event.get(storey_id=storey_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_2
 
             with pytest.raises(BEMServerAuthorizationError):
-                ts_l = list(Event.get_by_space(space_1.id))
-            ts_l = list(Event.get_by_space(space_2.id))
+                ts_l = list(Event.get(space_id=space_1.id))
+            ts_l = list(Event.get(space_id=space_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_2
 
             with pytest.raises(BEMServerAuthorizationError):
-                ts_l = list(Event.get_by_zone(zone_1.id))
-            ts_l = list(Event.get_by_zone(zone_2.id))
+                ts_l = list(Event.get(zone_id=zone_1.id))
+            ts_l = list(Event.get(zone_id=zone_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_2
 
             db.session.delete(ebst_2)
             db.session.commit()
 
-            ts_l = list(Event.get_by_storey(storey_2.id, recurse=False))
+            ts_l = list(Event.get(storey_id=storey_2.id))
             assert not len(ts_l)
-            ts_l = list(Event.get_by_storey(storey_2.id, recurse=True))
+            ts_l = list(Event.get(recurse_storey_id=storey_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_2
 
             db.session.delete(ebb_2)
             db.session.commit()
 
-            ts_l = list(Event.get_by_building(building_2.id, recurse=False))
+            ts_l = list(Event.get(building_id=building_2.id))
             assert not len(ts_l)
-            ts_l = list(Event.get_by_building(building_2.id, recurse=True))
+            ts_l = list(Event.get(recurse_building_id=building_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_2
 
             db.session.delete(ebsi_2)
             db.session.commit()
 
-            ts_l = list(Event.get_by_site(site_2.id, recurse=False))
+            ts_l = list(Event.get(site_id=site_2.id))
             assert not list(ts_l)
-            ts_l = list(Event.get_by_site(site_2.id, recurse=True))
+            ts_l = list(Event.get(recurse_site_id=site_2.id))
             assert len(ts_l) == 1
             assert ts_l[0] == event_2
 
             db.session.delete(ebsp_2)
             db.session.commit()
 
-            assert not list(Event.get_by_space(space_2.id))
-            assert not list(Event.get_by_storey(storey_2.id))
-            assert not list(Event.get_by_building(building_2.id))
-            assert not list(Event.get_by_site(site_2.id))
+            assert not list(Event.get(space_id=space_2.id))
+            assert not list(Event.get(storey_id=storey_2.id))
+            assert not list(Event.get(building_id=building_2.id))
+            assert not list(Event.get(site_id=site_2.id))
 
     def test_event_authorizations_as_admin(
         self, users, campaign_scopes, events, event_categories
