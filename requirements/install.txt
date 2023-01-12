@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file=requirements/install.txt setup.py
 #
-alembic==1.8.1
+alembic==1.9.1
     # via bemserver-core (setup.py)
 amqp==5.1.1
     # via kombu
@@ -35,8 +35,6 @@ click-plugins==1.1.1
     # via celery
 click-repl==0.2.0
     # via celery
-deprecated==1.2.13
-    # via redis
 greenlet==2.0.1
     # via sqlalchemy
 kombu==5.2.4
@@ -45,37 +43,33 @@ mako==1.2.4
     # via alembic
 markupsafe==2.1.1
     # via mako
-numpy==1.23.4
+numpy==1.24.1
     # via pandas
 oso==0.26.4
     # via bemserver-core (setup.py)
-packaging==21.3
-    # via redis
-pandas==1.5.1
+pandas==1.5.2
     # via bemserver-core (setup.py)
 passlib==1.7.4
     # via bemserver-core (setup.py)
-prompt-toolkit==3.0.32
+prompt-toolkit==3.0.36
     # via click-repl
 psycopg2==2.9.5
     # via bemserver-core (setup.py)
 pycparser==2.21
     # via cffi
-pyparsing==3.0.9
-    # via packaging
 python-dateutil==2.8.2
     # via pandas
-pytz==2022.6
+pytz==2022.7
     # via
     #   celery
     #   pandas
-redis==4.3.4
+redis==4.4.2
     # via bemserver-core (setup.py)
 six==1.16.0
     # via
     #   click-repl
     #   python-dateutil
-sqlalchemy==1.4.44
+sqlalchemy==1.4.46
     # via
     #   alembic
     #   bemserver-core (setup.py)
@@ -86,5 +80,3 @@ vine==5.0.0
     #   kombu
 wcwidth==0.2.5
     # via prompt-toolkit
-wrapt==1.14.1
-    # via deprecated
