@@ -929,3 +929,17 @@ def st_check_missings_by_campaigns(bemservercore, campaigns):
         )
         db.session.commit()
     return (st_cbc_1, st_cbc_2)
+
+
+@pytest.fixture
+def st_check_outliers_by_campaigns(bemservercore, campaigns):
+    with OpenBar():
+        st_cbc_1 = scheduled_tasks.ST_CheckOutliersByCampaign.new(
+            campaign_id=campaigns[0].id
+        )
+        st_cbc_2 = scheduled_tasks.ST_CheckOutliersByCampaign.new(
+            campaign_id=campaigns[1].id,
+            is_enabled=False,
+        )
+        db.session.commit()
+    return (st_cbc_1, st_cbc_2)

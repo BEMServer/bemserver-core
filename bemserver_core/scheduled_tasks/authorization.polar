@@ -20,3 +20,11 @@ resource ST_CheckMissingByCampaign {
 
 has_permission(user: User, "read", st_cbc: ST_CheckMissingByCampaign) if
     has_role(user, "member", st_cbc.campaign);
+
+
+resource ST_CheckOutliersByCampaign {
+    permissions = ["create", "read", "update", "delete"];
+}
+
+has_permission(user: User, "read", st_cbc: ST_CheckOutliersByCampaign) if
+    has_role(user, "member", st_cbc.campaign);
