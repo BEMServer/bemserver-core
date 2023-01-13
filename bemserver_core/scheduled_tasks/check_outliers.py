@@ -17,7 +17,7 @@ from bemserver_core.model import (
 )
 from bemserver_core.database import Base, db
 from bemserver_core.authorization import AuthMixin, auth, Relation
-from bemserver_core.process.outliers import get_outliers
+from bemserver_core.process.cleanup import cleanup
 from bemserver_core.celery import celery, logger
 from bemserver_core.time_utils import floor, make_date_offset
 from bemserver_core.exceptions import BEMServerCorePeriodError
@@ -198,7 +198,7 @@ def check_outliers_ts_data(
             logger.debug("Timeseries counts: %s", ts_counts)
 
             # Get outliers
-            outliers_df = get_outliers(
+            outliers_df = cleanup(
                 start_dt, end_dt, c_scope.timeseries, ds_raw, inclusive="left"
             )
             outliers_count = outliers_df.count()
@@ -206,8 +206,7 @@ def check_outliers_ts_data(
             outliers_ts = [
                 (ts_id, ts_info["name"])
                 for ts_id, ts_info in ts_counts.items()
-                if (1 - outliers_count[ts_id] / ts_info["count"])
-                < min_correctness_ratio
+                if outliers_count[ts_id] / ts_info["count"] < min_correctness_ratio
             ]
 
             logger.debug("Timeseries with outliers: %s", outliers_ts)
