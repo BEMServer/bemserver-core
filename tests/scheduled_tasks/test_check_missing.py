@@ -296,10 +296,10 @@ class TestCheckMissingScheduledTask:
 
         with OpenBar():
 
-            # Min ratio = 90 % -> 2 TS with missing data (different campaign scope)
-
             assert not list(Event.get())
             assert not list(TimeseriesByEvent.get())
+
+            # Min ratio = 90 % -> 2 TS with missing data (different campaign scope)
 
             check_dt_1 = end_dt
             check_missing_ts_data(check_dt_1, "day", 1, min_completeness_ratio=0.9)
