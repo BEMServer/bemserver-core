@@ -6,7 +6,7 @@ from pandas.tseries.offsets import DateOffset
 
 import pytest
 
-from bemserver_core.time_utils import make_date_offset, floor, ceil
+from bemserver_core.time_utils import make_date_offset, floor, ceil, last_full_interval
 from bemserver_core.exceptions import BEMServerCorePeriodError
 
 
@@ -137,3 +137,25 @@ class TestTimeUtilsCeil:
             match="Period multipliers only allowed for fixed size periods",
         ):
             ceil(dt.datetime(2020, 1, 1), period, 2)
+
+
+@pytest.mark.parametrize("timezone", (dt.timezone.utc, ZoneInfo("Europe/Paris")))
+def test_last_full_interval(timezone):
+    assert last_full_interval(
+        dt.datetime(2020, 1, 1, 12, 42, tzinfo=timezone), "hour", 3
+    ) == (
+        dt.datetime(2020, 1, 1, 9, tzinfo=timezone),
+        dt.datetime(2020, 1, 1, 12, tzinfo=timezone),
+    )
+    assert last_full_interval(
+        dt.datetime(2020, 1, 2, 12, 42, tzinfo=timezone), "day", 1
+    ) == (
+        dt.datetime(2020, 1, 1, tzinfo=timezone),
+        dt.datetime(2020, 1, 2, tzinfo=timezone),
+    )
+    assert last_full_interval(
+        dt.datetime(2020, 2, 11, 12, 42, tzinfo=timezone), "month", 1
+    ) == (
+        dt.datetime(2020, 1, 1, tzinfo=timezone),
+        dt.datetime(2020, 2, 1, tzinfo=timezone),
+    )

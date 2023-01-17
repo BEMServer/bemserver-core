@@ -685,6 +685,7 @@ def init_db_events():
             EventCategory(name="Data missing"),
             EventCategory(name="Data present"),
             EventCategory(name="Data outliers"),
+            EventCategory(name="No data outliers"),
         ]
     )
     db.session.commit()

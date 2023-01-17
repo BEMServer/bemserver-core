@@ -1,11 +1,14 @@
-"""Check missing data scheduled task"""
+"""Check outliers scheduled task"""
 import datetime as dt
 from zoneinfo import ZoneInfo
 
 import sqlalchemy as sqla
 
 from bemserver_core.model import (
+    Timeseries,
+    TimeseriesData,
     TimeseriesDataState,
+    TimeseriesByDataState,
     Campaign,
     EventLevelEnum,
     EventCategory,
@@ -14,17 +17,17 @@ from bemserver_core.model import (
 )
 from bemserver_core.database import Base, db
 from bemserver_core.authorization import AuthMixin, auth, Relation
-from bemserver_core.process.completeness import compute_completeness
+from bemserver_core.process.cleanup import cleanup
 from bemserver_core.celery import celery, logger
 from bemserver_core.time_utils import last_full_interval
 from bemserver_core.exceptions import BEMServerCorePeriodError
 
 
-SERVICE_NAME = "BEMServer - Check missing data"
+SERVICE_NAME = "BEMServer - Check outliers"
 
 
-class ST_CheckMissingByCampaign(AuthMixin, Base):
-    __tablename__ = "st_check_missing_by_campaigns"
+class ST_CheckOutliersByCampaign(AuthMixin, Base):
+    __tablename__ = "st_check_outliers_by_campaigns"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     campaign_id = sqla.Column(
@@ -34,14 +37,14 @@ class ST_CheckMissingByCampaign(AuthMixin, Base):
     campaign = sqla.orm.relationship(
         "Campaign",
         backref=sqla.orm.backref(
-            "st_check_missing_by_campaigns", cascade="all, delete-orphan"
+            "st_check_outliers_by_campaigns", cascade="all, delete-orphan"
         ),
     )
 
     @classmethod
     def get_all(cls, *, is_enabled=None, **kwargs):
-        """Get "check missing" service state for all campaigns, even if campaign has
-        no explicit relation with "check missing" (campaign has never been checked yet).
+        """Get "check outliers" service state for all campaigns, even if campaign has no
+        explicit relation with "check outliers" (campaign has never been checked yet).
         """
         # Extract sort info to apply it at the end.
         sort = kwargs.pop("sort", None)
@@ -59,33 +62,33 @@ class ST_CheckMissingByCampaign(AuthMixin, Base):
             Campaign,
             alias=Campaign.get(**camp_kwargs).subquery(),
         )
-        check_missing_subq = sqla.orm.aliased(
-            ST_CheckMissingByCampaign,
-            alias=ST_CheckMissingByCampaign.get(**kwargs).subquery(),
+        check_outliers_subq = sqla.orm.aliased(
+            ST_CheckOutliersByCampaign,
+            alias=ST_CheckOutliersByCampaign.get(**kwargs).subquery(),
         )
 
         # Main request.
         query = db.session.query(
-            check_missing_subq.id,
+            check_outliers_subq.id,
             camp_subq.id.label(f"{camp_alias_name}_id"),
             camp_subq.name.label(f"{camp_alias_name}_name"),
-            check_missing_subq.is_enabled,
+            check_outliers_subq.is_enabled,
         ).join(
-            check_missing_subq,
-            check_missing_subq.campaign_id == camp_subq.id,
+            check_outliers_subq,
+            check_outliers_subq.campaign_id == camp_subq.id,
             isouter=True,
         )
 
         # Apply a special filter for is_enabled attribute (None is considered as False).
         if is_enabled is not None:
             query = cls._filter_bool_none_as_false(
-                query, check_missing_subq.is_enabled, is_enabled
+                query, check_outliers_subq.is_enabled, is_enabled
             )
 
         # Apply sort on final result.
         if sort is not None:
             for field in sort:
-                cls_field = check_missing_subq
+                cls_field = check_outliers_subq
                 if camp_alias_name in field:
                     field = field.replace(f"{camp_alias_name}_", "")
                     cls_field = camp_subq
@@ -108,8 +111,8 @@ class ST_CheckMissingByCampaign(AuthMixin, Base):
         )
 
 
-def check_missing_ts_data(
-    datetime, period, period_multiplier, min_completeness_ratio=0.9
+def check_outliers_ts_data(
+    datetime, period, period_multiplier, min_correctness_ratio=0.9
 ):
     logger.debug("datetime: %s", datetime)
 
@@ -123,25 +126,25 @@ def check_missing_ts_data(
     logger.debug("Check interval: [%s - %s]", start_dt, end_dt)
 
     ds_raw = TimeseriesDataState.get(name="Raw").first()
-    ec_data_missing = EventCategory.get(name="Data missing").first()
-    ec_data_present = EventCategory.get(name="Data present").first()
+    ec_data_outliers = EventCategory.get(name="Data outliers").first()
+    ec_data_no_outliers = EventCategory.get(name="No data outliers").first()
 
-    for cbc in ST_CheckMissingByCampaign.get():
+    for cbc in ST_CheckOutliersByCampaign.get():
         campaign = cbc.campaign
 
-        logger.info("Checking missing data for campaign %s", campaign.name)
+        logger.info("Checking outliers data for campaign %s", campaign.name)
 
         for c_scope in campaign.campaign_scopes:
 
-            logger.debug("Checking missing data for campaign scope %s", c_scope.name)
+            logger.debug("Checking outliers data for campaign scope %s", c_scope.name)
 
             if not c_scope.timeseries:
                 continue
 
-            logger.debug("Querying for already missing timeseries")
+            logger.debug("Querying for timeseries with outliers already")
 
-            # Check current status: which timeseries are already missing
-            ts_status_missing = {}
+            # Check current status: which timeseries have outliers in last period
+            ts_status_outliers = {}
             for ts in c_scope.timeseries:
                 query = (
                     db.session.query(Event)
@@ -149,116 +152,131 @@ def check_missing_ts_data(
                     .filter(TimeseriesByEvent.timeseries_id == ts.id)
                     .filter(
                         sqla.or_(
-                            Event.category_id == ec_data_missing.id,
-                            Event.category_id == ec_data_present.id,
+                            Event.category_id == ec_data_outliers.id,
+                            Event.category_id == ec_data_no_outliers.id,
                         )
                     )
                     .order_by(sqla.desc(Event.timestamp))
                     .limit(1)
                 )
                 tbes = list(query)
-                ts_status_missing[(ts.id, ts.name)] = (
-                    bool(tbes) and tbes[0].category_id == ec_data_missing.id
+                ts_status_outliers[(ts.id, ts.name)] = (
+                    bool(tbes) and tbes[0].category_id == ec_data_outliers.id
                 )
 
-            logger.debug("Timeseries missing status: %s", ts_status_missing)
+            logger.debug("Timeseries outliers status: %s", ts_status_outliers)
 
-            # Compute completeness
-            completeness = compute_completeness(
-                start_dt,
-                end_dt,
-                c_scope.timeseries,
-                ds_raw,
-                period_multiplier,
-                period,
-                timezone=str(datetime.tzinfo),
+            # Get count for each TS
+            stmt = (
+                sqla.select(
+                    Timeseries.id,
+                    Timeseries.name,
+                    sqla.func.count(TimeseriesData.value),
+                )
+                .filter(
+                    TimeseriesData.timeseries_by_data_state_id
+                    == TimeseriesByDataState.id
+                )
+                .filter(TimeseriesByDataState.timeseries_id == Timeseries.id)
+                .filter(TimeseriesByDataState.data_state_id == ds_raw.id)
+                .filter(
+                    TimeseriesByDataState.timeseries_id.in_(
+                        ts.id for ts in c_scope.timeseries
+                    )
+                )
+                .filter(start_dt <= TimeseriesData.timestamp)
+                .filter(TimeseriesData.timestamp < end_dt)
+                .group_by(Timeseries.id)
             )
+            ts_counts = {
+                ts_id: {"name": name, "count": count}
+                for ts_id, name, count in db.session.execute(stmt).all()
+            }
 
-            # If interval is unknown, compute_completeness tries to guess
-            # Since it works on a single bucket, either there is data and
-            # ratio is 1, either there is no data and ratio is 0.
-            # Consider missing only if 0. If even a single sample is present,
-            # we can't conclude without knowing the expected interval.
-            missing_ts = [
+            logger.debug("Timeseries counts: %s", ts_counts)
+
+            # Get outliers
+            outliers_df = cleanup(
+                start_dt, end_dt, c_scope.timeseries, ds_raw, inclusive="left"
+            )
+            outliers_count = outliers_df.count()
+
+            outliers_ts = [
                 (ts_id, ts_info["name"])
-                for ts_id, ts_info in completeness["timeseries"].items()
-                # Timeseries missing if ratio < threshold
-                if (
-                    (ratio := ts_info["avg_ratio"]) is not None
-                    and ratio < min_completeness_ratio
-                )
-                # or no data in check period, whatever the expected interval
-                or ts_info["avg_count"] == 0
+                for ts_id, ts_info in ts_counts.items()
+                if outliers_count[ts_id] / ts_info["count"] < min_correctness_ratio
             ]
 
-            logger.debug("Missing timeseries: %s", missing_ts)
+            logger.debug("Timeseries with outliers: %s", outliers_ts)
 
-            new_missing_ts = [ts for ts in missing_ts if not ts_status_missing[ts]]
-            already_missing_ts = [ts for ts in missing_ts if ts_status_missing[ts]]
+            new_outliers_ts = [ts for ts in outliers_ts if not ts_status_outliers[ts]]
+            already_outliers_ts = [ts for ts in outliers_ts if ts_status_outliers[ts]]
             new_present_ts = [
                 ts
-                for ts, missing in ts_status_missing.items()
-                if missing and ts not in missing_ts
+                for ts, outliers in ts_status_outliers.items()
+                if outliers and ts not in outliers_ts
             ]
 
-            # Create Event for newly missing data
-            if new_missing_ts:
+            # Create Event for newly timeseries with outliers
+            if new_outliers_ts:
 
-                logger.debug("Creating new missing timeseries event")
+                logger.debug("Creating new timeseries with outliers event")
 
                 event = Event.new(
                     campaign_scope_id=c_scope.id,
-                    category_id=ec_data_missing.id,
+                    category_id=ec_data_outliers.id,
                     level=EventLevelEnum.WARNING,
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
-                        f"Timeseries newly missing: {[ts[1] for ts in new_missing_ts]}"
+                        "New timeseries with outliers: "
+                        f"{[ts[1] for ts in new_outliers_ts]}"
                     ),
                 )
                 db.session.flush()
 
                 logger.debug("Creating timeseries x event associations")
 
-                for ts_id, _ts_name in new_missing_ts:
+                for ts_id, _ts_name in new_outliers_ts:
                     TimeseriesByEvent.new(event_id=event.id, timeseries_id=ts_id)
 
-            # Create Event for already missing data
-            if already_missing_ts:
+            # Create Event for timeseries already having outliers
+            if already_outliers_ts:
 
-                logger.debug("Creating already missing timeseries event")
+                logger.debug("Creating timeseries already having outliers event")
 
                 event = Event.new(
                     campaign_scope_id=c_scope.id,
-                    category_id=ec_data_missing.id,
+                    category_id=ec_data_outliers.id,
                     level=EventLevelEnum.INFO,
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
-                        "Timeseries still missing: "
-                        f"{[ts[1] for ts in already_missing_ts]}"
+                        "Timeseries still having outliers: "
+                        f"{[ts[1] for ts in already_outliers_ts]}"
                     ),
                 )
                 db.session.flush()
 
                 logger.debug("Creating timeseries x event associations")
 
-                for ts_id, _ts_name in already_missing_ts:
+                for ts_id, _ts_name in already_outliers_ts:
                     TimeseriesByEvent.new(event_id=event.id, timeseries_id=ts_id)
 
-            # Create Event for (formerly missing) present data
+            # Create Event for (formerly outliers) present data
             if new_present_ts:
 
-                logger.debug("Creating present timeseries event")
+                logger.debug("Creating timeseries without no outliers event")
 
                 event = Event.new(
                     campaign_scope_id=c_scope.id,
-                    category_id=ec_data_present.id,
+                    category_id=ec_data_no_outliers.id,
                     level=EventLevelEnum.INFO,
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
-                        f"Timeseries present: {[ts[1] for ts in new_present_ts]}"
+                        "Timeseries without outliers: "
+                        f"{[ts[1] for ts in new_present_ts]}"
                     ),
                 )
                 db.session.flush()
@@ -272,15 +290,15 @@ def check_missing_ts_data(
             db.session.commit()
 
 
-@celery.task(name="CheckMissing")
-def check_missing_scheduled_task(
-    period, period_multiplier, timezone="UTC", min_completeness_ratio=0.9
+@celery.task(name="CheckOutliers")
+def check_outliers_scheduled_task(
+    period, period_multiplier, timezone="UTC", min_correctness_ratio=0.9
 ):
     logger.info("Start")
 
-    check_missing_ts_data(
+    check_outliers_ts_data(
         dt.datetime.now(tz=ZoneInfo(timezone)),
         period,
         period_multiplier=period_multiplier,
-        min_completeness_ratio=min_completeness_ratio,
+        min_correctness_ratio=min_correctness_ratio,
     )
