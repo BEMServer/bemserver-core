@@ -109,7 +109,7 @@ class ST_CheckMissingByCampaign(AuthMixin, Base):
 
 
 def check_missing_ts_data(
-    datetime, period, period_multiplier, timezone="UTC", min_completeness_ratio=0.9
+    datetime, period, period_multiplier, min_completeness_ratio=0.9
 ):
     logger.debug("datetime: %s", datetime)
 
@@ -173,7 +173,7 @@ def check_missing_ts_data(
                 ds_raw,
                 period_multiplier,
                 period,
-                timezone=timezone,
+                timezone=str(datetime.tzinfo),
             )
 
             # If interval is unknown, compute_completeness tries to guess
@@ -284,6 +284,5 @@ def check_missing_scheduled_task(
         dt.datetime.now(tz=ZoneInfo(timezone)),
         period,
         period_multiplier=period_multiplier,
-        timezone=timezone,
         min_completeness_ratio=min_completeness_ratio,
     )
