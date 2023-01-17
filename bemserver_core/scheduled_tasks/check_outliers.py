@@ -19,7 +19,7 @@ from bemserver_core.database import Base, db
 from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.process.cleanup import cleanup
 from bemserver_core.celery import celery, logger
-from bemserver_core.time_utils import floor, make_date_offset
+from bemserver_core.time_utils import last_full_interval
 from bemserver_core.exceptions import BEMServerCorePeriodError
 
 
@@ -117,13 +117,11 @@ def check_outliers_ts_data(
     logger.debug("datetime: %s", datetime)
 
     # Check last period before datetime
-    offset = make_date_offset(period, period_multiplier)
     try:
-        start_dt = floor(datetime - offset, period, period_multiplier)
+        start_dt, end_dt = last_full_interval(datetime, period, period_multiplier)
     except BEMServerCorePeriodError as exc:
         logger.critical(str(exc))
         raise
-    end_dt = start_dt + offset
 
     logger.debug("Check interval: [%s - %s]", start_dt, end_dt)
 

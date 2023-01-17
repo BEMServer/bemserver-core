@@ -104,3 +104,21 @@ def ceil(datetime, period, period_multiplier=1):
     if ret != datetime:
         ret += make_date_offset(period, 1)
     return ret
+
+
+def last_full_interval(datetime, period, period_multiplier):
+    """Compute the last full interval of a given size before a datetime
+
+    The interval respects the datetime timezone
+
+    :param datetime datetime: Timezone aware datetime
+    :param str period: Period in
+        ["second", "minute", "hour", "day", "week", "month", "year"]
+    :param int period_multiplier: Period multiplier.
+
+    Returns a tuple of timezone aware datetimes.
+    """
+    offset = make_date_offset(period, period_multiplier)
+    start_dt = floor(datetime - offset, period, period_multiplier)
+    end_dt = start_dt + offset
+    return start_dt, end_dt
