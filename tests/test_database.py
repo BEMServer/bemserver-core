@@ -151,10 +151,10 @@ class TestDatabase:
         db.session.commit()
 
         # Exception on non-string fields.
-        with pytest.raises(Exception):
+        with pytest.raises(sqla.exc.ProgrammingError):
             Test.get(in_note=12).all()
         db.session.rollback()
-        with pytest.raises(Exception):
+        with pytest.raises(sqla.exc.ProgrammingError):
             Test.get(in_date=dt.datetime(2019, 1, 1, tzinfo=dt.timezone.utc)).all()
         db.session.rollback()
 
