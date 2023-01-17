@@ -8,8 +8,6 @@ attrs==22.2.0
     # via pytest
 coverage[toml]==7.0.5
     # via pytest-cov
-exceptiongroup==1.1.0
-    # via pytest
 iniconfig==2.0.0
     # via pytest
 mirakuru==2.4.2
@@ -22,7 +20,7 @@ port-for==0.6.3
     # via pytest-postgresql
 psutil==5.9.4
     # via mirakuru
-pytest==7.2.0
+pytest==7.2.1
     # via
     #   -r requirements/tests.in
     #   pytest-cov
@@ -31,7 +29,3 @@ pytest-cov==4.0.0
     # via -r requirements/tests.in
 pytest-postgresql==3.1.3
     # via -r requirements/tests.in
-tomli==2.0.1
-    # via
-    #   coverage
-    #   pytest
