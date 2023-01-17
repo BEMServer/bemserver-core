@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.8.0 (2023-01-17)
+++++++++++++++++++
+
+Features:
+
+- Check outliers data scheduled task
+
 0.7.0 (2023-01-11)
 ++++++++++++++++++
 
