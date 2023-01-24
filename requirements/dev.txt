@@ -32,7 +32,7 @@ pluggy==1.0.0
     # via pytest
 port-for==0.6.3
     # via pytest-postgresql
-pre-commit==2.21.0
+pre-commit==3.0.0
     # via -r requirements/dev.in
 psutil==5.9.4
     # via mirakuru
