@@ -1,3 +1,6 @@
+ci:
+  skip: [pip-compile]
+
 repos:
 - repo: https://github.com/asottile/pyupgrade
   rev: v2.38.0
