@@ -45,7 +45,7 @@ class TimeseriesDataIOError(BEMServerCoreIOError):
     """Timeseries data IO error"""
 
 
-class TimeseriesDataIODatetimeError(BEMServerCoreIOError):
+class TimeseriesDataIODatetimeError(TimeseriesDataIOError):
     """Timeseries data IO datetime error"""
 
 
