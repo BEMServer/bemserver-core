@@ -172,10 +172,6 @@ class TestEventModel:
 
     @pytest.mark.usefixtures("as_admin")
     def test_event_order_by_level(self, campaign_scopes, event_categories):
-        """Check campaign_scope and timestamp can't be modified
-
-        This is kind of a "framework test".
-        """
         campaign_scope_1 = campaign_scopes[0]
         ec_1 = event_categories[0]
 
