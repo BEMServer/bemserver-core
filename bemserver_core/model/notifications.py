@@ -3,6 +3,7 @@ import sqlalchemy as sqla
 
 from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.authorization import auth, AuthMixin, Relation
+from bemserver_core.model.campaigns import Campaign, CampaignScope
 
 
 class Notification(AuthMixin, Base):
@@ -41,6 +42,22 @@ class Notification(AuthMixin, Base):
                 ),
             },
         )
+
+    @classmethod
+    def get(cls, campaign_id=None, **kwargs):
+        query = super().get(**kwargs)
+        if campaign_id is not None:
+            from bemserver_core.model.events import Event  # noqa: avoid cyclic import
+
+            Campaign.get_by_id(campaign_id)
+            cs_alias = sqla.orm.aliased(CampaignScope)
+            event_alias = sqla.orm.aliased(Event)
+            query = (
+                query.join(event_alias, cls.event_id == event_alias.id)
+                .join(cs_alias, event_alias.campaign_scope_id == cs_alias.id)
+                .filter(cs_alias.campaign_id == campaign_id)
+            )
+        return query
 
 
 def init_db_events_triggers():

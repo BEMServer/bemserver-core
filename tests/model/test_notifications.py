@@ -54,6 +54,19 @@ class TestNotificationModel:
             db.session.flush()
         db.session.rollback()
 
+    def test_notification_filters_as_admin(self, users, campaigns, notifications):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        notif_1 = notifications[0]
+
+        with CurrentUser(admin_user):
+            notifs_l = list(Notification.get())
+            assert len(notifs_l) == 2
+            notifs_l = list(Notification.get(campaign_id=campaign_1.id))
+            assert len(notifs_l) == 1
+            assert notifs_l[0] == notif_1
+
     def test_notification_authorizations_as_admin(self, users, events):
         admin_user = users[0]
         assert admin_user.is_admin
