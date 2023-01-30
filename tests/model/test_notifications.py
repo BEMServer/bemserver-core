@@ -4,8 +4,8 @@ import sqlalchemy as sqla
 
 import pytest
 
-from bemserver_core.model import Notification
-from bemserver_core.authorization import CurrentUser
+from bemserver_core.model import Notification, Event, EventLevelEnum
+from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.database import db
 from bemserver_core.exceptions import BEMServerAuthorizationError
 
@@ -66,6 +66,133 @@ class TestNotificationModel:
             notifs_l = list(Notification.get(campaign_id=campaign_1.id))
             assert len(notifs_l) == 1
             assert notifs_l[0] == notif_1
+
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    def test_notification_filters_as_user(self, users, campaigns, notifications):
+        user_2 = users[1]
+        assert not user_2.is_admin
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
+        notif_2 = notifications[1]
+
+        with CurrentUser(user_2):
+            notifs_l = list(Notification.get())
+            assert len(notifs_l) == 1
+            with pytest.raises(BEMServerAuthorizationError):
+                notifs_l = list(Notification.get(campaign_id=campaign_1.id))
+            notifs_l = list(Notification.get(campaign_id=campaign_2.id))
+            assert len(notifs_l) == 1
+            assert notifs_l[0] == notif_2
+
+    @pytest.mark.usefixtures("notifications")
+    def test_notification_get_count_by_campaign_as_admin(
+        self, users, campaign_scopes, event_categories
+    ):
+        admin_user = users[0]
+        user_2 = users[1]
+        assert admin_user.is_admin
+        cs_1 = campaign_scopes[0]
+        cs_2 = campaign_scopes[1]
+        ec_1 = event_categories[0]
+
+        timestamp_1 = dt.datetime(2021, 1, 1, tzinfo=dt.timezone.utc)
+
+        with OpenBar():
+            event_1 = Event.new(
+                campaign_scope_id=cs_1.id,
+                timestamp=timestamp_1,
+                category_id=ec_1.id,
+                level=EventLevelEnum.WARNING,
+                source="src",
+            )
+            event_2 = Event.new(
+                campaign_scope_id=cs_2.id,
+                timestamp=timestamp_1,
+                category_id=ec_1.id,
+                level=EventLevelEnum.WARNING,
+                source="src",
+            )
+            db.session.flush()
+            Notification.new(
+                user_id=admin_user.id,
+                event_id=event_1.id,
+                timestamp=timestamp_1,
+                read=False,
+            )
+            Notification.new(
+                user_id=admin_user.id,
+                event_id=event_2.id,
+                timestamp=timestamp_1,
+                read=True,
+            )
+            db.session.flush()
+
+        with CurrentUser(admin_user):
+            notif_count = Notification.get_count_by_campaign(user_2.id)
+            assert notif_count == {
+                "total": 1,
+                "campaigns": [
+                    {
+                        "campaign_id": 2,
+                        "campaign_name": "Campaign 2",
+                        "count": 1,
+                    }
+                ],
+            }
+            notif_count = Notification.get_count_by_campaign(admin_user.id)
+            assert notif_count == {
+                "total": 3,
+                "campaigns": [
+                    {
+                        "campaign_id": 1,
+                        "campaign_name": "Campaign 1",
+                        "count": 2,
+                    },
+                    {
+                        "campaign_id": 2,
+                        "campaign_name": "Campaign 2",
+                        "count": 1,
+                    },
+                ],
+            }
+            notif_count = Notification.get_count_by_campaign(admin_user.id, read=False)
+            assert notif_count == {
+                "total": 2,
+                "campaigns": [
+                    {
+                        "campaign_id": 1,
+                        "campaign_name": "Campaign 1",
+                        "count": 2,
+                    },
+                ],
+            }
+
+    @pytest.mark.usefixtures("notifications")
+    def test_notification_get_count_by_campaign_as_user(self, users):
+        admin_user = users[0]
+        user_2 = users[1]
+        assert not user_2.is_admin
+
+        with CurrentUser(user_2):
+            with pytest.raises(BEMServerAuthorizationError):
+                notif_count = Notification.get_count_by_campaign(admin_user.id)
+            notif_count = Notification.get_count_by_campaign(user_2.id)
+            assert notif_count == {
+                "total": 1,
+                "campaigns": [
+                    {
+                        "campaign_id": 2,
+                        "campaign_name": "Campaign 2",
+                        "count": 1,
+                    }
+                ],
+            }
+            notif_count = Notification.get_count_by_campaign(user_2.id, read=False)
+            assert notif_count == {
+                "total": 0,
+                "campaigns": [],
+            }
 
     def test_notification_authorizations_as_admin(self, users, events):
         admin_user = users[0]

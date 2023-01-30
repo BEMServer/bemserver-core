@@ -14,7 +14,6 @@ from bemserver_core.model.campaigns import (
     UserGroupByCampaignScope,
 )
 from bemserver_core.model.sites import Site, Building, Storey, Space, Zone
-from bemserver_core.model.notifications import Notification
 from bemserver_core.celery import celery, logger
 from bemserver_core.exceptions import (
     BEMServerCoreCampaignError,
@@ -265,6 +264,9 @@ class Event(AuthMixin, Base):
         return query
 
     def notify(self, timestamp):
+        from bemserver_core.model.notifications import (
+            Notification,
+        )  # noqa: avoid cyclic import
 
         ecbu_q = sqla.orm.aliased(
             EventCategoryByUser,
