@@ -2,8 +2,10 @@
 import sqlalchemy as sqla
 
 from bemserver_core.database import Base, db, make_columns_read_only
-from bemserver_core.authorization import auth, AuthMixin, Relation
+from bemserver_core.authorization import auth, AuthMixin, Relation, get_current_user
+from bemserver_core.model.users import User
 from bemserver_core.model.campaigns import Campaign, CampaignScope
+from bemserver_core.model.events import Event
 
 
 class Notification(AuthMixin, Base):
@@ -47,8 +49,6 @@ class Notification(AuthMixin, Base):
     def get(cls, campaign_id=None, **kwargs):
         query = super().get(**kwargs)
         if campaign_id is not None:
-            from bemserver_core.model.events import Event  # noqa: avoid cyclic import
-
             Campaign.get_by_id(campaign_id)
             cs_alias = sqla.orm.aliased(CampaignScope)
             event_alias = sqla.orm.aliased(Event)
@@ -58,6 +58,50 @@ class Notification(AuthMixin, Base):
                 .filter(cs_alias.campaign_id == campaign_id)
             )
         return query
+
+    @classmethod
+    def get_count_by_campaign(cls, user_id, read=None):
+        """Get notification count by campaign
+
+        :param int user_id: User about which to query.
+        :param bool read: Count only read/unread notifications.
+            Defaults to None, which means count all notifications.
+        """
+        user = User.get_by_id(user_id)
+        auth.authorize(get_current_user(), "count_notifications", user)
+
+        cs_alias = sqla.orm.aliased(CampaignScope)
+        event_alias = sqla.orm.aliased(Event)
+        campaign_alias = sqla.orm.aliased(Campaign)
+
+        stmt = (
+            sqla.select(
+                campaign_alias.id,
+                campaign_alias.name,
+                sqla.func.count(cls.id),
+            )
+            .join(event_alias)
+            .join(cs_alias)
+            .join(campaign_alias)
+            .filter(cls.user_id == user_id)
+            .group_by(campaign_alias.id)
+            .order_by(campaign_alias.id)
+        )
+        if read is not None:
+            stmt = stmt.filter(cls.read == read)
+
+        ret = {
+            "campaigns": [
+                {
+                    "campaign_id": c_id,
+                    "campaign_name": c_name,
+                    "count": count,
+                }
+                for c_id, c_name, count in db.session.execute(stmt).all()
+            ]
+        }
+        ret["total"] = sum(c["count"] for c in ret["campaigns"])
+        return ret
 
 
 def init_db_events_triggers():

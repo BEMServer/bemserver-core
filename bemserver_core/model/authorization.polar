@@ -1,9 +1,13 @@
 resource User {
-    permissions = ["create", "read", "update", "delete", "set_admin", "set_active"];
+    permissions = [
+        "create", "read", "update", "delete",
+        "set_admin", "set_active", "count_notifications",
+    ];
     roles = ["self"];
 
     "read" if "self";
     "update" if "self";
+    "count_notifications" if "self";
 }
 
 has_role(_user: User{id: id}, "self", _user: User{id: id});
