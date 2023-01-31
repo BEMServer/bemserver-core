@@ -194,6 +194,94 @@ class TestNotificationModel:
                 "campaigns": [],
             }
 
+    @pytest.mark.usefixtures("notifications")
+    def test_notification_mark_all_as_read_as_admin(
+        self, users, campaigns, campaign_scopes, event_categories
+    ):
+        admin_user = users[0]
+        user_2 = users[1]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
+        cs_1 = campaign_scopes[0]
+        cs_2 = campaign_scopes[1]
+        ec_1 = event_categories[0]
+
+        timestamp_1 = dt.datetime(2021, 1, 1, tzinfo=dt.timezone.utc)
+
+        with OpenBar():
+            event_1 = Event.new(
+                campaign_scope_id=cs_1.id,
+                timestamp=timestamp_1,
+                category_id=ec_1.id,
+                level=EventLevelEnum.WARNING,
+                source="src",
+            )
+            event_2 = Event.new(
+                campaign_scope_id=cs_2.id,
+                timestamp=timestamp_1,
+                category_id=ec_1.id,
+                level=EventLevelEnum.WARNING,
+                source="src",
+            )
+            db.session.flush()
+            Notification.new(
+                user_id=user_2.id,
+                event_id=event_1.id,
+                timestamp=timestamp_1,
+                read=False,
+            )
+            Notification.new(
+                user_id=user_2.id,
+                event_id=event_2.id,
+                timestamp=timestamp_1,
+                read=False,
+            )
+            db.session.flush()
+
+        with CurrentUser(admin_user):
+            notifs_l = list(Notification.get(user_id=admin_user.id, read=False))
+            assert len(notifs_l) == 1
+            Notification.mark_all_as_read(admin_user.id)
+            notifs_l = list(Notification.get(user_id=admin_user.id, read=False))
+            assert len(notifs_l) == 0
+
+            notifs_l = list(Notification.get(user_id=user_2.id, read=False))
+            assert len(notifs_l) == 2
+            Notification.mark_all_as_read(user_2.id, campaign_id=campaign_1.id)
+            notifs_l = list(Notification.get(user_id=user_2.id, read=False))
+            assert len(notifs_l) == 1
+            Notification.mark_all_as_read(user_2.id, campaign_id=campaign_2.id)
+            notifs_l = list(Notification.get(user_id=user_2.id, read=False))
+            assert not notifs_l
+
+    def test_notification_mark_all_as_read_as_user(
+        self, users, campaigns, notifications
+    ):
+        admin_user = users[0]
+        user_2 = users[1]
+        assert not user_2.is_admin
+        campaign_2 = campaigns[1]
+        notif_2 = notifications[1]
+
+        with CurrentUser(user_2):
+            with pytest.raises(BEMServerAuthorizationError):
+                Notification.mark_all_as_read(admin_user.id)
+            notif_2.read = False
+            db.session.flush()
+            notifs_l = list(Notification.get(user_id=user_2.id, read=False))
+            assert len(notifs_l) == 1
+            Notification.mark_all_as_read(user_2.id, campaign_id=campaign_2.id)
+            notifs_l = list(Notification.get(user_id=user_2.id, read=False))
+            assert not notifs_l
+            notif_2.read = False
+            db.session.flush()
+            notifs_l = list(Notification.get(user_id=user_2.id, read=False))
+            assert len(notifs_l) == 1
+            Notification.mark_all_as_read(user_2.id)
+            notifs_l = list(Notification.get(user_id=user_2.id, read=False))
+            assert len(notifs_l) == 0
+
     def test_notification_authorizations_as_admin(self, users, events):
         admin_user = users[0]
         assert admin_user.is_admin
