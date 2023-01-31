@@ -103,6 +103,32 @@ class Notification(AuthMixin, Base):
         ret["total"] = sum(c["count"] for c in ret["campaigns"])
         return ret
 
+    @classmethod
+    def mark_all_as_read(cls, user_id, campaign_id=None):
+        """Mark notifications as read
+
+        :param int user_id: User for which to mark notifications as read.
+        :param int campaign_id: Only mark notification as read for this campaign.
+            Defaults to None, which means all campaigns.
+        """
+        user = User.get_by_id(user_id)
+        auth.authorize(get_current_user(), "mark_notifications", user)
+
+        stmt = sqla.update(cls).values(read=True).where(cls.user_id == user_id)
+
+        if campaign_id is not None:
+            subq = (
+                sqla.select(cls.id)
+                .join(Event)
+                .join(CampaignScope)
+                .join(Campaign)
+                .filter(Campaign.id == campaign_id)
+            )
+            stmt = stmt.where(cls.id.in_(subq))
+
+        db.session.execute(stmt.execution_options(synchronize_session=False))
+        db.session.commit()
+
 
 def init_db_events_triggers():
     """Create triggers to protect some columns from update.
