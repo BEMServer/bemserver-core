@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+0.8.1 (2023-02-01)
+++++++++++++++++++
+
+Features:
+
+- Add Notification.mark_all_as_read and Notification.get_count_by_campaign
+- Add Notification campaign_id filter
+
+Bug fixes:
+
+- Make TimeseriesDataIODatetimeError child of TimeseriesDataIOError
+
 0.8.0 (2023-01-17)
 ++++++++++++++++++
 
