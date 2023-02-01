@@ -70,22 +70,18 @@ class Notification(AuthMixin, Base):
         user = User.get_by_id(user_id)
         auth.authorize(get_current_user(), "count_notifications", user)
 
-        cs_alias = sqla.orm.aliased(CampaignScope)
-        event_alias = sqla.orm.aliased(Event)
-        campaign_alias = sqla.orm.aliased(Campaign)
-
         stmt = (
             sqla.select(
-                campaign_alias.id,
-                campaign_alias.name,
+                Campaign.id,
+                Campaign.name,
                 sqla.func.count(cls.id),
             )
-            .join(event_alias)
-            .join(cs_alias)
-            .join(campaign_alias)
+            .join(Event)
+            .join(CampaignScope)
+            .join(Campaign)
             .filter(cls.user_id == user_id)
-            .group_by(campaign_alias.id)
-            .order_by(campaign_alias.id)
+            .group_by(Campaign.id)
+            .order_by(Campaign.id)
         )
         if read is not None:
             stmt = stmt.filter(cls.read == read)
