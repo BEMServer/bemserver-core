@@ -1,0 +1,22 @@
+[Unit]
+Description=BEMServer Celery worker
+Requires=postgresql.service redis-server.service
+After=postgresql.service redis-server.service
+
+[Service]
+Type=forking
+User=bemserver
+Group=bemserver
+
+ExecStart=/bin/sh -c '${CELERY_BIN} -A bemserver_core multi start ${CELERYD_NODES} \
+  --pidfile=/var/run/bemserver/%n.pid \
+  --logfile=/var/log/bemserver/%n%%I.log \
+  --loglevel=${CELERYD_LOG_LEVEL} \
+  --queues=${CELERYD_QUEUES}'
+ExecStop=/bin/sh -c '${CELERY_BIN} multi stopwait ${CELERYD_NODES} \
+  --pidfile=/var/run/bemserver/%n.pid \
+  --logfile=/var/log/bemserver/%n%%I.log \
+  --loglevel=${CELERYD_LOG_LEVEL}'
+
+[Install]
+WantedBy=multi-user.target
