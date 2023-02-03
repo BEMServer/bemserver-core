@@ -59,24 +59,6 @@ class BEMServerCoreCelery(Celery):
     """
 
 
-@signals.worker_process_init.connect
-def worker_process_init_cb(**kwargs):
-    """Callback executed at worker init
-
-    - Setup BEMServerCore
-    """
-    # Setup BEMServerCore (avoid circular import)
-    from bemserver_core import BEMServerCore
-
-    db_url = os.getenv("SQLALCHEMY_DATABASE_URI")
-    if db_url is None:
-        logger.critical("SQLALCHEMY_DATABASE_URI environment variable not set")
-        raise WorkerShutdown()
-    db.set_db_url(db_url)
-    bsc = BEMServerCore()
-    bsc.init_auth()
-
-
 # The two functions below are meant to load Celery configuration from an
 # external file by passing the path to that file as an environment variable.
 # Those functions, adapted from Flask code, were copied from Celery bugtracker.
@@ -158,3 +140,21 @@ def config_from_pyfile(celery_app, filename, silent=False):
 celery = BEMServerCoreCelery("BEMServer Core", task_cls=BEMServerCoreTask)
 celery.config_from_object(DefaultCeleryConfig)
 config_from_envvar(celery, "BEMSERVER_CELERY_SETTINGS_FILE", silent=True)
+
+
+@signals.worker_process_init.connect
+def worker_process_init_cb(**kwargs):
+    """Callback executed at worker init
+
+    - Setup BEMServerCore
+    """
+    # Setup BEMServerCore (avoid circular import)
+    from bemserver_core import BEMServerCore
+
+    db_url = celery.conf.get("SQLALCHEMY_DATABASE_URI")
+    if db_url is None:
+        logger.critical("Missing SQLALCHEMY_DATABASE_URI configuration parameter")
+        raise WorkerShutdown()
+    db.set_db_url(db_url)
+    bsc = BEMServerCore()
+    bsc.init_auth()
