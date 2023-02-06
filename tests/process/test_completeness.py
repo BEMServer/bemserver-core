@@ -86,7 +86,10 @@ class TestCompleteness:
 
         with CurrentUser(admin_user):
 
-            ts_l = (ts_0, ts_1, ts_2, ts_3, ts_4)
+            # Purposely set order different than ID order as a non-regression test
+            # for an issue that used to occur due to get_timeseries_buckets_data
+            # unexpectedly returning a dataframe with columns in wrong order
+            ts_l = (ts_1, ts_3, ts_4, ts_2, ts_0)
 
             # 2 months - monthly
             ret = compute_completeness(start_dt, end_dt, ts_l, ds_1, 1, "month")

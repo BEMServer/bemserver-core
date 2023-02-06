@@ -101,12 +101,19 @@ class TimeseriesDataIO:
         db.session.commit()
 
     @staticmethod
-    def _fill_missing_columns(data_df, ts_l, attr, fill_value=np.nan):
-        """Add missing columns, in query order"""
-        for idx, ts in enumerate(ts_l):
-            val = getattr(ts, attr)
-            if val not in data_df:
-                data_df.insert(idx, val, fill_value)
+    def _fill_missing_and_reorder_columns(data_df, ts_l, col_label, fill_value=np.nan):
+        """Add missing columns and reorder colums
+
+        - Add missing columns (columns with no values in DB)
+        - Ensure columns are in the order of the timeseries list parameter.
+            The SQL query may return them in any order.
+        """
+        timeseries_labels = [ts.id if col_label == "id" else ts.name for ts in ts_l]
+        # Fill missing
+        for col in set(timeseries_labels) - set(data_df.columns):
+            data_df[col] = fill_value
+        # Ensure order
+        return data_df[timeseries_labels]
 
     @classmethod
     def get_timeseries_data(
@@ -175,7 +182,7 @@ class TimeseriesDataIO:
 
         data_df = data_df.pivot(columns=col_label, values="value")
 
-        cls._fill_missing_columns(data_df, timeseries, col_label)
+        data_df = cls._fill_missing_and_reorder_columns(data_df, timeseries, col_label)
 
         return data_df
 
@@ -303,7 +310,7 @@ class TimeseriesDataIO:
         data_df = data_df.reindex(complete_idx, fill_value=fill_value)
 
         # Fill missing columns
-        cls._fill_missing_columns(
+        data_df = cls._fill_missing_and_reorder_columns(
             data_df,
             timeseries,
             col_label,

@@ -383,6 +383,9 @@ class TestTimeseriesDataIO:
             )
             assert data_df.equals(expected_data_df)
 
+            # Purposely set order different than ID order to check output ordering
+            ts_l = (ts_2, ts_0, ts_4)
+
             # Test inclusive
             index = pd.DatetimeIndex(
                 [
@@ -396,7 +399,7 @@ class TestTimeseriesDataIO:
             val_2 = [np.nan, np.nan]
             val_4 = [12.0, np.nan]
             expected_data_df = pd.DataFrame(
-                {ts_0.id: val_0, ts_2.id: val_2, ts_4.id: val_4},
+                {ts_2.id: val_2, ts_0.id: val_0, ts_4.id: val_4},
                 index=index,
             )
             data_df = tsdio.get_timeseries_data(
@@ -840,6 +843,9 @@ class TestTimeseriesDataIO:
 
             assert data_df.equals(expected_data_df)
 
+            # Purposely set order different than ID order to check output ordering
+            ts_l = (ts_2, ts_0, ts_4)
+
             # UTC count 1 day by ID
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
@@ -863,8 +869,8 @@ class TestTimeseriesDataIO:
             )
             expected_data_df = pd.DataFrame(
                 {
-                    ts_0.id: [24, 24, 24],
                     ts_2.id: [0, 0, 0],
+                    ts_0.id: [24, 24, 24],
                     ts_4.id: [24, 24, 0],
                 },
                 index=index,
