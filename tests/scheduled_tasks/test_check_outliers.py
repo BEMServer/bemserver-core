@@ -299,7 +299,6 @@ class TestCheckOutliersScheduledTask:
         create_timeseries_data(ts_3, ds_1, timestamps, values)
 
         with OpenBar():
-
             # Min ratio = 90 % -> 2 TS with outliers data (different campaign scopes)
 
             assert not list(Event.get())

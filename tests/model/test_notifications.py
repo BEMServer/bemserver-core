@@ -318,7 +318,6 @@ class TestNotificationModel:
         timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
 
         with CurrentUser(user_1):
-
             notifs = list(Notification.get())
             assert notifs == [notif_2]
             with pytest.raises(BEMServerAuthorizationError):

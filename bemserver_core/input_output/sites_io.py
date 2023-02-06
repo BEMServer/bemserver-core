@@ -24,7 +24,6 @@ def _get_se_properties(model_cls, reader, known_fields):
 
 
 class SitesCSVIO(BaseCSVFileIO):
-
     SITE_FIELDS = {"Name", "Description", "IFC_ID"}
     BUILDING_FIELDS = {"Site", "Name", "Description", "IFC_ID"}
     STOREY_FIELDS = {"Site", "Building", "Name", "Description", "IFC_ID"}

@@ -135,7 +135,6 @@ def check_outliers_ts_data(
         logger.info("Checking outliers data for campaign %s", campaign.name)
 
         for c_scope in campaign.campaign_scopes:
-
             logger.debug("Checking outliers data for campaign scope %s", c_scope.name)
 
             if not c_scope.timeseries:
@@ -219,7 +218,6 @@ def check_outliers_ts_data(
 
             # Create Event for newly timeseries with outliers
             if new_outliers_ts:
-
                 logger.debug("Creating new timeseries with outliers event")
 
                 event = Event.new(
@@ -242,7 +240,6 @@ def check_outliers_ts_data(
 
             # Create Event for timeseries already having outliers
             if already_outliers_ts:
-
                 logger.debug("Creating timeseries already having outliers event")
 
                 event = Event.new(
@@ -265,7 +262,6 @@ def check_outliers_ts_data(
 
             # Create Event for (formerly outliers) present data
             if new_present_ts:
-
                 logger.debug("Creating timeseries without no outliers event")
 
                 event = Event.new(

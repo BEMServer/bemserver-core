@@ -85,7 +85,6 @@ class TestCompleteness:
         create_timeseries_data(ts_3, ds_1, timestamps_4, values_4)
 
         with CurrentUser(admin_user):
-
             # Purposely set order different than ID order as a non-regression test
             # for an issue that used to occur due to get_timeseries_buckets_data
             # unexpectedly returning a dataframe with columns in wrong order

@@ -199,7 +199,6 @@ def cleanup_scheduled_task():
         logger.info("Cleanup campaign %s", campaign.name)
 
         for ts in campaign.timeseries:
-
             logger.debug("Cleaning data for timeseries %s", ts.name)
 
             cbt = ST_CleanupByTimeseries.get(timeseries_id=ts.id).first()

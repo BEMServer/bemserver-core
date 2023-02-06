@@ -86,7 +86,6 @@ class TestEnergyConsumption:
         site_1 = sites[0]
 
         with OpenBar():
-
             start_dt, end_dt, timeseries, expected = self._create_data(campaign_1, cs_1)
 
             source_all = EnergySource.get(name="all").first()
@@ -177,7 +176,6 @@ class TestEnergyConsumption:
         building_1 = buildings[0]
 
         with OpenBar():
-
             start_dt, end_dt, timeseries, expected = self._create_data(campaign_1, cs_1)
 
             source_all = EnergySource.get(name="all").first()

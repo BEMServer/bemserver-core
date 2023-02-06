@@ -511,7 +511,6 @@ class TestCleanupScheduledTask:
         create_timeseries_data(ts_1, ds_1, timestamps, values)
 
         with OpenBar():
-
             assert ST_CleanupByTimeseries.get(timeseries_id=ts_0.id).first() is None
             assert ST_CleanupByTimeseries.get(timeseries_id=ts_1.id).first() is None
 

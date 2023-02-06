@@ -21,7 +21,6 @@ def create_timeseries_data(timeseries, data_state, timestamps, values):
     """
 
     with OpenBar():
-
         tsbds = timeseries.get_timeseries_by_data_state(data_state)
 
         in_df = pd.DataFrame(

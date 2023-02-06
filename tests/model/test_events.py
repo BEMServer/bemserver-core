@@ -495,7 +495,6 @@ class TestEventModel:
         ec_1 = event_categories[0]
 
         with CurrentUser(user_1):
-
             events = list(Event.get())
             assert events == [event_2]
             with pytest.raises(BEMServerAuthorizationError):
@@ -534,7 +533,6 @@ class TestEventModel:
     @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
     @pytest.mark.usefixtures("as_admin")
     def test_event_notify(self, users, campaign_scopes, event_categories):
-
         user_0 = users[0]
         user_1 = users[1]
 
@@ -600,7 +598,6 @@ class TestEventModel:
 
 
 def test_event_notify_task(events):
-
     evt_1 = events[0]
     dt_1 = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
 
@@ -1112,7 +1109,6 @@ class TestEventCategoryByUserModel:
         assert ecbu_2.user == user_1
 
         with CurrentUser(user_1):
-
             ecbus = list(EventCategoryByUser.get())
             assert ecbus == [ecbu_2]
             assert EventCategoryByUser.get_by_id(ecbu_2.id) == ecbu_2

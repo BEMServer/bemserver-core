@@ -1108,7 +1108,6 @@ class TestSitePropertyDataModel:
         site_p_2 = site_properties[1]
 
         with CurrentUser(admin_user):
-
             spd = SitePropertyData.new(
                 site_id=site_1.id,
                 site_property_id=site_p_1.id,
