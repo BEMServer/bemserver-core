@@ -20,7 +20,6 @@ def _get_ts_properties(model_cls, reader, known_fields):
 
 
 class TimeseriesCSVIO(BaseCSVFileIO):
-
     TS_FIELDS = {
         "Campaign scope",
         "Name",
@@ -46,7 +45,6 @@ class TimeseriesCSVIO(BaseCSVFileIO):
         properties = _get_ts_properties(model.TimeseriesProperty, reader, cls.TS_FIELDS)
 
         for row in reader:
-
             cs_name = row.pop("Campaign scope")
             timeseries = model.Timeseries.new(
                 campaign_id=campaign.id,

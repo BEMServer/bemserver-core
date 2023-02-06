@@ -295,7 +295,6 @@ class TestCheckMissingScheduledTask:
         create_timeseries_data(ts_2, ds_1, timestamps_3, values_3)
 
         with OpenBar():
-
             assert not list(Event.get())
             assert not list(TimeseriesByEvent.get())
 

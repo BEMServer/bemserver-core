@@ -47,7 +47,6 @@ class EventLevelEnum(enum.IntEnum):
 
 
 def upgrade():
-
     event_level = postgresql.ENUM(
         EventLevelEnum, name="eventlevelenum", create_type=False
     )

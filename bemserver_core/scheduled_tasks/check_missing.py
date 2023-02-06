@@ -132,7 +132,6 @@ def check_missing_ts_data(
         logger.info("Checking missing data for campaign %s", campaign.name)
 
         for c_scope in campaign.campaign_scopes:
-
             logger.debug("Checking missing data for campaign scope %s", c_scope.name)
 
             if not c_scope.timeseries:
@@ -203,7 +202,6 @@ def check_missing_ts_data(
 
             # Create Event for newly missing data
             if new_missing_ts:
-
                 logger.debug("Creating new missing timeseries event")
 
                 event = Event.new(
@@ -225,7 +223,6 @@ def check_missing_ts_data(
 
             # Create Event for already missing data
             if already_missing_ts:
-
                 logger.debug("Creating already missing timeseries event")
 
                 event = Event.new(
@@ -248,7 +245,6 @@ def check_missing_ts_data(
 
             # Create Event for (formerly missing) present data
             if new_present_ts:
-
                 logger.debug("Creating present timeseries event")
 
                 event = Event.new(

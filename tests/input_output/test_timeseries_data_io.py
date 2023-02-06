@@ -326,7 +326,6 @@ class TestTimeseriesDataIO:
         create_timeseries_data(ts_4, ds_1, timestamps[:2], values_2)
 
         with CurrentUser(admin_user):
-
             data_df = tsdio.get_timeseries_data(start_dt, end_dt, ts_l, ds_1)
             index = pd.DatetimeIndex(
                 [
@@ -454,7 +453,6 @@ class TestTimeseriesDataIO:
         create_timeseries_data(ts_3, ds_1, timestamps[:2], values_2)
 
         with CurrentUser(user_1):
-
             ts_l = (ts_0, ts_2, ts_4)
 
             with pytest.raises(BEMServerAuthorizationError):
@@ -510,7 +508,6 @@ class TestTimeseriesDataIO:
         ts_l = (ts_0, ts_2, ts_4)
 
         with CurrentUser(admin_user):
-
             # No data
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
@@ -546,7 +543,6 @@ class TestTimeseriesDataIO:
         create_timeseries_data(ts_4, ds_1, timestamps[: 24 * 2], values_2)
 
         with CurrentUser(admin_user):
-
             # UTC count 1 day
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
@@ -964,7 +960,6 @@ class TestTimeseriesDataIO:
         create_timeseries_data(ts_0, ds_1, timestamps, values_1)
 
         with CurrentUser(admin_user):
-
             # Local TZ count 1 hour
             data_df = tsdio.get_timeseries_buckets_data(
                 dt.datetime(2020, 10, 25, 0, 0, tzinfo=dt.timezone.utc),
@@ -1029,7 +1024,6 @@ class TestTimeseriesDataIO:
         create_timeseries_data(ts_0, ds_1, timestamps_2, values_2)
 
         with CurrentUser(admin_user):
-
             args = [(ts_0,), ds_1, 1, "day", "count"]
             kwargs = {"timezone": "Europe/Paris", "col_label": "name"}
 
@@ -1085,7 +1079,6 @@ class TestTimeseriesDataIO:
         ts_l = (ts_0, ts_2, ts_4)
 
         with CurrentUser(admin_user):
-
             # UTC count year
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt, end_dt, ts_l, ds_1, 1, "year", "count", col_label="name"
@@ -1461,7 +1454,6 @@ class TestTimeseriesDataIO:
         create_timeseries_data(ts_3, ds_1, timestamps[: 24 * 2], values_2)
 
         with CurrentUser(user_1):
-
             ts_l = (ts_0, ts_2, ts_4)
 
             with pytest.raises(BEMServerAuthorizationError):
@@ -1810,7 +1802,6 @@ class TestTimeseriesDataCSVIO:
         ts_l = (ts_0, ts_2, ts_4)
 
         with CurrentUser(admin_user):
-
             if col_label == "name":
                 header = f"Datetime,{ts_0.name},{ts_2.name},{ts_4.name}\n"
             else:
@@ -1889,7 +1880,6 @@ class TestTimeseriesDataCSVIO:
         create_timeseries_data(ts_3, ds_1, timestamps[:2], values_2)
 
         with CurrentUser(user_1):
-
             ts_l = (ts_0, ts_2, ts_4)
 
             with pytest.raises(BEMServerAuthorizationError):
@@ -1942,7 +1932,6 @@ class TestTimeseriesDataCSVIO:
         ts_l = (ts_0, ts_2, ts_4)
 
         with CurrentUser(admin_user):
-
             if col_label == "name":
                 header = f"Datetime,{ts_0.name},{ts_2.name},{ts_4.name}\n"
             else:
@@ -2088,7 +2077,6 @@ class TestTimeseriesDataCSVIO:
         create_timeseries_data(ts_3, ds_1, timestamps[: 24 * 2], values_2)
 
         with CurrentUser(user_1):
-
             ts_l = (ts_0, ts_2, ts_4)
 
             with pytest.raises(BEMServerAuthorizationError):
@@ -2344,7 +2332,6 @@ class TestTimeseriesDataJSONIO:
         ts_l = (ts_0, ts_2, ts_4)
 
         with CurrentUser(admin_user):
-
             labels = [str(getattr(ts, col_label)) for ts in ts_l]
 
             data = tsdjsonio.export_json(
@@ -2438,7 +2425,6 @@ class TestTimeseriesDataJSONIO:
         create_timeseries_data(ts_3, ds_1, timestamps[:2], values_2)
 
         with CurrentUser(user_1):
-
             ts_l = (ts_0, ts_2, ts_4)
 
             with pytest.raises(BEMServerAuthorizationError):
@@ -2496,7 +2482,6 @@ class TestTimeseriesDataJSONIO:
         labels = [str(getattr(ts, col_label)) for ts in ts_l]
 
         with CurrentUser(admin_user):
-
             # Export JSON: UTC avg
             data = tsdjsonio.export_json_bucket(
                 start_dt, end_dt, ts_l, ds_1, 1, "day", col_label=col_label
@@ -2698,7 +2683,6 @@ class TestTimeseriesDataJSONIO:
         create_timeseries_data(ts_3, ds_1, timestamps[: 24 * 2], values_2)
 
         with CurrentUser(user_1):
-
             ts_l = (ts_0, ts_2, ts_4)
 
             with pytest.raises(BEMServerAuthorizationError):

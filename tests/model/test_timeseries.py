@@ -88,7 +88,6 @@ class TestTimeseriesDataStateModel:
         tsbds_1 = timeseries_by_data_states[0]
 
         with CurrentUser(admin_user):
-
             ts_data_state_1 = TimeseriesByDataState.get()[0]
 
             TimeseriesData.new(
@@ -367,7 +366,6 @@ class TestTimeseriesModel:
         tbsp_1 = timeseries_by_spaces[0]
 
         with CurrentUser(admin_user):
-
             ts_l = list(Timeseries.get(campaign_id=campaign_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
@@ -509,7 +507,6 @@ class TestTimeseriesModel:
         tbsp_2 = timeseries_by_spaces[1]
 
         with CurrentUser(user_1):
-
             with pytest.raises(BEMServerAuthorizationError):
                 list(Timeseries.get(campaign_id=campaign_1.id))
             ts_l = list(Timeseries.get(campaign_id=campaign_2.id))

@@ -61,7 +61,6 @@ def compute_energy_consumption_breakdown(
     bucket_width_unit,
     timezone="UTC",
 ):
-
     timeseries = [ectbl.timeseries for ectbl in ectbl_l]
 
     data_state = TimeseriesDataState.get(name=DATA_STATE).first()

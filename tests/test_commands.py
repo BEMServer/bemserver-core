@@ -43,7 +43,6 @@ class TestCommands:
             )
 
     def test_create_user_cmd(self, database, bemservercore):
-
         # Check there is no user in DB
         with sqla.create_engine(database).connect() as connection:
             assert not list(connection.execute(sqla.text("select * from users;")))
