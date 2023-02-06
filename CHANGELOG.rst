@@ -13,6 +13,10 @@ Bug fixes:
 - TimeseriesDataIO.get_*: fix columns order in returned dataframe, which fixes
   an issue with the completeness computation process
 
+Other changes:
+
+- Require SQLAlchemy 2.x
+
 0.8.1 (2023-02-01)
 ++++++++++++++++++
 
