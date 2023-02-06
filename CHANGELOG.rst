@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+0.9.0 (2023-02-06)
+++++++++++++++++++
+
+Features:
+
+- BEMServerCoreCelery: get DB URL from config file rather than env var
+
+Bug fixes:
+
+- TimeseriesDataIO.get_*: fix columns order in returned dataframe, which fixes
+  an issue with the completeness computation process
+
 0.8.1 (2023-02-01)
 ++++++++++++++++++
 
