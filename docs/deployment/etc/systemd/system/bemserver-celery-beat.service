@@ -1,0 +1,17 @@
+[Unit]
+Description=BEMServer Celery beat scheduler
+Requires=postgresql.service redis-server.service
+After=postgresql.service redis-server.service
+
+[Service]
+Type=simple
+User=bemserver
+Group=bemserver
+ExecStart=/bin/sh -c '${CELERY_BIN} -A bemserver_core beat \
+  --schedule=/var/run/bemserver/%n-schedule \
+  --pidfile=/var/run/bemserver/%n.pid \
+  --logfile=/var/log/bemserver/%n.log \
+  --loglevel=${CELERYBEAT_LOG_LEVEL}'
+
+[Install]
+WantedBy=multi-user.target
