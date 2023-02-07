@@ -271,7 +271,7 @@ class TimeseriesDataIO:
         # done in Pandas below.
         params = {
             "timezone": timezone,
-            "timeseries_ids": tuple(ts.id for ts in timeseries),
+            "timeseries_ids": [ts.id for ts in timeseries],
             "data_state_id": data_state.id,
             "start_dt": start_dt,
             "end_dt": end_dt,
@@ -284,7 +284,7 @@ class TimeseriesDataIO:
             "WHERE ts_data.ts_by_data_state_id = ts_by_data_states.id "
             "  AND ts_by_data_states.data_state_id = :data_state_id "
             "  AND ts_by_data_states.timeseries_id = timeseries.id "
-            "  AND timeseries_id IN :timeseries_ids "
+            "  AND timeseries_id = ANY(:timeseries_ids) "
             "  AND timestamp >= :start_dt AND timestamp < :end_dt "
             "GROUP BY bucket, timeseries.id "
             "ORDER BY bucket;"
