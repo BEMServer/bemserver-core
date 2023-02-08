@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.9.1 (2023-02-08)
+++++++++++++++++++
+
+Other changes:
+
+- Reintroduce SQLAlchemy 1.4 support
+
 0.9.0 (2023-02-07)
 ++++++++++++++++++
 
