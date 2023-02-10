@@ -58,6 +58,10 @@ from .energy import (
     EnergyConsumptionTimeseriesBySite,
     EnergyConsumptionTimeseriesByBuilding,
 )
+from .weather import (
+    WeatherParameterEnum,
+    WeatherTimeseriesBySite,
+)
 
 __all__ = [
     "User",
@@ -109,6 +113,8 @@ __all__ = [
     "EnergyEndUse",
     "EnergyConsumptionTimeseriesBySite",
     "EnergyConsumptionTimeseriesByBuilding",
+    "WeatherParameterEnum",
+    "WeatherTimeseriesBySite",
 ]
 
 
@@ -160,6 +166,7 @@ AUTH_MODEL_CLASSES = [
     EnergyEndUse,
     EnergyConsumptionTimeseriesBySite,
     EnergyConsumptionTimeseriesByBuilding,
+    WeatherTimeseriesBySite,
 ]
 
 

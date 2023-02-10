@@ -943,3 +943,20 @@ def st_check_outliers_by_campaigns(bemservercore, campaigns):
         )
         db.session.commit()
     return (st_cbc_1, st_cbc_2)
+
+
+@pytest.fixture
+def weather_timeseries_by_sites(bemservercore, timeseries, sites):
+    with OpenBar():
+        wtbs_1 = model.WeatherTimeseriesBySite.new(
+            site_id=sites[0].id,
+            parameter=model.WeatherParameterEnum.AIR_TEMPERATURE,
+            timeseries_id=timeseries[0].id,
+        )
+        wtbs_2 = model.WeatherTimeseriesBySite.new(
+            site_id=sites[1].id,
+            parameter=model.WeatherParameterEnum.RELATIVE_HUMIDITY,
+            timeseries_id=timeseries[1].id,
+        )
+        db.session.commit()
+    return (wtbs_1, wtbs_2)

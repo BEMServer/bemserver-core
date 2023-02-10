@@ -499,3 +499,15 @@ resource EnergyConsumptionTimeseriesByBuilding {
 }
 has_permission(user: User, "read", ecbb: EnergyConsumptionTimeseriesByBuilding) if
     has_permission(user, "read_data", ecbb.timeseries);
+
+
+resource WeatherTimeseriesBySite {
+    permissions = ["create", "read", "update", "delete"];
+    relations = {
+        timeseries: Timeseries
+    };
+
+    "read" if "read" on "timeseries";
+}
+has_relation(ts: Timeseries, "timeseries", wtsbd: WeatherTimeseriesBySite) if
+    ts = wtsbd.timeseries;
