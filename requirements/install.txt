@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file=requirements/install.txt setup.py
 #
-alembic==1.9.2
+alembic==1.9.4
     # via bemserver-core (setup.py)
 amqp==5.1.1
     # via kombu
@@ -63,17 +63,17 @@ pytz==2022.7.1
     # via
     #   celery
     #   pandas
-redis==4.4.2
+redis==4.5.1
     # via bemserver-core (setup.py)
 six==1.16.0
     # via
     #   click-repl
     #   python-dateutil
-sqlalchemy==2.0.1
+sqlalchemy==2.0.4
     # via
     #   alembic
     #   bemserver-core (setup.py)
-typing-extensions==4.4.0
+typing-extensions==4.5.0
     # via sqlalchemy
 vine==5.0.0
     # via
