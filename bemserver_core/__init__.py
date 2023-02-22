@@ -2,6 +2,7 @@
 from bemserver_core import authorization
 
 from . import model
+from . import common
 from . import database  # noqa
 from . import input_output  # noqa
 from . import scheduled_tasks
@@ -26,3 +27,6 @@ class BEMServerCore:
             self.auth_model_classes,
             self.auth_polar_files,
         )
+
+    def load_units_definitions_file(self, file_path):
+        common.ureg.load_definitions(file_path)

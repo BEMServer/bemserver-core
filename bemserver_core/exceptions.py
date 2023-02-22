@@ -69,6 +69,10 @@ class TimeseriesDataJSONIOError(BEMServerCoreJSONIOError, TimeseriesDataIOError)
     """Timeseries data JSON IO error"""
 
 
+class BEMServerCoreUndefinedUnitError(BEMServerCoreError):
+    """Undefined unit error"""
+
+
 class BEMServerAuthorizationError(BEMServerCoreIOError):
     """Operation not autorized to current user"""
 
