@@ -73,6 +73,10 @@ class BEMServerCoreUndefinedUnitError(BEMServerCoreError):
     """Undefined unit error"""
 
 
+class BEMServerCoreDimensionalityError(BEMServerCoreError):
+    """Dimensionality error"""
+
+
 class BEMServerAuthorizationError(BEMServerCoreIOError):
     """Operation not autorized to current user"""
 
