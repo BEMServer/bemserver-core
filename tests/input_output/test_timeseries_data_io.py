@@ -394,7 +394,7 @@ class TestTimeseriesDataIO:
                 end_dt,
                 ts_l,
                 ds_1,
-                conversions={ts_0.id: "mm"},
+                convert_to={ts_0.id: "mm"},
             )
             index = pd.DatetimeIndex(
                 [
@@ -420,7 +420,7 @@ class TestTimeseriesDataIO:
                     end_dt,
                     ts_l,
                     ds_1,
-                    conversions={ts_0.id: "dummy"},
+                    convert_to={ts_0.id: "dummy"},
                 )
             # Wrong dimension: kW vs. m
             with pytest.raises(BEMServerCoreDimensionalityError):
@@ -429,7 +429,7 @@ class TestTimeseriesDataIO:
                     end_dt,
                     ts_l,
                     ds_1,
-                    conversions={ts_0.id: "kW"},
+                    convert_to={ts_0.id: "kW"},
                 )
 
             # Purposely set order different than ID order to check output ordering
@@ -900,7 +900,7 @@ class TestTimeseriesDataIO:
                 ds_1,
                 1,
                 "day",
-                conversions={ts_0.id: "mm"},
+                convert_to={ts_0.id: "mm"},
             )
             index = pd.DatetimeIndex(
                 [
@@ -928,7 +928,7 @@ class TestTimeseriesDataIO:
                     ds_1,
                     1,
                     "day",
-                    conversions={ts_0.id: "dummy"},
+                    convert_to={ts_0.id: "dummy"},
                 )
             # Wrong dimension: kW vs. m
             with pytest.raises(BEMServerCoreDimensionalityError):
@@ -939,7 +939,7 @@ class TestTimeseriesDataIO:
                     ds_1,
                     1,
                     "day",
-                    conversions={ts_0.id: "kW"},
+                    convert_to={ts_0.id: "kW"},
                 )
             # Wrong dimension: mm vs. count
             with pytest.raises(BEMServerCoreDimensionalityError):
@@ -951,7 +951,7 @@ class TestTimeseriesDataIO:
                     1,
                     "day",
                     "count",
-                    conversions={ts_0.id: "mm"},
+                    convert_to={ts_0.id: "mm"},
                 )
             # count vs. count OK (data unchanged)
             data_df = tsdio.get_timeseries_buckets_data(
@@ -962,7 +962,7 @@ class TestTimeseriesDataIO:
                 1,
                 "day",
                 "count",
-                conversions={ts_0.id: "count"},
+                convert_to={ts_0.id: "count"},
             )
             index = pd.DatetimeIndex(
                 [
@@ -1999,7 +1999,7 @@ class TestTimeseriesDataCSVIO:
                 end_dt,
                 ts_l,
                 ds_1,
-                conversions={ts_0.name if col_label == "name" else ts_0.id: "mm"},
+                convert_to={ts_0.name if col_label == "name" else ts_0.id: "mm"},
                 col_label=col_label,
             )
             assert data == header + (
@@ -2182,7 +2182,7 @@ class TestTimeseriesDataCSVIO:
                 ds_1,
                 1,
                 "day",
-                conversions={ts_0.name if col_label == "name" else ts_0.id: "mm"},
+                convert_to={ts_0.name if col_label == "name" else ts_0.id: "mm"},
                 col_label=col_label,
             )
             assert data == header + (
@@ -2580,7 +2580,7 @@ class TestTimeseriesDataJSONIO:
                 end_dt,
                 ts_l,
                 ds_1,
-                conversions={ts_0.name if col_label == "name" else ts_0.id: "mm"},
+                convert_to={ts_0.name if col_label == "name" else ts_0.id: "mm"},
                 col_label=col_label,
             )
             expected = {
@@ -2835,7 +2835,7 @@ class TestTimeseriesDataJSONIO:
                 ds_1,
                 1,
                 "day",
-                conversions={ts_0.name if col_label == "name" else ts_0.id: "mm"},
+                convert_to={ts_0.name if col_label == "name" else ts_0.id: "mm"},
                 col_label=col_label,
             )
             expected = {

@@ -117,16 +117,16 @@ class TimeseriesDataIO:
         return data_df[timeseries_labels]
 
     @staticmethod
-    def _convert(data_df, ts_l, col_label, conversions, *, src_unit=None):
+    def _convert(data_df, ts_l, col_label, convert_to, *, src_unit=None):
         """Convert data to given units
 
         :param DataFrame data_df: DataFrame to convert
         :param list ts_l: List of Timeseries objects
         :param str col_label: DataFrame column labels: IDs or names
-        :param dict conversions: Mapping of timeseries ID/name -> unit
+        :param dict convert_to: Mapping of timeseries ID/name -> unit
         :param string src_unit: Unit to use as source unit for all timeseries
 
-        Converts column for each item in conversions dict.
+        Converts column for each item in convert_to dict.
 
         If src_unit is provided, it is used as source unit for all timeseries
         in place of their respective units. This is useful for aggregated data
@@ -136,7 +136,7 @@ class TimeseriesDataIO:
         ureg.convert_df(
             data_df,
             {getattr(ts, col_label): src_unit or ts.unit_symbol for ts in ts_l},
-            conversions,
+            convert_to,
         )
 
     @classmethod
@@ -147,7 +147,7 @@ class TimeseriesDataIO:
         timeseries,
         data_state,
         *,
-        conversions=None,
+        convert_to=None,
         timezone="UTC",
         inclusive="left",
         col_label="id",
@@ -209,8 +209,8 @@ class TimeseriesDataIO:
 
         data_df = cls._fill_missing_and_reorder_columns(data_df, timeseries, col_label)
 
-        if conversions:
-            cls._convert(data_df, timeseries, col_label, conversions)
+        if convert_to:
+            cls._convert(data_df, timeseries, col_label, convert_to)
 
         return data_df
 
@@ -225,7 +225,7 @@ class TimeseriesDataIO:
         bucket_width_unit,
         aggregation="avg",
         *,
-        conversions=None,
+        convert_to=None,
         timezone="UTC",
         col_label="id",
     ):
@@ -348,10 +348,10 @@ class TimeseriesDataIO:
 
         data_df = data_df.astype(dtype)
 
-        if conversions:
+        if convert_to:
             # If aggregation is count, data is not in original TS unit but dimensionless
             src_unit = "count" if aggregation == "count" else None
-            cls._convert(data_df, timeseries, col_label, conversions, src_unit=src_unit)
+            cls._convert(data_df, timeseries, col_label, convert_to, src_unit=src_unit)
 
         return data_df
 
@@ -459,7 +459,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         timeseries,
         data_state,
         *,
-        conversions=None,
+        convert_to=None,
         timezone="UTC",
         col_label="id",
     ):
@@ -472,7 +472,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             end_dt,
             timeseries,
             data_state,
-            conversions=conversions,
+            convert_to=convert_to,
             timezone=timezone,
             col_label=col_label,
         )
@@ -493,7 +493,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         bucket_width_unit,
         aggregation="avg",
         *,
-        conversions=None,
+        convert_to=None,
         timezone="UTC",
         col_label="id",
     ):
@@ -509,7 +509,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             bucket_width_value,
             bucket_width_unit,
             aggregation,
-            conversions=conversions,
+            convert_to=convert_to,
             timezone=timezone,
             col_label=col_label,
         )
@@ -578,7 +578,7 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
         timeseries,
         data_state,
         *,
-        conversions=None,
+        convert_to=None,
         timezone="UTC",
         col_label="id",
     ):
@@ -591,7 +591,7 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
             end_dt,
             timeseries,
             data_state,
-            conversions=conversions,
+            convert_to=convert_to,
             timezone=timezone,
             col_label=col_label,
         )
@@ -608,7 +608,7 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
         bucket_width_unit,
         aggregation="avg",
         *,
-        conversions=None,
+        convert_to=None,
         timezone="UTC",
         col_label="id",
     ):
@@ -624,7 +624,7 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
             bucket_width_value,
             bucket_width_unit,
             aggregation,
-            conversions=conversions,
+            convert_to=convert_to,
             timezone=timezone,
             col_label=col_label,
         )
