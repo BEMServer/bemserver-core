@@ -106,6 +106,7 @@ class TestEnergyConsumptionTimeseriesBySiteModel:
         with CurrentUser(admin_user):
             energy_source_1 = EnergySource.get()[0]
             energy_end_use_1 = EnergyEndUse.get()[0]
+            energy_end_use_2 = EnergyEndUse.get()[1]
 
             assert not list(EnergyConsumptionTimeseriesBySite.get())
             ectbs_1 = EnergyConsumptionTimeseriesBySite.new(
@@ -113,13 +114,12 @@ class TestEnergyConsumptionTimeseriesBySiteModel:
                 source_id=energy_source_1.id,
                 end_use_id=energy_end_use_1.id,
                 timeseries_id=ts_1.id,
-                wh_conversion_factor=1000,
             )
             db.session.commit()
             EnergyConsumptionTimeseriesBySite.get_by_id(ectbs_1.id)
             ectbs_l = list(EnergyConsumptionTimeseriesBySite.get())
             assert len(ectbs_l) == 1
-            ectbs_1.update(wh_conversion_factor=100)
+            ectbs_1.update(end_use_id=energy_end_use_2.id)
             ectbs_1.delete()
             db.session.commit()
 
@@ -138,6 +138,7 @@ class TestEnergyConsumptionTimeseriesBySiteModel:
         with CurrentUser(user_1):
             energy_source_1 = EnergySource.get()[0]
             energy_end_use_1 = EnergyEndUse.get()[0]
+            energy_end_use_2 = EnergyEndUse.get()[1]
 
             ectbs_l = list(EnergyConsumptionTimeseriesBySite.get())
             ectbs_2 = EnergyConsumptionTimeseriesBySite.get_by_id(ectbs_l[0].id)
@@ -147,10 +148,9 @@ class TestEnergyConsumptionTimeseriesBySiteModel:
                     source_id=energy_source_1.id,
                     end_use_id=energy_end_use_1.id,
                     timeseries_id=ts_2.id,
-                    wh_conversion_factor=1000,
                 )
             with pytest.raises(BEMServerAuthorizationError):
-                ectbs_2.update(wh_conversion_factor=100)
+                ectbs_2.update(end_use_id=energy_end_use_2.id)
             with pytest.raises(BEMServerAuthorizationError):
                 ectbs_2.delete()
 
@@ -184,6 +184,7 @@ class TestEnergyConsumptionTimeseriesByBuildingModel:
         with CurrentUser(admin_user):
             energy_source_1 = EnergySource.get()[0]
             energy_end_use_1 = EnergyEndUse.get()[0]
+            energy_end_use_2 = EnergyEndUse.get()[1]
 
             assert not list(EnergyConsumptionTimeseriesByBuilding.get())
             ectbb_1 = EnergyConsumptionTimeseriesByBuilding.new(
@@ -191,13 +192,12 @@ class TestEnergyConsumptionTimeseriesByBuildingModel:
                 source_id=energy_source_1.id,
                 end_use_id=energy_end_use_1.id,
                 timeseries_id=ts_1.id,
-                wh_conversion_factor=1000,
             )
             db.session.commit()
             EnergyConsumptionTimeseriesByBuilding.get_by_id(ectbb_1.id)
             ectbb_l = list(EnergyConsumptionTimeseriesByBuilding.get())
             assert len(ectbb_l) == 1
-            ectbb_1.update(wh_conversion_factor=100)
+            ectbb_1.update(end_use_id=energy_end_use_2.id)
             ectbb_1.delete()
             db.session.commit()
 
@@ -216,6 +216,7 @@ class TestEnergyConsumptionTimeseriesByBuildingModel:
         with CurrentUser(user_1):
             energy_source_1 = EnergySource.get()[0]
             energy_end_use_1 = EnergyEndUse.get()[0]
+            energy_end_use_2 = EnergyEndUse.get()[1]
 
             ectbb_l = list(EnergyConsumptionTimeseriesByBuilding.get())
             ectbb_2 = EnergyConsumptionTimeseriesByBuilding.get_by_id(ectbb_l[0].id)
@@ -225,9 +226,8 @@ class TestEnergyConsumptionTimeseriesByBuildingModel:
                     source_id=energy_source_1.id,
                     end_use_id=energy_end_use_1.id,
                     timeseries_id=ts_2.id,
-                    wh_conversion_factor=1000,
                 )
             with pytest.raises(BEMServerAuthorizationError):
-                ectbb_2.update(wh_conversion_factor=100)
+                ectbb_2.update(end_use_id=energy_end_use_2.id)
             with pytest.raises(BEMServerAuthorizationError):
                 ectbb_2.delete()

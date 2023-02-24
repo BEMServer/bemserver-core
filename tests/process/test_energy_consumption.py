@@ -3,6 +3,8 @@ import datetime as dt
 
 import pandas as pd
 
+import pytest
+
 from tests.utils import create_timeseries_data
 
 from bemserver_core.database import db
@@ -19,6 +21,7 @@ from bemserver_core.process.energy_consumption import (
     compute_energy_consumption_breakdown_for_site,
     compute_energy_consumption_breakdown_for_building,
 )
+from bemserver_core.exceptions import BEMServerCoreDimensionalityError
 
 
 class TestEnergyConsumption:
@@ -37,6 +40,7 @@ class TestEnergyConsumption:
                 name=f"Timeseries {i+1}",
                 campaign=campaign,
                 campaign_scope=campaign_scope,
+                unit_symbol=("Wh" if i < 6 else "kWh"),
             )
             timeseries.append(ts_i)
         db.session.flush()
@@ -136,21 +140,18 @@ class TestEnergyConsumption:
                 source_id=source_gas.id,
                 end_use_id=end_use_all.id,
                 timeseries_id=timeseries[6].id,
-                wh_conversion_factor=1000,
             )
             EnergyConsumptionTimeseriesBySite.new(
                 site_id=sites[0].id,
                 source_id=source_gas.id,
                 end_use_id=end_use_heating.id,
                 timeseries_id=timeseries[7].id,
-                wh_conversion_factor=1000,
             )
             EnergyConsumptionTimeseriesBySite.new(
                 site_id=sites[0].id,
                 source_id=source_gas.id,
                 end_use_id=end_use_cooling.id,
                 timeseries_id=timeseries[8].id,
-                wh_conversion_factor=1000,
             )
 
         with CurrentUser(admin_user):
@@ -164,6 +165,13 @@ class TestEnergyConsumption:
                 site_1, start_dt, end_dt, 2, "hour"
             )
             assert ret["energy"]["all"]["all"] == [142.0]
+
+            # Check wrong unit
+            timeseries[0].unit_symbol = None
+            with pytest.raises(BEMServerCoreDimensionalityError):
+                ret = compute_energy_consumption_breakdown_for_site(
+                    site_1, start_dt, end_dt, 1, "hour"
+                )
 
     def test_compute_energy_consumption_breakdown_for_building(
         self, users, buildings, campaigns, campaign_scopes
@@ -226,21 +234,18 @@ class TestEnergyConsumption:
                 source_id=source_gas.id,
                 end_use_id=end_use_all.id,
                 timeseries_id=timeseries[6].id,
-                wh_conversion_factor=1000,
             )
             EnergyConsumptionTimeseriesByBuilding.new(
                 building_id=buildings[0].id,
                 source_id=source_gas.id,
                 end_use_id=end_use_heating.id,
                 timeseries_id=timeseries[7].id,
-                wh_conversion_factor=1000,
             )
             EnergyConsumptionTimeseriesByBuilding.new(
                 building_id=buildings[0].id,
                 source_id=source_gas.id,
                 end_use_id=end_use_cooling.id,
                 timeseries_id=timeseries[8].id,
-                wh_conversion_factor=1000,
             )
 
         with CurrentUser(admin_user):
@@ -254,3 +259,10 @@ class TestEnergyConsumption:
                 building_1, start_dt, end_dt, 2, "hour"
             )
             assert ret["energy"]["all"]["all"] == [142.0]
+
+            # Check wrong unit
+            timeseries[0].unit_symbol = None
+            with pytest.raises(BEMServerCoreDimensionalityError):
+                ret = compute_energy_consumption_breakdown_for_building(
+                    building_1, start_dt, end_dt, 1, "hour"
+                )
