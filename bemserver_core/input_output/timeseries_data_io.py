@@ -459,6 +459,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         timeseries,
         data_state,
         *,
+        conversions=None,
         timezone="UTC",
         col_label="id",
     ):
@@ -471,6 +472,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             end_dt,
             timeseries,
             data_state,
+            conversions=conversions,
             timezone=timezone,
             col_label=col_label,
         )
@@ -491,6 +493,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
         bucket_width_unit,
         aggregation="avg",
         *,
+        conversions=None,
         timezone="UTC",
         col_label="id",
     ):
@@ -506,6 +509,7 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             bucket_width_value,
             bucket_width_unit,
             aggregation,
+            conversions=conversions,
             timezone=timezone,
             col_label=col_label,
         )
@@ -574,6 +578,7 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
         timeseries,
         data_state,
         *,
+        conversions=None,
         timezone="UTC",
         col_label="id",
     ):
@@ -586,6 +591,7 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
             end_dt,
             timeseries,
             data_state,
+            conversions=conversions,
             timezone=timezone,
             col_label=col_label,
         )
@@ -602,6 +608,7 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
         bucket_width_unit,
         aggregation="avg",
         *,
+        conversions=None,
         timezone="UTC",
         col_label="id",
     ):
@@ -617,6 +624,7 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
             bucket_width_value,
             bucket_width_unit,
             aggregation,
+            conversions=conversions,
             timezone=timezone,
             col_label=col_label,
         )

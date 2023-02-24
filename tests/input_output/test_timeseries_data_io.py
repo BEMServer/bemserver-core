@@ -1930,6 +1930,7 @@ class TestTimeseriesDataCSVIO:
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
+            ts_0.unit_symbol = ureg.get_symbol("meter")
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=3)
@@ -1957,13 +1958,13 @@ class TestTimeseriesDataCSVIO:
                 ds_1,
                 col_label=col_label,
             )
-
             assert data == header + (
                 "2020-01-01T00:00:00+0000,0.0,,10.0\n"
                 "2020-01-01T01:00:00+0000,1.0,,12.0\n"
                 "2020-01-01T02:00:00+0000,2.0,,\n"
             )
 
+            # No start/end date
             data = tsdcsvio.export_csv(
                 None,
                 None,
@@ -1971,13 +1972,13 @@ class TestTimeseriesDataCSVIO:
                 ds_1,
                 col_label=col_label,
             )
-
             assert data == header + (
                 "2020-01-01T00:00:00+0000,0.0,,10.0\n"
                 "2020-01-01T01:00:00+0000,1.0,,12.0\n"
                 "2020-01-01T02:00:00+0000,2.0,,\n"
             )
 
+            # Local TZ
             data = tsdcsvio.export_csv(
                 start_dt,
                 end_dt,
@@ -1986,11 +1987,25 @@ class TestTimeseriesDataCSVIO:
                 timezone="Europe/Paris",
                 col_label=col_label,
             )
-
             assert data == header + (
                 "2020-01-01T01:00:00+0100,0.0,,10.0\n"
                 "2020-01-01T02:00:00+0100,1.0,,12.0\n"
                 "2020-01-01T03:00:00+0100,2.0,,\n"
+            )
+
+            # Unit conversions
+            data = tsdcsvio.export_csv(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                conversions={ts_0.name if col_label == "name" else ts_0.id: "mm"},
+                col_label=col_label,
+            )
+            assert data == header + (
+                "2020-01-01T00:00:00+0000,0.0,,10.0\n"
+                "2020-01-01T01:00:00+0000,1000.0,,12.0\n"
+                "2020-01-01T02:00:00+0000,2000.0,,\n"
             )
 
     @pytest.mark.parametrize("campaigns", (2,), indirect=True)
@@ -2060,6 +2075,7 @@ class TestTimeseriesDataCSVIO:
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
+            ts_0.unit_symbol = ureg.get_symbol("meter")
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
@@ -2156,6 +2172,23 @@ class TestTimeseriesDataCSVIO:
                 "2020-01-01T00:00:00+0000,23.0,,56.0\n"
                 "2020-01-02T00:00:00+0000,47.0,,104.0\n"
                 "2020-01-03T00:00:00+0000,71.0,,\n"
+            )
+
+            # Export CSV: conversions
+            data = tsdcsvio.export_csv_bucket(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                1,
+                "day",
+                conversions={ts_0.name if col_label == "name" else ts_0.id: "mm"},
+                col_label=col_label,
+            )
+            assert data == header + (
+                "2020-01-01T00:00:00+0000,11500.0,,33.0\n"
+                "2020-01-02T00:00:00+0000,35500.0,,81.0\n"
+                "2020-01-03T00:00:00+0000,59500.0,,\n"
             )
 
             # Export CSV: no timeseries
@@ -2460,6 +2493,7 @@ class TestTimeseriesDataJSONIO:
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
+            ts_0.unit_symbol = ureg.get_symbol("meter")
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=3)
@@ -2497,6 +2531,7 @@ class TestTimeseriesDataJSONIO:
             }
             assert json.loads(data) == expected
 
+            # No start/end date
             data = tsdjsonio.export_json(
                 None,
                 None,
@@ -2517,6 +2552,7 @@ class TestTimeseriesDataJSONIO:
             }
             assert json.loads(data) == expected
 
+            # Local TZ
             data = tsdjsonio.export_json(
                 start_dt,
                 end_dt,
@@ -2534,6 +2570,28 @@ class TestTimeseriesDataJSONIO:
                 labels[2]: {
                     "2020-01-01T01:00:00+01:00": 10.0,
                     "2020-01-01T02:00:00+01:00": 12.0,
+                },
+            }
+            assert json.loads(data) == expected
+
+            # Unit conversions
+            data = tsdjsonio.export_json(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                conversions={ts_0.name if col_label == "name" else ts_0.id: "mm"},
+                col_label=col_label,
+            )
+            expected = {
+                labels[0]: {
+                    "2020-01-01T00:00:00+00:00": 0.0,
+                    "2020-01-01T01:00:00+00:00": 1000.0,
+                    "2020-01-01T02:00:00+00:00": 2000.0,
+                },
+                labels[2]: {
+                    "2020-01-01T00:00:00+00:00": 10.0,
+                    "2020-01-01T01:00:00+00:00": 12.0,
                 },
             }
             assert json.loads(data) == expected
@@ -2608,6 +2666,7 @@ class TestTimeseriesDataJSONIO:
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
+            ts_0.unit_symbol = ureg.get_symbol("meter")
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
@@ -2763,6 +2822,36 @@ class TestTimeseriesDataJSONIO:
                 labels[2]: {
                     "2020-01-01T00:00:00+00:00": 56.0,
                     "2020-01-02T00:00:00+00:00": 104.0,
+                    "2020-01-03T00:00:00+00:00": None,
+                },
+            }
+            assert json.loads(data) == expected
+
+            # Export JSON: unit converions
+            data = tsdjsonio.export_json_bucket(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                1,
+                "day",
+                conversions={ts_0.name if col_label == "name" else ts_0.id: "mm"},
+                col_label=col_label,
+            )
+            expected = {
+                labels[0]: {
+                    "2020-01-01T00:00:00+00:00": 11500.0,
+                    "2020-01-02T00:00:00+00:00": 35500.0,
+                    "2020-01-03T00:00:00+00:00": 59500.0,
+                },
+                labels[1]: {
+                    "2020-01-01T00:00:00+00:00": None,
+                    "2020-01-02T00:00:00+00:00": None,
+                    "2020-01-03T00:00:00+00:00": None,
+                },
+                labels[2]: {
+                    "2020-01-01T00:00:00+00:00": 33.0,
+                    "2020-01-02T00:00:00+00:00": 81.0,
                     "2020-01-03T00:00:00+00:00": None,
                 },
             }
