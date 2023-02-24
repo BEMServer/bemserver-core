@@ -14,6 +14,7 @@ from bemserver_core.model import (
     TimeseriesDataState,
     TimeseriesByDataState,
 )
+from bemserver_core.common import ureg
 from bemserver_core.input_output import tsdio, tsdcsvio, tsdjsonio
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
@@ -27,6 +28,8 @@ from bemserver_core.exceptions import (
     TimeseriesDataCSVIOError,
     TimeseriesDataJSONIOError,
     TimeseriesNotFoundError,
+    BEMServerCoreUndefinedUnitError,
+    BEMServerCoreDimensionalityError,
 )
 
 
@@ -382,6 +385,53 @@ class TestTimeseriesDataIO:
             )
             assert data_df.equals(expected_data_df)
 
+            # Test conversions
+            with OpenBar():
+                ts_0.unit_symbol = ureg.get_symbol("meter")
+
+            data_df = tsdio.get_timeseries_data(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                conversions={ts_0.id: "mm"},
+            )
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00+00:00",
+                    "2020-01-01T01:00:00+00:00",
+                    "2020-01-01T02:00:00+00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            val_0 = [1000 * 0.0, 1000 * 1.0, 1000 * 2.0]
+            val_2 = [np.nan, np.nan, np.nan]
+            val_4 = [10.0, 12.0, np.nan]
+            expected_data_df = pd.DataFrame(
+                {ts_0.id: val_0, ts_2.id: val_2, ts_4.id: val_4},
+                index=index,
+            )
+            assert data_df.equals(expected_data_df)
+            # Undefined: dummy
+            with pytest.raises(BEMServerCoreUndefinedUnitError):
+                data_df = tsdio.get_timeseries_data(
+                    start_dt,
+                    end_dt,
+                    ts_l,
+                    ds_1,
+                    conversions={ts_0.id: "dummy"},
+                )
+            # Wrong dimension: kW vs. m
+            with pytest.raises(BEMServerCoreDimensionalityError):
+                data_df = tsdio.get_timeseries_data(
+                    start_dt,
+                    end_dt,
+                    ts_l,
+                    ds_1,
+                    conversions={ts_0.id: "kW"},
+                )
+
             # Purposely set order different than ID order to check output ordering
             ts_l = (ts_2, ts_0, ts_4)
 
@@ -608,7 +658,7 @@ class TestTimeseriesDataIO:
             )
             assert data_df.equals(expected_data_df)
 
-            # UTC count 1 day1, 3 hour (and a half) offset
+            # UTC count 1 day, 3 hour (and a half) offset
             # start time is floored to round to interval
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt + dt.timedelta(hours=3, minutes=30),
@@ -837,6 +887,99 @@ class TestTimeseriesDataIO:
                 index=index,
             )
 
+            assert data_df.equals(expected_data_df)
+
+            # Test conversions
+            with OpenBar():
+                ts_0.unit_symbol = ureg.get_symbol("meter")
+
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                1,
+                "day",
+                conversions={ts_0.id: "mm"},
+            )
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00+00:00",
+                    "2020-01-02T00:00:00+00:00",
+                    "2020-01-03T00:00:00+00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            val_0 = [1000 * 11.5, 1000 * 35.5, 1000 * 59.5]
+            val_2 = [np.nan, np.nan, np.nan]
+            val_4 = [33.0, 81.0, np.nan]
+            expected_data_df = pd.DataFrame(
+                {ts_0.id: val_0, ts_2.id: val_2, ts_4.id: val_4},
+                index=index,
+            )
+            assert data_df.equals(expected_data_df)
+            # Undefined: dummy
+            with pytest.raises(BEMServerCoreUndefinedUnitError):
+                data_df = tsdio.get_timeseries_buckets_data(
+                    start_dt,
+                    end_dt,
+                    ts_l,
+                    ds_1,
+                    1,
+                    "day",
+                    conversions={ts_0.id: "dummy"},
+                )
+            # Wrong dimension: kW vs. m
+            with pytest.raises(BEMServerCoreDimensionalityError):
+                data_df = tsdio.get_timeseries_buckets_data(
+                    start_dt,
+                    end_dt,
+                    ts_l,
+                    ds_1,
+                    1,
+                    "day",
+                    conversions={ts_0.id: "kW"},
+                )
+            # Wrong dimension: mm vs. count
+            with pytest.raises(BEMServerCoreDimensionalityError):
+                data_df = tsdio.get_timeseries_buckets_data(
+                    start_dt,
+                    end_dt,
+                    ts_l,
+                    ds_1,
+                    1,
+                    "day",
+                    "count",
+                    conversions={ts_0.id: "mm"},
+                )
+            # count vs. count OK (data unchanged)
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                1,
+                "day",
+                "count",
+                conversions={ts_0.id: "count"},
+            )
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00+00:00",
+                    "2020-01-02T00:00:00+00:00",
+                    "2020-01-03T00:00:00+00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            val_0 = [24, 24, 24]
+            val_2 = [0, 0, 0]
+            val_4 = [24, 24, 0]
+            expected_data_df = pd.DataFrame(
+                {ts_0.id: val_0, ts_2.id: val_2, ts_4.id: val_4},
+                index=index,
+            )
             assert data_df.equals(expected_data_df)
 
             # Purposely set order different than ID order to check output ordering

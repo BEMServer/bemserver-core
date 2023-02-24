@@ -16,6 +16,7 @@ from bemserver_core.model import (
     TimeseriesData,
     TimeseriesByDataState,
 )
+from bemserver_core.common import ureg
 from bemserver_core.authorization import auth, get_current_user
 from bemserver_core.time_utils import floor, ceil, PERIODS, make_pandas_freq
 from bemserver_core.exceptions import (
@@ -115,6 +116,29 @@ class TimeseriesDataIO:
         # Ensure order
         return data_df[timeseries_labels]
 
+    @staticmethod
+    def _convert(data_df, ts_l, col_label, conversions, *, src_unit=None):
+        """Convert data to given units
+
+        :param DataFrame data_df: DataFrame to convert
+        :param list ts_l: List of Timeseries objects
+        :param str col_label: DataFrame column labels: IDs or names
+        :param dict conversions: Mapping of timeseries ID/name -> unit
+        :param string src_unit: Unit to use as source unit for all timeseries
+
+        Converts column for each item in conversions dict.
+
+        If src_unit is provided, it is used as source unit for all timeseries
+        in place of their respective units. This is useful for aggregated data
+        where the result of the aggregation may not have the same unit as the
+        original data (e.g. count).
+        """
+        ureg.convert_df(
+            data_df,
+            {getattr(ts, col_label): src_unit or ts.unit_symbol for ts in ts_l},
+            conversions,
+        )
+
     @classmethod
     def get_timeseries_data(
         cls,
@@ -123,6 +147,7 @@ class TimeseriesDataIO:
         timeseries,
         data_state,
         *,
+        conversions=None,
         timezone="UTC",
         inclusive="left",
         col_label="id",
@@ -184,6 +209,9 @@ class TimeseriesDataIO:
 
         data_df = cls._fill_missing_and_reorder_columns(data_df, timeseries, col_label)
 
+        if conversions:
+            cls._convert(data_df, timeseries, col_label, conversions)
+
         return data_df
 
     @classmethod
@@ -197,6 +225,7 @@ class TimeseriesDataIO:
         bucket_width_unit,
         aggregation="avg",
         *,
+        conversions=None,
         timezone="UTC",
         col_label="id",
     ):
@@ -318,6 +347,11 @@ class TimeseriesDataIO:
         )
 
         data_df = data_df.astype(dtype)
+
+        if conversions:
+            # If aggregation is count, data is not in original TS unit but dimensionless
+            src_unit = "count" if aggregation == "count" else None
+            cls._convert(data_df, timeseries, col_label, conversions, src_unit=src_unit)
 
         return data_df
 
