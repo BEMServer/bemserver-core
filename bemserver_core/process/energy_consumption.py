@@ -73,6 +73,7 @@ def compute_energy_consumption_breakdown(
         bucket_width_value,
         bucket_width_unit,
         "sum",
+        convert_to={ts.id: "Wh" for ts in timeseries},
         timezone=timezone,
     ).fillna(0)
 
@@ -81,8 +82,8 @@ def compute_energy_consumption_breakdown(
         "energy": defaultdict(dict),
     }
     for ectbl, ts_name in zip(ectbl_l, data_df.columns):
-        brkdwn["energy"][ectbl.source.name][ectbl.end_use.name] = (
-            ectbl.wh_conversion_factor * data_df[ts_name]
-        ).to_list()
+        brkdwn["energy"][ectbl.source.name][ectbl.end_use.name] = data_df[
+            ts_name
+        ].to_list()
 
     return brkdwn

@@ -28,8 +28,6 @@ class EnergyConsumptionTimeseriesBySite(AuthMixin, Base):
     source_id = sqla.Column(sqla.ForeignKey("ener_sources.id"), nullable=False)
     end_use_id = sqla.Column(sqla.ForeignKey("ener_end_uses.id"), nullable=False)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
-    # Multiply TS values by wh_conversion_factor to get Wh
-    wh_conversion_factor = sqla.Column(sqla.Float, nullable=False, default=1)
 
     site = sqla.orm.relationship(
         "Site",
@@ -80,8 +78,6 @@ class EnergyConsumptionTimeseriesByBuilding(AuthMixin, Base):
     source_id = sqla.Column(sqla.ForeignKey("ener_sources.id"), nullable=False)
     end_use_id = sqla.Column(sqla.ForeignKey("ener_end_uses.id"), nullable=False)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
-    # Multiply TS values by kwh_conversion_factor to get Wh
-    wh_conversion_factor = sqla.Column(sqla.Integer, nullable=False, default=1)
 
     building = sqla.orm.relationship(
         "Building",
