@@ -34,11 +34,24 @@ class TestUnits:
         with pytest.raises(BEMServerCoreUndefinedUnitError):
             ureg.get_symbol("dummy")
 
+    def test_ureg_validate_unit(self):
+        assert ureg.validate_unit("")
+        assert ureg.validate_unit("m")
+        assert ureg.validate_unit("meter")
+        assert ureg.validate_unit("kWh")
+        assert ureg.validate_unit("m/s")
+        assert ureg.validate_unit("m3/m3")
+        with pytest.raises(BEMServerCoreUndefinedUnitError):
+            ureg.validate_unit("wh")
+        with pytest.raises(BEMServerCoreUndefinedUnitError):
+            ureg.validate_unit("dummy")
+
     def test_ureg_loads_units_file_on_startup(self):
         assert "heating_celsius_degree_hour" in ureg
 
     def test_ureg_convert(self):
         assert ureg.convert(1.0, "km", "m") == 1000.0
+        assert ureg.convert(1.0, "m/s", "km/h") == pytest.approx(3.6)
         # convert returns a np.array, cast to list to compare
         assert list(ureg.convert([1.0, 2.0, 3.0], "km", "m")) == [
             1000.0,
