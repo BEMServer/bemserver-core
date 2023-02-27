@@ -27,6 +27,8 @@ from bemserver_core.exceptions import (
     TimeseriesDataCSVIOError,
     TimeseriesDataJSONIOError,
     TimeseriesNotFoundError,
+    BEMServerCoreUndefinedUnitError,
+    BEMServerCoreDimensionalityError,
 )
 
 
@@ -382,6 +384,53 @@ class TestTimeseriesDataIO:
             )
             assert data_df.equals(expected_data_df)
 
+            # Test conversions
+            with OpenBar():
+                ts_0.unit_symbol = "meter"
+
+            data_df = tsdio.get_timeseries_data(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                convert_to={ts_0.id: "mm"},
+            )
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00+00:00",
+                    "2020-01-01T01:00:00+00:00",
+                    "2020-01-01T02:00:00+00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            val_0 = [1000 * 0.0, 1000 * 1.0, 1000 * 2.0]
+            val_2 = [np.nan, np.nan, np.nan]
+            val_4 = [10.0, 12.0, np.nan]
+            expected_data_df = pd.DataFrame(
+                {ts_0.id: val_0, ts_2.id: val_2, ts_4.id: val_4},
+                index=index,
+            )
+            assert data_df.equals(expected_data_df)
+            # Undefined: dummy
+            with pytest.raises(BEMServerCoreUndefinedUnitError):
+                data_df = tsdio.get_timeseries_data(
+                    start_dt,
+                    end_dt,
+                    ts_l,
+                    ds_1,
+                    convert_to={ts_0.id: "dummy"},
+                )
+            # Wrong dimension: kW vs. m
+            with pytest.raises(BEMServerCoreDimensionalityError):
+                data_df = tsdio.get_timeseries_data(
+                    start_dt,
+                    end_dt,
+                    ts_l,
+                    ds_1,
+                    convert_to={ts_0.id: "kW"},
+                )
+
             # Purposely set order different than ID order to check output ordering
             ts_l = (ts_2, ts_0, ts_4)
 
@@ -608,7 +657,7 @@ class TestTimeseriesDataIO:
             )
             assert data_df.equals(expected_data_df)
 
-            # UTC count 1 day1, 3 hour (and a half) offset
+            # UTC count 1 day, 3 hour (and a half) offset
             # start time is floored to round to interval
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt + dt.timedelta(hours=3, minutes=30),
@@ -837,6 +886,99 @@ class TestTimeseriesDataIO:
                 index=index,
             )
 
+            assert data_df.equals(expected_data_df)
+
+            # Test conversions
+            with OpenBar():
+                ts_0.unit_symbol = "meter"
+
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                1,
+                "day",
+                convert_to={ts_0.id: "mm"},
+            )
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00+00:00",
+                    "2020-01-02T00:00:00+00:00",
+                    "2020-01-03T00:00:00+00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            val_0 = [1000 * 11.5, 1000 * 35.5, 1000 * 59.5]
+            val_2 = [np.nan, np.nan, np.nan]
+            val_4 = [33.0, 81.0, np.nan]
+            expected_data_df = pd.DataFrame(
+                {ts_0.id: val_0, ts_2.id: val_2, ts_4.id: val_4},
+                index=index,
+            )
+            assert data_df.equals(expected_data_df)
+            # Undefined: dummy
+            with pytest.raises(BEMServerCoreUndefinedUnitError):
+                data_df = tsdio.get_timeseries_buckets_data(
+                    start_dt,
+                    end_dt,
+                    ts_l,
+                    ds_1,
+                    1,
+                    "day",
+                    convert_to={ts_0.id: "dummy"},
+                )
+            # Wrong dimension: kW vs. m
+            with pytest.raises(BEMServerCoreDimensionalityError):
+                data_df = tsdio.get_timeseries_buckets_data(
+                    start_dt,
+                    end_dt,
+                    ts_l,
+                    ds_1,
+                    1,
+                    "day",
+                    convert_to={ts_0.id: "kW"},
+                )
+            # Wrong dimension: mm vs. count
+            with pytest.raises(BEMServerCoreDimensionalityError):
+                data_df = tsdio.get_timeseries_buckets_data(
+                    start_dt,
+                    end_dt,
+                    ts_l,
+                    ds_1,
+                    1,
+                    "day",
+                    "count",
+                    convert_to={ts_0.id: "mm"},
+                )
+            # count vs. count OK (data unchanged)
+            data_df = tsdio.get_timeseries_buckets_data(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                1,
+                "day",
+                "count",
+                convert_to={ts_0.id: "count"},
+            )
+            index = pd.DatetimeIndex(
+                [
+                    "2020-01-01T00:00:00+00:00",
+                    "2020-01-02T00:00:00+00:00",
+                    "2020-01-03T00:00:00+00:00",
+                ],
+                name="timestamp",
+                tz="UTC",
+            )
+            val_0 = [24, 24, 24]
+            val_2 = [0, 0, 0]
+            val_4 = [24, 24, 0]
+            expected_data_df = pd.DataFrame(
+                {ts_0.id: val_0, ts_2.id: val_2, ts_4.id: val_4},
+                index=index,
+            )
             assert data_df.equals(expected_data_df)
 
             # Purposely set order different than ID order to check output ordering
@@ -1787,6 +1929,7 @@ class TestTimeseriesDataCSVIO:
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
+            ts_0.unit_symbol = "meter"
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=3)
@@ -1814,13 +1957,13 @@ class TestTimeseriesDataCSVIO:
                 ds_1,
                 col_label=col_label,
             )
-
             assert data == header + (
                 "2020-01-01T00:00:00+0000,0.0,,10.0\n"
                 "2020-01-01T01:00:00+0000,1.0,,12.0\n"
                 "2020-01-01T02:00:00+0000,2.0,,\n"
             )
 
+            # No start/end date
             data = tsdcsvio.export_csv(
                 None,
                 None,
@@ -1828,13 +1971,13 @@ class TestTimeseriesDataCSVIO:
                 ds_1,
                 col_label=col_label,
             )
-
             assert data == header + (
                 "2020-01-01T00:00:00+0000,0.0,,10.0\n"
                 "2020-01-01T01:00:00+0000,1.0,,12.0\n"
                 "2020-01-01T02:00:00+0000,2.0,,\n"
             )
 
+            # Local TZ
             data = tsdcsvio.export_csv(
                 start_dt,
                 end_dt,
@@ -1843,11 +1986,25 @@ class TestTimeseriesDataCSVIO:
                 timezone="Europe/Paris",
                 col_label=col_label,
             )
-
             assert data == header + (
                 "2020-01-01T01:00:00+0100,0.0,,10.0\n"
                 "2020-01-01T02:00:00+0100,1.0,,12.0\n"
                 "2020-01-01T03:00:00+0100,2.0,,\n"
+            )
+
+            # Unit conversions
+            data = tsdcsvio.export_csv(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                convert_to={ts_0.name if col_label == "name" else ts_0.id: "mm"},
+                col_label=col_label,
+            )
+            assert data == header + (
+                "2020-01-01T00:00:00+0000,0.0,,10.0\n"
+                "2020-01-01T01:00:00+0000,1000.0,,12.0\n"
+                "2020-01-01T02:00:00+0000,2000.0,,\n"
             )
 
     @pytest.mark.parametrize("campaigns", (2,), indirect=True)
@@ -1917,6 +2074,7 @@ class TestTimeseriesDataCSVIO:
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
+            ts_0.unit_symbol = "meter"
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
@@ -2013,6 +2171,23 @@ class TestTimeseriesDataCSVIO:
                 "2020-01-01T00:00:00+0000,23.0,,56.0\n"
                 "2020-01-02T00:00:00+0000,47.0,,104.0\n"
                 "2020-01-03T00:00:00+0000,71.0,,\n"
+            )
+
+            # Export CSV: conversions
+            data = tsdcsvio.export_csv_bucket(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                1,
+                "day",
+                convert_to={ts_0.name if col_label == "name" else ts_0.id: "mm"},
+                col_label=col_label,
+            )
+            assert data == header + (
+                "2020-01-01T00:00:00+0000,11500.0,,33.0\n"
+                "2020-01-02T00:00:00+0000,35500.0,,81.0\n"
+                "2020-01-03T00:00:00+0000,59500.0,,\n"
             )
 
             # Export CSV: no timeseries
@@ -2317,6 +2492,7 @@ class TestTimeseriesDataJSONIO:
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
+            ts_0.unit_symbol = "meter"
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=3)
@@ -2354,6 +2530,7 @@ class TestTimeseriesDataJSONIO:
             }
             assert json.loads(data) == expected
 
+            # No start/end date
             data = tsdjsonio.export_json(
                 None,
                 None,
@@ -2374,6 +2551,7 @@ class TestTimeseriesDataJSONIO:
             }
             assert json.loads(data) == expected
 
+            # Local TZ
             data = tsdjsonio.export_json(
                 start_dt,
                 end_dt,
@@ -2391,6 +2569,28 @@ class TestTimeseriesDataJSONIO:
                 labels[2]: {
                     "2020-01-01T01:00:00+01:00": 10.0,
                     "2020-01-01T02:00:00+01:00": 12.0,
+                },
+            }
+            assert json.loads(data) == expected
+
+            # Unit conversions
+            data = tsdjsonio.export_json(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                convert_to={ts_0.name if col_label == "name" else ts_0.id: "mm"},
+                col_label=col_label,
+            )
+            expected = {
+                labels[0]: {
+                    "2020-01-01T00:00:00+00:00": 0.0,
+                    "2020-01-01T01:00:00+00:00": 1000.0,
+                    "2020-01-01T02:00:00+00:00": 2000.0,
+                },
+                labels[2]: {
+                    "2020-01-01T00:00:00+00:00": 10.0,
+                    "2020-01-01T01:00:00+00:00": 12.0,
                 },
             }
             assert json.loads(data) == expected
@@ -2465,6 +2665,7 @@ class TestTimeseriesDataJSONIO:
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
+            ts_0.unit_symbol = "meter"
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
@@ -2620,6 +2821,36 @@ class TestTimeseriesDataJSONIO:
                 labels[2]: {
                     "2020-01-01T00:00:00+00:00": 56.0,
                     "2020-01-02T00:00:00+00:00": 104.0,
+                    "2020-01-03T00:00:00+00:00": None,
+                },
+            }
+            assert json.loads(data) == expected
+
+            # Export JSON: unit converions
+            data = tsdjsonio.export_json_bucket(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                1,
+                "day",
+                convert_to={ts_0.name if col_label == "name" else ts_0.id: "mm"},
+                col_label=col_label,
+            )
+            expected = {
+                labels[0]: {
+                    "2020-01-01T00:00:00+00:00": 11500.0,
+                    "2020-01-02T00:00:00+00:00": 35500.0,
+                    "2020-01-03T00:00:00+00:00": 59500.0,
+                },
+                labels[1]: {
+                    "2020-01-01T00:00:00+00:00": None,
+                    "2020-01-02T00:00:00+00:00": None,
+                    "2020-01-03T00:00:00+00:00": None,
+                },
+                labels[2]: {
+                    "2020-01-01T00:00:00+00:00": 33.0,
+                    "2020-01-02T00:00:00+00:00": 81.0,
                     "2020-01-03T00:00:00+00:00": None,
                 },
             }

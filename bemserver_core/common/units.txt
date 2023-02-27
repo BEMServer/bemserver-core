@@ -1,0 +1,4 @@
+heating_celsius_degree_hour = degree_Celsius * hour = °C_HDH
+heating_celsius_degree_day = degree_Celsius * day = °C_HDD
+heating_fahrenheit_degree_hour = degree_Fahrenheit * hour = °F_HDH
+heating_fahrenheit_degree_day = degree_Fahrenheit * day = °F_HDD
