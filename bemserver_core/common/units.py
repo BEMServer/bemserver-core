@@ -22,18 +22,6 @@ class BEMServerUnitRegistry:
     def load_definitions(self, file_path):
         self._ureg.load_definitions(file_path)
 
-    def get_name(self, unit_str):
-        try:
-            return self._ureg.get_name(unit_str)
-        except pint.errors.UndefinedUnitError as exc:
-            raise BEMServerCoreUndefinedUnitError(str(exc)) from exc
-
-    def get_symbol(self, unit_str):
-        try:
-            return self._ureg.get_symbol(unit_str)
-        except pint.errors.UndefinedUnitError as exc:
-            raise BEMServerCoreUndefinedUnitError(str(exc)) from exc
-
     def validate_unit(self, unit_str):
         try:
             return self._ureg.Unit(unit_str)

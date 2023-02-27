@@ -24,16 +24,6 @@ class TestUnits:
         load_mock.assert_called_once()
         load_mock.assert_called_with("dummy_path")
 
-    def test_ureg_get_name(self):
-        assert ureg.get_name("meter") == "meter"
-        with pytest.raises(BEMServerCoreUndefinedUnitError):
-            ureg.get_name("dummy")
-
-    def test_reg_get_symbol(self):
-        assert ureg.get_symbol("meter") == "m"
-        with pytest.raises(BEMServerCoreUndefinedUnitError):
-            ureg.get_symbol("dummy")
-
     def test_ureg_validate_unit(self):
         assert ureg.validate_unit("")
         assert ureg.validate_unit("m")

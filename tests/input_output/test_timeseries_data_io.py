@@ -14,7 +14,6 @@ from bemserver_core.model import (
     TimeseriesDataState,
     TimeseriesByDataState,
 )
-from bemserver_core.common import ureg
 from bemserver_core.input_output import tsdio, tsdcsvio, tsdjsonio
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
@@ -387,7 +386,7 @@ class TestTimeseriesDataIO:
 
             # Test conversions
             with OpenBar():
-                ts_0.unit_symbol = ureg.get_symbol("meter")
+                ts_0.unit_symbol = "meter"
 
             data_df = tsdio.get_timeseries_data(
                 start_dt,
@@ -891,7 +890,7 @@ class TestTimeseriesDataIO:
 
             # Test conversions
             with OpenBar():
-                ts_0.unit_symbol = ureg.get_symbol("meter")
+                ts_0.unit_symbol = "meter"
 
             data_df = tsdio.get_timeseries_buckets_data(
                 start_dt,
@@ -1930,7 +1929,7 @@ class TestTimeseriesDataCSVIO:
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
-            ts_0.unit_symbol = ureg.get_symbol("meter")
+            ts_0.unit_symbol = "meter"
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=3)
@@ -2075,7 +2074,7 @@ class TestTimeseriesDataCSVIO:
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
-            ts_0.unit_symbol = ureg.get_symbol("meter")
+            ts_0.unit_symbol = "meter"
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
@@ -2493,7 +2492,7 @@ class TestTimeseriesDataJSONIO:
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
-            ts_0.unit_symbol = ureg.get_symbol("meter")
+            ts_0.unit_symbol = "meter"
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=3)
@@ -2666,7 +2665,7 @@ class TestTimeseriesDataJSONIO:
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
-            ts_0.unit_symbol = ureg.get_symbol("meter")
+            ts_0.unit_symbol = "meter"
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
