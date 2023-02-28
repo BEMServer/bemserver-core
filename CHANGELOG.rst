@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.10.1 (2023-02-28)
++++++++++++++++++++
+
+Bug fixes:
+
+- Add bemserver_core/common/units.txt to MANIFEST.in
+
 0.10.0 (2023-02-28)
 +++++++++++++++++++
 
