@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+0.10.0 (2023-02-28)
++++++++++++++++++++
+
+Features:
+
+- Add unit conversions, convert on-the-fly when getting timeseries data
+- Remove wh_conversion_factor from EnergyConsumptionTimeseriesBySite/Building
+
+Bug fixes:
+
+- Fix migrations/env.py for SQLAlchemy 2.0
+
 0.9.1 (2023-02-08)
 ++++++++++++++++++
 
