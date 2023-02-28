@@ -58,6 +58,8 @@ from .energy import (
     EnergyProductionTechnology,
     EnergyConsumptionTimeseriesBySite,
     EnergyConsumptionTimeseriesByBuilding,
+    EnergyProductionTimeseriesBySite,
+    EnergyProductionTimeseriesByBuilding,
 )
 from .weather import (
     WeatherParameterEnum,
@@ -115,6 +117,8 @@ __all__ = [
     "EnergyProductionTechnology",
     "EnergyConsumptionTimeseriesBySite",
     "EnergyConsumptionTimeseriesByBuilding",
+    "EnergyProductionTimeseriesBySite",
+    "EnergyProductionTimeseriesByBuilding",
     "WeatherParameterEnum",
     "WeatherTimeseriesBySite",
 ]
@@ -169,6 +173,8 @@ AUTH_MODEL_CLASSES = [
     EnergyProductionTechnology,
     EnergyConsumptionTimeseriesBySite,
     EnergyConsumptionTimeseriesByBuilding,
+    EnergyProductionTimeseriesBySite,
+    EnergyProductionTimeseriesByBuilding,
     WeatherTimeseriesBySite,
 ]
 

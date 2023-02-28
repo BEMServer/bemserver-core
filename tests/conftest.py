@@ -893,6 +893,44 @@ def energy_consumption_timeseries_by_buildings(bemservercore, timeseries, buildi
 
 
 @pytest.fixture
+def energy_production_timeseries_by_sites(bemservercore, timeseries, sites):
+    with OpenBar():
+        eptbs_1 = model.EnergyProductionTimeseriesBySite.new(
+            site_id=sites[0].id,
+            energy_id=1,
+            prod_tech_id=1,
+            timeseries_id=timeseries[0].id,
+        )
+        eptbs_2 = model.EnergyProductionTimeseriesBySite.new(
+            site_id=sites[1].id,
+            energy_id=2,
+            prod_tech_id=2,
+            timeseries_id=timeseries[1].id,
+        )
+        db.session.commit()
+    return (eptbs_1, eptbs_2)
+
+
+@pytest.fixture
+def energy_production_timeseries_by_buildings(bemservercore, timeseries, buildings):
+    with OpenBar():
+        eptbb_1 = model.EnergyProductionTimeseriesByBuilding.new(
+            building_id=buildings[0].id,
+            energy_id=1,
+            prod_tech_id=1,
+            timeseries_id=timeseries[0].id,
+        )
+        eptbb_2 = model.EnergyProductionTimeseriesByBuilding.new(
+            building_id=buildings[1].id,
+            energy_id=2,
+            prod_tech_id=2,
+            timeseries_id=timeseries[1].id,
+        )
+        db.session.commit()
+    return (eptbb_1, eptbb_2)
+
+
+@pytest.fixture
 def st_cleanups_by_campaigns(bemservercore, campaigns):
     with OpenBar():
         st_cbc_1 = scheduled_tasks.ST_CleanupByCampaign.new(campaign_id=campaigns[0].id)

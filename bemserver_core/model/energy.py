@@ -126,6 +126,108 @@ class EnergyConsumptionTimeseriesByBuilding(AuthMixin, Base):
         )
 
 
+class EnergyProductionTimeseriesBySite(AuthMixin, Base):
+    __tablename__ = "ener_prod_ts_by_site"
+    __table_args__ = (sqla.UniqueConstraint("site_id", "energy_id", "prod_tech_id"),)
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    site_id = sqla.Column(sqla.ForeignKey("sites.id"), nullable=False)
+    energy_id = sqla.Column(sqla.ForeignKey("energies.id"), nullable=False)
+    prod_tech_id = sqla.Column(sqla.ForeignKey("ener_prod_techs.id"), nullable=False)
+    timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
+
+    site = sqla.orm.relationship(
+        "Site",
+        backref=sqla.orm.backref(
+            "energy_production_timeseries_by_sites", cascade="all, delete-orphan"
+        ),
+    )
+    timeseries = sqla.orm.relationship(
+        "Timeseries",
+        backref=sqla.orm.backref(
+            "energy_production_timeseries_by_sites", cascade="all, delete-orphan"
+        ),
+    )
+    energy = sqla.orm.relationship(
+        "Energy",
+        backref=sqla.orm.backref(
+            "energy_production_timeseries_by_sites", cascade="all, delete-orphan"
+        ),
+    )
+    prod_tech = sqla.orm.relationship(
+        "EnergyProductionTechnology",
+        backref=sqla.orm.backref(
+            "energy_production_timeseries_by_sites", cascade="all, delete-orphan"
+        ),
+    )
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "timeseries": Relation(
+                    kind="one",
+                    other_type="Timeseries",
+                    my_field="timeseries_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
+class EnergyProductionTimeseriesByBuilding(AuthMixin, Base):
+    __tablename__ = "ener_prod_ts_by_building"
+    __table_args__ = (
+        sqla.UniqueConstraint("building_id", "energy_id", "prod_tech_id"),
+    )
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    building_id = sqla.Column(sqla.ForeignKey("buildings.id"), nullable=False)
+    energy_id = sqla.Column(sqla.ForeignKey("energies.id"), nullable=False)
+    prod_tech_id = sqla.Column(sqla.ForeignKey("ener_prod_techs.id"), nullable=False)
+    timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
+
+    building = sqla.orm.relationship(
+        "Building",
+        backref=sqla.orm.backref(
+            "energy_production_timeseries_by_buildings", cascade="all, delete-orphan"
+        ),
+    )
+    timeseries = sqla.orm.relationship(
+        "Timeseries",
+        backref=sqla.orm.backref(
+            "energy_production_timeseries_by_buildings", cascade="all, delete-orphan"
+        ),
+    )
+    energy = sqla.orm.relationship(
+        "Energy",
+        backref=sqla.orm.backref(
+            "energy_production_timeseries_by_buildings", cascade="all, delete-orphan"
+        ),
+    )
+    prod_tech = sqla.orm.relationship(
+        "EnergyProductionTechnology",
+        backref=sqla.orm.backref(
+            "energy_production_timeseries_by_buildings", cascade="all, delete-orphan"
+        ),
+    )
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "timeseries": Relation(
+                    kind="one",
+                    other_type="Timeseries",
+                    my_field="timeseries_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
 def init_db_energy():
     """Create default energy energys and end uses
 
