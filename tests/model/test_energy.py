@@ -5,6 +5,7 @@ import pytest
 from bemserver_core.model import (
     Energy,
     EnergyEndUse,
+    EnergyProductionTechnology,
     EnergyConsumptionTimeseriesBySite,
     EnergyConsumptionTimeseriesByBuilding,
 )
@@ -75,6 +76,38 @@ class TestEnergyEndUseModel:
                 energy_end_use_1.update(name="Super custom")
             with pytest.raises(BEMServerAuthorizationError):
                 energy_end_use_1.delete()
+
+
+class TestEnergyProductionTechnologyModel:
+    def test_energy_production_technology_authorizations_as_admin(self, users):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        with CurrentUser(admin_user):
+            nb_ts_properties = len(list(EnergyProductionTechnology.get()))
+            ept_1 = EnergyProductionTechnology.new(name="Custom")
+            db.session.commit()
+            assert EnergyProductionTechnology.get_by_id(ept_1.id) == ept_1
+            assert len(list(EnergyProductionTechnology.get())) == nb_ts_properties + 1
+            ept_1.update(name="Super custom")
+            ept_1.delete()
+            db.session.commit()
+
+    def test_energy_production_technology_authorizations_as_user(self, users):
+        user_1 = users[1]
+        assert not user_1.is_admin
+
+        with CurrentUser(user_1):
+            ts_properties = list(EnergyProductionTechnology.get())
+            ept_1 = EnergyProductionTechnology.get_by_id(ts_properties[0].id)
+            with pytest.raises(BEMServerAuthorizationError):
+                EnergyProductionTechnology.new(
+                    name="Custom",
+                )
+            with pytest.raises(BEMServerAuthorizationError):
+                ept_1.update(name="Super custom")
+            with pytest.raises(BEMServerAuthorizationError):
+                ept_1.delete()
 
 
 class TestEnergyConsumptionTimeseriesBySiteModel:

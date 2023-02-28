@@ -55,6 +55,7 @@ from .notifications import Notification
 from .energy import (
     Energy,
     EnergyEndUse,
+    EnergyProductionTechnology,
     EnergyConsumptionTimeseriesBySite,
     EnergyConsumptionTimeseriesByBuilding,
 )
@@ -111,6 +112,7 @@ __all__ = [
     "Notification",
     "Energy",
     "EnergyEndUse",
+    "EnergyProductionTechnology",
     "EnergyConsumptionTimeseriesBySite",
     "EnergyConsumptionTimeseriesByBuilding",
     "WeatherParameterEnum",
@@ -164,6 +166,7 @@ AUTH_MODEL_CLASSES = [
     Notification,
     Energy,
     EnergyEndUse,
+    EnergyProductionTechnology,
     EnergyConsumptionTimeseriesBySite,
     EnergyConsumptionTimeseriesByBuilding,
     WeatherTimeseriesBySite,

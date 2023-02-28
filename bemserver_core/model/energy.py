@@ -19,6 +19,13 @@ class EnergyEndUse(AuthMixin, Base):
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
 
 
+class EnergyProductionTechnology(AuthMixin, Base):
+    __tablename__ = "ener_prod_techs"
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    name = sqla.Column(sqla.String(80), unique=True, nullable=False)
+
+
 class EnergyConsumptionTimeseriesBySite(AuthMixin, Base):
     __tablename__ = "ener_cons_ts_by_site"
     __table_args__ = (sqla.UniqueConstraint("site_id", "energy_id", "end_use_id"),)
@@ -143,6 +150,10 @@ def init_db_energy():
             EnergyEndUse(name="ventilation"),
             EnergyEndUse(name="lighting"),
             EnergyEndUse(name="appliances"),
+            EnergyProductionTechnology(name="all"),
+            EnergyProductionTechnology(name="PV panels"),
+            EnergyProductionTechnology(name="wind turbines"),
+            EnergyProductionTechnology(name="solar thermal collectors"),
         ]
     )
     db.session.commit()

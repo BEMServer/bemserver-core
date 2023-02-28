@@ -488,6 +488,13 @@ resource EnergyEndUse {
     "read" if "user";
 }
 
+resource EnergyProductionTechnology {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
 resource EnergyConsumptionTimeseriesBySite {
     permissions = ["create", "read", "update", "delete"];
 }
