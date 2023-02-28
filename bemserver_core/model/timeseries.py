@@ -43,7 +43,7 @@ class Timeseries(AuthMixin, Base):
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), nullable=False)
     description = sqla.Column(sqla.String(500))
-    unit_symbol = sqla.Column(sqla.String(20))
+    unit_symbol = sqla.Column(sqla.String(20), default="", nullable=False)
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
     campaign_scope_id = sqla.Column(sqla.ForeignKey("c_scopes.id"), nullable=False)
 

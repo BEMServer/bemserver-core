@@ -167,7 +167,7 @@ class TestEnergyConsumption:
             assert ret["energy"]["all"]["all"] == [142.0]
 
             # Check wrong unit
-            timeseries[0].unit_symbol = None
+            timeseries[0].unit_symbol = ""
             with pytest.raises(BEMServerCoreDimensionalityError):
                 ret = compute_energy_consumption_breakdown_for_site(
                     site_1, start_dt, end_dt, 1, "hour"
@@ -261,7 +261,7 @@ class TestEnergyConsumption:
             assert ret["energy"]["all"]["all"] == [142.0]
 
             # Check wrong unit
-            timeseries[0].unit_symbol = None
+            timeseries[0].unit_symbol = ""
             with pytest.raises(BEMServerCoreDimensionalityError):
                 ret = compute_energy_consumption_breakdown_for_building(
                     building_1, start_dt, end_dt, 1, "hour"
