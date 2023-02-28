@@ -30,7 +30,10 @@ if DB_URL is None:
     logger.error("SQLALCHEMY_DATABASE_URI environment variable not set.")
     sys.exit()
 db.set_db_url(DB_URL)
-config.set_main_option("sqlalchemy.url", str(db.url).replace("%", "%%"))
+config.set_main_option(
+    "sqlalchemy.url",
+    db.url.render_as_string(hide_password=False).replace("%", "%%"),
+)
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
