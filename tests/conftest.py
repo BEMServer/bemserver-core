@@ -859,13 +859,13 @@ def energy_consumption_timeseries_by_sites(bemservercore, timeseries, sites):
     with OpenBar():
         ectbs_1 = model.EnergyConsumptionTimeseriesBySite.new(
             site_id=sites[0].id,
-            source_id=1,
+            energy_id=1,
             end_use_id=1,
             timeseries_id=timeseries[0].id,
         )
         ectbs_2 = model.EnergyConsumptionTimeseriesBySite.new(
             site_id=sites[1].id,
-            source_id=2,
+            energy_id=2,
             end_use_id=2,
             timeseries_id=timeseries[1].id,
         )
@@ -878,13 +878,13 @@ def energy_consumption_timeseries_by_buildings(bemservercore, timeseries, buildi
     with OpenBar():
         ectbb_1 = model.EnergyConsumptionTimeseriesByBuilding.new(
             building_id=buildings[0].id,
-            source_id=1,
+            energy_id=1,
             end_use_id=1,
             timeseries_id=timeseries[0].id,
         )
         ectbb_2 = model.EnergyConsumptionTimeseriesByBuilding.new(
             building_id=buildings[1].id,
-            source_id=2,
+            energy_id=2,
             end_use_id=2,
             timeseries_id=timeseries[1].id,
         )

@@ -53,7 +53,7 @@ from .events import (  # noqa
 )
 from .notifications import Notification
 from .energy import (
-    EnergySource,
+    Energy,
     EnergyEndUse,
     EnergyConsumptionTimeseriesBySite,
     EnergyConsumptionTimeseriesByBuilding,
@@ -109,7 +109,7 @@ __all__ = [
     "EventBySpace",
     "EventByZone",
     "Notification",
-    "EnergySource",
+    "Energy",
     "EnergyEndUse",
     "EnergyConsumptionTimeseriesBySite",
     "EnergyConsumptionTimeseriesByBuilding",
@@ -162,7 +162,7 @@ AUTH_MODEL_CLASSES = [
     EventBySpace,
     EventByZone,
     Notification,
-    EnergySource,
+    Energy,
     EnergyEndUse,
     EnergyConsumptionTimeseriesBySite,
     EnergyConsumptionTimeseriesByBuilding,

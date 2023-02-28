@@ -474,7 +474,7 @@ has_permission(user: User, "read", zpd:ZonePropertyData) if
     has_permission(user, "read", zpd.zone);
 
 
-resource EnergySource {
+resource Energy{
     permissions = ["create", "read", "update", "delete"];
     roles = ["user"];
 

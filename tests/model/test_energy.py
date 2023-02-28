@@ -3,7 +3,7 @@
 import pytest
 
 from bemserver_core.model import (
-    EnergySource,
+    Energy,
     EnergyEndUse,
     EnergyConsumptionTimeseriesBySite,
     EnergyConsumptionTimeseriesByBuilding,
@@ -13,36 +13,36 @@ from bemserver_core.authorization import CurrentUser
 from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
-class TestEnergySourceModel:
-    def test_energy_source_authorizations_as_admin(self, users):
+class TestEnergyModel:
+    def test_energy_authorizations_as_admin(self, users):
         admin_user = users[0]
         assert admin_user.is_admin
 
         with CurrentUser(admin_user):
-            nb_ts_properties = len(list(EnergySource.get()))
-            energy_source_1 = EnergySource.new(name="Custom")
+            nb_ts_properties = len(list(Energy.get()))
+            energy_1 = Energy.new(name="Custom")
             db.session.commit()
-            assert EnergySource.get_by_id(energy_source_1.id) == energy_source_1
-            assert len(list(EnergySource.get())) == nb_ts_properties + 1
-            energy_source_1.update(name="Super custom")
-            energy_source_1.delete()
+            assert Energy.get_by_id(energy_1.id) == energy_1
+            assert len(list(Energy.get())) == nb_ts_properties + 1
+            energy_1.update(name="Super custom")
+            energy_1.delete()
             db.session.commit()
 
-    def test_energy_source_authorizations_as_user(self, users):
+    def test_energy_authorizations_as_user(self, users):
         user_1 = users[1]
         assert not user_1.is_admin
 
         with CurrentUser(user_1):
-            ts_properties = list(EnergySource.get())
-            energy_source_1 = EnergySource.get_by_id(ts_properties[0].id)
+            ts_properties = list(Energy.get())
+            energy_1 = Energy.get_by_id(ts_properties[0].id)
             with pytest.raises(BEMServerAuthorizationError):
-                EnergySource.new(
+                Energy.new(
                     name="Custom",
                 )
             with pytest.raises(BEMServerAuthorizationError):
-                energy_source_1.update(name="Super custom")
+                energy_1.update(name="Super custom")
             with pytest.raises(BEMServerAuthorizationError):
-                energy_source_1.delete()
+                energy_1.delete()
 
 
 class TestEnergyEndUseModel:
@@ -83,11 +83,11 @@ class TestEnergyConsumptionTimeseriesBySiteModel:
         admin_user = users[0]
 
         with CurrentUser(admin_user):
-            energy_source_1 = EnergySource.get()[0]
+            energy_1 = Energy.get()[0]
             energy_end_use_2 = EnergyEndUse.get()[1]
 
             assert len(list(EnergyConsumptionTimeseriesBySite.get())) == 2
-            energy_source_1.delete()
+            energy_1.delete()
             db.session.commit()
             assert len(list(EnergyConsumptionTimeseriesBySite.get())) == 1
             energy_end_use_2.delete()
@@ -104,14 +104,14 @@ class TestEnergyConsumptionTimeseriesBySiteModel:
         site_1 = sites[0]
 
         with CurrentUser(admin_user):
-            energy_source_1 = EnergySource.get()[0]
+            energy_1 = Energy.get()[0]
             energy_end_use_1 = EnergyEndUse.get()[0]
             energy_end_use_2 = EnergyEndUse.get()[1]
 
             assert not list(EnergyConsumptionTimeseriesBySite.get())
             ectbs_1 = EnergyConsumptionTimeseriesBySite.new(
                 site_id=site_1.id,
-                source_id=energy_source_1.id,
+                energy_id=energy_1.id,
                 end_use_id=energy_end_use_1.id,
                 timeseries_id=ts_1.id,
             )
@@ -136,7 +136,7 @@ class TestEnergyConsumptionTimeseriesBySiteModel:
         site_2 = sites[1]
 
         with CurrentUser(user_1):
-            energy_source_1 = EnergySource.get()[0]
+            energy_1 = Energy.get()[0]
             energy_end_use_1 = EnergyEndUse.get()[0]
             energy_end_use_2 = EnergyEndUse.get()[1]
 
@@ -145,7 +145,7 @@ class TestEnergyConsumptionTimeseriesBySiteModel:
             with pytest.raises(BEMServerAuthorizationError):
                 EnergyConsumptionTimeseriesBySite.new(
                     site_id=site_2.id,
-                    source_id=energy_source_1.id,
+                    energy_id=energy_1.id,
                     end_use_id=energy_end_use_1.id,
                     timeseries_id=ts_2.id,
                 )
@@ -161,11 +161,11 @@ class TestEnergyConsumptionTimeseriesByBuildingModel:
         admin_user = users[0]
 
         with CurrentUser(admin_user):
-            energy_source_1 = EnergySource.get()[0]
+            energy_1 = Energy.get()[0]
             energy_end_use_2 = EnergyEndUse.get()[1]
 
             assert len(list(EnergyConsumptionTimeseriesByBuilding.get())) == 2
-            energy_source_1.delete()
+            energy_1.delete()
             db.session.commit()
             assert len(list(EnergyConsumptionTimeseriesByBuilding.get())) == 1
             energy_end_use_2.delete()
@@ -182,14 +182,14 @@ class TestEnergyConsumptionTimeseriesByBuildingModel:
         building_1 = buildings[0]
 
         with CurrentUser(admin_user):
-            energy_source_1 = EnergySource.get()[0]
+            energy_1 = Energy.get()[0]
             energy_end_use_1 = EnergyEndUse.get()[0]
             energy_end_use_2 = EnergyEndUse.get()[1]
 
             assert not list(EnergyConsumptionTimeseriesByBuilding.get())
             ectbb_1 = EnergyConsumptionTimeseriesByBuilding.new(
                 building_id=building_1.id,
-                source_id=energy_source_1.id,
+                energy_id=energy_1.id,
                 end_use_id=energy_end_use_1.id,
                 timeseries_id=ts_1.id,
             )
@@ -214,7 +214,7 @@ class TestEnergyConsumptionTimeseriesByBuildingModel:
         building_2 = buildings[1]
 
         with CurrentUser(user_1):
-            energy_source_1 = EnergySource.get()[0]
+            energy_1 = Energy.get()[0]
             energy_end_use_1 = EnergyEndUse.get()[0]
             energy_end_use_2 = EnergyEndUse.get()[1]
 
@@ -223,7 +223,7 @@ class TestEnergyConsumptionTimeseriesByBuildingModel:
             with pytest.raises(BEMServerAuthorizationError):
                 EnergyConsumptionTimeseriesByBuilding.new(
                     building_id=building_2.id,
-                    source_id=energy_source_1.id,
+                    energy_id=energy_1.id,
                     end_use_id=energy_end_use_1.id,
                     timeseries_id=ts_2.id,
                 )

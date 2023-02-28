@@ -5,8 +5,8 @@ from bemserver_core.database import Base, db
 from bemserver_core.authorization import AuthMixin, auth, Relation
 
 
-class EnergySource(AuthMixin, Base):
-    __tablename__ = "ener_sources"
+class Energy(AuthMixin, Base):
+    __tablename__ = "energies"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
@@ -21,11 +21,11 @@ class EnergyEndUse(AuthMixin, Base):
 
 class EnergyConsumptionTimeseriesBySite(AuthMixin, Base):
     __tablename__ = "ener_cons_ts_by_site"
-    __table_args__ = (sqla.UniqueConstraint("site_id", "source_id", "end_use_id"),)
+    __table_args__ = (sqla.UniqueConstraint("site_id", "energy_id", "end_use_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     site_id = sqla.Column(sqla.ForeignKey("sites.id"), nullable=False)
-    source_id = sqla.Column(sqla.ForeignKey("ener_sources.id"), nullable=False)
+    energy_id = sqla.Column(sqla.ForeignKey("energies.id"), nullable=False)
     end_use_id = sqla.Column(sqla.ForeignKey("ener_end_uses.id"), nullable=False)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
 
@@ -41,8 +41,8 @@ class EnergyConsumptionTimeseriesBySite(AuthMixin, Base):
             "energy_consumption_timeseries_by_sites", cascade="all, delete-orphan"
         ),
     )
-    source = sqla.orm.relationship(
-        "EnergySource",
+    energy = sqla.orm.relationship(
+        "Energy",
         backref=sqla.orm.backref(
             "energy_consumption_timeseries_by_sites", cascade="all, delete-orphan"
         ),
@@ -71,11 +71,11 @@ class EnergyConsumptionTimeseriesBySite(AuthMixin, Base):
 
 class EnergyConsumptionTimeseriesByBuilding(AuthMixin, Base):
     __tablename__ = "ener_cons_ts_by_building"
-    __table_args__ = (sqla.UniqueConstraint("building_id", "source_id", "end_use_id"),)
+    __table_args__ = (sqla.UniqueConstraint("building_id", "energy_id", "end_use_id"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     building_id = sqla.Column(sqla.ForeignKey("buildings.id"), nullable=False)
-    source_id = sqla.Column(sqla.ForeignKey("ener_sources.id"), nullable=False)
+    energy_id = sqla.Column(sqla.ForeignKey("energies.id"), nullable=False)
     end_use_id = sqla.Column(sqla.ForeignKey("ener_end_uses.id"), nullable=False)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
 
@@ -91,8 +91,8 @@ class EnergyConsumptionTimeseriesByBuilding(AuthMixin, Base):
             "energy_consumption_timeseries_by_buildings", cascade="all, delete-orphan"
         ),
     )
-    source = sqla.orm.relationship(
-        "EnergySource",
+    energy = sqla.orm.relationship(
+        "Energy",
         backref=sqla.orm.backref(
             "energy_consumption_timeseries_by_buildings", cascade="all, delete-orphan"
         ),
@@ -120,23 +120,23 @@ class EnergyConsumptionTimeseriesByBuilding(AuthMixin, Base):
 
 
 def init_db_energy():
-    """Create default energy sources and end uses
+    """Create default energy energys and end uses
 
     This function is meant to be used for tests or dev setups after create_all.
     Production setups should rely on migration scripts.
     """
     db.session.add_all(
         [
-            EnergySource(name="all"),
-            EnergySource(name="electricity"),
-            EnergySource(name="natural gas"),
-            EnergySource(name="propane gas"),
-            EnergySource(name="heating oil"),
-            EnergySource(name="wood log"),
-            EnergySource(name="wood pellet"),
-            EnergySource(name="wood chips"),
-            EnergySource(name="heating network"),
-            EnergySource(name="cooling network"),
+            Energy(name="all"),
+            Energy(name="electricity"),
+            Energy(name="natural gas"),
+            Energy(name="propane gas"),
+            Energy(name="heating oil"),
+            Energy(name="wood log"),
+            Energy(name="wood pellet"),
+            Energy(name="wood chips"),
+            Energy(name="heating network"),
+            Energy(name="cooling network"),
             EnergyEndUse(name="all"),
             EnergyEndUse(name="heating"),
             EnergyEndUse(name="cooling"),
