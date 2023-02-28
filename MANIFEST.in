@@ -1,6 +1,7 @@
 include LICENSE
 
 recursive-include bemserver_core *.polar
+include bemserver_core/common/units.txt
 
 include bemserver_core/alembic.ini
 graft bemserver_core/migrations
