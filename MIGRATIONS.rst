@@ -69,6 +69,6 @@ Upgrade database (to head revision by default) ::
 
 Downgrade database::
 
-    $ bemserver_db_dowbgrade -r revision
+    $ bemserver_db_downgrade -r revision
 
 .. _Alembic: https://alembic.sqlalchemy.org/
