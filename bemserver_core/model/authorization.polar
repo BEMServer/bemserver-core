@@ -474,7 +474,7 @@ has_permission(user: User, "read", zpd:ZonePropertyData) if
     has_permission(user, "read", zpd.zone);
 
 
-resource EnergySource {
+resource Energy{
     permissions = ["create", "read", "update", "delete"];
     roles = ["user"];
 
@@ -482,6 +482,13 @@ resource EnergySource {
 }
 
 resource EnergyEndUse {
+    permissions = ["create", "read", "update", "delete"];
+    roles = ["user"];
+
+    "read" if "user";
+}
+
+resource EnergyProductionTechnology {
     permissions = ["create", "read", "update", "delete"];
     roles = ["user"];
 
@@ -499,3 +506,27 @@ resource EnergyConsumptionTimeseriesByBuilding {
 }
 has_permission(user: User, "read", ecbb: EnergyConsumptionTimeseriesByBuilding) if
     has_permission(user, "read_data", ecbb.timeseries);
+
+resource EnergyProductionTimeseriesBySite {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", epbs: EnergyProductionTimeseriesBySite) if
+    has_permission(user, "read_data", epbs.timeseries);
+
+resource EnergyProductionTimeseriesByBuilding {
+    permissions = ["create", "read", "update", "delete"];
+}
+has_permission(user: User, "read", epbb: EnergyProductionTimeseriesByBuilding) if
+    has_permission(user, "read_data", epbb.timeseries);
+
+
+resource WeatherTimeseriesBySite {
+    permissions = ["create", "read", "update", "delete"];
+    relations = {
+        timeseries: Timeseries
+    };
+
+    "read" if "read" on "timeseries";
+}
+has_relation(ts: Timeseries, "timeseries", wtsbd: WeatherTimeseriesBySite) if
+    ts = wtsbd.timeseries;

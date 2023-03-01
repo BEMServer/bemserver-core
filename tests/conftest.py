@@ -859,13 +859,13 @@ def energy_consumption_timeseries_by_sites(bemservercore, timeseries, sites):
     with OpenBar():
         ectbs_1 = model.EnergyConsumptionTimeseriesBySite.new(
             site_id=sites[0].id,
-            source_id=1,
+            energy_id=1,
             end_use_id=1,
             timeseries_id=timeseries[0].id,
         )
         ectbs_2 = model.EnergyConsumptionTimeseriesBySite.new(
             site_id=sites[1].id,
-            source_id=2,
+            energy_id=2,
             end_use_id=2,
             timeseries_id=timeseries[1].id,
         )
@@ -878,18 +878,56 @@ def energy_consumption_timeseries_by_buildings(bemservercore, timeseries, buildi
     with OpenBar():
         ectbb_1 = model.EnergyConsumptionTimeseriesByBuilding.new(
             building_id=buildings[0].id,
-            source_id=1,
+            energy_id=1,
             end_use_id=1,
             timeseries_id=timeseries[0].id,
         )
         ectbb_2 = model.EnergyConsumptionTimeseriesByBuilding.new(
             building_id=buildings[1].id,
-            source_id=2,
+            energy_id=2,
             end_use_id=2,
             timeseries_id=timeseries[1].id,
         )
         db.session.commit()
     return (ectbb_1, ectbb_2)
+
+
+@pytest.fixture
+def energy_production_timeseries_by_sites(bemservercore, timeseries, sites):
+    with OpenBar():
+        eptbs_1 = model.EnergyProductionTimeseriesBySite.new(
+            site_id=sites[0].id,
+            energy_id=1,
+            prod_tech_id=1,
+            timeseries_id=timeseries[0].id,
+        )
+        eptbs_2 = model.EnergyProductionTimeseriesBySite.new(
+            site_id=sites[1].id,
+            energy_id=2,
+            prod_tech_id=2,
+            timeseries_id=timeseries[1].id,
+        )
+        db.session.commit()
+    return (eptbs_1, eptbs_2)
+
+
+@pytest.fixture
+def energy_production_timeseries_by_buildings(bemservercore, timeseries, buildings):
+    with OpenBar():
+        eptbb_1 = model.EnergyProductionTimeseriesByBuilding.new(
+            building_id=buildings[0].id,
+            energy_id=1,
+            prod_tech_id=1,
+            timeseries_id=timeseries[0].id,
+        )
+        eptbb_2 = model.EnergyProductionTimeseriesByBuilding.new(
+            building_id=buildings[1].id,
+            energy_id=2,
+            prod_tech_id=2,
+            timeseries_id=timeseries[1].id,
+        )
+        db.session.commit()
+    return (eptbb_1, eptbb_2)
 
 
 @pytest.fixture
@@ -943,3 +981,20 @@ def st_check_outliers_by_campaigns(bemservercore, campaigns):
         )
         db.session.commit()
     return (st_cbc_1, st_cbc_2)
+
+
+@pytest.fixture
+def weather_timeseries_by_sites(bemservercore, timeseries, sites):
+    with OpenBar():
+        wtbs_1 = model.WeatherTimeseriesBySite.new(
+            site_id=sites[0].id,
+            parameter=model.WeatherParameterEnum.AIR_TEMPERATURE,
+            timeseries_id=timeseries[0].id,
+        )
+        wtbs_2 = model.WeatherTimeseriesBySite.new(
+            site_id=sites[1].id,
+            parameter=model.WeatherParameterEnum.RELATIVE_HUMIDITY,
+            timeseries_id=timeseries[1].id,
+        )
+        db.session.commit()
+    return (wtbs_1, wtbs_2)

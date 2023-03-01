@@ -82,7 +82,7 @@ def compute_energy_consumption_breakdown(
         "energy": defaultdict(dict),
     }
     for ectbl, ts_name in zip(ectbl_l, data_df.columns):
-        brkdwn["energy"][ectbl.source.name][ectbl.end_use.name] = data_df[
+        brkdwn["energy"][ectbl.energy.name][ectbl.end_use.name] = data_df[
             ts_name
         ].to_list()
 
