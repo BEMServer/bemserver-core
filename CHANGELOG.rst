@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+0.11.0 (2023-03-01)
++++++++++++++++++++
+
+Features:
+
+- Rename EnergySource -> Energy
+- Add EnergyProductionTechnology
+- Add EnergyProductionTimeseriesBySite/Building
+- Add WeatherParameterEnum and WeatherTimeseriesBySite
+
 0.10.1 (2023-02-28)
 +++++++++++++++++++
 
