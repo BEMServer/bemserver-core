@@ -1881,6 +1881,7 @@ class TestTimeseriesDataCSVIO:
             # Invalid timestamp
             ("dummy,1", TimeseriesDataIODatetimeError),
             ("0,1", TimeseriesDataIODatetimeError),
+            ("2500-01-01T00:00:00+00:00,12", TimeseriesDataIODatetimeError),
         ),
     )
     @pytest.mark.usefixtures("timeseries")
@@ -2446,6 +2447,7 @@ class TestTimeseriesDataJSONIO:
             # Invalid timestamp
             ('{"1324564": {"dummy": 1}}', TimeseriesDataIODatetimeError),
             ('{"1324564": [{"dummy": 1}]}', TimeseriesDataIODatetimeError),
+            ('{"1": {"2500-01-01T00:00:00+00:00": 1}}', TimeseriesDataIODatetimeError),
         ),
     )
     @pytest.mark.parametrize("for_campaign", (True,))  # False))
