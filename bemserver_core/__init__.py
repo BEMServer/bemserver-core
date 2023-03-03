@@ -8,7 +8,7 @@ from . import input_output  # noqa
 from . import scheduled_tasks
 
 
-__version__ = "0.11.0"
+__version__ = "0.11.1"
 
 
 class BEMServerCore:
