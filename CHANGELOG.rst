@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.11.1 (2023-03-03)
++++++++++++++++++++
+
+Bug fixes:
+
+- TimeseriesDataCSV/JSON: catch OutOfBoundsDatetime when loading data
+
 0.11.0 (2023-03-01)
 +++++++++++++++++++
 
