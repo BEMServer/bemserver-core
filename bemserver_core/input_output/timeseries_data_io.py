@@ -399,7 +399,10 @@ def to_utc_index(series):
 
     try:
         index = pd.to_datetime(pd.Series(series))
-    except dateutil.parser._parser.ParserError as exc:
+    except (
+        dateutil.parser._parser.ParserError,
+        pd.errors.OutOfBoundsDatetime,
+    ) as exc:
         raise TimeseriesDataIODatetimeError("Invalid timestamp") from exc
 
     # We can't just use tz_convert because it would silently swallow naive datetimes
