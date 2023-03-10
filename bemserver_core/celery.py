@@ -3,10 +3,7 @@
 Manages scheduled and asynchronous tasks
 """
 import os
-from pathlib import Path
 from functools import wraps
-import types
-import errno
 
 from celery import Celery, Task, signals
 from celery.utils.log import get_task_logger
@@ -14,6 +11,7 @@ from celery.exceptions import WorkerShutdown
 
 from bemserver_core.authorization import OpenBar
 from bemserver_core.exceptions import BEMServerCoreSettingsError
+from bemserver_core import utils
 
 
 logger = get_task_logger(__name__)
@@ -59,87 +57,11 @@ class BEMServerCoreCelery(Celery):
     """
 
 
-# The two functions below are meant to load Celery configuration from an
-# external file by passing the path to that file as an environment variable.
-# Those functions, adapted from Flask code, were copied from Celery bugtracker.
-# https://github.com/celery/celery/issues/5303
-
-
-def config_from_envvar(celery_app, var_name, silent=False):
-    """
-    Load celery config from an envvar that points to a python config file.
-
-    Basically this:
-
-        config_from_pyfile(os.environ['YOUR_APP_SETTINGS'])
-
-    Example:
-        >>> os.environ['CELERY_CONFIG_FILE'] = './some_dir/config_file.cfg'
-        >>> config_from_envvar(celery, 'CELERY_CONFIG_FILE')
-
-    Arguments:
-        celery_app (Celery app instance): The celery app to update
-        var_name (str): The env var to use.
-        silent (bool): If true then import errors will be ignored.
-
-    Shamelessly taken from Flask. Like, almost exactly. Thanks!
-    https://github.com/pallets/flask/blob/74691fbe0192de1134c93e9821d5f8ef65405670/flask/config.py#L88
-    """
-    rv = os.environ.get(var_name)
-    if not rv:
-        if silent:
-            return False
-        raise RuntimeError(
-            "The environment variable %r is not set"
-            " and as such configuration could not be"
-            " loaded. Set this variable to make it"
-            " point to a configuration file." % var_name
-        )
-    return config_from_pyfile(celery_app, rv, silent=silent)
-
-
-def config_from_pyfile(celery_app, filename, silent=False):
-    """
-    Mimics Flask's config.from_pyfile()
-
-    Allows loading a separate, perhaps non `.py`, file into Celery.
-
-    Example:
-        >>> config_from_pyfile(celery, './some_dir/config_file.cfg')
-
-    Arguments:
-        celery_app (Celery app instance): The celery app to update
-        filename (str): The file to load.
-        silent (bool): If true then import errors will be ignored.
-
-    Also shamelessly taken from Flask:
-    https://github.com/pallets/flask/blob/74691fbe0192de1134c93e9821d5f8ef65405670/flask/config.py#L111
-    """
-    filename = str(Path(filename).resolve())
-    d = types.ModuleType("config")
-    d.__file__ = filename
-
-    try:
-        with open(filename, "rb") as config_file:
-            exec(compile(config_file.read(), filename, "exec"), d.__dict__)
-    except OSError as e:
-        if silent and e.errno in (errno.ENOENT, errno.EISDIR, errno.ENOTDIR):
-            return False
-        e.strerror = "Unable to load config file (%s)" % e.strerror
-        raise
-
-    # Remove any "hidden" attributes: __ and _
-    for k in list(d.__dict__.keys()):
-        if k.startswith("_"):
-            del d.__dict__[k]
-
-    celery_app.conf.update(d.__dict__)
-    return True
-
-
 celery = BEMServerCoreCelery("BEMServer Core", task_cls=BEMServerCoreTask)
 celery.config_from_object(DefaultCeleryConfig)
-config_from_envvar(celery, "BEMSERVER_CELERY_SETTINGS_FILE", silent=True)
+celery_cfg_file = os.environ.get("BEMSERVER_CELERY_SETTINGS_FILE")
+if celery_cfg_file is not None:
+    celery.conf.update(utils.get_dict_from_pyfile(celery_cfg_file))
 
 
 @signals.worker_process_init.connect
