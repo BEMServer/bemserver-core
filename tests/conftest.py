@@ -77,7 +77,6 @@ def bemservercore(config):
     """Create and initialize BEMServerCore with a database"""
     bsc = BEMServerCore()
     setup_db()
-    bsc.init_auth()
     yield bsc
 
 

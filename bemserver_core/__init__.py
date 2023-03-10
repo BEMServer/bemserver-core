@@ -38,7 +38,7 @@ class BEMServerCore:
         # Set db URL
         database.db.set_db_url(self.config["SQLALCHEMY_DATABASE_URI"])
 
-    def init_auth(self):
+        # Init auth
         authorization.auth.init_authorization(
             self.auth_model_classes,
             self.auth_polar_files,

@@ -149,8 +149,7 @@ def worker_process_init_cb(**kwargs):
     from bemserver_core import BEMServerCore
 
     try:
-        bsc = BEMServerCore()
+        BEMServerCore()
     except BEMServerCoreSettingsError as exc:
         logger.critical(str(exc))
         raise WorkerShutdown() from exc
-    bsc.init_auth()
