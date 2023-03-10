@@ -12,8 +12,8 @@ from celery import Celery, Task, signals
 from celery.utils.log import get_task_logger
 from celery.exceptions import WorkerShutdown
 
-from bemserver_core.database import db
 from bemserver_core.authorization import OpenBar
+from bemserver_core.exceptions import BEMServerCoreSettingsError
 
 
 logger = get_task_logger(__name__)
@@ -144,17 +144,13 @@ config_from_envvar(celery, "BEMSERVER_CELERY_SETTINGS_FILE", silent=True)
 
 @signals.worker_process_init.connect
 def worker_process_init_cb(**kwargs):
-    """Callback executed at worker init
-
-    - Setup BEMServerCore
-    """
-    # Setup BEMServerCore (avoid circular import)
+    """Callback executed at worker init to setup BEMServerCore"""
+    # Avoid circular import issue
     from bemserver_core import BEMServerCore
 
-    db_url = celery.conf.get("SQLALCHEMY_DATABASE_URI")
-    if db_url is None:
-        logger.critical("Missing SQLALCHEMY_DATABASE_URI configuration parameter")
-        raise WorkerShutdown()
-    db.set_db_url(db_url)
-    bsc = BEMServerCore()
+    try:
+        bsc = BEMServerCore()
+    except BEMServerCoreSettingsError as exc:
+        logger.critical(str(exc))
+        raise WorkerShutdown() from exc
     bsc.init_auth()

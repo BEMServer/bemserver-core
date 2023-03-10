@@ -5,6 +5,10 @@ class BEMServerCoreError(Exception):
     """Base BEMServer Core exception"""
 
 
+class BEMServerCoreSettingsError(BEMServerCoreError):
+    """Base BEMServer settings error"""
+
+
 class BEMServerCorePeriodError(BEMServerCoreError):
     """Wrong time period unit or multiplier"""
 

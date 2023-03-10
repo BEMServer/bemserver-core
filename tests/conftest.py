@@ -59,12 +59,26 @@ def database(timescale_db):
     yield timescale_db
 
 
+@pytest.fixture(params=(None,))
+def config(request, timescale_db, tmp_path, monkeypatch):
+    cfg_dict = {
+        "SQLALCHEMY_DATABASE_URI": timescale_db,
+        **(request.param or {}),
+    }
+    cfg = "".join([f"{k}={v!r}\n" for k, v in cfg_dict.items()])
+    cfg_file = tmp_path / "config.py"
+    cfg_file.write_text(cfg)
+    monkeypatch.setenv("BEMSERVER_CORE_SETTINGS_FILE", str(cfg_file))
+    yield cfg_file
+
+
 @pytest.fixture
-def bemservercore(request, database):
+def bemservercore(config):
     """Create and initialize BEMServerCore with a database"""
     bsc = BEMServerCore()
     setup_db()
     bsc.init_auth()
+    yield bsc
 
 
 @pytest.fixture
