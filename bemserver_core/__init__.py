@@ -33,7 +33,11 @@ class BEMServerCore:
             raise BEMServerCoreSettingsError(
                 "Missing BEMSERVER_CORE_SETTINGS_FILE environment variable"
             )
-        self.config.update(utils.get_dict_from_pyfile(file_path))
+        try:
+            cfg = utils.get_dict_from_pyfile(file_path)
+        except (OSError, SyntaxError) as exc:
+            raise BEMServerCoreSettingsError(str(exc)) from exc
+        self.config.update(cfg)
 
         # Set db URL
         database.db.set_db_url(self.config["SQLALCHEMY_DATABASE_URI"])
