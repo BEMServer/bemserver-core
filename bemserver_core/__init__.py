@@ -44,5 +44,9 @@ class BEMServerCore:
             self.auth_polar_files,
         )
 
+        # Load unit definition files
+        for file_path in self.config["UNIT_DEFINITION_FILES"]:
+            common.ureg.load_definitions(file_path)
+
     def load_units_definitions_file(self, file_path):
         common.ureg.load_definitions(file_path)
