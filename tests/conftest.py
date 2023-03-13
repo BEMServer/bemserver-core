@@ -59,6 +59,7 @@ def database(timescale_db):
     yield timescale_db
 
 
+# param dict: Additional config parameters
 @pytest.fixture(params=(None,))
 def config(request, timescale_db, tmp_path, monkeypatch):
     cfg_dict = {
@@ -72,11 +73,13 @@ def config(request, timescale_db, tmp_path, monkeypatch):
     yield cfg_file
 
 
-@pytest.fixture
-def bemservercore(config):
+# param bool: Whether or not to setup database
+@pytest.fixture(params=(True,))
+def bemservercore(request, config):
     """Create and initialize BEMServerCore with a database"""
     bsc = BEMServerCore()
-    setup_db()
+    if request.param:
+        setup_db()
     yield bsc
 
 
@@ -146,6 +149,7 @@ def users_by_user_groups(bemservercore, users, user_groups):
     return (ubug_1, ubug_2)
 
 
+# param int: Number of campaigns
 @pytest.fixture(params=[3])
 def campaigns(request, bemservercore):
     with OpenBar():
@@ -255,6 +259,7 @@ def timeseries_properties(bemservercore):
     return (ts_p_1, ts_p_2, ts_p_3, ts_p_4, ts_p_5, ts_p_6)
 
 
+# param int: Number of timeseries
 @pytest.fixture(params=[2])
 def timeseries(request, bemservercore, campaigns, campaign_scopes):
     with OpenBar():
@@ -294,6 +299,7 @@ def timeseries_property_data(request, bemservercore, timeseries_properties, time
         return tspd_l
 
 
+# param int: Number of timeseries x data states associations
 @pytest.fixture(params=[2])
 def timeseries_by_data_states(request, bemservercore, timeseries):
     with OpenBar():
