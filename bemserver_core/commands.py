@@ -2,19 +2,9 @@
 
 This module provides commands made available as CLI commands.
 """
-import os
-
 import click
 
-from bemserver_core import model, database, migrations
-from bemserver_core.exceptions import BEMServerCoreError
-
-
-def _set_db_url():
-    db_url = os.getenv("SQLALCHEMY_DATABASE_URI")
-    if db_url is None:
-        raise BEMServerCoreError("SQLALCHEMY_DATABASE_URI environment variable not set")
-    database.db.set_db_url(db_url)
+from bemserver_core import BEMServerCore, model, database, migrations
 
 
 def setup_db():
@@ -43,7 +33,7 @@ def setup_db_cmd():
     This command is meant to be used for dev setups.
     Production setups should rely on migration scripts.
     """
-    _set_db_url()
+    BEMServerCore()
     setup_db()
 
 
@@ -62,7 +52,7 @@ def setup_db_cmd():
 )
 def create_user_cmd(name, email, admin, inactive, password):
     """Create a new user"""
-    _set_db_url()
+    BEMServerCore()
     user = model.User(
         name=name,
         email=email,

@@ -2,10 +2,13 @@
 import sqlalchemy as sqla
 from click.testing import CliRunner
 
+import pytest
+
 from bemserver_core.commands import create_user_cmd, setup_db_cmd
 
 
 class TestCommands:
+    @pytest.mark.usefixtures("config")
     def test_setup_db_cmd(self, timescale_db):
         """Check bemserver_setup_db runs without error
 
@@ -25,10 +28,7 @@ class TestCommands:
 
         # Run command
         runner = CliRunner()
-        result = runner.invoke(
-            setup_db_cmd,
-            env={"SQLALCHEMY_DATABASE_URI": timescale_db},
-        )
+        result = runner.invoke(setup_db_cmd)
         assert result.exit_code == 0
 
         # Check tables are created
@@ -42,7 +42,8 @@ class TestCommands:
                 )
             )
 
-    def test_create_user_cmd(self, database, bemservercore):
+    @pytest.mark.usefixtures("bemservercore")
+    def test_create_user_cmd(self, database):
         # Check there is no user in DB
         with sqla.create_engine(database).connect() as connection:
             assert not list(connection.execute(sqla.text("select * from users;")))
@@ -60,7 +61,6 @@ class TestCommands:
                 "--inactive",
             ],
             input="p@ssword\np@ssword\n",
-            env={"SQLALCHEMY_DATABASE_URI": database},
         )
         assert result.exit_code == 0
 

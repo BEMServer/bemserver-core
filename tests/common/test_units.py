@@ -77,11 +77,24 @@ class TestUnits:
             ureg.convert_df(data_df, {"id": "m"}, {"id": "kW"})
 
 
-def test_bemserver_core_load_units_definitions_file():
-    bsc = BEMServerCore()
-
+@pytest.mark.parametrize("bemservercore", (False,), indirect=True)
+def test_bemserver_core_load_units_definitions_file(bemservercore):
     with mock.patch("bemserver_core.common.units.ureg.load_definitions") as load_mock:
-        bsc.load_units_definitions_file("dummy_path")
+        bemservercore.load_units_definitions_file("dummy_path")
+
+    load_mock.assert_called_once()
+    load_mock.assert_called_with("dummy_path")
+
+
+@pytest.mark.parametrize(
+    "config",
+    ({"UNIT_DEFINITION_FILES": ("dummy_path",)},),
+    indirect=True,
+)
+@pytest.mark.usefixtures("config")
+def test_bemserver_core_load_units_definitions_file_config():
+    with mock.patch("bemserver_core.common.units.ureg.load_definitions") as load_mock:
+        BEMServerCore()
 
     load_mock.assert_called_once()
     load_mock.assert_called_with("dummy_path")
