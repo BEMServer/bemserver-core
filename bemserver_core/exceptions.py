@@ -91,3 +91,15 @@ class PropertyTypeInvalidError(BEMServerCoreError):
 
 class BEMServerCoreTaskError(BEMServerCoreError):
     """Error in task execution"""
+
+
+class BEMServerCoreWeatherAPIError(BEMServerCoreError):
+    """Error in weather API call"""
+
+
+class BEMServerCoreWeatherAPIQueryError(BEMServerCoreWeatherAPIError):
+    """Error in weather API query"""
+
+
+class BEMServerCoreWeatherAPIConnectionError(BEMServerCoreWeatherAPIError):
+    """Error in weather API connection"""

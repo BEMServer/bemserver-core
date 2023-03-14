@@ -42,6 +42,7 @@ setup(
         "click>=8.1.3,<9.0",
         "celery>=5.2.0,<6.0",
         "redis>=4.3.4,<5.0",
+        "requests>=2.28.2",
     ],
     packages=find_packages(exclude=["tests*"]),
     include_package_data=True,
