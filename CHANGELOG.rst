@@ -1,6 +1,16 @@
 Changelog
 ---------
 
+0.12.0 (2023-03-14)
++++++++++++++++++++
+
+Features:
+
+- Load configuration from Python file provided by BEMSERVER_CORE_SETTINGS_FILE
+  environment variable
+- Init authentication at BEMServerCore init
+- Add direct/diffuse solar radiation to WeatherParameterEnum
+
 0.11.1 (2023-03-03)
 +++++++++++++++++++
 
