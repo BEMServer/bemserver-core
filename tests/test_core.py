@@ -7,7 +7,8 @@ from bemserver_core.exceptions import BEMServerCoreSettingsError
 
 
 class TestBEMServerCore:
-    def test_missing_settings_file_env_var(self):
+    def test_missing_settings_file_env_var(self, monkeypatch):
+        monkeypatch.delenv("BEMSERVER_CORE_SETTINGS_FILE", raising=False)
         with pytest.raises(
             BEMServerCoreSettingsError,
             match="Missing BEMSERVER_CORE_SETTINGS_FILE environment variable",
