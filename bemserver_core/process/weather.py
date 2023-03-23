@@ -93,9 +93,10 @@ class OikolabWeatherDataClient:
             ) from exc
 
         try:
+            timestamps = [int(d) for d in ret_data["index"]]
             ret_df = pd.DataFrame(
                 index=pd.DatetimeIndex(
-                    pd.to_datetime(ret_data["index"], utc=True, unit="s"),
+                    pd.to_datetime(timestamps, utc=True, unit="s"),
                     name="timestamp",
                 ),
                 data=ret_data["data"],

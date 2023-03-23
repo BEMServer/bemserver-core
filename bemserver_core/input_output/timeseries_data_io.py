@@ -8,7 +8,6 @@ import csv
 import sqlalchemy as sqla
 import numpy as np
 import pandas as pd
-import dateutil
 
 from bemserver_core.database import db
 from bemserver_core.model import (
@@ -109,7 +108,7 @@ class TimeseriesDataIO:
         # Ensure columns labels are of right type
         try:
             data_df.columns = data_df.columns.astype(str if campaign else int)
-        except TypeError as exc:
+        except ValueError as exc:
             raise TimeseriesDataIOInvalidTimeseriesIDTypeError(
                 "Wrong timeseries ID type"
             ) from exc
@@ -435,11 +434,14 @@ def to_utc_index(series):
                 ) from exc
             raise
 
+    series = pd.Series(series)
+
     try:
-        index = pd.to_datetime(pd.Series(series))
+        index = pd.to_datetime(series, format="ISO8601")
     except (
-        dateutil.parser._parser.ParserError,
+        ValueError,
         pd.errors.OutOfBoundsDatetime,
+        pd._libs.tslibs.parsing.DateParseError,
     ) as exc:
         raise TimeseriesDataIODatetimeError("Invalid timestamp") from exc
 
