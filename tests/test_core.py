@@ -29,3 +29,15 @@ class TestBEMServerCore:
         monkeypatch.setenv("BEMSERVER_CORE_SETTINGS_FILE", str(cfg_file))
         with pytest.raises(BEMServerCoreSettingsError, match="invalid syntax"):
             BEMServerCore()
+
+    @pytest.mark.parametrize(
+        "config",
+        ({"test": 1, "_test": 2, "__test": 3},),
+        indirect=True,
+    )
+    @pytest.mark.usefixtures("config")
+    def test_underscore_variables_ignored_in_config_file(self):
+        bsc = BEMServerCore()
+        assert bsc.config["test"] == 1
+        assert "_test" not in bsc.config
+        assert "__test" not in bsc.config
