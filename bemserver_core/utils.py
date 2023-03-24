@@ -39,4 +39,4 @@ def get_dict_from_pyfile(file_path):
         exc.strerror = f'Unable to load file "{exc.strerror}"'
         raise
 
-    return mod.__dict__
+    return {k: v for k, v in mod.__dict__.items() if not k.startswith("_")}
