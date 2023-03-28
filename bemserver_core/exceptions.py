@@ -101,5 +101,9 @@ class BEMServerCoreWeatherAPIQueryError(BEMServerCoreWeatherAPIError):
     """Error in weather API query"""
 
 
+class BEMServerCoreWeatherAPIResponseError(BEMServerCoreWeatherAPIError):
+    """Error in weather API response"""
+
+
 class BEMServerCoreWeatherAPIConnectionError(BEMServerCoreWeatherAPIError):
     """Error in weather API connection"""
