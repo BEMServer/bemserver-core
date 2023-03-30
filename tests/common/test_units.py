@@ -35,6 +35,8 @@ class TestUnits:
             ureg.validate_unit("wh")
         with pytest.raises(BEMServerCoreUndefinedUnitError):
             ureg.validate_unit("dummy")
+        with pytest.raises(BEMServerCoreUndefinedUnitError):
+            ureg.validate_unit("/m")
 
     def test_ureg_loads_units_file_on_startup(self):
         assert "heating_celsius_degree_hour" in ureg
