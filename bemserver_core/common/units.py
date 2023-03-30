@@ -25,7 +25,10 @@ class BEMServerUnitRegistry:
     def validate_unit(self, unit_str):
         try:
             return self._ureg.Unit(unit_str)
-        except pint.errors.UndefinedUnitError as exc:
+        except (
+            pint.errors.UndefinedUnitError,
+            pint.errors.DefinitionSyntaxError,
+        ) as exc:
             raise BEMServerCoreUndefinedUnitError(str(exc)) from exc
 
     def convert(self, data, src_unit, dest_unit):
