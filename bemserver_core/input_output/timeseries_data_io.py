@@ -117,7 +117,7 @@ class TimeseriesDataIO:
         return data_df[timeseries_labels]
 
     @staticmethod
-    def _convert(data_df, ts_l, col_label, convert_to, *, src_unit=None):
+    def _convert_to(data_df, ts_l, col_label, convert_to, *, src_unit=None):
         """Convert data to given units
 
         :param DataFrame data_df: DataFrame to convert
@@ -210,7 +210,7 @@ class TimeseriesDataIO:
         data_df = cls._fill_missing_and_reorder_columns(data_df, timeseries, col_label)
 
         if convert_to:
-            cls._convert(data_df, timeseries, col_label, convert_to)
+            cls._convert_to(data_df, timeseries, col_label, convert_to)
 
         return data_df
 
@@ -351,7 +351,9 @@ class TimeseriesDataIO:
         if convert_to:
             # If aggregation is count, data is not in original TS unit but dimensionless
             src_unit = "count" if aggregation == "count" else None
-            cls._convert(data_df, timeseries, col_label, convert_to, src_unit=src_unit)
+            cls._convert_to(
+                data_df, timeseries, col_label, convert_to, src_unit=src_unit
+            )
 
         return data_df
 
