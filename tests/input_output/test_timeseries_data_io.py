@@ -116,6 +116,55 @@ class TestTimeseriesDataIO:
 
         assert data == expected
 
+        # Test conversions
+        with OpenBar():
+            ts_2.unit_symbol = "meter"
+            tsdio.delete(
+                dt.datetime(2020, 1, 1),
+                dt.datetime(2020, 1, 2),
+                (ts_0, ts_2),
+                ds_1,
+            )
+
+        with CurrentUser(admin_user):
+            tsdio.set_timeseries_data(
+                data_df,
+                ds_1,
+                campaign,
+                convert_from={ts_2.name if for_campaign else ts_2.id: "mm"},
+            )
+
+        # Rollback then query to ensure data is actually written
+        db.session.rollback()
+
+        # Check timeseries data is written
+        data = (
+            db.session.query(
+                TimeseriesData.timestamp,
+                TimeseriesData.timeseries_by_data_state_id,
+                TimeseriesData.value,
+            )
+            .order_by(
+                TimeseriesData.timeseries_by_data_state_id,
+                TimeseriesData.timestamp,
+            )
+            .all()
+        )
+
+        timestamps = [
+            dt.datetime(2020, 1, 1, i, tzinfo=dt.timezone.utc) for i in range(4)
+        ]
+
+        expected = [
+            (timestamp, tsbds_0.id, float(idx))
+            for idx, timestamp in enumerate(timestamps)
+        ] + [
+            (timestamp, tsbds_2.id, (float(idx) + 10) / 1000)
+            for idx, timestamp in enumerate(timestamps[:-1])
+        ]
+
+        assert data == expected
+
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
