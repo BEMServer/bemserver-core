@@ -107,3 +107,13 @@ class BEMServerCoreWeatherAPIResponseError(BEMServerCoreWeatherAPIError):
 
 class BEMServerCoreWeatherAPIConnectionError(BEMServerCoreWeatherAPIError):
     """Error in weather API connection"""
+
+
+class BEMServerCoreWeatherProcessError(BEMServerCoreError):
+    """Error in weather process"""
+
+
+class BEMServerCoreWeatherProcessMissingCoordinatesError(
+    BEMServerCoreWeatherProcessError
+):
+    """Missing coordinates in weather process"""

@@ -370,7 +370,7 @@ resource ZoneProperty{
 
 
 resource Site {
-    permissions = ["create", "read", "update", "delete"];
+    permissions = ["create", "read", "update", "delete", "get_weather_data"];
 }
 has_permission(user: User, "read", site:Site) if
     has_role(user, "member", site.campaign);

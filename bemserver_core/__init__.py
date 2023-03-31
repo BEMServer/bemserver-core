@@ -9,6 +9,7 @@ from bemserver_core import input_output  # noqa
 from bemserver_core import scheduled_tasks
 from bemserver_core import settings
 from bemserver_core import utils
+from bemserver_core.process.weather import wdp
 from bemserver_core.exceptions import BEMServerCoreSettingsError
 
 
@@ -51,6 +52,9 @@ class BEMServerCore:
         # Load unit definition files
         for file_path in self.config["UNIT_DEFINITION_FILES"]:
             common.ureg.load_definitions(file_path)
+
+        # Init weather data processor
+        wdp.init_core(self)
 
     def load_units_definitions_file(self, file_path):
         common.ureg.load_definitions(file_path)
