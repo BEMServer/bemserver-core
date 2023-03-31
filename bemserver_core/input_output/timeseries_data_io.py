@@ -158,6 +158,8 @@ class TimeseriesDataIO:
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
         :param list timeseries: List of timeseries
         :param TimeseriesDataState data_state: Timeseries data state
+        :param dict convert_to: Mapping of timeseries ID/name -> unit to convert
+            timeseries data to
         :param str timezone: IANA timezone
         :param str inclusive: Whether to set each bound as closed or open.
             Must be "both", "neither", "left" or "right". Default: "left".
@@ -239,6 +241,8 @@ class TimeseriesDataIO:
             Must be at least 1.
         :param str bucket_witdh_unit: Unit of the bucket width
             One of "second", "minute", "hour", "day", "week", "month", "year".
+        :param dict convert_to: Mapping of timeseries ID/name -> unit to convert
+            timeseries data to
         :param str aggregation: Aggregation function.
             One of "avg", "sum", "min", "max" and "count".
         :param str timezone: IANA timezone
