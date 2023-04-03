@@ -46,14 +46,66 @@ PANDAS_RE_AGGREG_FUNC_MAPPING = {
 class TimeseriesDataIO:
     """Base class for TimeseriesData IO classes"""
 
+    @staticmethod
+    def _convert_from(data_df, ts_l, col_label, convert_from):
+        """Convert data to given units
+
+        :param DataFrame data_df: DataFrame to convert
+        :param list ts_l: List of Timeseries objects
+        :param str col_label: DataFrame column labels: IDs or names
+        :param dict convert_from: Mapping of timeseries ID/name -> unit
+
+        Converts column for each item in convert_from dict.
+        """
+        ureg.convert_df(
+            data_df,
+            convert_from,
+            {
+                label: ts.unit_symbol
+                for ts in ts_l
+                if (label := getattr(ts, col_label)) in convert_from
+            },
+        )
+
+    @staticmethod
+    def _convert_to(data_df, ts_l, col_label, convert_to, *, src_unit=None):
+        """Convert data to given units
+
+        :param DataFrame data_df: DataFrame to convert
+        :param list ts_l: List of Timeseries objects
+        :param str col_label: DataFrame column labels: IDs or names
+        :param dict convert_to: Mapping of timeseries ID/name -> unit
+        :param string src_unit: Unit to use as source unit for all timeseries
+
+        Converts column for each item in convert_to dict.
+
+        If src_unit is provided, it is used as source unit for all timeseries
+        in place of their respective units. This is useful for aggregated data
+        where the result of the aggregation may not have the same unit as the
+        original data (e.g. count).
+        """
+        ureg.convert_df(
+            data_df,
+            {getattr(ts, col_label): src_unit or ts.unit_symbol for ts in ts_l},
+            convert_to,
+        )
+
     @classmethod
-    def set_timeseries_data(cls, data_df, data_state, campaign=None):
+    def set_timeseries_data(
+        cls, data_df, data_state, campaign=None, *, convert_from=None
+    ):
         """Insert timeseries data
 
         :param DataFrame data_df: Input timeseries data
         :param TimeseriesDataState data_state: Timeseries data state
         :param Campaign campaign: Campaign
+        :param dict convert_from: Mapping of timeseries ID/name -> unit to convert
+            timeseries data from
         """
+        # Copy so that modifications here don't affect input dataframe
+        # Only a shallow copy is needed
+        data_df = data_df.copy(deep=False)
+
         # Ensure columns labels are of right type
         try:
             data_df.columns = data_df.columns.astype(str if campaign else int)
@@ -71,6 +123,11 @@ class TimeseriesDataIO:
         # Check permissions
         for ts in timeseries:
             auth.authorize(get_current_user(), "write_data", ts)
+
+        if convert_from:
+            cls._convert_from(
+                data_df, timeseries, "name" if campaign else "id", convert_from
+            )
 
         # Get timeseries x data states ids
         tsbds_ids = [
@@ -116,29 +173,6 @@ class TimeseriesDataIO:
         # Ensure order
         return data_df[timeseries_labels]
 
-    @staticmethod
-    def _convert(data_df, ts_l, col_label, convert_to, *, src_unit=None):
-        """Convert data to given units
-
-        :param DataFrame data_df: DataFrame to convert
-        :param list ts_l: List of Timeseries objects
-        :param str col_label: DataFrame column labels: IDs or names
-        :param dict convert_to: Mapping of timeseries ID/name -> unit
-        :param string src_unit: Unit to use as source unit for all timeseries
-
-        Converts column for each item in convert_to dict.
-
-        If src_unit is provided, it is used as source unit for all timeseries
-        in place of their respective units. This is useful for aggregated data
-        where the result of the aggregation may not have the same unit as the
-        original data (e.g. count).
-        """
-        ureg.convert_df(
-            data_df,
-            {getattr(ts, col_label): src_unit or ts.unit_symbol for ts in ts_l},
-            convert_to,
-        )
-
     @classmethod
     def get_timeseries_data(
         cls,
@@ -158,6 +192,8 @@ class TimeseriesDataIO:
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
         :param list timeseries: List of timeseries
         :param TimeseriesDataState data_state: Timeseries data state
+        :param dict convert_to: Mapping of timeseries ID/name -> unit to convert
+            timeseries data to
         :param str timezone: IANA timezone
         :param str inclusive: Whether to set each bound as closed or open.
             Must be "both", "neither", "left" or "right". Default: "left".
@@ -210,7 +246,7 @@ class TimeseriesDataIO:
         data_df = cls._fill_missing_and_reorder_columns(data_df, timeseries, col_label)
 
         if convert_to:
-            cls._convert(data_df, timeseries, col_label, convert_to)
+            cls._convert_to(data_df, timeseries, col_label, convert_to)
 
         return data_df
 
@@ -239,6 +275,8 @@ class TimeseriesDataIO:
             Must be at least 1.
         :param str bucket_witdh_unit: Unit of the bucket width
             One of "second", "minute", "hour", "day", "week", "month", "year".
+        :param dict convert_to: Mapping of timeseries ID/name -> unit to convert
+            timeseries data to
         :param str aggregation: Aggregation function.
             One of "avg", "sum", "min", "max" and "count".
         :param str timezone: IANA timezone
@@ -351,7 +389,9 @@ class TimeseriesDataIO:
         if convert_to:
             # If aggregation is count, data is not in original TS unit but dimensionless
             src_unit = "count" if aggregation == "count" else None
-            cls._convert(data_df, timeseries, col_label, convert_to, src_unit=src_unit)
+            cls._convert_to(
+                data_df, timeseries, col_label, convert_to, src_unit=src_unit
+            )
 
         return data_df
 
