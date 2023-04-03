@@ -1009,6 +1009,9 @@ def st_check_outliers_by_campaigns(bemservercore, campaigns):
 @pytest.fixture
 def weather_timeseries_by_sites(bemservercore, timeseries, sites):
     with OpenBar():
+        # Set units to timeseries
+        timeseries[0].unit_symbol = "°C"
+        timeseries[1].unit_symbol = "percent"
         wtbs_1 = model.WeatherTimeseriesBySite.new(
             site_id=sites[0].id,
             parameter=model.WeatherParameterEnum.AIR_TEMPERATURE,
