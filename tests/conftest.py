@@ -594,10 +594,14 @@ def sites(bemservercore, campaigns):
         site_1 = model.Site.new(
             name="Site 1",
             campaign_id=campaigns[0].id,
+            latitude=43.47394,
+            longitude=-1.50940,
         )
         site_2 = model.Site.new(
             name="Site 2",
             campaign_id=campaigns[1].id,
+            latitude=44.84325,
+            longitude=-0.56262,
         )
         db.session.commit()
     return (site_1, site_2)

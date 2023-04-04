@@ -110,6 +110,8 @@ class Site(AuthMixin, Base):
     description = sqla.Column(sqla.String(500))
     ifc_id = sqla.Column(sqla.String(22))
     campaign_id = sqla.Column(sqla.ForeignKey("campaigns.id"), nullable=False)
+    latitude = sqla.Column(sqla.Float())
+    longitude = sqla.Column(sqla.Float())
 
     campaign = sqla.orm.relationship(
         "Campaign", backref=sqla.orm.backref("sites", cascade="all, delete-orphan")
