@@ -258,4 +258,3 @@ def init_db_energy():
             EnergyProductionTechnology(name="solar thermal collectors"),
         ]
     )
-    db.session.commit()

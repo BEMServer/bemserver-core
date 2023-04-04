@@ -294,7 +294,6 @@ class Event(AuthMixin, Base):
 
         for user in list(query):
             Notification.new(user=user, event=self, timestamp=timestamp)
-        db.session.commit()
 
 
 @sqla.event.listens_for(Event, "after_insert")
@@ -325,6 +324,7 @@ def notify(event_id, timestamp):
     if event is None:
         raise BEMServerCoreTaskError(f"Unknown event ID {event_id}")
     event.notify(timestamp)
+    db.session.commit()
 
 
 class EventCategoryByUser(AuthMixin, Base):
@@ -673,7 +673,6 @@ def init_db_events_triggers():
         Event.campaign_scope_id,
         EventCategoryByUser.user_id,
     )
-    db.session.commit()
 
 
 def init_db_events():
@@ -690,4 +689,3 @@ def init_db_events():
             EventCategory(name="No data outliers"),
         ]
     )
-    db.session.commit()

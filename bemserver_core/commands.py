@@ -24,6 +24,7 @@ def setup_db():
     model.timeseries.init_db_timeseries()
     model.sites.init_db_structural_elements_triggers()
     model.energy.init_db_energy()
+    database.db.session.commit()
 
 
 @click.command()

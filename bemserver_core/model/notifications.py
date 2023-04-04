@@ -122,8 +122,7 @@ class Notification(AuthMixin, Base):
             )
             stmt = stmt.where(cls.id.in_(subq))
 
-        db.session.execute(stmt.execution_options(synchronize_session=False))
-        db.session.commit()
+        db.session.execute(stmt)
 
 
 def init_db_events_triggers():
@@ -137,4 +136,3 @@ def init_db_events_triggers():
         Notification.event_id,
         Notification.timestamp,
     )
-    db.session.commit()

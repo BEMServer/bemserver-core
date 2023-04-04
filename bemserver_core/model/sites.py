@@ -1,7 +1,7 @@
 """Sites"""
 import sqlalchemy as sqla
 
-from bemserver_core.database import Base, db, make_columns_read_only
+from bemserver_core.database import Base, make_columns_read_only
 from bemserver_core.model import Campaign
 from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.common import PropertyType
@@ -543,4 +543,3 @@ def init_db_structural_elements_triggers():
         ZonePropertyData.zone_id,
         ZonePropertyData.zone_property_id,
     )
-    db.session.commit()
