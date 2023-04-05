@@ -128,7 +128,7 @@ class TestTimeseriesDataIO:
                 data_df,
                 ds_1,
                 campaign,
-                convert_from={ts_2.name if for_campaign else ts_2.id: "mm"},
+                convert_from={ts_2.name if for_campaign else ts_2.id: "km"},
             )
 
         # Check timeseries data is written
@@ -153,11 +153,31 @@ class TestTimeseriesDataIO:
             (timestamp, tsbds_0.id, float(idx))
             for idx, timestamp in enumerate(timestamps)
         ] + [
-            (timestamp, tsbds_2.id, (float(idx) + 10) / 1000)
+            (timestamp, tsbds_2.id, (float(idx) + 10) * 1000)
             for idx, timestamp in enumerate(timestamps[:-1])
         ]
 
         assert data == expected
+
+        # Undefined: dummy
+        with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreUndefinedUnitError):
+                tsdio.set_timeseries_data(
+                    data_df,
+                    ds_1,
+                    campaign,
+                    convert_from={ts_2.name if for_campaign else ts_2.id: "dummy"},
+                )
+
+        # Wrong dimension: kW vs. m
+        with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreDimensionalityError):
+                tsdio.set_timeseries_data(
+                    data_df,
+                    ds_1,
+                    campaign,
+                    convert_from={ts_2.name if for_campaign else ts_2.id: "kW"},
+                )
 
     @pytest.mark.parametrize("timeseries", (3,), indirect=True)
     @pytest.mark.usefixtures("users_by_user_groups")
