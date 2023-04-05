@@ -257,7 +257,6 @@ class SitesCSVIO(BaseCSVFileIO):
             cls._import_csv_spaces(campaign, spaces_csv)
         if zones_csv is not None:
             cls._import_csv_zones(campaign, zones_csv)
-        db.session.commit()
 
 
 sites_csv_io = SitesCSVIO()

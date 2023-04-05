@@ -73,9 +73,6 @@ class TestTimeseriesDataIO:
         with CurrentUser(admin_user):
             tsdio.set_timeseries_data(data_df, ds_1, campaign)
 
-        # Rollback then query to ensure data is actually written
-        db.session.rollback()
-
         # Check TSBDS are correctly auto-created
         tsbds_l = (
             db.session.query(TimeseriesByDataState)
@@ -133,9 +130,6 @@ class TestTimeseriesDataIO:
                 campaign,
                 convert_from={ts_2.name if for_campaign else ts_2.id: "mm"},
             )
-
-        # Rollback then query to ensure data is actually written
-        db.session.rollback()
 
         # Check timeseries data is written
         data = (
@@ -1708,8 +1702,6 @@ class TestTimeseriesDataIO:
 
         with CurrentUser(admin_user):
             tsdio.delete(start_dt, end_dt, ts_l, ds_1)
-            # Rollback then query to ensure data is actually deleted
-            db.session.rollback()
             assert not db.session.query(TimeseriesData).all()
 
     @pytest.mark.parametrize("campaigns", (2,), indirect=True)
@@ -1751,8 +1743,6 @@ class TestTimeseriesDataIO:
 
         with CurrentUser(user_1):
             tsdio.delete(start_dt, end_dt, ts_l, ds_1)
-            # Rollback then query to ensure data is actually deleted
-            db.session.rollback()
             assert (
                 not db.session.query(TimeseriesData)
                 .filter_by(timeseries_by_data_state_id=tsbds_1.id)

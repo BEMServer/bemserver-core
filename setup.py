@@ -32,7 +32,7 @@ setup(
     python_requires=">=3.9",
     install_requires=[
         "psycopg2>=2.9.0,<3.0",
-        "sqlalchemy>=1.4.40,<3.0",
+        "sqlalchemy>=2.0,<3.0",
         "pandas>=1.5.0,<2.0",
         "pint>=0.20.0",
         "passlib>=1.7.4,<2.0",

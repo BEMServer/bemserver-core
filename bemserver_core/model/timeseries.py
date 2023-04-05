@@ -617,7 +617,6 @@ def init_db_timeseries_triggers():
         TimeseriesPropertyData.timeseries_id,
         TimeseriesPropertyData.property_id,
     )
-    db.session.commit()
 
 
 def init_db_timeseries():
@@ -648,4 +647,3 @@ def init_db_timeseries():
             TimeseriesDataState(name="Clean"),
         ]
     )
-    db.session.commit()

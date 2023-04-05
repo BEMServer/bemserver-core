@@ -247,8 +247,6 @@ def init_db_functions():
         )
     )
 
-    db.session.commit()
-
 
 def _generate_ddl_trigger_read_only(table_name, col_name):
     """Generate the SQL statement that creates an "update read-only trigger"

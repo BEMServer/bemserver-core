@@ -264,9 +264,6 @@ def check_missing_ts_data(
                 for ts_id, _ts_name in new_present_ts:
                     TimeseriesByEvent.new(event_id=event.id, timeseries_id=ts_id)
 
-            logger.debug("Committing")
-            db.session.commit()
-
 
 @celery.task(name="CheckMissing")
 def check_missing_scheduled_task(
@@ -280,3 +277,5 @@ def check_missing_scheduled_task(
         period_multiplier=period_multiplier,
         min_completeness_ratio=min_completeness_ratio,
     )
+    logger.debug("Committing")
+    db.session.commit()

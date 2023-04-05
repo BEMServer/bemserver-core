@@ -282,9 +282,6 @@ def check_outliers_ts_data(
                 for ts_id, _ts_name in new_present_ts:
                     TimeseriesByEvent.new(event_id=event.id, timeseries_id=ts_id)
 
-            logger.debug("Committing")
-            db.session.commit()
-
 
 @celery.task(name="CheckOutliers")
 def check_outliers_scheduled_task(
@@ -298,3 +295,5 @@ def check_outliers_scheduled_task(
         period_multiplier=period_multiplier,
         min_correctness_ratio=min_correctness_ratio,
     )
+    logger.debug("Committing")
+    db.session.commit()

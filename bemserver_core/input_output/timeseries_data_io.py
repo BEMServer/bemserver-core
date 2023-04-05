@@ -156,7 +156,6 @@ class TimeseriesDataIO:
             .on_conflict_do_nothing()
         )
         db.session.execute(query)
-        db.session.commit()
 
     @staticmethod
     def _fill_missing_and_reorder_columns(data_df, ts_l, col_label, fill_value=np.nan):
@@ -421,7 +420,6 @@ class TimeseriesDataIO:
             .filter(TimeseriesData.timestamp < end_dt)
             .delete(synchronize_session=False)
         )
-        db.session.commit()
 
 
 def to_utc_index(series):

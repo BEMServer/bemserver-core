@@ -131,7 +131,6 @@ class TimeseriesCSVIO(BaseCSVFileIO):
                             f'Timeseries "{timeseries.name}" property "{key}"'
                             " can't be created."
                         ) from exc
-        db.session.commit()
 
 
 timeseries_csv_io = TimeseriesCSVIO()

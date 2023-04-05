@@ -1,7 +1,7 @@
 """Campaings"""
 import sqlalchemy as sqla
 
-from bemserver_core.database import Base, db, make_columns_read_only
+from bemserver_core.database import Base, make_columns_read_only
 from bemserver_core.authorization import AuthMixin, auth, Relation
 
 
@@ -144,4 +144,3 @@ def init_db_campaigns_triggers():
     make_columns_read_only(
         CampaignScope.campaign_id,
     )
-    db.session.commit()
