@@ -451,12 +451,14 @@ def to_utc_index(series):
 
 class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
     @classmethod
-    def import_csv(cls, csv_data, data_state, campaign=None):
+    def import_csv(cls, csv_data, data_state, campaign=None, convert_from=None):
         """Import CSV file
 
         :param srt csv_data: CSV as string
         :param TimeseriesDataState data_state: Timeseries data state
         :param Campaign campaign: Campaign
+        :param dict convert_from: Mapping of timeseries ID/name -> unit to convert
+            timeseries data from
 
         If campaign is None, the CSV header is expected to contain timeseries IDs.
         Otherwise, timeseries names are expected.
@@ -490,7 +492,9 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             raise TimeseriesDataCSVIOError("Invalid values") from exc
 
         # Insert data
-        cls.set_timeseries_data(data_df, data_state=data_state, campaign=campaign)
+        cls.set_timeseries_data(
+            data_df, data_state=data_state, campaign=campaign, convert_from=convert_from
+        )
 
     @classmethod
     def export_csv(
@@ -563,12 +567,14 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
 
 class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
     @classmethod
-    def import_json(cls, json_data, data_state, campaign=None):
+    def import_json(cls, json_data, data_state, campaign=None, convert_from=None):
         """Import JSON file
 
         :param srt json_data: JSON as string or text stream
         :param TimeseriesDataState data_state: Timeseries data state
         :param Campaign campaign: Campaign
+        :param dict convert_from: Mapping of timeseries ID/name -> unit to convert
+            timeseries data from
 
         If campaign is None, the JSON header is expected to contain timeseries IDs.
         Otherwise, timeseries names are expected.
@@ -587,7 +593,9 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
         data_df.index = to_utc_index(data_df.index)
 
         # Insert data
-        cls.set_timeseries_data(data_df, data_state=data_state, campaign=campaign)
+        cls.set_timeseries_data(
+            data_df, data_state=data_state, campaign=campaign, convert_from=convert_from
+        )
 
     @staticmethod
     def _df_to_json(data_df, dropna=False):
