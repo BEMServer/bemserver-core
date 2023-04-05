@@ -1,6 +1,25 @@
 Changelog
 ---------
 
+0.13.0 (unreleased)
++++++++++++++++++++
+
+Features:
+
+- Rework session management: only commit in tasks and commands
+- Add latitude and longitude to Site
+- Add convert_from argument to TimeseriesDataIO.set_timeseries_data
+- Ignore underscore variables in config files
+
+Bug fixes:
+
+- Catch DefinitionSyntaxError in BEMServerUnitRegistry.validate_unit
+
+Other changes:
+
+- Require SQLAlchemy 2.x
+- Set upper bound to requirements versions in setup.py
+
 0.12.0 (2023-03-14)
 +++++++++++++++++++
 
