@@ -8,12 +8,14 @@ Features:
 
 - Rework session management: only commit in tasks and commands
 - Add latitude and longitude to Site
-- Add convert_from argument to TimeseriesDataIO.set_timeseries_data
+- Add convert_from argument to TimeseriesDataIO and TimeseriesDataCSV/JSONIO
+- Add weather data download feature: Oikolab client, model, process, task
 - Ignore underscore variables in config files
 
 Bug fixes:
 
 - Catch DefinitionSyntaxError in BEMServerUnitRegistry.validate_unit
+- Scheduled task: skip if is_enabled is False
 
 Other changes:
 
@@ -35,7 +37,7 @@ Features:
 
 Bug fixes:
 
-- TimeseriesDataCSV/JSON: catch OutOfBoundsDatetime when loading data
+- TimeseriesDataCSV/JSONIO: catch OutOfBoundsDatetime when loading data
 
 0.11.0 (2023-03-01)
 +++++++++++++++++++
