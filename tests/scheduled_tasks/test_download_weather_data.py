@@ -13,15 +13,11 @@ from bemserver_core.model import Site, TimeseriesDataState
 from bemserver_core.input_output import tsdio
 from bemserver_core.scheduled_tasks.download_weather_data import (
     ST_DownloadWeatherDataBySite,
-    _make_date_range,
     download_weather_data,
 )
 from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
-from bemserver_core.exceptions import (
-    BEMServerAuthorizationError,
-    BEMServerCorePeriodError,
-)
+from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestST_DownloadWeatherDataBySiteModel:
@@ -250,43 +246,6 @@ OIKOLAB_RESPONSE_ATTRIBUTES = {
 
 
 class TestDownloadWeatherDataScheduledTask:
-    def test__make_date_range(self):
-        dt_1 = dt.datetime(2020, 1, 1, 0, 30, tzinfo=dt.timezone.utc)
-        with pytest.raises(BEMServerCorePeriodError):
-            _make_date_range(dt_1, "day", 5, 0, 0)
-        assert _make_date_range(dt_1, "hour", 1, 0, 0) == (
-            dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-            dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-        )
-        assert _make_date_range(dt_1, "hour", 2, 0, 0) == (
-            dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-            dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-        )
-        assert _make_date_range(dt_1, "hour", 1, 1, 0) == (
-            dt.datetime(2019, 12, 31, 23, 0, tzinfo=dt.timezone.utc),
-            dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-        )
-        assert _make_date_range(dt_1, "hour", 2, 1, 0) == (
-            dt.datetime(2019, 12, 31, 22, 0, tzinfo=dt.timezone.utc),
-            dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-        )
-        assert _make_date_range(dt_1, "hour", 1, 0, 1) == (
-            dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-            dt.datetime(2020, 1, 1, 1, 0, tzinfo=dt.timezone.utc),
-        )
-        assert _make_date_range(dt_1, "hour", 2, 0, 1) == (
-            dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-            dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc),
-        )
-        assert _make_date_range(dt_1, "day", 1, 0, 0) == (
-            dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-            dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-        )
-        assert _make_date_range(dt_1, "day", 1, 2, 3) == (
-            dt.datetime(2019, 12, 30, 0, 0, tzinfo=dt.timezone.utc),
-            dt.datetime(2020, 1, 4, 0, 0, tzinfo=dt.timezone.utc),
-        )
-
     @pytest.mark.usefixtures("st_download_weather_data_by_sites")
     @pytest.mark.usefixtures("weather_timeseries_by_sites")
     @pytest.mark.parametrize("sites", (2,), indirect=True)

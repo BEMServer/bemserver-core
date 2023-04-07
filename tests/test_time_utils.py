@@ -6,7 +6,12 @@ from pandas.tseries.offsets import DateOffset
 
 import pytest
 
-from bemserver_core.time_utils import make_date_offset, floor, ceil, last_full_interval
+from bemserver_core.time_utils import (
+    make_date_offset,
+    floor,
+    ceil,
+    make_date_range_around_datetime,
+)
 from bemserver_core.exceptions import BEMServerCorePeriodError
 
 
@@ -140,22 +145,37 @@ class TestTimeUtilsCeil:
 
 
 @pytest.mark.parametrize("timezone", (dt.timezone.utc, ZoneInfo("Europe/Paris")))
-def test_last_full_interval(timezone):
-    assert last_full_interval(
-        dt.datetime(2020, 1, 1, 12, 42, tzinfo=timezone), "hour", 3
-    ) == (
-        dt.datetime(2020, 1, 1, 9, tzinfo=timezone),
-        dt.datetime(2020, 1, 1, 12, tzinfo=timezone),
+def test_make_date_range_around_datetime(timezone):
+    dt_1 = dt.datetime(2020, 1, 1, 0, 0, tzinfo=timezone)
+    assert make_date_range_around_datetime(dt_1, "hour", 1, 0, 0) == (
+        dt.datetime(2020, 1, 1, 0, 0, tzinfo=timezone),
+        dt.datetime(2020, 1, 1, 0, 0, tzinfo=timezone),
     )
-    assert last_full_interval(
-        dt.datetime(2020, 1, 2, 12, 42, tzinfo=timezone), "day", 1
-    ) == (
-        dt.datetime(2020, 1, 1, tzinfo=timezone),
-        dt.datetime(2020, 1, 2, tzinfo=timezone),
+    assert make_date_range_around_datetime(dt_1, "hour", 2, 0, 0) == (
+        dt.datetime(2020, 1, 1, 0, 0, tzinfo=timezone),
+        dt.datetime(2020, 1, 1, 0, 0, tzinfo=timezone),
     )
-    assert last_full_interval(
-        dt.datetime(2020, 2, 11, 12, 42, tzinfo=timezone), "month", 1
-    ) == (
-        dt.datetime(2020, 1, 1, tzinfo=timezone),
-        dt.datetime(2020, 2, 1, tzinfo=timezone),
+    assert make_date_range_around_datetime(dt_1, "hour", 1, 1, 0) == (
+        dt.datetime(2019, 12, 31, 23, 0, tzinfo=timezone),
+        dt.datetime(2020, 1, 1, 0, 0, tzinfo=timezone),
+    )
+    assert make_date_range_around_datetime(dt_1, "hour", 2, 1, 0) == (
+        dt.datetime(2019, 12, 31, 22, 0, tzinfo=timezone),
+        dt.datetime(2020, 1, 1, 0, 0, tzinfo=timezone),
+    )
+    assert make_date_range_around_datetime(dt_1, "hour", 1, 0, 1) == (
+        dt.datetime(2020, 1, 1, 0, 0, tzinfo=timezone),
+        dt.datetime(2020, 1, 1, 1, 0, tzinfo=timezone),
+    )
+    assert make_date_range_around_datetime(dt_1, "hour", 2, 0, 1) == (
+        dt.datetime(2020, 1, 1, 0, 0, tzinfo=timezone),
+        dt.datetime(2020, 1, 1, 2, 0, tzinfo=timezone),
+    )
+    assert make_date_range_around_datetime(dt_1, "day", 1, 0, 0) == (
+        dt.datetime(2020, 1, 1, 0, 0, tzinfo=timezone),
+        dt.datetime(2020, 1, 1, 0, 0, tzinfo=timezone),
+    )
+    assert make_date_range_around_datetime(dt_1, "day", 1, 2, 3) == (
+        dt.datetime(2019, 12, 30, 0, 0, tzinfo=timezone),
+        dt.datetime(2020, 1, 4, 0, 0, tzinfo=timezone),
     )

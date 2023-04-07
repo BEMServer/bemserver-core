@@ -23,9 +23,8 @@ from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestST_CleanupByCampaignModel:
-    def test_st_cleanup_by_campaign_get_all_as_admin(
-        self, users, campaigns, st_cleanups_by_campaigns
-    ):
+    @pytest.mark.usefixtures("st_cleanups_by_campaigns")
+    def test_st_cleanup_by_campaign_get_all_as_admin(self, users, campaigns):
         admin_user = users[0]
         campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
@@ -94,9 +93,8 @@ class TestST_CleanupByCampaignModel:
 
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
-    def test_st_cleanup_by_campaign_get_all_as_user(
-        self, users, campaigns, st_cleanups_by_campaigns
-    ):
+    @pytest.mark.usefixtures("st_cleanups_by_campaigns")
+    def test_st_cleanup_by_campaign_get_all_as_user(self, users, campaigns):
         user_1 = users[1]
         assert not user_1.is_admin
         campaign_1 = campaigns[0]
@@ -154,9 +152,8 @@ class TestST_CleanupByCampaignModel:
             ret = ST_CleanupByCampaign.get_all(sort=["-campaign_name"], is_enabled=True)
             assert len(list(ret)) == 0
 
-    def test_st_cleanup_by_campaign_delete_cascade(
-        self, users, campaigns, st_cleanups_by_campaigns
-    ):
+    @pytest.mark.usefixtures("st_cleanups_by_campaigns")
+    def test_st_cleanup_by_campaign_delete_cascade(self, users, campaigns):
         admin_user = users[0]
         campaign_1 = campaigns[0]
 
@@ -490,6 +487,7 @@ class TestCleanupScheduledTask:
         ts_0 = timeseries[0]
         ts_1 = timeseries[1]
         campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
@@ -501,6 +499,7 @@ class TestCleanupScheduledTask:
                 value="12",
             )
             ST_CleanupByCampaign.new(campaign_id=campaign_1.id)
+            ST_CleanupByCampaign.new(campaign_id=campaign_2.id, is_enabled=False)
             db.session.flush()
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)

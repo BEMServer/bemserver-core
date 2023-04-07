@@ -33,12 +33,11 @@ class ST_CleanupByCampaign(AuthMixin, Base):
         sort = kwargs.pop("sort", None)
 
         # Extract and prepare kwargs for each sub-request.
-        camp_alias_name = "campaign"
         camp_kwargs = {}
-        if f"in_{camp_alias_name}_name" in kwargs:
-            camp_kwargs["in_name"] = kwargs.pop(f"in_{camp_alias_name}_name")
-        if f"{camp_alias_name}_id" in kwargs:
-            camp_kwargs["id"] = kwargs.pop(f"{camp_alias_name}_id")
+        if "in_campaign_name" in kwargs:
+            camp_kwargs["in_name"] = kwargs.pop("in_campaign_name")
+        if "campaign_id" in kwargs:
+            camp_kwargs["id"] = kwargs.pop("campaign_id")
 
         # Prepare sub-requests.
         camp_subq = sqla.orm.aliased(
@@ -53,8 +52,8 @@ class ST_CleanupByCampaign(AuthMixin, Base):
         # Main request.
         query = db.session.query(
             cleanup_subq.id,
-            camp_subq.id.label(f"{camp_alias_name}_id"),
-            camp_subq.name.label(f"{camp_alias_name}_name"),
+            camp_subq.id.label("campaign_id"),
+            camp_subq.name.label("campaign_name"),
             cleanup_subq.is_enabled,
         ).join(cleanup_subq, cleanup_subq.campaign_id == camp_subq.id, isouter=True)
 
@@ -68,8 +67,8 @@ class ST_CleanupByCampaign(AuthMixin, Base):
         if sort is not None:
             for field in sort:
                 cls_field = cleanup_subq
-                if camp_alias_name in field:
-                    field = field.replace(f"{camp_alias_name}_", "")
+                if "campaign_" in field:
+                    field = field.replace("campaign_", "")
                     cls_field = camp_subq
                 query = cls_field._apply_sort_query_filter(query, field)
 
@@ -140,10 +139,9 @@ class ST_CleanupByTimeseries(AuthMixin, Base):
         sort = kwargs.pop("sort", None)
 
         # Extract and prepare kwargs for each sub-request.
-        ts_alias_name = "timeseries"
         ts_kwargs = {}
-        if f"in_{ts_alias_name}_name" in kwargs:
-            ts_kwargs["in_name"] = kwargs.pop(f"in_{ts_alias_name}_name")
+        if "in_timeseries_name" in kwargs:
+            ts_kwargs["in_name"] = kwargs.pop("in_timeseries_name")
         if "campaign_id" in kwargs:
             ts_kwargs["campaign_id"] = kwargs["campaign_id"]
 
@@ -160,9 +158,9 @@ class ST_CleanupByTimeseries(AuthMixin, Base):
         # Main request.
         query = db.session.query(
             cleanup_subq.id,
-            ts_subq.id.label(f"{ts_alias_name}_id"),
-            ts_subq.name.label(f"{ts_alias_name}_name"),
-            ts_subq.unit_symbol.label(f"{ts_alias_name}_unit_symbol"),
+            ts_subq.id.label("timeseries_id"),
+            ts_subq.name.label("timeseries_name"),
+            ts_subq.unit_symbol.label("timeseries_unit_symbol"),
             cleanup_subq.last_timestamp,
         ).join(cleanup_subq, cleanup_subq.timeseries_id == ts_subq.id, isouter=True)
 
@@ -170,8 +168,8 @@ class ST_CleanupByTimeseries(AuthMixin, Base):
         if sort is not None:
             for sort_field in sort:
                 cls_field = cleanup_subq
-                if ts_alias_name in sort_field:
-                    sort_field = sort_field.replace(f"{ts_alias_name}_", "")
+                if "timeseries_" in sort_field:
+                    sort_field = sort_field.replace("timeseries_", "")
                     cls_field = ts_subq
                 # nulls_last ensures that null timestamps stay at the end of results,
                 #  whatever the sort direction.
@@ -193,7 +191,7 @@ def cleanup_scheduled_task():
 
     logger.debug("Cleaning data")
 
-    for cbc in ST_CleanupByCampaign.get():
+    for cbc in ST_CleanupByCampaign.get(is_enabled=True):
         campaign = cbc.campaign
 
         logger.info("Cleanup campaign %s", campaign.name)

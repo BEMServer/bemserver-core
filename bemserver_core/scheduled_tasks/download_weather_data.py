@@ -7,7 +7,7 @@ import sqlalchemy as sqla
 from bemserver_core.model import Site
 from bemserver_core.database import Base, db
 from bemserver_core.authorization import AuthMixin, auth, Relation
-from bemserver_core.time_utils import floor, make_date_offset
+from bemserver_core.time_utils import floor, make_date_range_around_datetime
 from bemserver_core.process.weather import wdp
 from bemserver_core.celery import celery, logger
 from bemserver_core.exceptions import BEMServerCorePeriodError
@@ -49,12 +49,11 @@ class ST_DownloadWeatherDataBySite(AuthMixin, Base):
         sort = kwargs.pop("sort", None)
 
         # Extract and prepare kwargs for each sub-request.
-        site_alias_name = "site"
         site_kwargs = {}
-        if f"in_{site_alias_name}_name" in kwargs:
-            site_kwargs["in_name"] = kwargs.pop(f"in_{site_alias_name}_name")
-        if f"{site_alias_name}_id" in kwargs:
-            site_kwargs["id"] = kwargs.pop(f"{site_alias_name}_id")
+        if "in_site_name" in kwargs:
+            site_kwargs["in_name"] = kwargs.pop("in_site_name")
+        if "site_id" in kwargs:
+            site_kwargs["id"] = kwargs.pop("site_id")
 
         # Prepare sub-requests.
         site_subq = sqla.orm.aliased(
@@ -69,8 +68,8 @@ class ST_DownloadWeatherDataBySite(AuthMixin, Base):
         # Main request.
         query = db.session.query(
             dwdbs_subq.id,
-            site_subq.id.label(f"{site_alias_name}_id"),
-            site_subq.name.label(f"{site_alias_name}_name"),
+            site_subq.id.label("site_id"),
+            site_subq.name.label("site_name"),
             dwdbs_subq.is_enabled,
         ).join(
             dwdbs_subq,
@@ -88,29 +87,12 @@ class ST_DownloadWeatherDataBySite(AuthMixin, Base):
         if sort is not None:
             for field in sort:
                 cls_field = dwdbs_subq
-                if site_alias_name in field:
-                    field = field.replace(f"{site_alias_name}_", "")
+                if "site_" in field:
+                    field = field.replace("site_", "")
                     cls_field = site_subq
                 query = cls_field._apply_sort_query_filter(query, field)
 
         return query
-
-
-def _make_date_range(
-    datetime, period, period_multiplier, periods_before, periods_after
-):
-    """Make date range before and after floored datetime"""
-    try:
-        round_dt = floor(datetime, period, period_multiplier)
-        period_offset = make_date_offset(period, period_multiplier)
-    except BEMServerCorePeriodError as exc:
-        logger.critical(str(exc))
-        raise
-
-    start_dt = round_dt - periods_before * period_offset
-    end_dt = round_dt + periods_after * period_offset
-
-    return start_dt, end_dt
 
 
 def download_weather_data(
@@ -118,9 +100,14 @@ def download_weather_data(
 ):
     logger.debug("datetime: %s", datetime)
 
-    start_dt, end_dt = _make_date_range(
-        datetime, period, period_multiplier, periods_before, periods_after
-    )
+    try:
+        round_dt = floor(datetime, period, period_multiplier)
+        start_dt, end_dt = make_date_range_around_datetime(
+            round_dt, period, period_multiplier, periods_before, periods_after
+        )
+    except BEMServerCorePeriodError as exc:
+        logger.critical(str(exc))
+        raise
 
     for dwdbs in ST_DownloadWeatherDataBySite.get(is_enabled=True):
         site = dwdbs.site
@@ -134,7 +121,7 @@ def download_weather_data(
 
 
 @celery.task(name="DownloadWeatherDataScheduledTask")
-def dowload_weather_data_scheduled_task(
+def download_weather_data_scheduled_task(
     period, period_multiplier, periods_before, periods_after, timezone="UTC"
 ):
     logger.info("Start")

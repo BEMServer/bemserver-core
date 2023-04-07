@@ -19,7 +19,7 @@ from bemserver_core.database import Base, db
 from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.process.cleanup import cleanup
 from bemserver_core.celery import celery, logger
-from bemserver_core.time_utils import last_full_interval
+from bemserver_core.time_utils import floor, make_date_range_around_datetime
 from bemserver_core.exceptions import BEMServerCorePeriodError
 
 
@@ -50,12 +50,11 @@ class ST_CheckOutliersByCampaign(AuthMixin, Base):
         sort = kwargs.pop("sort", None)
 
         # Extract and prepare kwargs for each sub-request.
-        camp_alias_name = "campaign"
         camp_kwargs = {}
-        if f"in_{camp_alias_name}_name" in kwargs:
-            camp_kwargs["in_name"] = kwargs.pop(f"in_{camp_alias_name}_name")
-        if f"{camp_alias_name}_id" in kwargs:
-            camp_kwargs["id"] = kwargs.pop(f"{camp_alias_name}_id")
+        if "in_campaign_name" in kwargs:
+            camp_kwargs["in_name"] = kwargs.pop("in_campaign_name")
+        if "campaign_id" in kwargs:
+            camp_kwargs["id"] = kwargs.pop("campaign_id")
 
         # Prepare sub-requests.
         camp_subq = sqla.orm.aliased(
@@ -70,8 +69,8 @@ class ST_CheckOutliersByCampaign(AuthMixin, Base):
         # Main request.
         query = db.session.query(
             check_outliers_subq.id,
-            camp_subq.id.label(f"{camp_alias_name}_id"),
-            camp_subq.name.label(f"{camp_alias_name}_name"),
+            camp_subq.id.label("campaign_id"),
+            camp_subq.name.label("campaign_name"),
             check_outliers_subq.is_enabled,
         ).join(
             check_outliers_subq,
@@ -89,8 +88,8 @@ class ST_CheckOutliersByCampaign(AuthMixin, Base):
         if sort is not None:
             for field in sort:
                 cls_field = check_outliers_subq
-                if camp_alias_name in field:
-                    field = field.replace(f"{camp_alias_name}_", "")
+                if "campaign_" in field:
+                    field = field.replace("campaign_", "")
                     cls_field = camp_subq
                 query = cls_field._apply_sort_query_filter(query, field)
 
@@ -112,13 +111,24 @@ class ST_CheckOutliersByCampaign(AuthMixin, Base):
 
 
 def check_outliers_ts_data(
-    datetime, period, period_multiplier, min_correctness_ratio=0.9
+    datetime,
+    period,
+    period_multiplier,
+    periods_before=1,
+    periods_after=0,
+    min_correctness_ratio=0.9,
 ):
     logger.debug("datetime: %s", datetime)
 
-    # Check last period before datetime
     try:
-        start_dt, end_dt = last_full_interval(datetime, period, period_multiplier)
+        round_dt = floor(datetime, period, period_multiplier)
+        start_dt, end_dt = make_date_range_around_datetime(
+            round_dt,
+            period,
+            period_multiplier,
+            periods_before,
+            periods_after,
+        )
     except BEMServerCorePeriodError as exc:
         logger.critical(str(exc))
         raise
@@ -129,7 +139,7 @@ def check_outliers_ts_data(
     ec_data_outliers = EventCategory.get(name="Data outliers").first()
     ec_data_no_outliers = EventCategory.get(name="No data outliers").first()
 
-    for cbc in ST_CheckOutliersByCampaign.get():
+    for cbc in ST_CheckOutliersByCampaign.get(is_enabled=True):
         campaign = cbc.campaign
 
         logger.info("Checking outliers data for campaign %s", campaign.name)
