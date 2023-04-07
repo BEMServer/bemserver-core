@@ -49,12 +49,11 @@ class ST_DownloadWeatherDataBySite(AuthMixin, Base):
         sort = kwargs.pop("sort", None)
 
         # Extract and prepare kwargs for each sub-request.
-        site_alias_name = "site"
         site_kwargs = {}
-        if f"in_{site_alias_name}_name" in kwargs:
-            site_kwargs["in_name"] = kwargs.pop(f"in_{site_alias_name}_name")
-        if f"{site_alias_name}_id" in kwargs:
-            site_kwargs["id"] = kwargs.pop(f"{site_alias_name}_id")
+        if "in_site_name" in kwargs:
+            site_kwargs["in_name"] = kwargs.pop("in_site_name")
+        if "site_id" in kwargs:
+            site_kwargs["id"] = kwargs.pop("site_id")
 
         # Prepare sub-requests.
         site_subq = sqla.orm.aliased(
@@ -69,8 +68,8 @@ class ST_DownloadWeatherDataBySite(AuthMixin, Base):
         # Main request.
         query = db.session.query(
             dwdbs_subq.id,
-            site_subq.id.label(f"{site_alias_name}_id"),
-            site_subq.name.label(f"{site_alias_name}_name"),
+            site_subq.id.label("site_id"),
+            site_subq.name.label("site_name"),
             dwdbs_subq.is_enabled,
         ).join(
             dwdbs_subq,
@@ -88,8 +87,8 @@ class ST_DownloadWeatherDataBySite(AuthMixin, Base):
         if sort is not None:
             for field in sort:
                 cls_field = dwdbs_subq
-                if site_alias_name in field:
-                    field = field.replace(f"{site_alias_name}_", "")
+                if "site_" in field:
+                    field = field.replace("site_", "")
                     cls_field = site_subq
                 query = cls_field._apply_sort_query_filter(query, field)
 

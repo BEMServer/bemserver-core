@@ -50,12 +50,11 @@ class ST_CheckOutliersByCampaign(AuthMixin, Base):
         sort = kwargs.pop("sort", None)
 
         # Extract and prepare kwargs for each sub-request.
-        camp_alias_name = "campaign"
         camp_kwargs = {}
-        if f"in_{camp_alias_name}_name" in kwargs:
-            camp_kwargs["in_name"] = kwargs.pop(f"in_{camp_alias_name}_name")
-        if f"{camp_alias_name}_id" in kwargs:
-            camp_kwargs["id"] = kwargs.pop(f"{camp_alias_name}_id")
+        if "in_campaign_name" in kwargs:
+            camp_kwargs["in_name"] = kwargs.pop("in_campaign_name")
+        if "campaign_id" in kwargs:
+            camp_kwargs["id"] = kwargs.pop("campaign_id")
 
         # Prepare sub-requests.
         camp_subq = sqla.orm.aliased(
@@ -70,8 +69,8 @@ class ST_CheckOutliersByCampaign(AuthMixin, Base):
         # Main request.
         query = db.session.query(
             check_outliers_subq.id,
-            camp_subq.id.label(f"{camp_alias_name}_id"),
-            camp_subq.name.label(f"{camp_alias_name}_name"),
+            camp_subq.id.label("campaign_id"),
+            camp_subq.name.label("campaign_name"),
             check_outliers_subq.is_enabled,
         ).join(
             check_outliers_subq,
@@ -89,8 +88,8 @@ class ST_CheckOutliersByCampaign(AuthMixin, Base):
         if sort is not None:
             for field in sort:
                 cls_field = check_outliers_subq
-                if camp_alias_name in field:
-                    field = field.replace(f"{camp_alias_name}_", "")
+                if "campaign_" in field:
+                    field = field.replace("campaign_", "")
                     cls_field = camp_subq
                 query = cls_field._apply_sort_query_filter(query, field)
 
