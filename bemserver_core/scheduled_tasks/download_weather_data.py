@@ -134,7 +134,7 @@ def download_weather_data(
 
 
 @celery.task(name="DownloadWeatherDataScheduledTask")
-def dowload_weather_data_scheduled_task(
+def download_weather_data_scheduled_task(
     period, period_multiplier, periods_before, periods_after, timezone="UTC"
 ):
     logger.info("Start")
