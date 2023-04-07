@@ -26,9 +26,8 @@ from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestST_CheckMissingByCampaignModel:
-    def test_st_check_missing_by_campaign_get_all_as_admin(
-        self, users, campaigns, st_check_missings_by_campaigns
-    ):
+    @pytest.mark.usefixtures("st_check_missings_by_campaigns")
+    def test_st_check_missing_by_campaign_get_all_as_admin(self, users, campaigns):
         admin_user = users[0]
         campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
@@ -107,9 +106,8 @@ class TestST_CheckMissingByCampaignModel:
 
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
-    def test_st_check_missing_by_campaign_get_all_as_user(
-        self, users, campaigns, st_check_missings_by_campaigns
-    ):
+    @pytest.mark.usefixtures("st_check_missings_by_campaigns")
+    def test_st_check_missing_by_campaign_get_all_as_user(self, users, campaigns):
         user_1 = users[1]
         assert not user_1.is_admin
         campaign_1 = campaigns[0]
@@ -176,9 +174,8 @@ class TestST_CheckMissingByCampaignModel:
             )
             assert len(list(ret)) == 0
 
-    def test_st_check_missing_by_campaign_delete_cascade(
-        self, users, campaigns, st_check_missings_by_campaigns
-    ):
+    @pytest.mark.usefixtures("st_check_missings_by_campaigns")
+    def test_st_check_missing_by_campaign_delete_cascade(self, users, campaigns):
         admin_user = users[0]
         campaign_1 = campaigns[0]
 

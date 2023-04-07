@@ -23,9 +23,8 @@ from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestST_CleanupByCampaignModel:
-    def test_st_cleanup_by_campaign_get_all_as_admin(
-        self, users, campaigns, st_cleanups_by_campaigns
-    ):
+    @pytest.mark.usefixtures("st_cleanups_by_campaigns")
+    def test_st_cleanup_by_campaign_get_all_as_admin(self, users, campaigns):
         admin_user = users[0]
         campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
@@ -94,9 +93,8 @@ class TestST_CleanupByCampaignModel:
 
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
-    def test_st_cleanup_by_campaign_get_all_as_user(
-        self, users, campaigns, st_cleanups_by_campaigns
-    ):
+    @pytest.mark.usefixtures("st_cleanups_by_campaigns")
+    def test_st_cleanup_by_campaign_get_all_as_user(self, users, campaigns):
         user_1 = users[1]
         assert not user_1.is_admin
         campaign_1 = campaigns[0]
@@ -154,9 +152,8 @@ class TestST_CleanupByCampaignModel:
             ret = ST_CleanupByCampaign.get_all(sort=["-campaign_name"], is_enabled=True)
             assert len(list(ret)) == 0
 
-    def test_st_cleanup_by_campaign_delete_cascade(
-        self, users, campaigns, st_cleanups_by_campaigns
-    ):
+    @pytest.mark.usefixtures("st_cleanups_by_campaigns")
+    def test_st_cleanup_by_campaign_delete_cascade(self, users, campaigns):
         admin_user = users[0]
         campaign_1 = campaigns[0]
 
