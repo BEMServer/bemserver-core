@@ -7,7 +7,7 @@ import sqlalchemy as sqla
 from bemserver_core.model import Site
 from bemserver_core.database import Base, db
 from bemserver_core.authorization import AuthMixin, auth, Relation
-from bemserver_core.time_utils import floor, make_date_offset
+from bemserver_core.time_utils import floor, make_date_range_around_datetime
 from bemserver_core.process.weather import wdp
 from bemserver_core.celery import celery, logger
 from bemserver_core.exceptions import BEMServerCorePeriodError
@@ -96,31 +96,19 @@ class ST_DownloadWeatherDataBySite(AuthMixin, Base):
         return query
 
 
-def _make_date_range(
-    datetime, period, period_multiplier, periods_before, periods_after
-):
-    """Make date range before and after floored datetime"""
-    try:
-        round_dt = floor(datetime, period, period_multiplier)
-        period_offset = make_date_offset(period, period_multiplier)
-    except BEMServerCorePeriodError as exc:
-        logger.critical(str(exc))
-        raise
-
-    start_dt = round_dt - periods_before * period_offset
-    end_dt = round_dt + periods_after * period_offset
-
-    return start_dt, end_dt
-
-
 def download_weather_data(
     datetime, period, period_multiplier, periods_before, periods_after
 ):
     logger.debug("datetime: %s", datetime)
 
-    start_dt, end_dt = _make_date_range(
-        datetime, period, period_multiplier, periods_before, periods_after
-    )
+    try:
+        round_dt = floor(datetime, period, period_multiplier)
+        start_dt, end_dt = make_date_range_around_datetime(
+            round_dt, period, period_multiplier, periods_before, periods_after
+        )
+    except BEMServerCorePeriodError as exc:
+        logger.critical(str(exc))
+        raise
 
     for dwdbs in ST_DownloadWeatherDataBySite.get(is_enabled=True):
         site = dwdbs.site

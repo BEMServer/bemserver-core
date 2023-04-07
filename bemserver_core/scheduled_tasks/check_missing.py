@@ -16,7 +16,7 @@ from bemserver_core.database import Base, db
 from bemserver_core.authorization import AuthMixin, auth, Relation
 from bemserver_core.process.completeness import compute_completeness
 from bemserver_core.celery import celery, logger
-from bemserver_core.time_utils import last_full_interval
+from bemserver_core.time_utils import floor, make_date_range_around_datetime
 from bemserver_core.exceptions import BEMServerCorePeriodError
 
 
@@ -109,13 +109,24 @@ class ST_CheckMissingByCampaign(AuthMixin, Base):
 
 
 def check_missing_ts_data(
-    datetime, period, period_multiplier, min_completeness_ratio=0.9
+    datetime,
+    period,
+    period_multiplier,
+    periods_before=1,
+    periods_after=0,
+    min_completeness_ratio=0.9,
 ):
     logger.debug("datetime: %s", datetime)
 
-    # Check last period before datetime
     try:
-        start_dt, end_dt = last_full_interval(datetime, period, period_multiplier)
+        round_dt = floor(datetime, period, period_multiplier)
+        start_dt, end_dt = make_date_range_around_datetime(
+            round_dt,
+            period,
+            period_multiplier,
+            periods_before,
+            periods_after,
+        )
     except BEMServerCorePeriodError as exc:
         logger.critical(str(exc))
         raise

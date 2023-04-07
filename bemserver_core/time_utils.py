@@ -106,19 +106,21 @@ def ceil(datetime, period, period_multiplier=1):
     return ret
 
 
-def last_full_interval(datetime, period, period_multiplier):
-    """Compute the last full interval of a given size before a datetime
-
-    The interval respects the datetime timezone
+def make_date_range_around_datetime(
+    datetime, period, period_multiplier, periods_before, periods_after
+):
+    """Make date range around datetime
 
     :param datetime datetime: Timezone aware datetime
     :param str period: Period in
         ["second", "minute", "hour", "day", "week", "month", "year"]
     :param int period_multiplier: Period multiplier.
+    :param int periods_before: Number of periods before datetime
+    :param int periods_after: Number of periods after datetime
 
     Returns a tuple of timezone aware datetimes.
     """
-    offset = make_date_offset(period, period_multiplier)
-    start_dt = floor(datetime - offset, period, period_multiplier)
-    end_dt = start_dt + offset
+    period_offset = make_date_offset(period, period_multiplier)
+    start_dt = datetime - periods_before * period_offset
+    end_dt = datetime + periods_after * period_offset
     return start_dt, end_dt
