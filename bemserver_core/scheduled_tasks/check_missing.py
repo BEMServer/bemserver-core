@@ -126,7 +126,7 @@ def check_missing_ts_data(
     ec_data_missing = EventCategory.get(name="Data missing").first()
     ec_data_present = EventCategory.get(name="Data present").first()
 
-    for cbc in ST_CheckMissingByCampaign.get():
+    for cbc in ST_CheckMissingByCampaign.get(is_enabled=True):
         campaign = cbc.campaign
 
         logger.info("Checking missing data for campaign %s", campaign.name)

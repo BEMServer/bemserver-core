@@ -487,6 +487,7 @@ class TestCleanupScheduledTask:
         ts_0 = timeseries[0]
         ts_1 = timeseries[1]
         campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
 
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
@@ -498,6 +499,7 @@ class TestCleanupScheduledTask:
                 value="12",
             )
             ST_CleanupByCampaign.new(campaign_id=campaign_1.id)
+            ST_CleanupByCampaign.new(campaign_id=campaign_2.id, is_enabled=False)
             db.session.flush()
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)

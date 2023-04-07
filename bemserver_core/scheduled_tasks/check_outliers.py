@@ -129,7 +129,7 @@ def check_outliers_ts_data(
     ec_data_outliers = EventCategory.get(name="Data outliers").first()
     ec_data_no_outliers = EventCategory.get(name="No data outliers").first()
 
-    for cbc in ST_CheckOutliersByCampaign.get():
+    for cbc in ST_CheckOutliersByCampaign.get(is_enabled=True):
         campaign = cbc.campaign
 
         logger.info("Checking outliers data for campaign %s", campaign.name)

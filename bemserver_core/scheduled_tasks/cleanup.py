@@ -193,7 +193,7 @@ def cleanup_scheduled_task():
 
     logger.debug("Cleaning data")
 
-    for cbc in ST_CleanupByCampaign.get():
+    for cbc in ST_CleanupByCampaign.get(is_enabled=True):
         campaign = cbc.campaign
 
         logger.info("Cleanup campaign %s", campaign.name)
