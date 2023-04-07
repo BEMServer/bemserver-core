@@ -52,6 +52,8 @@ class ST_DownloadWeatherDataBySite(AuthMixin, Base):
         site_kwargs = {}
         if "in_site_name" in kwargs:
             site_kwargs["in_name"] = kwargs.pop("in_site_name")
+        if "campaign_id" in kwargs:
+            site_kwargs["campaign_id"] = kwargs.pop("campaign_id")
         if "site_id" in kwargs:
             site_kwargs["id"] = kwargs.pop("site_id")
 

@@ -22,13 +22,17 @@ from bemserver_core.exceptions import BEMServerAuthorizationError
 
 class TestST_DownloadWeatherDataBySiteModel:
     @pytest.mark.usefixtures("st_download_weather_data_by_sites")
-    def test_st_download_weather_data_by_site_get_all_as_admin(self, users, sites):
+    def test_st_download_weather_data_by_site_get_all_as_admin(
+        self, users, campaigns, sites
+    ):
         admin_user = users[0]
+        campaign_1 = campaigns[0]
+        campaign_2 = campaigns[1]
         site_1 = sites[0]
         site_2 = sites[1]
 
         with OpenBar():
-            site_3 = Site.new(name="Site 3", campaign=site_2.campaign)
+            site_3 = Site.new(name="Site 3", campaign_id=campaign_2.id)
             db.session.flush()
 
         sites += (site_3,)
@@ -60,6 +64,13 @@ class TestST_DownloadWeatherDataBySiteModel:
             )
             assert len(ret) == 1
             assert ret[0][2] == site_3.name
+
+            ret = list(ST_DownloadWeatherDataBySite.get_all(campaign_id=campaign_1.id))
+            assert len(ret) == 1
+            assert ret[0][2] == site_1.name
+            ret = list(ST_DownloadWeatherDataBySite.get_all(campaign_id=campaign_2.id))
+            assert len(ret) == 2
+            # assert ret[0][2] == site_3.name
 
             ret = list(ST_DownloadWeatherDataBySite.get_all(in_site_name="1"))
             assert len(ret) == 1
