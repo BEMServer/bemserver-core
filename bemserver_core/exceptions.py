@@ -91,3 +91,29 @@ class PropertyTypeInvalidError(BEMServerCoreError):
 
 class BEMServerCoreTaskError(BEMServerCoreError):
     """Error in task execution"""
+
+
+class BEMServerCoreWeatherAPIError(BEMServerCoreError):
+    """Error in weather API call"""
+
+
+class BEMServerCoreWeatherAPIQueryError(BEMServerCoreWeatherAPIError):
+    """Error in weather API query"""
+
+
+class BEMServerCoreWeatherAPIResponseError(BEMServerCoreWeatherAPIError):
+    """Error in weather API response"""
+
+
+class BEMServerCoreWeatherAPIConnectionError(BEMServerCoreWeatherAPIError):
+    """Error in weather API connection"""
+
+
+class BEMServerCoreWeatherProcessError(BEMServerCoreError):
+    """Error in weather process"""
+
+
+class BEMServerCoreWeatherProcessMissingCoordinatesError(
+    BEMServerCoreWeatherProcessError
+):
+    """Missing coordinates in weather process"""

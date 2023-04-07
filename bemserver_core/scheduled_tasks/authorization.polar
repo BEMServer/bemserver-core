@@ -28,3 +28,11 @@ resource ST_CheckOutliersByCampaign {
 
 has_permission(user: User, "read", st_cbc: ST_CheckOutliersByCampaign) if
     has_role(user, "member", st_cbc.campaign);
+
+
+resource ST_DownloadWeatherDataBySite {
+    permissions = ["create", "read", "update", "delete"];
+}
+
+has_permission(user: User, "read", st_dwdbs: ST_DownloadWeatherDataBySite) if
+    has_role(user, "member", st_dwdbs.site.campaign);

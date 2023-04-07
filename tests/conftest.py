@@ -954,6 +954,26 @@ def energy_production_timeseries_by_buildings(bemservercore, timeseries, buildin
 
 
 @pytest.fixture
+def weather_timeseries_by_sites(bemservercore, timeseries, sites):
+    with OpenBar():
+        # Set units to timeseries
+        timeseries[0].unit_symbol = "°C"
+        timeseries[1].unit_symbol = "percent"
+        wtbs_1 = model.WeatherTimeseriesBySite.new(
+            site_id=sites[0].id,
+            parameter=model.WeatherParameterEnum.AIR_TEMPERATURE,
+            timeseries_id=timeseries[0].id,
+        )
+        wtbs_2 = model.WeatherTimeseriesBySite.new(
+            site_id=sites[1].id,
+            parameter=model.WeatherParameterEnum.RELATIVE_HUMIDITY,
+            timeseries_id=timeseries[1].id,
+        )
+        db.session.commit()
+    return (wtbs_1, wtbs_2)
+
+
+@pytest.fixture
 def st_cleanups_by_campaigns(bemservercore, campaigns):
     with OpenBar():
         st_cbc_1 = scheduled_tasks.ST_CleanupByCampaign.new(campaign_id=campaigns[0].id)
@@ -1007,20 +1027,14 @@ def st_check_outliers_by_campaigns(bemservercore, campaigns):
 
 
 @pytest.fixture
-def weather_timeseries_by_sites(bemservercore, timeseries, sites):
+def st_download_weather_data_by_sites(bemservercore, sites):
     with OpenBar():
-        # Set units to timeseries
-        timeseries[0].unit_symbol = "°C"
-        timeseries[1].unit_symbol = "percent"
-        wtbs_1 = model.WeatherTimeseriesBySite.new(
+        st_dwdbs_1 = scheduled_tasks.ST_DownloadWeatherDataBySite.new(
             site_id=sites[0].id,
-            parameter=model.WeatherParameterEnum.AIR_TEMPERATURE,
-            timeseries_id=timeseries[0].id,
         )
-        wtbs_2 = model.WeatherTimeseriesBySite.new(
+        st_dwdbs_2 = scheduled_tasks.ST_DownloadWeatherDataBySite.new(
             site_id=sites[1].id,
-            parameter=model.WeatherParameterEnum.RELATIVE_HUMIDITY,
-            timeseries_id=timeseries[1].id,
+            is_enabled=False,
         )
         db.session.commit()
-    return (wtbs_1, wtbs_2)
+    return (st_dwdbs_1, st_dwdbs_2)
