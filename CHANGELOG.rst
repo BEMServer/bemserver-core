@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-0.13.0 (unreleased)
+0.13.0 (2023-04-11)
 +++++++++++++++++++
 
 Features:
@@ -19,6 +19,7 @@ Bug fixes:
 
 Other changes:
 
+- Require Pandas 2.x
 - Require SQLAlchemy 2.x
 - Set upper bound to requirements versions in setup.py
 
