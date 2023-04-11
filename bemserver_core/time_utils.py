@@ -49,7 +49,7 @@ def floor(datetime, period, period_multiplier=1):
     """
     if period in FIXED_SIZE_PERIODS:
         pd_freq = make_pandas_freq(period, period_multiplier)
-        return pd.Timestamp(datetime).floor(pd_freq, ambiguous=datetime.fold)
+        return pd.Timestamp(datetime).floor(pd_freq, ambiguous=not bool(datetime.fold))
 
     if period_multiplier != 1:
         raise BEMServerCorePeriodError(
@@ -59,21 +59,35 @@ def floor(datetime, period, period_multiplier=1):
     tz = datetime.tzinfo
 
     if period == "year":
-        return pd.Timestamp(datetime.year, 1, 1, tzinfo=tz, fold=datetime.fold)
+        return pd.Timestamp(
+            year=datetime.year, month=1, day=1, tzinfo=tz, fold=datetime.fold
+        )
     if period == "month":
         return pd.Timestamp(
-            datetime.year, datetime.month, 1, tzinfo=tz, fold=datetime.fold
+            year=datetime.year,
+            month=datetime.month,
+            day=1,
+            tzinfo=tz,
+            fold=datetime.fold,
         )
     if period == "day":
         return pd.Timestamp(
-            datetime.year, datetime.month, datetime.day, tzinfo=tz, fold=datetime.fold
+            year=datetime.year,
+            month=datetime.month,
+            day=datetime.day,
+            tzinfo=tz,
+            fold=datetime.fold,
         )
     if period == "week":
         # Week: align on monday
         # Note that timedelta arithmetics respect wall clock so subtracting days
         # works even across DST
         return pd.Timestamp(
-            datetime.year, datetime.month, datetime.day, tzinfo=tz, fold=datetime.fold
+            year=datetime.year,
+            month=datetime.month,
+            day=datetime.day,
+            tzinfo=tz,
+            fold=datetime.fold,
         ) - dt.timedelta(days=datetime.weekday())
 
     raise BEMServerCorePeriodError(f'Invalid period: "{period}"')
@@ -93,7 +107,7 @@ def ceil(datetime, period, period_multiplier=1):
     """
     if period in FIXED_SIZE_PERIODS:
         pd_freq = f"{period_multiplier}{PANDAS_PERIOD_ALIASES[period]}"
-        return pd.Timestamp(datetime).ceil(pd_freq, ambiguous=datetime.fold)
+        return pd.Timestamp(datetime).ceil(pd_freq, ambiguous=not bool(datetime.fold))
 
     if period_multiplier != 1:
         raise BEMServerCorePeriodError(
