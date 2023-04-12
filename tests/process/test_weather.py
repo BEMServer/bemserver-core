@@ -21,6 +21,7 @@ from bemserver_core.exceptions import (
     BEMServerCoreWeatherAPIConnectionError,
     BEMServerCoreWeatherAPIQueryError,
     BEMServerCoreWeatherAPIResponseError,
+    BEMServerCoreWeatherAPIAuthenticationError,
     BEMServerCoreWeatherProcessMissingCoordinatesError,
     BEMServerCoreDimensionalityError,
 )
@@ -97,6 +98,27 @@ class TestWeatherClient:
             index=index,
         )
         assert_frame_equal(resp_df, expected_data_df)
+
+    @patch("requests.get")
+    def test_get_weather_data_auth_error(self, mock_get):
+        mock_get.return_value.status_code = 401
+        mock_get.return_value.text = (
+            '{ "statusCode": 401, '
+            '"message": "Access denied due to invalid subscription key. '
+            'Make sure to provide a valid key for an active subscription." }'
+        )
+        client = OikolabWeatherDataClient("dummy-url", "dummy-key")
+        with pytest.raises(
+            BEMServerCoreWeatherAPIAuthenticationError,
+            match="Wrong API key.",
+        ):
+            client.get_weather_data(
+                params=["AIR_TEMPERATURE"],
+                latitude="dummy",
+                longitude=6.0,
+                start_dt=dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
+                end_dt=dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc),
+            )
 
     @patch("requests.get")
     def test_get_weather_data_query_error(self, mock_get):
