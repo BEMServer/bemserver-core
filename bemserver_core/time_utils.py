@@ -20,7 +20,7 @@ PANDAS_PERIOD_ALIASES = {
 
 # Day / week may not be fixed size periods because of DST
 PERIODS = ("second", "minute", "hour", "day", "week", "month", "year")
-FIXED_SIZE_PERIODS = {"second", "minute", "hour"}
+FIXED_SIZE_PERIODS = ("second", "minute", "hour")
 
 
 def make_pandas_freq(period, period_multiplier):
