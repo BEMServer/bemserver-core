@@ -458,6 +458,8 @@ class TestWeatherDataProcessor:
             wdp.get_weather_data_for_site(site_1, start_dt, end_dt)
 
     @pytest.mark.usefixtures("bemservercore")
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
     def test_get_weather_data_for_site_as_user(self, users, sites):
         user_2 = users[1]
         site_1 = sites[0]
