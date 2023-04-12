@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.13.1 (2023-04-12)
++++++++++++++++++++
+
+Features:
+
+- Weather data download: catch API key error
+
 0.13.0 (2023-04-11)
 +++++++++++++++++++
 
