@@ -109,6 +109,10 @@ class BEMServerCoreWeatherAPIConnectionError(BEMServerCoreWeatherAPIError):
     """Error in weather API connection"""
 
 
+class BEMServerCoreWeatherAPIAuthenticationError(BEMServerCoreWeatherAPIError):
+    """Error in weather API authentication"""
+
+
 class BEMServerCoreWeatherProcessError(BEMServerCoreError):
     """Error in weather process"""
 

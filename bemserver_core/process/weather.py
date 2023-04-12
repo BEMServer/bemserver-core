@@ -15,6 +15,7 @@ from bemserver_core.exceptions import (
     BEMServerCoreWeatherAPIConnectionError,
     BEMServerCoreWeatherAPIQueryError,
     BEMServerCoreWeatherAPIResponseError,
+    BEMServerCoreWeatherAPIAuthenticationError,
     BEMServerCoreWeatherProcessMissingCoordinatesError,
 )
 
@@ -80,6 +81,8 @@ class OikolabWeatherDataClient:
                 f"Error while connecting to weather API: {exc}"
             ) from exc
 
+        if resp.status_code == 401:
+            raise BEMServerCoreWeatherAPIAuthenticationError("Wrong API key.")
         if resp.status_code != 200:
             raise BEMServerCoreWeatherAPIQueryError(
                 f"Error while querying weather API: {resp.text}"
