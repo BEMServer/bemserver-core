@@ -68,6 +68,17 @@ class TestSitesCSVIO:
             with pytest.raises(BEMServerCoreCSVIOError, match="Missing columns"):
                 sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
 
+    def test_site_data_io_import_csv_empty_file(self, users, campaigns):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+
+        csv_file = ""
+
+        with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreCSVIOError, match="Empty CSV file"):
+                sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
+
     def test_site_data_io_import_csv_unknown_property(self, users, campaigns):
         admin_user = users[0]
         assert admin_user.is_admin
