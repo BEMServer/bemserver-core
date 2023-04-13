@@ -73,11 +73,15 @@ class TimeseriesDataJSONIOError(BEMServerCoreJSONIOError, TimeseriesDataIOError)
     """Timeseries data JSON IO error"""
 
 
-class BEMServerCoreUndefinedUnitError(BEMServerCoreError):
+class BEMServerCoreUnitError(BEMServerCoreError):
+    """Unit error"""
+
+
+class BEMServerCoreUndefinedUnitError(BEMServerCoreUnitError):
     """Undefined unit error"""
 
 
-class BEMServerCoreDimensionalityError(BEMServerCoreError):
+class BEMServerCoreDimensionalityError(BEMServerCoreUnitError):
     """Dimensionality error"""
 
 
