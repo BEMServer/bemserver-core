@@ -29,7 +29,6 @@ class SitesCSVIO(BaseCSVFileIO):
     STOREY_FIELDS = {"Site", "Building", "Name", "Description", "IFC_ID"}
     SPACE_FIELDS = {"Site", "Building", "Storey", "Name", "Description", "IFC_ID"}
     ZONE_FIELDS = {"Name", "Description", "IFC_ID"}
-    ERROR = SitesCSVIOError
 
     @classmethod
     def _import_csv_sites(cls, campaign, sites_csv):
