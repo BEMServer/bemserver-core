@@ -99,6 +99,8 @@ class BaseCSVIO(BaseIO):
 
         Only applies to DictReader
         """
+        if reader.fieldnames is None:
+            raise BEMServerCoreCSVIOError("Empty CSV file")
         missing_fields = required_field_names - set(reader.fieldnames)
         if missing_fields:
             raise BEMServerCoreCSVIOError(f"Missing columns: {list(missing_fields)}")

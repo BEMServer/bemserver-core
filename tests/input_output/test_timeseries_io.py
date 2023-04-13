@@ -110,9 +110,6 @@ class TestTimeseriesCSVIO:
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
 
-        timeseries = db.session.query(Timeseries).all()
-        assert not timeseries
-
         timeseries_csv = (
             "Name,Unit,Campaign scope,Site,Building,Storey,Space,Zone\n"
             "Space_1_Temp,°C,Campaign scope 1,Site 1,Building 1,"
@@ -122,6 +119,25 @@ class TestTimeseriesCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(BEMServerCoreCSVIOError, match="Missing columns"):
+                timeseries_csv_io.import_csv(
+                    campaign_1,
+                    timeseries_csv=timeseries_csv,
+                )
+
+    def test_timeseries_csv_io_import_csv_empty_file(
+        self,
+        users,
+        campaigns,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+
+        timeseries_csv = ""
+        timeseries_csv = io.StringIO(timeseries_csv)
+
+        with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreCSVIOError, match="Empty CSV file"):
                 timeseries_csv_io.import_csv(
                     campaign_1,
                     timeseries_csv=timeseries_csv,
