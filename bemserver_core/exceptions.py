@@ -125,3 +125,13 @@ class BEMServerCoreWeatherProcessMissingCoordinatesError(
     BEMServerCoreWeatherProcessError
 ):
     """Missing coordinates in weather process"""
+
+
+class BEMServerCoreDegreeDaysProcessError(BEMServerCoreError):
+    """Error in degree days process"""
+
+
+class BEMServerCoreDegreeDayProcessMissingTemperatureError(
+    BEMServerCoreDegreeDaysProcessError
+):
+    """Missing air temperature in degree days process"""
