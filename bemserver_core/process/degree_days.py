@@ -29,7 +29,7 @@ def compute_hdd(air_temp, period="year", base=18):
     max_s = air_temp.resample("D").max()
     avg_s = (min_s + max_s) / 2
     hdd = (base - avg_s).clip(0).rename("hdd")
-    return hdd.resample(PANDAS_PERIOD_ALIASES[period]).sum()
+    return hdd.resample(PANDAS_PERIOD_ALIASES[period]).sum(min_count=1)
 
 
 def compute_cdd(air_temp, period="year", base=18):
@@ -47,7 +47,7 @@ def compute_cdd(air_temp, period="year", base=18):
     max_s = air_temp.resample("D").max()
     avg_s = (min_s + max_s) / 2
     hdd = (avg_s - base).clip(0).rename("cdd")
-    return hdd.resample(PANDAS_PERIOD_ALIASES[period]).sum()
+    return hdd.resample(PANDAS_PERIOD_ALIASES[period]).sum(min_count=1)
 
 
 def compute_dd_for_site(

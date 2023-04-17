@@ -2,6 +2,7 @@
 import datetime as dt
 from zoneinfo import ZoneInfo
 
+import numpy as np
 import pandas as pd
 from pandas.testing import assert_series_equal
 
@@ -58,6 +59,12 @@ def test_compute_hdd(base, timezone):
     expected_y = expected_d.resample("AS").sum()
     assert_series_equal(hdd_s, expected_y)
 
+    # Return NaN if no value
+    weather_df["temperature"][index.month > 6] = np.nan
+    hdd_s = compute_hdd(weather_df["temperature"], "day", base=base)
+    expected_d[expected_d.index.month > 6] = np.nan
+    assert_series_equal(hdd_s, expected_d)
+
 
 @pytest.mark.parametrize("base", (18, 19.5))
 @pytest.mark.parametrize("timezone", (dt.timezone.utc, ZoneInfo("Europe/Paris")))
@@ -95,6 +102,12 @@ def test_compute_cdd(base, timezone):
     expected_y = expected_d.resample("AS").sum()
     assert_series_equal(cdd_s, expected_y)
 
+    # Return NaN if no value
+    weather_df["temperature"][index.month > 6] = np.nan
+    hdd_s = compute_cdd(weather_df["temperature"], "day", base=base)
+    expected_d[expected_d.index.month > 6] = np.nan
+    assert_series_equal(hdd_s, expected_d)
+
 
 @pytest.mark.parametrize("type_", ("heating", "cooling"))
 @pytest.mark.parametrize("base", (18, 19.5))
@@ -113,6 +126,7 @@ def test_compute_dd_for_site(sites, weather_timeseries_by_sites, type_, base, un
 
     start_d = dt.date(2020, 1, 1)
     end_d = dt.date(2021, 1, 1)
+    post_d = dt.date(2022, 1, 1)
 
     ds_clean = TimeseriesDataState.get(name="Clean").first()
 
@@ -169,6 +183,13 @@ def test_compute_dd_for_site(sites, weather_timeseries_by_sites, type_, base, un
     )
     expected_y = expected_d.resample("AS").sum()
     assert_series_equal(dd_s, expected_y)
+
+    # Missing data
+    dd_s = compute_dd_for_site(
+        site_1, start_d, post_d, "day", type_=type_, base=base, unit=unit
+    )
+    assert_series_equal(dd_s[dd_s.index.year == 2020], expected_d)
+    assert (dd_s[dd_s.index.year == 2022] == np.nan).all()
 
     # Missing temperature
     wtbs_1.delete()
