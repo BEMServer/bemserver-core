@@ -13,100 +13,59 @@ from bemserver_core.model import (
     WeatherParameterEnum,
 )
 from bemserver_core.input_output import tsdio
-from bemserver_core.process.degree_days import (
-    compute_hdd,
-    compute_cdd,
-    compute_dd_for_site,
-)
+from bemserver_core.process.degree_days import compute_dd, compute_dd_for_site
 from bemserver_core.exceptions import (
     BEMServerCoreDegreeDayProcessMissingTemperatureError,
 )
 
 
+@pytest.mark.parametrize("type_", ("heating", "cooling"))
 @pytest.mark.parametrize("base", (18, 19.5))
 @pytest.mark.parametrize("timezone", (dt.timezone.utc, ZoneInfo("Europe/Paris")))
-def test_compute_hdd(base, timezone):
+def test_compute_dd(type_, base, timezone):
     index = pd.date_range(
         "2020-01-01", "2021-01-01", freq="H", tz=timezone, inclusive="left"
     )
     weather_df = pd.DataFrame(index=index)
     weather_df["temperature"] = index.month
+    if type_ == "cooling":
+        weather_df["temperature"] += 20
 
     # Introduce a bias to check that computation method uses min/max
     weather_df["temperature"] += 5
     weather_df["temperature"][index.hour == 1] -= 10
 
     # Daily HDD
-    hdd_s = compute_hdd(weather_df["temperature"], "day", base=base)
+    dd_s = compute_dd(weather_df["temperature"], "day", type_=type_, base=base)
     expected_d_index = pd.date_range(
         "2020-01-01", "2021-01-01", freq="D", tz=timezone, inclusive="left"
     )
+    month_avg_temp = expected_d_index.month
+    if type_ == "cooling":
+        month_avg_temp += 20
     expected_d = pd.Series(
-        base - expected_d_index.month,
+        (month_avg_temp - base) if type_ == "cooling" else (base - month_avg_temp),
         index=expected_d_index,
         dtype="float",
-        name="hdd",
+        name="dd",
     )
-    assert_series_equal(hdd_s, expected_d)
+    assert_series_equal(dd_s, expected_d)
 
     # Monthly HDD
-    hdd_s = compute_hdd(weather_df["temperature"], "month", base=base)
+    dd_s = compute_dd(weather_df["temperature"], "month", type_=type_, base=base)
     expected_m = expected_d.resample("MS").sum()
-    assert_series_equal(hdd_s, expected_m)
+    assert_series_equal(dd_s, expected_m)
 
     # Yearly HDD
-    hdd_s = compute_hdd(weather_df["temperature"], "year", base=base)
+    dd_s = compute_dd(weather_df["temperature"], "year", type_=type_, base=base)
     expected_y = expected_d.resample("AS").sum()
-    assert_series_equal(hdd_s, expected_y)
+    assert_series_equal(dd_s, expected_y)
 
     # Return NaN if no value
     weather_df["temperature"][index.month > 6] = np.nan
-    hdd_s = compute_hdd(weather_df["temperature"], "day", base=base)
+    dd_s = compute_dd(weather_df["temperature"], "day", type_=type_, base=base)
     expected_d[expected_d.index.month > 6] = np.nan
-    assert_series_equal(hdd_s, expected_d)
-
-
-@pytest.mark.parametrize("base", (18, 19.5))
-@pytest.mark.parametrize("timezone", (dt.timezone.utc, ZoneInfo("Europe/Paris")))
-def test_compute_cdd(base, timezone):
-    index = pd.date_range(
-        "2020-01-01", "2021-01-01", freq="H", tz=timezone, inclusive="left"
-    )
-    weather_df = pd.DataFrame(index=index)
-    weather_df["temperature"] = index.month + 20
-
-    # Introduce a bias to check that computation method uses min/max
-    weather_df["temperature"] += 5
-    weather_df["temperature"][index.hour == 1] -= 10
-
-    # Daily HDD
-    cdd_s = compute_cdd(weather_df["temperature"], "day", base=base)
-    expected_d_index = pd.date_range(
-        "2020-01-01", "2021-01-01", freq="D", tz=timezone, inclusive="left"
-    )
-    expected_d = pd.Series(
-        expected_d_index.month + 20 - base,
-        index=expected_d_index,
-        dtype="float",
-        name="cdd",
-    )
-    assert_series_equal(cdd_s, expected_d)
-
-    # Monthly HDD
-    cdd_s = compute_cdd(weather_df["temperature"], "month", base=base)
-    expected_m = expected_d.resample("MS").sum()
-    assert_series_equal(cdd_s, expected_m)
-
-    # Yearly HDD
-    cdd_s = compute_cdd(weather_df["temperature"], "year", base=base)
-    expected_y = expected_d.resample("AS").sum()
-    assert_series_equal(cdd_s, expected_y)
-
-    # Return NaN if no value
-    weather_df["temperature"][index.month > 6] = np.nan
-    hdd_s = compute_cdd(weather_df["temperature"], "day", base=base)
-    expected_d[expected_d.index.month > 6] = np.nan
-    assert_series_equal(hdd_s, expected_d)
+    assert_series_equal(dd_s, expected_d)
 
 
 @pytest.mark.parametrize("type_", ("heating", "cooling"))
@@ -166,7 +125,7 @@ def test_compute_dd_for_site(sites, weather_timeseries_by_sites, type_, base, un
         (month_avg_temp - base) if type_ == "cooling" else (base - month_avg_temp),
         index=expected_d_index,
         dtype="float",
-        name={"heating": "hdd", "cooling": "cdd"}[type_],
+        name="dd",
     )
     assert_series_equal(dd_s, expected_d)
 

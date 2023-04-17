@@ -14,11 +14,12 @@ from bemserver_core.exceptions import (
 )
 
 
-def compute_hdd(air_temp, period="year", base=18):
-    """Compute heating degree days
+def compute_dd(air_temp, period="year", type_="heating", base=18):
+    """Compute heating/cooling degree days
 
     :param Series air_temp: Outside air temperature
     :param string period: One of "day", "month", "year"
+    :param string type_: Type of degree days to compute ("heating" or "cooling")
     :param int|float base: Base temperature
 
     :returns Series: Heating degree days
@@ -28,32 +29,18 @@ def compute_hdd(air_temp, period="year", base=18):
     min_s = air_temp.resample("D").min()
     max_s = air_temp.resample("D").max()
     avg_s = (min_s + max_s) / 2
-    hdd = (base - avg_s).clip(0).rename("hdd")
-    return hdd.resample(PANDAS_PERIOD_ALIASES[period]).sum(min_count=1)
-
-
-def compute_cdd(air_temp, period="year", base=18):
-    """Compute cooling degree days
-
-    :param Series air_temp: Outside air temperature
-    :param string period: One of "day", "month", "year"
-    :param int|float base: Base temperature
-
-    :returns Series: Cooling degree days
-
-    Note: base unit must match air_temp unit
-    """
-    min_s = air_temp.resample("D").min()
-    max_s = air_temp.resample("D").max()
-    avg_s = (min_s + max_s) / 2
-    hdd = (avg_s - base).clip(0).rename("cdd")
-    return hdd.resample(PANDAS_PERIOD_ALIASES[period]).sum(min_count=1)
+    if type_ == "cooling":
+        diff_s = avg_s - base
+    else:
+        diff_s = base - avg_s
+    dd_s = diff_s.clip(0).rename("dd")
+    return dd_s.resample(PANDAS_PERIOD_ALIASES[period]).sum(min_count=1)
 
 
 def compute_dd_for_site(
     site, start_d, end_d, period="year", *, type_="heating", base=18, unit="°C"
 ):
-    """Compute degree days for a given site
+    """Compute heating/cooling degree days for a given site
 
     :param datetime start_dt: Time interval lower bound (tz-aware)
     :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
@@ -98,9 +85,4 @@ def compute_dd_for_site(
         timezone=timezone,
     )
 
-    process = {
-        "heating": compute_hdd,
-        "cooling": compute_cdd,
-    }[type_]
-
-    return process(data_df[air_temp_ts.id], period=period, base=base)
+    return compute_dd(data_df[air_temp_ts.id], period=period, type_=type_, base=base)
