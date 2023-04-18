@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+0.13.2 (2023-04-18)
++++++++++++++++++++
+
+Features:
+
+- Add Heating/Cooling Degree Days computation process
+- Add BEMServerCoreUnitError base exception for unit errors
+
+Bug fixes:
+
+- CSV IO: don't crash on empty file
+
 0.13.1 (2023-04-12)
 +++++++++++++++++++
 
