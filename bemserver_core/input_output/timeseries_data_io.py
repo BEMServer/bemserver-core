@@ -45,6 +45,78 @@ PANDAS_RE_AGGREG_FUNC_MAPPING = {
 class TimeseriesDataIO:
     """Base class for TimeseriesData IO classes"""
 
+    @classmethod
+    def get_timeseries_stats(
+        cls,
+        timeseries,
+        data_state,
+        *,
+        timezone="UTC",
+        col_label="id",
+    ):
+        """Get timeseries stats
+
+        :param list timeseries: List of timeseries
+        :param TimeseriesDataState data_state: Timeseries data state
+        :param str timezone: IANA timezone to use for first/last timestamp
+        :param string col_label: Timeseries attribute to use for column header.
+            Should be "id" or "name". Default: "id".
+
+        Returns a dataframe.
+        """
+        # Check permissions
+        for ts in timeseries:
+            auth.authorize(get_current_user(), "read_data", ts)
+
+        params = {
+            "timeseries_ids": [ts.id for ts in timeseries],
+            "data_state_id": data_state.id,
+        }
+        query = (
+            f"SELECT timeseries.{col_label}, "
+            "min(timestamp), max(timestamp), "
+            "min(value), max(value), avg(value), stddev_samp(value)"
+            "FROM ts_data, timeseries, ts_by_data_states "
+            "WHERE ts_data.ts_by_data_state_id = ts_by_data_states.id "
+            "  AND ts_by_data_states.data_state_id = :data_state_id "
+            "  AND ts_by_data_states.timeseries_id = timeseries.id "
+            "  AND timeseries_id = ANY(:timeseries_ids) "
+            "GROUP BY timeseries.id "
+        )
+        data = db.session.execute(sqla.text(query), params)
+
+        data_df = (
+            pd.DataFrame(
+                data,
+                columns=(
+                    col_label,
+                    "first_timestamp",
+                    "last_timestamp",
+                    "min",
+                    "max",
+                    "avg",
+                    "stddev",
+                ),
+            )
+            .set_index(col_label)
+            .reindex(getattr(ts, col_label) for ts in timeseries)
+            .astype(
+                {
+                    "first_timestamp": "datetime64[ns, UTC]",
+                    "last_timestamp": "datetime64[ns, UTC]",
+                    "min": float,
+                    "max": float,
+                    "avg": float,
+                    "stddev": float,
+                }
+            )
+        )
+
+        for col in ("first_timestamp", "last_timestamp"):
+            data_df[col] = data_df[col].dt.tz_convert(timezone)
+
+        return data_df
+
     @staticmethod
     def _convert_from(data_df, ts_l, col_label, convert_from):
         """Convert data to given units

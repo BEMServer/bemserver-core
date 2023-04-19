@@ -1,10 +1,12 @@
 """Timeseries I/O tests"""
+import math
 import json
 import datetime as dt
 from zoneinfo import ZoneInfo
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+from pandas.testing import assert_frame_equal
 
 import pytest
 from tests.utils import create_timeseries_data
@@ -346,6 +348,167 @@ class TestTimeseriesDataIO:
         # Nothing happens. No crash.
         with CurrentUser(admin_user):
             tsdio.set_timeseries_data(data_df, ds_1, campaign)
+
+    @pytest.mark.parametrize("timezone", ("UTC", "Europe/Paris"))
+    @pytest.mark.parametrize("timeseries", (5,), indirect=True)
+    def test_timeseries_data_io_get_timeseries_stats_as_admin(
+        self, users, timeseries, timezone
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        ts_0 = timeseries[0]
+        ts_2 = timeseries[2]
+        ts_4 = timeseries[4]
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=ZoneInfo(timezone))
+        h1_dt = start_dt + dt.timedelta(hours=1)
+        h2_dt = start_dt + dt.timedelta(hours=2)
+        end_dt = start_dt + dt.timedelta(hours=3)
+
+        ts_l = (ts_0, ts_2, ts_4)
+
+        # No data (by col name)
+        with CurrentUser(admin_user):
+            data_df = tsdio.get_timeseries_stats(
+                ts_l, ds_1, col_label="name", timezone=timezone
+            )
+            no_data_df = pd.DataFrame(
+                index=pd.Index([ts.name for ts in ts_l], name="name"),
+                columns=[
+                    "first_timestamp",
+                    "last_timestamp",
+                    "min",
+                    "max",
+                    "avg",
+                    "stddev",
+                ],
+            )
+            no_data_df = no_data_df.astype(
+                {
+                    "first_timestamp": f"datetime64[ns, {timezone}]",
+                    "last_timestamp": f"datetime64[ns, {timezone}]",
+                    "min": float,
+                    "max": float,
+                    "avg": float,
+                    "stddev": float,
+                }
+            )
+            assert_frame_equal(data_df, no_data_df)
+
+        # Create data
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        create_timeseries_data(ts_0, ds_1, timestamps, [None, 0, 2])
+        create_timeseries_data(ts_4, ds_1, timestamps, [10, 12, None])
+
+        with CurrentUser(admin_user):
+            data_df = tsdio.get_timeseries_stats(ts_l, ds_1, timezone=timezone)
+            expected_data_df = pd.DataFrame(
+                {
+                    "first_timestamp": [h1_dt, pd.NaT, start_dt],
+                    "last_timestamp": [h2_dt, pd.NaT, h1_dt],
+                    "min": [0.0, np.nan, 10.0],
+                    "max": [2.0, np.nan, 12.0],
+                    "avg": [1.0, np.nan, 11.0],
+                    "stddev": [math.sqrt(2), np.nan, math.sqrt(2)],
+                },
+                index=pd.Index([ts.id for ts in ts_l], name="id"),
+                columns=[
+                    "first_timestamp",
+                    "last_timestamp",
+                    "min",
+                    "max",
+                    "avg",
+                    "stddev",
+                ],
+            )
+            expected_data_df = expected_data_df.astype(
+                {
+                    "first_timestamp": f"datetime64[ns, {timezone}]",
+                    "last_timestamp": f"datetime64[ns, {timezone}]",
+                    "min": float,
+                    "max": float,
+                    "avg": float,
+                    "stddev": float,
+                }
+            )
+            assert_frame_equal(data_df, expected_data_df)
+
+    @pytest.mark.parametrize("campaigns", (2,), indirect=True)
+    @pytest.mark.parametrize("timeseries", (5,), indirect=True)
+    @pytest.mark.usefixtures("users_by_user_groups")
+    @pytest.mark.usefixtures("user_groups_by_campaigns")
+    @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
+    @pytest.mark.parametrize("col_label", ("id", "name"))
+    @pytest.mark.parametrize("timezone", ("UTC", "Europe/Paris"))
+    def test_timeseries_data_io_get_timeseries_stats_as_user(
+        self, users, timeseries, col_label, timezone
+    ):
+        user_1 = users[1]
+        assert not user_1.is_admin
+        ts_0 = timeseries[0]
+        ts_1 = timeseries[1]
+        ts_2 = timeseries[2]
+        ts_3 = timeseries[3]
+        ts_4 = timeseries[4]
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=ZoneInfo(timezone))
+        h1_dt = start_dt + dt.timedelta(hours=1)
+        h2_dt = start_dt + dt.timedelta(hours=2)
+        end_dt = start_dt + dt.timedelta(hours=3)
+
+        # Create data
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="H"
+        )
+        create_timeseries_data(ts_1, ds_1, timestamps, [None, 0, 2])
+        create_timeseries_data(ts_3, ds_1, timestamps, [10, 12, None])
+
+        with CurrentUser(user_1):
+            ts_l = (ts_0, ts_2, ts_4)
+            with pytest.raises(BEMServerAuthorizationError):
+                tsdio.get_timeseries_stats(ts_l, ds_1, timezone=timezone)
+
+            ts_l = (ts_1, ts_3)
+            data_df = tsdio.get_timeseries_stats(ts_l, ds_1, timezone=timezone)
+
+            expected_data_df = pd.DataFrame(
+                {
+                    "first_timestamp": [h1_dt, start_dt],
+                    "last_timestamp": [h2_dt, h1_dt],
+                    "min": [0.0, 10.0],
+                    "max": [2.0, 12.0],
+                    "avg": [1.0, 11.0],
+                    "stddev": [math.sqrt(2), math.sqrt(2)],
+                },
+                index=pd.Index([ts.id for ts in ts_l], name="id"),
+                columns=[
+                    "first_timestamp",
+                    "last_timestamp",
+                    "min",
+                    "max",
+                    "avg",
+                    "stddev",
+                ],
+            )
+            expected_data_df = expected_data_df.astype(
+                {
+                    "first_timestamp": f"datetime64[ns, {timezone}]",
+                    "last_timestamp": f"datetime64[ns, {timezone}]",
+                    "min": float,
+                    "max": float,
+                    "avg": float,
+                    "stddev": float,
+                }
+            )
+            assert_frame_equal(data_df, expected_data_df)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     def test_timeseries_data_io_get_timeseries_data_as_admin(
