@@ -75,7 +75,7 @@ class TimeseriesDataIO:
         query = (
             f"SELECT timeseries.{col_label}, "
             "min(timestamp), max(timestamp), "
-            "min(value), max(value), avg(value), stddev_samp(value)"
+            "count(value), min(value), max(value), avg(value), stddev_samp(value)"
             "FROM ts_data, timeseries, ts_by_data_states "
             "WHERE ts_data.ts_by_data_state_id = ts_by_data_states.id "
             "  AND ts_by_data_states.data_state_id = :data_state_id "
@@ -92,6 +92,7 @@ class TimeseriesDataIO:
                     col_label,
                     "first_timestamp",
                     "last_timestamp",
+                    "count",
                     "min",
                     "max",
                     "avg",
@@ -100,16 +101,18 @@ class TimeseriesDataIO:
             )
             .set_index(col_label)
             .reindex(getattr(ts, col_label) for ts in timeseries)
-            .astype(
-                {
-                    "first_timestamp": "datetime64[ns, UTC]",
-                    "last_timestamp": "datetime64[ns, UTC]",
-                    "min": float,
-                    "max": float,
-                    "avg": float,
-                    "stddev": float,
-                }
-            )
+        )
+        data_df["count"] = data_df["count"].fillna(0)
+        data_df = data_df.astype(
+            {
+                "first_timestamp": "datetime64[ns, UTC]",
+                "last_timestamp": "datetime64[ns, UTC]",
+                "count": int,
+                "min": float,
+                "max": float,
+                "avg": float,
+                "stddev": float,
+            }
         )
 
         for col in ("first_timestamp", "last_timestamp"):
