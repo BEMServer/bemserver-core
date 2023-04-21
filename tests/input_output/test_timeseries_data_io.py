@@ -380,16 +380,19 @@ class TestTimeseriesDataIO:
                 columns=[
                     "first_timestamp",
                     "last_timestamp",
+                    "count",
                     "min",
                     "max",
                     "avg",
                     "stddev",
                 ],
             )
+            no_data_df["count"] = no_data_df["count"].fillna(0)
             no_data_df = no_data_df.astype(
                 {
                     "first_timestamp": f"datetime64[ns, {timezone}]",
                     "last_timestamp": f"datetime64[ns, {timezone}]",
+                    "count": int,
                     "min": float,
                     "max": float,
                     "avg": float,
@@ -411,6 +414,7 @@ class TestTimeseriesDataIO:
                 {
                     "first_timestamp": [h1_dt, pd.NaT, start_dt],
                     "last_timestamp": [h2_dt, pd.NaT, h1_dt],
+                    "count": [2, 0, 2],
                     "min": [0.0, np.nan, 10.0],
                     "max": [2.0, np.nan, 12.0],
                     "avg": [1.0, np.nan, 11.0],
@@ -420,6 +424,7 @@ class TestTimeseriesDataIO:
                 columns=[
                     "first_timestamp",
                     "last_timestamp",
+                    "count",
                     "min",
                     "max",
                     "avg",
@@ -430,6 +435,7 @@ class TestTimeseriesDataIO:
                 {
                     "first_timestamp": f"datetime64[ns, {timezone}]",
                     "last_timestamp": f"datetime64[ns, {timezone}]",
+                    "count": int,
                     "min": float,
                     "max": float,
                     "avg": float,
@@ -483,6 +489,7 @@ class TestTimeseriesDataIO:
                 {
                     "first_timestamp": [h1_dt, start_dt],
                     "last_timestamp": [h2_dt, h1_dt],
+                    "count": [2, 2],
                     "min": [0.0, 10.0],
                     "max": [2.0, 12.0],
                     "avg": [1.0, 11.0],
@@ -492,6 +499,7 @@ class TestTimeseriesDataIO:
                 columns=[
                     "first_timestamp",
                     "last_timestamp",
+                    "count",
                     "min",
                     "max",
                     "avg",
@@ -502,6 +510,7 @@ class TestTimeseriesDataIO:
                 {
                     "first_timestamp": f"datetime64[ns, {timezone}]",
                     "last_timestamp": f"datetime64[ns, {timezone}]",
+                    "count": int,
                     "min": float,
                     "max": float,
                     "avg": float,
