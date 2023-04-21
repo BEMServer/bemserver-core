@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.13.4 (2023-04-21)
++++++++++++++++++++
+
+Features:
+
+- TimeseriesDataIO TS stats: add count
+
 0.13.3 (2023-04-21)
 +++++++++++++++++++
 
