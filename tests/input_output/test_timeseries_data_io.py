@@ -449,10 +449,9 @@ class TestTimeseriesDataIO:
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")
     @pytest.mark.usefixtures("user_groups_by_campaign_scopes")
-    @pytest.mark.parametrize("col_label", ("id", "name"))
     @pytest.mark.parametrize("timezone", ("UTC", "Europe/Paris"))
     def test_timeseries_data_io_get_timeseries_stats_as_user(
-        self, users, timeseries, col_label, timezone
+        self, users, timeseries, timezone
     ):
         user_1 = users[1]
         assert not user_1.is_admin
