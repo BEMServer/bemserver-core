@@ -39,7 +39,8 @@ class BEMServerUnitRegistry:
         :param string dest_unit: Destination unit
         """
         try:
-            return self._ureg.Quantity(data, src_unit).m_as(dest_unit)
+            # https://github.com/hgrecco/pint/issues/1758
+            return self._ureg.Quantity(data, src_unit).m_as(self._ureg.Unit(dest_unit))
         except pint.errors.UndefinedUnitError as exc:
             raise BEMServerCoreUndefinedUnitError(str(exc)) from exc
         except pint.errors.DimensionalityError as exc:

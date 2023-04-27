@@ -44,6 +44,7 @@ class TestUnits:
     def test_ureg_convert(self):
         assert ureg.convert(1.0, "km", "m") == 1000.0
         assert ureg.convert(1.0, "m/s", "km/h") == pytest.approx(3.6)
+        assert ureg.convert(1.0, "ratio", "%") == 100.0
         # convert returns a np.array, cast to list to compare
         assert list(ureg.convert([1.0, 2.0, 3.0], "km", "m")) == [
             1000.0,
