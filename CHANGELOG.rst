@@ -1,6 +1,21 @@
 Changelog
 ---------
 
+0.13.5 (unreleased)
++++++++++++++++++++
+
+Features:
+
+- Add "ratio" unit
+
+Bug fixes:
+
+- Fix conversion to "%"
+
+Other changes:
+
+- Require Pint 0.21
+
 0.13.4 (2023-04-21)
 +++++++++++++++++++
 
