@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-0.13.5 (unreleased)
+0.13.5 (2023-05-02)
 +++++++++++++++++++
 
 Features:
@@ -10,6 +10,7 @@ Features:
 
 Bug fixes:
 
+- TimeseriesDataJSONIO: catch wrong value type error
 - Fix conversion to "%"
 
 Other changes:
