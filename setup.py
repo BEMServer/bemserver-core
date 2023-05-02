@@ -34,7 +34,7 @@ setup(
         "psycopg2>=2.9.0,<3.0",
         "sqlalchemy>=2.0,<3.0",
         "pandas>=2.0,<3.0",
-        "pint>=0.20.0",
+        "pint>=0.21.0",
         "passlib>=1.7.4,<2.0",
         "argon2_cffi>=21.3.0",
         "oso>=0.26.0,<0.27",
