@@ -658,7 +658,7 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
         """
         # Load JSON into DataFrame
         try:
-            data_df = pd.read_json(json_data, orient="columns", dtype=float)
+            data_df = pd.read_json(json_data, orient="columns", dtype=False)
         except ValueError as exc:
             raise TimeseriesDataJSONIOError("Wrong JSON file") from exc
 
