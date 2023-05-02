@@ -57,7 +57,7 @@ pandas==2.0.0
     # via bemserver-core (setup.py)
 passlib==1.7.4
     # via bemserver-core (setup.py)
-pint==0.20.1
+pint==0.21
     # via bemserver-core (setup.py)
 prompt-toolkit==3.0.36
     # via click-repl
