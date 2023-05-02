@@ -2767,18 +2767,17 @@ class TestTimeseriesDataJSONIO:
             # Unknown TS
             ('{"1324564": []}', TimeseriesNotFoundError),
             # Invalid timestamp
-            ('{"1324564": {"dummy": 1}}', TimeseriesDataIODatetimeError),
-            ('{"1324564": [{"dummy": 1}]}', TimeseriesDataIODatetimeError),
+            ('{"1": {"dummy": 1}}', TimeseriesDataIODatetimeError),
+            ('{"1": [{"dummy": 1}]}', TimeseriesDataIODatetimeError),
             ('{"1": {"2500-01-01T00:00:00+00:00": 1}}', TimeseriesDataIODatetimeError),
+            # Invalid value
+            ('{"1": {"2020-01-01T00:00:00+00:00": "lol"}}', TimeseriesDataJSONIOError),
         ),
     )
-    @pytest.mark.parametrize("for_campaign", (True,))  # False))
-    def test_timeseries_data_io_import_json_error(
-        self, users, campaigns, for_campaign, data_error
-    ):
+    @pytest.mark.usefixtures("timeseries")
+    def test_timeseries_data_io_import_json_error(self, users, data_error):
         admin_user = users[0]
         assert admin_user.is_admin
-        campaign = campaigns[0] if for_campaign else None
         json_data, exc_cls = data_error
 
         with OpenBar():
@@ -2786,7 +2785,7 @@ class TestTimeseriesDataJSONIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(exc_cls):
-                tsdjsonio.import_json(json_data, ds_1.id, campaign)
+                tsdjsonio.import_json(json_data, ds_1)
 
     @pytest.mark.usefixtures("timeseries")
     def test_timeseries_data_io_import_json_invalid_ts_id(self, users):
@@ -2801,7 +2800,7 @@ class TestTimeseriesDataJSONIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(TimeseriesDataIOInvalidTimeseriesIDTypeError):
-                tsdjsonio.import_json(json_data, ds_1.id)
+                tsdjsonio.import_json(json_data, ds_1)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.parametrize("col_label", ("id", "name"))

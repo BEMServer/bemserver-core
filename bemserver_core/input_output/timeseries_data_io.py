@@ -669,6 +669,12 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
         # Index
         data_df.index = to_utc_index(data_df.index)
 
+        # Values
+        try:
+            data_df = data_df.astype(float)
+        except ValueError as exc:
+            raise TimeseriesDataJSONIOError("Invalid values") from exc
+
         # Insert data
         cls.set_timeseries_data(
             data_df, data_state=data_state, campaign=campaign, convert_from=convert_from
