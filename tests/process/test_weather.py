@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
+import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
 from requests.exceptions import RequestException
@@ -282,15 +283,20 @@ class TestWeatherDataProcessor:
         self, mock_get, sites, weather_timeseries_by_sites
     ):
         site_1 = sites[0]
+        site_2 = sites[1]
         wtbs_1 = weather_timeseries_by_sites[0]
+        wtbs_2 = weather_timeseries_by_sites[1]
 
         air_temp_ts = wtbs_1.timeseries
+        rh_ts = wtbs_2.timeseries
         ds_clean = TimeseriesDataState.get(name="Clean").first()
 
         start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc)
         oik_end_dt = dt.datetime(2020, 1, 1, 1, 0, tzinfo=dt.timezone.utc)
 
+        # The payload should contain only air temp or RH depending on the call
+        # but it is easier here to write a single payload.
         resp_data = {
             "columns": [
                 "coordinates (lat,lon)",
@@ -316,7 +322,7 @@ class TestWeatherDataProcessor:
                     694.09,
                     1.0,
                     2.59,
-                    0.78,
+                    0.79,
                 ],
             ],
         }
@@ -327,12 +333,13 @@ class TestWeatherDataProcessor:
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = resp_json
 
+        # Test site 1, air temp
         wdp.get_weather_data_for_site(site_1, start_dt, end_dt)
 
         data_df_1 = tsdio.get_timeseries_data(
             start_dt,
             end_dt,
-            (air_temp_ts,),
+            (air_temp_ts, rh_ts),
             ds_clean,
             col_label="name",
         )
@@ -344,23 +351,53 @@ class TestWeatherDataProcessor:
             name="timestamp",
             tz="UTC",
         )
-        expected_data_df = pd.DataFrame({"Timeseries 1": [2.45, 2.59]}, index=index)
+        expected_data_df = pd.DataFrame(
+            {"Timeseries 1": [2.45, 2.59], "Timeseries 2": [np.nan, np.nan]},
+            index=index,
+        )
         assert_frame_equal(data_df_1, expected_data_df, check_names=False)
 
-        # Test again to check conversion works and data is deleted/overwritten
-        air_temp_ts.unit_symbol = "°F"
-
-        wdp.get_weather_data_for_site(site_1, start_dt, end_dt)
+        # Test site 2, RH forecast
+        # Also check units conversion from 1 to %
+        wdp.get_weather_data_for_site(site_2, start_dt, end_dt, forecast=True)
 
         data_df_2 = tsdio.get_timeseries_data(
             start_dt,
             end_dt,
-            (air_temp_ts,),
+            (air_temp_ts, rh_ts),
             ds_clean,
             col_label="name",
         )
-        expected_data_df = pd.DataFrame({"Timeseries 1": [36.410, 36.662]}, index=index)
+        index = pd.DatetimeIndex(
+            [
+                "2020-01-01T00:00:00+00:00",
+                "2020-01-01T01:00:00+00:00",
+            ],
+            name="timestamp",
+            tz="UTC",
+        )
+        expected_data_df = pd.DataFrame(
+            {"Timeseries 1": [2.45, 2.59], "Timeseries 2": [78.0, 79.0]}, index=index
+        )
         assert_frame_equal(data_df_2, expected_data_df, check_names=False)
+
+        # Test again to check data is deleted/overwritten (with a unit conversion)
+        air_temp_ts.unit_symbol = "°F"
+
+        wdp.get_weather_data_for_site(site_1, start_dt, end_dt)
+
+        data_df_3 = tsdio.get_timeseries_data(
+            start_dt,
+            end_dt,
+            (air_temp_ts, rh_ts),
+            ds_clean,
+            col_label="name",
+        )
+        expected_data_df = pd.DataFrame(
+            {"Timeseries 1": [36.410, 36.662], "Timeseries 2": [78.0, 79.0]},
+            index=index,
+        )
+        assert_frame_equal(data_df_3, expected_data_df, check_names=False)
 
         # Test failure + rollback: data not deleted
         air_temp_ts.unit_symbol = "m/s"
@@ -375,7 +412,7 @@ class TestWeatherDataProcessor:
         data_df_3 = tsdio.get_timeseries_data(
             start_dt,
             end_dt,
-            (air_temp_ts,),
+            (air_temp_ts, rh_ts),
             ds_clean,
             col_label="name",
         )
