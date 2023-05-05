@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file=requirements/install.txt setup.py
 #
-alembic==1.9.4
+alembic==1.10.4
     # via bemserver-core (setup.py)
 amqp==5.1.1
     # via kombu
@@ -49,45 +49,47 @@ mako==1.2.4
     # via alembic
 markupsafe==2.1.2
     # via mako
-numpy==1.24.2
+numpy==1.24.3
     # via pandas
 oso==0.27.0
     # via bemserver-core (setup.py)
-pandas==2.0.0
+pandas==2.0.1
     # via bemserver-core (setup.py)
 passlib==1.7.4
     # via bemserver-core (setup.py)
 pint==0.21
     # via bemserver-core (setup.py)
-prompt-toolkit==3.0.36
+prompt-toolkit==3.0.38
     # via click-repl
-psycopg2==2.9.5
+psycopg2==2.9.6
     # via bemserver-core (setup.py)
 pycparser==2.21
     # via cffi
 python-dateutil==2.8.2
     # via pandas
-pytz==2022.7.1
+pytz==2023.3
     # via
     #   celery
     #   pandas
-redis==4.5.1
+redis==4.5.4
     # via bemserver-core (setup.py)
-requests==2.28.2
+requests==2.30.0
     # via bemserver-core (setup.py)
 six==1.16.0
     # via
     #   click-repl
     #   python-dateutil
-sqlalchemy==2.0.4
+sqlalchemy==2.0.12
     # via
     #   alembic
     #   bemserver-core (setup.py)
 typing-extensions==4.5.0
-    # via sqlalchemy
+    # via
+    #   alembic
+    #   sqlalchemy
 tzdata==2023.3
     # via pandas
-urllib3==1.26.14
+urllib3==2.0.2
     # via requests
 vine==5.0.0
     # via

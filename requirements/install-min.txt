@@ -45,17 +45,17 @@ mako==1.2.4
     # via alembic
 markupsafe==2.1.2
     # via mako
-numpy==1.24.2
+numpy==1.24.3
     # via pandas
 oso==0.26.0
     # via -r requirements/install-min.in
-packaging==23.0
+packaging==23.1
     # via redis
 pandas==2.0
     # via -r requirements/install-min.in
 passlib==1.7.4
     # via -r requirements/install-min.in
-prompt-toolkit==3.0.36
+prompt-toolkit==3.0.38
     # via click-repl
 psycopg2==2.9.0
     # via -r requirements/install-min.in
@@ -63,7 +63,7 @@ pycparser==2.21
     # via cffi
 python-dateutil==2.8.2
     # via pandas
-pytz==2022.7.1
+pytz==2023.3
     # via
     #   celery
     #   pandas
@@ -88,7 +88,7 @@ vine==5.0.0
     #   kombu
 wcwidth==0.2.6
     # via prompt-toolkit
-wrapt==1.14.1
+wrapt==1.15.0
     # via deprecated
 
 # The following packages are considered to be unsafe in a requirements file:

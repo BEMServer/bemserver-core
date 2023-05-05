@@ -4,41 +4,39 @@
 #
 #    pip-compile requirements/dev.in
 #
-attrs==22.2.0
-    # via pytest
 bump2version==1.0.1
     # via -r requirements/dev.in
 cfgv==3.3.1
     # via pre-commit
-coverage[toml]==7.0.5
+coverage[toml]==7.2.5
     # via pytest-cov
 distlib==0.3.6
     # via virtualenv
-exceptiongroup==1.1.0
+exceptiongroup==1.1.1
     # via pytest
-filelock==3.9.0
+filelock==3.12.0
     # via virtualenv
-identify==2.5.13
+identify==2.5.24
     # via pre-commit
 iniconfig==2.0.0
     # via pytest
-mirakuru==2.4.2
+mirakuru==2.5.1
     # via pytest-postgresql
 nodeenv==1.7.0
     # via pre-commit
-packaging==23.0
+packaging==23.1
     # via pytest
-platformdirs==2.6.2
+platformdirs==3.5.0
     # via virtualenv
 pluggy==1.0.0
     # via pytest
 port-for==0.6.3
     # via pytest-postgresql
-pre-commit==3.0.4
+pre-commit==3.3.1
     # via -r requirements/dev.in
-psutil==5.9.4
+psutil==5.9.5
     # via mirakuru
-pytest==7.2.1
+pytest==7.3.1
     # via
     #   -r requirements/tests.in
     #   pytest-cov
@@ -53,7 +51,7 @@ tomli==2.0.1
     # via
     #   coverage
     #   pytest
-virtualenv==20.17.1
+virtualenv==20.23.0
     # via pre-commit
 
 # The following packages are considered to be unsafe in a requirements file:
