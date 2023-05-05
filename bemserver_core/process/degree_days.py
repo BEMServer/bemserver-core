@@ -58,6 +58,7 @@ def compute_dd_for_site(
     wtbs = WeatherTimeseriesBySite.get(
         site_id=site.id,
         parameter=WeatherParameterEnum.AIR_TEMPERATURE,
+        forecast=False,
     ).first()
 
     if wtbs is None:
