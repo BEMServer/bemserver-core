@@ -170,6 +170,26 @@ def download_weather_data_scheduled_task(
         period_multiplier,
         periods_before,
         periods_after,
+        forecast=False,
+    )
+
+    logger.debug("Committing")
+    db.session.commit()
+
+
+@celery.task(name="DownloadWeatherForecastDataScheduledTask")
+def download_weather_forecast_data_scheduled_task(
+    period, period_multiplier, periods_before, periods_after, timezone="UTC"
+):
+    logger.info("Start")
+
+    download_weather_data(
+        dt.datetime.now(tz=ZoneInfo(timezone)),
+        period,
+        period_multiplier,
+        periods_before,
+        periods_after,
+        forecast=True,
     )
 
     logger.debug("Committing")
