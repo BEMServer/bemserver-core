@@ -128,9 +128,15 @@ class ST_DownloadWeatherForecastDataBySite(AuthMixin, ST_DownloadWeatherDataBySi
 
 
 def download_weather_data(
-    datetime, period, period_multiplier, periods_before, periods_after
+    datetime, period, period_multiplier, periods_before, periods_after, forecast=False
 ):
     logger.debug("datetime: %s", datetime)
+
+    st_dwdbs_cls = (
+        ST_DownloadWeatherForecastDataBySite
+        if forecast
+        else ST_DownloadWeatherDataBySite
+    )
 
     try:
         round_dt = floor(datetime, period, period_multiplier)
@@ -141,7 +147,7 @@ def download_weather_data(
         logger.critical(str(exc))
         raise
 
-    for dwdbs in ST_DownloadWeatherDataBySite.get(is_enabled=True):
+    for dwdbs in st_dwdbs_cls.get(is_enabled=True):
         site = dwdbs.site
         logger.debug(
             "Getting weather data for site %s for period [%s, %s]",
@@ -149,7 +155,7 @@ def download_weather_data(
             start_dt.isoformat(),
             end_dt.isoformat(),
         )
-        wdp.get_weather_data_for_site(site, start_dt, end_dt)
+        wdp.get_weather_data_for_site(site, start_dt, end_dt, forecast=forecast)
 
 
 @celery.task(name="DownloadWeatherDataScheduledTask")

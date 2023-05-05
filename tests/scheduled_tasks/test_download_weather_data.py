@@ -274,7 +274,8 @@ class TestDownloadWeatherDataScheduledTask:
         indirect=True,
     )
     @patch("requests.get")
-    def test_download_weather_data(self, mock_get, users, timeseries):
+    @pytest.mark.parametrize("forecast", (False, True))
+    def test_download_weather_data(self, mock_get, users, timeseries, forecast):
         admin_user = users[0]
         assert admin_user.is_admin
         temp_site_1_ts = timeseries[0]
@@ -313,7 +314,7 @@ class TestDownloadWeatherDataScheduledTask:
                 ],
                 "data": [
                     ["(46.0, 6.0)", "era5", 694.09, 1.0, 2.45, 0.78],
-                    ["(46.0, 6.0)", "era5", 694.09, 1.0, 2.59, 0.78],
+                    ["(46.0, 6.0)", "era5", 694.09, 1.0, 2.59, 0.79],
                 ],
             }
             resp_json = {
@@ -324,15 +325,26 @@ class TestDownloadWeatherDataScheduledTask:
             mock_get.return_value.json.return_value = resp_json
 
             # Call service at end_dt for last 2 hours, get 1 2-hour period before
-            download_weather_data(end_dt, "hour", 2, 1, 0)
+            download_weather_data(end_dt, "hour", 2, 1, 0, forecast=forecast)
 
             # Check mock call
-            mock_get.assert_called_with(
-                url="https://api.oikolab.com/weather",
-                params={
+            if forecast is False:
+                call_params = {
                     "param": ["temperature"],
                     "lat": 43.47394,
                     "lon": -1.50940,
+                }
+            else:
+                call_params = {
+                    "param": ["relative_humidity"],
+                    "lat": 44.84325,
+                    "lon": -0.56262,
+                }
+
+            mock_get.assert_called_with(
+                url="https://api.oikolab.com/weather",
+                params={
+                    **call_params,
                     "start": start_dt.isoformat(),
                     "end": oik_end_dt.isoformat(),
                     "api-key": "dummy-key",
@@ -356,8 +368,14 @@ class TestDownloadWeatherDataScheduledTask:
                 name="timestamp",
                 tz="UTC",
             )
-            expected_data_df = pd.DataFrame(
-                {"Timeseries 1": [2.45, 2.59], "Timeseries 2": [np.nan, np.nan]},
-                index=index,
-            )
+            if forecast is False:
+                expected_data_df = pd.DataFrame(
+                    {"Timeseries 1": [2.45, 2.59], "Timeseries 2": [np.nan, np.nan]},
+                    index=index,
+                )
+            else:
+                expected_data_df = pd.DataFrame(
+                    {"Timeseries 1": [np.nan, np.nan], "Timeseries 2": [78.0, 79.0]},
+                    index=index,
+                )
             assert_frame_equal(data_df, expected_data_df, check_names=False)

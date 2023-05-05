@@ -1040,10 +1040,10 @@ def st_download_weather_data_by_sites(bemservercore, sites):
         )
         st_dwdbs_3 = scheduled_tasks.ST_DownloadWeatherForecastDataBySite.new(
             site_id=sites[0].id,
+            is_enabled=False,
         )
         st_dwdbs_4 = scheduled_tasks.ST_DownloadWeatherForecastDataBySite.new(
             site_id=sites[1].id,
-            is_enabled=False,
         )
         db.session.commit()
     return (st_dwdbs_1, st_dwdbs_2, st_dwdbs_3, st_dwdbs_4)
