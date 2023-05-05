@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.14.0 (2023-05-05)
++++++++++++++++++++
+
+Features:
+
+- Weather: differentiate forecast data
+
 0.13.5 (2023-05-02)
 +++++++++++++++++++
 
