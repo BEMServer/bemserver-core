@@ -25,12 +25,13 @@ class WeatherParameterEnum(enum.Enum):
 
 class WeatherTimeseriesBySite(AuthMixin, Base):
     __tablename__ = "weather_ts_by_site"
-    __table_args__ = (sqla.UniqueConstraint("site_id", "parameter"),)
+    __table_args__ = (sqla.UniqueConstraint("site_id", "parameter", "forecast"),)
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     site_id = sqla.Column(sqla.ForeignKey("sites.id"), nullable=False)
     parameter = sqla.Column(sqla.Enum(WeatherParameterEnum), nullable=False)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
+    forecast = sqla.Column(sqla.Boolean(), nullable=False)
 
     site = sqla.orm.relationship(
         "Site",

@@ -151,6 +151,14 @@ def test_compute_dd_for_site(sites, weather_timeseries_by_sites, type_, base, un
     assert (dd_s[dd_s.index.year == 2022] == np.nan).all()
 
     # Missing temperature
+    wtbs_1.forecast = True
+    with pytest.raises(
+        BEMServerCoreDegreeDayProcessMissingTemperatureError,
+        match="Air temperature for site undefined or access denied.",
+    ):
+        compute_dd_for_site(
+            site_1, start_d, end_d, "day", type_=type_, base=base, unit=unit
+        )
     wtbs_1.delete()
     with pytest.raises(
         BEMServerCoreDegreeDayProcessMissingTemperatureError,

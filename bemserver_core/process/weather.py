@@ -139,14 +139,25 @@ class WeatherDataProcessor:
             raise BEMServerCoreSettingsError("Missing weather API settings.")
         return OikolabWeatherDataClient(self._api_url, self._api_key)
 
-    def get_weather_data_for_site(self, site, start_dt, end_dt):
-        """Get weather data for a site."""
+    def get_weather_data_for_site(self, site, start_dt, end_dt, forecast=False):
+        """Get weather data for a site
 
+        :param Site site: Site for which to get weather data
+        :param datetime start_dt: Time interval lower bound (tz-aware)
+        :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
+        :param bool forecast: Whether or not the data is past data or forecast
+
+        The forecast argument only defines where to store the data in BEMServer.
+        The data source is the same and it is up to the caller to set it according
+        to the time interval.
+        """
         auth.authorize(get_current_user(), "get_weather_data", site)
 
         ds_clean = TimeseriesDataState.get(name="Clean").first()
 
-        if wtsbs_l := list(WeatherTimeseriesBySite.get(site_id=site.id)):
+        if wtsbs_l := list(
+            WeatherTimeseriesBySite.get(site_id=site.id, forecast=forecast)
+        ):
             params_l = [wtsbs.parameter.name for wtsbs in wtsbs_l]
             ts_l = [wtsbs.timeseries for wtsbs in wtsbs_l]
 

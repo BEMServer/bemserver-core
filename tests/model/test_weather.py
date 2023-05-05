@@ -44,6 +44,7 @@ class TestWeatherTimeseriesBySiteModel:
                 site_id=site_1.id,
                 parameter=WeatherParameterEnum.AIR_TEMPERATURE,
                 timeseries_id=ts_1.id,
+                forecast=False,
             )
             db.session.commit()
             WeatherTimeseriesBySite.get_by_id(ectbs_1.id)
@@ -73,6 +74,7 @@ class TestWeatherTimeseriesBySiteModel:
                     site_id=site_2.id,
                     parameter=WeatherParameterEnum.AIR_TEMPERATURE,
                     timeseries_id=ts_2.id,
+                    forecast=True,
                 )
             with pytest.raises(BEMServerAuthorizationError):
                 ectbs_2.update(parameter=WeatherParameterEnum.RELATIVE_HUMIDITY)

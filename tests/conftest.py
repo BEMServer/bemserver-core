@@ -958,16 +958,18 @@ def weather_timeseries_by_sites(bemservercore, timeseries, sites):
     with OpenBar():
         # Set units to timeseries
         timeseries[0].unit_symbol = "°C"
-        timeseries[1].unit_symbol = "percent"
+        timeseries[1].unit_symbol = "%"
         wtbs_1 = model.WeatherTimeseriesBySite.new(
             site_id=sites[0].id,
             parameter=model.WeatherParameterEnum.AIR_TEMPERATURE,
             timeseries_id=timeseries[0].id,
+            forecast=False,
         )
         wtbs_2 = model.WeatherTimeseriesBySite.new(
             site_id=sites[1].id,
             parameter=model.WeatherParameterEnum.RELATIVE_HUMIDITY,
             timeseries_id=timeseries[1].id,
+            forecast=True,
         )
         db.session.commit()
     return (wtbs_1, wtbs_2)
