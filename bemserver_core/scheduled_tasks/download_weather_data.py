@@ -13,32 +13,12 @@ from bemserver_core.celery import celery, logger
 from bemserver_core.exceptions import BEMServerCorePeriodError
 
 
-class ST_DownloadWeatherDataBySite(AuthMixin, Base):
-    __tablename__ = "st_dl_weather_data_by_site"
+class ST_DownloadWeatherDataBySiteBase(Base):
+    __abstract__ = True
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     site_id = sqla.Column(sqla.ForeignKey("sites.id"), unique=True, nullable=False)
     is_enabled = sqla.Column(sqla.Boolean, default=True, nullable=False)
-    site = sqla.orm.relationship(
-        "Site",
-        backref=sqla.orm.backref(
-            "st_dl_weather_data_by_site", cascade="all, delete-orphan"
-        ),
-    )
-
-    @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "site": Relation(
-                    kind="one",
-                    other_type="Site",
-                    my_field="site_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def get_all(cls, *, is_enabled=None, **kwargs):
@@ -63,8 +43,8 @@ class ST_DownloadWeatherDataBySite(AuthMixin, Base):
             alias=Site.get(**site_kwargs).subquery(),
         )
         dwdbs_subq = sqla.orm.aliased(
-            ST_DownloadWeatherDataBySite,
-            alias=ST_DownloadWeatherDataBySite.get(**kwargs).subquery(),
+            cls,
+            alias=cls.get(**kwargs).subquery(),
         )
 
         # Main request.
@@ -97,10 +77,66 @@ class ST_DownloadWeatherDataBySite(AuthMixin, Base):
         return query
 
 
+class ST_DownloadWeatherDataBySite(AuthMixin, ST_DownloadWeatherDataBySiteBase):
+    __tablename__ = "st_dl_weather_data_by_site"
+
+    site = sqla.orm.relationship(
+        "Site",
+        backref=sqla.orm.backref(
+            "st_dl_weather_data_by_site", cascade="all, delete-orphan"
+        ),
+    )
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "site": Relation(
+                    kind="one",
+                    other_type="Site",
+                    my_field="site_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
+class ST_DownloadWeatherForecastDataBySite(AuthMixin, ST_DownloadWeatherDataBySiteBase):
+    __tablename__ = "st_dl_weather_fcast_data_by_site"
+
+    site = sqla.orm.relationship(
+        "Site",
+        backref=sqla.orm.backref(
+            "st_dl_weather_fcast_data_by_site", cascade="all, delete-orphan"
+        ),
+    )
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "site": Relation(
+                    kind="one",
+                    other_type="Site",
+                    my_field="site_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
 def download_weather_data(
-    datetime, period, period_multiplier, periods_before, periods_after
+    datetime, period, period_multiplier, periods_before, periods_after, forecast=False
 ):
     logger.debug("datetime: %s", datetime)
+
+    st_dwdbs_cls = (
+        ST_DownloadWeatherForecastDataBySite
+        if forecast
+        else ST_DownloadWeatherDataBySite
+    )
 
     try:
         round_dt = floor(datetime, period, period_multiplier)
@@ -111,7 +147,7 @@ def download_weather_data(
         logger.critical(str(exc))
         raise
 
-    for dwdbs in ST_DownloadWeatherDataBySite.get(is_enabled=True):
+    for dwdbs in st_dwdbs_cls.get(is_enabled=True):
         site = dwdbs.site
         logger.debug(
             "Getting weather data for site %s for period [%s, %s]",
@@ -119,7 +155,7 @@ def download_weather_data(
             start_dt.isoformat(),
             end_dt.isoformat(),
         )
-        wdp.get_weather_data_for_site(site, start_dt, end_dt)
+        wdp.get_weather_data_for_site(site, start_dt, end_dt, forecast=forecast)
 
 
 @celery.task(name="DownloadWeatherDataScheduledTask")
@@ -134,6 +170,26 @@ def download_weather_data_scheduled_task(
         period_multiplier,
         periods_before,
         periods_after,
+        forecast=False,
+    )
+
+    logger.debug("Committing")
+    db.session.commit()
+
+
+@celery.task(name="DownloadWeatherForecastDataScheduledTask")
+def download_weather_forecast_data_scheduled_task(
+    period, period_multiplier, periods_before, periods_after, timezone="UTC"
+):
+    logger.info("Start")
+
+    download_weather_data(
+        dt.datetime.now(tz=ZoneInfo(timezone)),
+        period,
+        period_multiplier,
+        periods_before,
+        periods_after,
+        forecast=True,
     )
 
     logger.debug("Committing")

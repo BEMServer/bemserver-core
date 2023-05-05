@@ -36,3 +36,11 @@ resource ST_DownloadWeatherDataBySite {
 
 has_permission(user: User, "read", st_dwdbs: ST_DownloadWeatherDataBySite) if
     has_role(user, "member", st_dwdbs.site.campaign);
+
+
+resource ST_DownloadWeatherForecastDataBySite {
+    permissions = ["create", "read", "update", "delete"];
+}
+
+has_permission(user: User, "read", st_dwdbs: ST_DownloadWeatherForecastDataBySite) if
+    has_role(user, "member", st_dwdbs.site.campaign);
