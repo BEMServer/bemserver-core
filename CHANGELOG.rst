@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.15.0 (2023-05-05)
++++++++++++++++++++
+
+Features:
+
+- Download forecast weather feature
+
 0.14.0 (2023-05-05)
 +++++++++++++++++++
 
