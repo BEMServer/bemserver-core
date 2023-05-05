@@ -285,7 +285,7 @@ class Event(AuthMixin, Base):
         if self.level >= DEFAULT_NOTIFICATION_EVENT_LEVEL:
             level_filter = sqla.or_(
                 ecbu_q.notification_level <= self.level,
-                ecbu_q.notification_level == None,  # noqa
+                ecbu_q.notification_level.is_(None),
             )
         else:
             level_filter = ecbu_q.notification_level <= self.level
