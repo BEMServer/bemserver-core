@@ -13,32 +13,12 @@ from bemserver_core.celery import celery, logger
 from bemserver_core.exceptions import BEMServerCorePeriodError
 
 
-class ST_DownloadWeatherDataBySite(AuthMixin, Base):
-    __tablename__ = "st_dl_weather_data_by_site"
+class ST_DownloadWeatherDataBySiteBase(Base):
+    __abstract__ = True
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     site_id = sqla.Column(sqla.ForeignKey("sites.id"), unique=True, nullable=False)
     is_enabled = sqla.Column(sqla.Boolean, default=True, nullable=False)
-    site = sqla.orm.relationship(
-        "Site",
-        backref=sqla.orm.backref(
-            "st_dl_weather_data_by_site", cascade="all, delete-orphan"
-        ),
-    )
-
-    @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "site": Relation(
-                    kind="one",
-                    other_type="Site",
-                    my_field="site_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def get_all(cls, *, is_enabled=None, **kwargs):
@@ -63,8 +43,8 @@ class ST_DownloadWeatherDataBySite(AuthMixin, Base):
             alias=Site.get(**site_kwargs).subquery(),
         )
         dwdbs_subq = sqla.orm.aliased(
-            ST_DownloadWeatherDataBySite,
-            alias=ST_DownloadWeatherDataBySite.get(**kwargs).subquery(),
+            cls,
+            alias=cls.get(**kwargs).subquery(),
         )
 
         # Main request.
@@ -95,6 +75,56 @@ class ST_DownloadWeatherDataBySite(AuthMixin, Base):
                 query = cls_field._apply_sort_query_filter(query, field)
 
         return query
+
+
+class ST_DownloadWeatherDataBySite(AuthMixin, ST_DownloadWeatherDataBySiteBase):
+    __tablename__ = "st_dl_weather_data_by_site"
+
+    site = sqla.orm.relationship(
+        "Site",
+        backref=sqla.orm.backref(
+            "st_dl_weather_data_by_site", cascade="all, delete-orphan"
+        ),
+    )
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "site": Relation(
+                    kind="one",
+                    other_type="Site",
+                    my_field="site_id",
+                    other_field="id",
+                ),
+            },
+        )
+
+
+class ST_DownloadWeatherForecastDataBySite(AuthMixin, ST_DownloadWeatherDataBySiteBase):
+    __tablename__ = "st_dl_weather_fcast_data_by_site"
+
+    site = sqla.orm.relationship(
+        "Site",
+        backref=sqla.orm.backref(
+            "st_dl_weather_fcast_data_by_site", cascade="all, delete-orphan"
+        ),
+    )
+
+    @classmethod
+    def register_class(cls):
+        auth.register_class(
+            cls,
+            fields={
+                "site": Relation(
+                    kind="one",
+                    other_type="Site",
+                    my_field="site_id",
+                    other_field="id",
+                ),
+            },
+        )
 
 
 def download_weather_data(

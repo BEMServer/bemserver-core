@@ -4,7 +4,10 @@ from pathlib import Path
 from .cleanup import ST_CleanupByCampaign, ST_CleanupByTimeseries
 from .check_missing import ST_CheckMissingByCampaign
 from .check_outliers import ST_CheckOutliersByCampaign
-from .download_weather_data import ST_DownloadWeatherDataBySite
+from .download_weather_data import (
+    ST_DownloadWeatherDataBySite,
+    ST_DownloadWeatherForecastDataBySite,
+)
 
 
 __all__ = [
@@ -13,6 +16,7 @@ __all__ = [
     "ST_CheckMissingByCampaign",
     "ST_CheckOutliersByCampaign",
     "ST_DownloadWeatherDataBySite",
+    "ST_DownloadWeatherForecastDataBySite",
 ]
 
 
@@ -22,6 +26,7 @@ AUTH_MODEL_CLASSES = [
     ST_CheckMissingByCampaign,
     ST_CheckOutliersByCampaign,
     ST_DownloadWeatherDataBySite,
+    ST_DownloadWeatherForecastDataBySite,
 ]
 
 
