@@ -46,6 +46,64 @@ class TimeseriesDataIO:
     """Base class for TimeseriesData IO classes"""
 
     @classmethod
+    def get_last(
+        cls,
+        timeseries,
+        data_state,
+        *,
+        timezone="UTC",
+        col_label="id",
+    ):
+        """Get timeseries last values
+
+        :param list timeseries: List of timeseries
+        :param TimeseriesDataState data_state: Timeseries data state
+        :param str timezone: IANA timezone to use for first/last timestamp
+        :param string col_label: Timeseries attribute to use for column header.
+            Should be "id" or "name". Default: "id".
+
+        Returns a dataframe.
+        """
+        # Check permissions
+        for ts in timeseries:
+            auth.authorize(get_current_user(), "read_data", ts)
+
+        params = {
+            "timeseries_ids": [ts.id for ts in timeseries],
+            "data_state_id": data_state.id,
+        }
+        query = (
+            # https://stackoverflow.com/a/7630564
+            f"SELECT DISTINCT ON (timeseries.{col_label}) timeseries.{col_label}, "
+            "timestamp, value "
+            "FROM ts_data, timeseries, ts_by_data_states "
+            "WHERE ts_data.ts_by_data_state_id = ts_by_data_states.id "
+            "  AND ts_by_data_states.data_state_id = :data_state_id "
+            "  AND ts_by_data_states.timeseries_id = timeseries.id "
+            "  AND timeseries_id = ANY(:timeseries_ids) "
+            f"ORDER BY timeseries.{col_label}, timestamp DESC"
+        )
+        data = db.session.execute(sqla.text(query), params)
+
+        data_df = (
+            pd.DataFrame(
+                data,
+                columns=(
+                    col_label,
+                    "timestamp",
+                    "value",
+                ),
+            )
+            .set_index(col_label)
+            .reindex(getattr(ts, col_label) for ts in timeseries)
+            .astype({"timestamp": "datetime64[ns, UTC]", "value": float})
+        )
+
+        data_df["timestamp"] = data_df["timestamp"].dt.tz_convert(timezone)
+
+        return data_df
+
+    @classmethod
     def get_timeseries_stats(
         cls,
         timeseries,
