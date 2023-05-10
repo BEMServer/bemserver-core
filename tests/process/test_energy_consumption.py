@@ -129,11 +129,14 @@ class TestEnergyConsumption:
                 end_use_id=end_use_heating.id,
                 timeseries_id=timeseries[4].id,
             )
+            # Non-reg test: use the same timeseries for two end uses
+            # It makes no sense but it shouldn't crash
+            # Result is the same in this case since values are the same in both TS
             EnergyConsumptionTimeseriesBySite.new(
                 site_id=sites[0].id,
                 energy_id=source_elec.id,
                 end_use_id=end_use_cooling.id,
-                timeseries_id=timeseries[5].id,
+                timeseries_id=timeseries[4].id,
             )
             EnergyConsumptionTimeseriesBySite.new(
                 site_id=sites[0].id,
