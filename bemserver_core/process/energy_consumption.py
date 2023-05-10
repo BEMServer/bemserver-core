@@ -61,7 +61,8 @@ def compute_energy_consumption_breakdown(
     bucket_width_unit,
     timezone="UTC",
 ):
-    timeseries = [ectbl.timeseries for ectbl in ectbl_l]
+    # Use a set to remove potential duplicates (although it shouldn't happen)
+    timeseries = {ectbl.timeseries for ectbl in ectbl_l}
 
     data_state = TimeseriesDataState.get(name=DATA_STATE).first()
 
@@ -81,9 +82,9 @@ def compute_energy_consumption_breakdown(
         "timestamps": data_df.index.to_list(),
         "energy": defaultdict(dict),
     }
-    for ectbl, ts_name in zip(ectbl_l, data_df.columns):
+    for ectbl in ectbl_l:
         brkdwn["energy"][ectbl.energy.name][ectbl.end_use.name] = data_df[
-            ts_name
+            ectbl.timeseries_id
         ].to_list()
 
     return brkdwn
