@@ -370,7 +370,9 @@ class TestTimeseriesDataIO:
 
         # No data (by col name)
         with CurrentUser(admin_user):
-            data_df = tsdio.get_last(ts_l, ds_1, col_label="name", timezone=timezone)
+            data_df = tsdio.get_last(
+                None, None, ts_l, ds_1, col_label="name", timezone=timezone
+            )
             no_data_df = pd.DataFrame(
                 index=pd.Index([ts.name for ts in ts_l], name="name"),
                 columns=[
@@ -388,19 +390,73 @@ class TestTimeseriesDataIO:
         create_timeseries_data(ts_4, ds_1, timestamps, [12, 10, None])
 
         with CurrentUser(admin_user):
-            data_df = tsdio.get_last(ts_l, ds_1, timezone=timezone)
+            # No time interval
+            data_df = tsdio.get_last(None, None, ts_l, ds_1, timezone=timezone)
             expected_data_df = pd.DataFrame(
                 {
                     "timestamp": [h2_dt, pd.NaT, h1_dt],
                     "value": [2.0, np.nan, 10.0],
                 },
                 index=pd.Index([ts.id for ts in ts_l], name="id"),
-            ).astype(
+            ).astype({"timestamp": f"datetime64[ns, {timezone}]", "value": float})
+            assert_frame_equal(data_df, expected_data_df)
+
+            # Time interval, inclusive=left (default)
+            data_df = tsdio.get_last(h1_dt, h2_dt, ts_l, ds_1, timezone=timezone)
+            expected_data_df = pd.DataFrame(
                 {
-                    "timestamp": f"datetime64[ns, {timezone}]",
-                    "value": float,
-                }
+                    "timestamp": [h1_dt, pd.NaT, h1_dt],
+                    "value": [0.0, np.nan, 10.0],
+                },
+                index=pd.Index([ts.id for ts in ts_l], name="id"),
+            ).astype({"timestamp": f"datetime64[ns, {timezone}]", "value": float})
+            assert_frame_equal(data_df, expected_data_df)
+
+            # Time interval, inclusive=both
+            data_df = tsdio.get_last(
+                h1_dt, h2_dt, ts_l, ds_1, timezone=timezone, inclusive="both"
             )
+            expected_data_df = pd.DataFrame(
+                {
+                    "timestamp": [h2_dt, pd.NaT, h1_dt],
+                    "value": [2.0, np.nan, 10.0],
+                },
+                index=pd.Index([ts.id for ts in ts_l], name="id"),
+            ).astype({"timestamp": f"datetime64[ns, {timezone}]", "value": float})
+            assert_frame_equal(data_df, expected_data_df)
+
+            # Time interval, inclusive=neither (no data in this case)
+            data_df = tsdio.get_last(
+                h1_dt,
+                h2_dt,
+                ts_l,
+                ds_1,
+                timezone=timezone,
+                inclusive="neither",
+                col_label="name",
+            )
+            assert_frame_equal(data_df, no_data_df)
+
+            # Time interval, start_dt only
+            data_df = tsdio.get_last(h2_dt, None, ts_l, ds_1, timezone=timezone)
+            expected_data_df = pd.DataFrame(
+                {
+                    "timestamp": [h2_dt, pd.NaT, pd.NaT],
+                    "value": [2.0, np.nan, np.nan],
+                },
+                index=pd.Index([ts.id for ts in ts_l], name="id"),
+            ).astype({"timestamp": f"datetime64[ns, {timezone}]", "value": float})
+            assert_frame_equal(data_df, expected_data_df)
+
+            # Time interval, end_dt only
+            data_df = tsdio.get_last(None, h1_dt, ts_l, ds_1, timezone=timezone)
+            expected_data_df = pd.DataFrame(
+                {
+                    "timestamp": [pd.NaT, pd.NaT, start_dt],
+                    "value": [np.nan, np.nan, 12.0],
+                },
+                index=pd.Index([ts.id for ts in ts_l], name="id"),
+            ).astype({"timestamp": f"datetime64[ns, {timezone}]", "value": float})
             assert_frame_equal(data_df, expected_data_df)
 
     @pytest.mark.parametrize("campaigns", (2,), indirect=True)
@@ -439,7 +495,7 @@ class TestTimeseriesDataIO:
                 tsdio.get_timeseries_stats(ts_l, ds_1, timezone=timezone)
 
             ts_l = (ts_1, ts_3)
-            data_df = tsdio.get_last(ts_l, ds_1, timezone=timezone)
+            data_df = tsdio.get_last(None, None, ts_l, ds_1, timezone=timezone)
 
             expected_data_df = pd.DataFrame(
                 {
