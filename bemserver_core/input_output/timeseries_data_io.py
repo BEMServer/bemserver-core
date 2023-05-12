@@ -46,6 +46,85 @@ class TimeseriesDataIO:
     """Base class for TimeseriesData IO classes"""
 
     @classmethod
+    def get_last(
+        cls,
+        start_dt,
+        end_dt,
+        timeseries,
+        data_state,
+        *,
+        timezone="UTC",
+        inclusive="left",
+        col_label="id",
+    ):
+        """Get timeseries last values
+
+        :param datetime start_dt: Time interval lower bound (tz-aware)
+        :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
+        :param list timeseries: List of timeseries
+        :param TimeseriesDataState data_state: Timeseries data state
+        :param str timezone: IANA timezone to use for first/last timestamp
+        :param str inclusive: Whether to set each bound as closed or open.
+            Must be "both", "neither", "left" or "right". Default: "left".
+        :param string col_label: Timeseries attribute to use for column header.
+            Should be "id" or "name". Default: "id".
+
+        Returns a dataframe.
+        """
+        # Check permissions
+        for ts in timeseries:
+            auth.authorize(get_current_user(), "read_data", ts)
+
+        params = {
+            "timeseries_ids": [ts.id for ts in timeseries],
+            "data_state_id": data_state.id,
+            "start_dt": start_dt,
+            "end_dt": end_dt,
+        }
+
+        time_interval_filter = ""
+        if start_dt:
+            compar = ">=" if inclusive in {"both", "left"} else ">"
+            time_interval_filter += f"AND timestamp {compar} :start_dt "
+            params["start_dt"] = start_dt
+        if end_dt:
+            compar = "<=" if inclusive in {"both", "right"} else "<"
+            time_interval_filter += f"AND timestamp {compar} :end_dt "
+            params["end_dt"] = end_dt
+
+        query = (
+            # https://stackoverflow.com/a/7630564
+            f"SELECT DISTINCT ON (timeseries.{col_label}) timeseries.{col_label}, "
+            "timestamp, value "
+            "FROM ts_data, timeseries, ts_by_data_states "
+            "WHERE ts_data.ts_by_data_state_id = ts_by_data_states.id "
+            "  AND ts_by_data_states.data_state_id = :data_state_id "
+            "  AND ts_by_data_states.timeseries_id = timeseries.id "
+            "  AND timeseries_id = ANY(:timeseries_ids) "
+            f"{time_interval_filter}"
+            f"ORDER BY timeseries.{col_label}, timestamp DESC"
+        )
+        data = db.session.execute(sqla.text(query), params)
+
+        data_df = (
+            pd.DataFrame(
+                data,
+                columns=(
+                    col_label,
+                    "timestamp",
+                    "value",
+                ),
+            )
+            .set_index(col_label)
+            .reindex(getattr(ts, col_label) for ts in timeseries)
+            .astype({"timestamp": "datetime64[ns, UTC]", "value": float})
+        )
+
+        data_df["timestamp"] = data_df["timestamp"].dt.tz_convert(timezone)
+
+        return data_df
+
+    @classmethod
     def get_timeseries_stats(
         cls,
         timeseries,
