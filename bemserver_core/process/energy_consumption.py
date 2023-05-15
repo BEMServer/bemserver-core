@@ -21,6 +21,7 @@ def compute_energy_consumption_breakdown_for_site(
     end_dt,
     bucket_width_value,
     bucket_width_unit,
+    unit="Wh",
     timezone="UTC",
 ):
     """Compute energy consumption breakdown for a Site"""
@@ -30,6 +31,7 @@ def compute_energy_consumption_breakdown_for_site(
         end_dt,
         bucket_width_value,
         bucket_width_unit,
+        unit=unit,
         timezone=timezone,
     )
 
@@ -40,6 +42,8 @@ def compute_energy_consumption_breakdown_for_building(
     end_dt,
     bucket_width_value,
     bucket_width_unit,
+    *,
+    unit="Wh",
     timezone="UTC",
 ):
     """Compute energy consumption breakdown for a Building"""
@@ -49,6 +53,7 @@ def compute_energy_consumption_breakdown_for_building(
         end_dt,
         bucket_width_value,
         bucket_width_unit,
+        unit=unit,
         timezone=timezone,
     )
 
@@ -59,6 +64,8 @@ def compute_energy_consumption_breakdown(
     end_dt,
     bucket_width_value,
     bucket_width_unit,
+    *,
+    unit="Wh",
     timezone="UTC",
 ):
     # Use a set to remove potential duplicates (although it shouldn't happen)
@@ -74,7 +81,7 @@ def compute_energy_consumption_breakdown(
         bucket_width_value,
         bucket_width_unit,
         "sum",
-        convert_to={ts.id: "Wh" for ts in timeseries},
+        convert_to={ts.id: unit for ts in timeseries},
         timezone=timezone,
     ).fillna(0)
 
