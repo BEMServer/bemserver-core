@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+0.16.0 (unreleased)
++++++++++++++++++++
+
+Features:
+
+- Add forward fill process
+- Add TimeseriesDataIO.get_last
+
+Bug fixes:
+
+- Fix energy consumption breakdown computation crash on timeseries duplicate
+
 0.15.0 (2023-05-05)
 +++++++++++++++++++
 
