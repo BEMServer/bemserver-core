@@ -22,7 +22,10 @@ from bemserver_core.process.energy_consumption import (
     compute_energy_consumption_breakdown_for_site,
     compute_energy_consumption_breakdown_for_building,
 )
-from bemserver_core.exceptions import BEMServerCoreDimensionalityError
+from bemserver_core.exceptions import (
+    BEMServerCoreDimensionalityError,
+    BEMServerCoreEnergyBreakdownProcessZeroDivisionError,
+)
 
 
 class TestEnergyConsumption:
@@ -178,12 +181,22 @@ class TestEnergyConsumption:
                 site_1, start_dt, end_dt, 1, "hour", unit="mWh"
             )
             assert ret == expected["mWh"]
+            ret = compute_energy_consumption_breakdown_for_site(
+                site_1, start_dt, end_dt, 1, "hour", ratio=0.001
+            )
+            assert ret == expected["mWh"]
 
             # Check values are aggregated with a sum
             ret = compute_energy_consumption_breakdown_for_site(
                 site_1, start_dt, end_dt, 2, "hour"
             )
             assert ret["energy"]["all"]["all"] == [142.0]
+
+            # Check zero ratio
+            with pytest.raises(BEMServerCoreEnergyBreakdownProcessZeroDivisionError):
+                ret = compute_energy_consumption_breakdown_for_site(
+                    site_1, start_dt, end_dt, 1, "hour", ratio=0
+                )
 
             # Check wrong unit
             timeseries[0].unit_symbol = ""
@@ -276,12 +289,22 @@ class TestEnergyConsumption:
                 building_1, start_dt, end_dt, 1, "hour", unit="mWh"
             )
             assert ret == expected["mWh"]
+            ret = compute_energy_consumption_breakdown_for_building(
+                building_1, start_dt, end_dt, 1, "hour", ratio=0.001
+            )
+            assert ret == expected["mWh"]
 
             # Check values are aggregated with a sum
             ret = compute_energy_consumption_breakdown_for_building(
                 building_1, start_dt, end_dt, 2, "hour"
             )
             assert ret["energy"]["all"]["all"] == [142.0]
+
+            # Check zero ratio
+            with pytest.raises(BEMServerCoreEnergyBreakdownProcessZeroDivisionError):
+                ret = compute_energy_consumption_breakdown_for_building(
+                    building_1, start_dt, end_dt, 1, "hour", ratio=0
+                )
 
             # Check wrong unit
             timeseries[0].unit_symbol = ""

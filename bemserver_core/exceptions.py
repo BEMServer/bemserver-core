@@ -117,6 +117,16 @@ class BEMServerCoreWeatherAPIAuthenticationError(BEMServerCoreWeatherAPIError):
     """Error in weather API authentication"""
 
 
+class BEMServerCoreEnergyBreakdownProcessError(BEMServerCoreError):
+    """Error in energy breakdown computation process"""
+
+
+class BEMServerCoreEnergyBreakdownProcessZeroDivisionError(
+    BEMServerCoreEnergyBreakdownProcessError
+):
+    """Division by zero in energy breakdown computation process"""
+
+
 class BEMServerCoreWeatherProcessError(BEMServerCoreError):
     """Error in weather process"""
 
