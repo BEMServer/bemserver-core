@@ -546,6 +546,43 @@ class TestSiteModel:
             with pytest.raises(BEMServerAuthorizationError):
                 site.delete()
 
+    def test_site_get_property_value(
+        self,
+        users,
+        sites,
+        structural_element_properties,
+        site_property_data,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        site_1 = sites[0]
+        site_2 = sites[1]
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+        sep_3 = structural_element_properties[2]
+        sep_4 = structural_element_properties[3]
+        spd_1 = site_property_data[0]
+        spd_2 = site_property_data[1]
+        spd_3 = site_property_data[2]
+        spd_4 = site_property_data[3]
+
+        with CurrentUser(admin_user):
+            ret = site_1.get_property_value(sep_1.name)
+            assert type(ret) == sep_1.value_type.value
+            assert ret == sep_1.value_type.value(spd_1.value)
+            ret = site_2.get_property_value(sep_2.name)
+            assert type(ret) == sep_2.value_type.value
+            assert ret == sep_2.value_type.value(spd_2.value)
+            ret = site_2.get_property_value(sep_3.name)
+            assert type(ret) == sep_3.value_type.value
+            assert ret == sep_3.value_type.value(spd_3.value)
+            ret = site_2.get_property_value(sep_4.name)
+            assert type(ret) == sep_4.value_type.value
+            assert ret == sep_4.value_type.value(spd_4.value)
+            ret = site_2.get_property_value("dummy")
+            assert ret is None
+
 
 class TestBuildingModel:
     @pytest.mark.usefixtures("spaces")
@@ -645,6 +682,43 @@ class TestBuildingModel:
                 building.update(name="Super building 1")
             with pytest.raises(BEMServerAuthorizationError):
                 building.delete()
+
+    def test_building_get_property_value(
+        self,
+        users,
+        buildings,
+        structural_element_properties,
+        building_property_data,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        building_1 = buildings[0]
+        building_2 = buildings[1]
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+        sep_3 = structural_element_properties[2]
+        sep_4 = structural_element_properties[3]
+        spd_1 = building_property_data[0]
+        spd_2 = building_property_data[1]
+        spd_3 = building_property_data[2]
+        spd_4 = building_property_data[3]
+
+        with CurrentUser(admin_user):
+            ret = building_1.get_property_value(sep_1.name)
+            assert type(ret) == sep_1.value_type.value
+            assert ret == sep_1.value_type.value(spd_1.value)
+            ret = building_2.get_property_value(sep_2.name)
+            assert type(ret) == sep_2.value_type.value
+            assert ret == sep_2.value_type.value(spd_2.value)
+            ret = building_2.get_property_value(sep_3.name)
+            assert type(ret) == sep_3.value_type.value
+            assert ret == sep_3.value_type.value(spd_3.value)
+            ret = building_2.get_property_value(sep_4.name)
+            assert type(ret) == sep_4.value_type.value
+            assert ret == sep_4.value_type.value(spd_4.value)
+            ret = building_2.get_property_value("dummy")
+            assert ret is None
 
 
 class TestStoreyModel:
@@ -754,6 +828,43 @@ class TestStoreyModel:
                 storey.update(name="Super storey 1")
             with pytest.raises(BEMServerAuthorizationError):
                 storey.delete()
+
+    def test_storey_get_property_value(
+        self,
+        users,
+        storeys,
+        structural_element_properties,
+        storey_property_data,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        storey_1 = storeys[0]
+        storey_2 = storeys[1]
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+        sep_3 = structural_element_properties[2]
+        sep_4 = structural_element_properties[3]
+        spd_1 = storey_property_data[0]
+        spd_2 = storey_property_data[1]
+        spd_3 = storey_property_data[2]
+        spd_4 = storey_property_data[3]
+
+        with CurrentUser(admin_user):
+            ret = storey_1.get_property_value(sep_1.name)
+            assert type(ret) == sep_1.value_type.value
+            assert ret == sep_1.value_type.value(spd_1.value)
+            ret = storey_2.get_property_value(sep_2.name)
+            assert type(ret) == sep_2.value_type.value
+            assert ret == sep_2.value_type.value(spd_2.value)
+            ret = storey_2.get_property_value(sep_3.name)
+            assert type(ret) == sep_3.value_type.value
+            assert ret == sep_3.value_type.value(spd_3.value)
+            ret = storey_2.get_property_value(sep_4.name)
+            assert type(ret) == sep_4.value_type.value
+            assert ret == sep_4.value_type.value(spd_4.value)
+            ret = storey_2.get_property_value("dummy")
+            assert ret is None
 
 
 class TestSpaceModel:
@@ -872,6 +983,43 @@ class TestSpaceModel:
             with pytest.raises(BEMServerAuthorizationError):
                 space.delete()
 
+    def test_space_get_property_value(
+        self,
+        users,
+        spaces,
+        structural_element_properties,
+        space_property_data,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        space_1 = spaces[0]
+        space_2 = spaces[1]
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+        sep_3 = structural_element_properties[2]
+        sep_4 = structural_element_properties[3]
+        spd_1 = space_property_data[0]
+        spd_2 = space_property_data[1]
+        spd_3 = space_property_data[2]
+        spd_4 = space_property_data[3]
+
+        with CurrentUser(admin_user):
+            ret = space_1.get_property_value(sep_1.name)
+            assert type(ret) == sep_1.value_type.value
+            assert ret == sep_1.value_type.value(spd_1.value)
+            ret = space_2.get_property_value(sep_2.name)
+            assert type(ret) == sep_2.value_type.value
+            assert ret == sep_2.value_type.value(spd_2.value)
+            ret = space_2.get_property_value(sep_3.name)
+            assert type(ret) == sep_3.value_type.value
+            assert ret == sep_3.value_type.value(spd_3.value)
+            ret = space_2.get_property_value(sep_4.name)
+            assert type(ret) == sep_4.value_type.value
+            assert ret == sep_4.value_type.value(spd_4.value)
+            ret = space_2.get_property_value("dummy")
+            assert ret is None
+
 
 class TestZoneModel:
     @pytest.mark.usefixtures("zone_property_data")
@@ -939,6 +1087,43 @@ class TestZoneModel:
                 zone.update(name="Super zone 1")
             with pytest.raises(BEMServerAuthorizationError):
                 zone.delete()
+
+    def test_zone_get_property_value(
+        self,
+        users,
+        zones,
+        structural_element_properties,
+        zone_property_data,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        zone_1 = zones[0]
+        zone_2 = zones[1]
+        sep_1 = structural_element_properties[0]
+        sep_2 = structural_element_properties[1]
+        sep_3 = structural_element_properties[2]
+        sep_4 = structural_element_properties[3]
+        spd_1 = zone_property_data[0]
+        spd_2 = zone_property_data[1]
+        spd_3 = zone_property_data[2]
+        spd_4 = zone_property_data[3]
+
+        with CurrentUser(admin_user):
+            ret = zone_1.get_property_value(sep_1.name)
+            assert type(ret) == sep_1.value_type.value
+            assert ret == sep_1.value_type.value(spd_1.value)
+            ret = zone_2.get_property_value(sep_2.name)
+            assert type(ret) == sep_2.value_type.value
+            assert ret == sep_2.value_type.value(spd_2.value)
+            ret = zone_2.get_property_value(sep_3.name)
+            assert type(ret) == sep_3.value_type.value
+            assert ret == sep_3.value_type.value(spd_3.value)
+            ret = zone_2.get_property_value(sep_4.name)
+            assert type(ret) == sep_4.value_type.value
+            assert ret == sep_4.value_type.value(spd_4.value)
+            ret = zone_2.get_property_value("dummy")
+            assert ret is None
 
 
 class TestSitePropertyDataModel:
