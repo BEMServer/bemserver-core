@@ -1,13 +1,15 @@
 Changelog
 ---------
 
-0.16.0 (unreleased)
+0.15.1 (2023-05-22)
 +++++++++++++++++++
 
 Features:
 
 - Add forward fill process
 - Add TimeseriesDataIO.get_last
+- Add unit and ratio arguments to energy consumption breakdown process
+- Add get_property_value method to Site/Building/...
 
 Bug fixes:
 
