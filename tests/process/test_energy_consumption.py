@@ -1,4 +1,5 @@
 """Energy consumption tests"""
+from copy import deepcopy
 import datetime as dt
 
 import pandas as pd
@@ -21,7 +22,10 @@ from bemserver_core.process.energy_consumption import (
     compute_energy_consumption_breakdown_for_site,
     compute_energy_consumption_breakdown_for_building,
 )
-from bemserver_core.exceptions import BEMServerCoreDimensionalityError
+from bemserver_core.exceptions import (
+    BEMServerCoreDimensionalityError,
+    BEMServerCoreEnergyBreakdownProcessZeroDivisionError,
+)
 
 
 class TestEnergyConsumption:
@@ -54,7 +58,7 @@ class TestEnergyConsumption:
         create_timeseries_data(timeseries[6], ds_clean, timestamps, [0.021, 0.021])
         create_timeseries_data(timeseries[7], ds_clean, timestamps, [0.021, 0.021])
 
-        expected_consumptions = {
+        expected_consumptions_wh = {
             "all": {
                 "all": [71.0, 71.0],
                 "heating": [46.0, 46.0],
@@ -72,9 +76,20 @@ class TestEnergyConsumption:
             },
         }
 
+        expected_consumptions_mwh = deepcopy(expected_consumptions_wh)
+        for energy in expected_consumptions_mwh.values():
+            for usage in energy.keys():
+                energy[usage] = [val * 1000 for val in energy[usage]]
+
         expected = {
-            "timestamps": timestamps.to_list(),
-            "energy": expected_consumptions,
+            "Wh": {
+                "timestamps": timestamps.to_list(),
+                "energy": expected_consumptions_wh,
+            },
+            "mWh": {
+                "timestamps": timestamps.to_list(),
+                "energy": expected_consumptions_mwh,
+            },
         }
 
         return start_dt, end_dt, timeseries, expected
@@ -161,13 +176,27 @@ class TestEnergyConsumption:
             ret = compute_energy_consumption_breakdown_for_site(
                 site_1, start_dt, end_dt, 1, "hour"
             )
-            assert ret == expected
+            assert ret == expected["Wh"]
+            ret = compute_energy_consumption_breakdown_for_site(
+                site_1, start_dt, end_dt, 1, "hour", unit="mWh"
+            )
+            assert ret == expected["mWh"]
+            ret = compute_energy_consumption_breakdown_for_site(
+                site_1, start_dt, end_dt, 1, "hour", ratio=0.001
+            )
+            assert ret == expected["mWh"]
 
             # Check values are aggregated with a sum
             ret = compute_energy_consumption_breakdown_for_site(
                 site_1, start_dt, end_dt, 2, "hour"
             )
             assert ret["energy"]["all"]["all"] == [142.0]
+
+            # Check zero ratio
+            with pytest.raises(BEMServerCoreEnergyBreakdownProcessZeroDivisionError):
+                ret = compute_energy_consumption_breakdown_for_site(
+                    site_1, start_dt, end_dt, 1, "hour", ratio=0
+                )
 
             # Check wrong unit
             timeseries[0].unit_symbol = ""
@@ -255,13 +284,27 @@ class TestEnergyConsumption:
             ret = compute_energy_consumption_breakdown_for_building(
                 building_1, start_dt, end_dt, 1, "hour"
             )
-            assert ret == expected
+            assert ret == expected["Wh"]
+            ret = compute_energy_consumption_breakdown_for_building(
+                building_1, start_dt, end_dt, 1, "hour", unit="mWh"
+            )
+            assert ret == expected["mWh"]
+            ret = compute_energy_consumption_breakdown_for_building(
+                building_1, start_dt, end_dt, 1, "hour", ratio=0.001
+            )
+            assert ret == expected["mWh"]
 
             # Check values are aggregated with a sum
             ret = compute_energy_consumption_breakdown_for_building(
                 building_1, start_dt, end_dt, 2, "hour"
             )
             assert ret["energy"]["all"]["all"] == [142.0]
+
+            # Check zero ratio
+            with pytest.raises(BEMServerCoreEnergyBreakdownProcessZeroDivisionError):
+                ret = compute_energy_consumption_breakdown_for_building(
+                    building_1, start_dt, end_dt, 1, "hour", ratio=0
+                )
 
             # Check wrong unit
             timeseries[0].unit_symbol = ""
