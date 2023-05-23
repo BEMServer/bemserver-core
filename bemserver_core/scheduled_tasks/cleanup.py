@@ -182,14 +182,9 @@ class ST_CleanupByTimeseries(AuthMixin, Base):
         return query
 
 
-@celery.task(name="Cleanup")
-def cleanup_scheduled_task():
-    logger.info("Start")
-
+def cleanup_data():
     ds_raw = TimeseriesDataState.get(name="Raw").first()
     ds_clean = TimeseriesDataState.get(name="Clean").first()
-
-    logger.debug("Cleaning data")
 
     for cbc in ST_CleanupByCampaign.get(is_enabled=True):
         campaign = cbc.campaign
@@ -225,3 +220,10 @@ def cleanup_scheduled_task():
 
             logger.debug("Committing")
             db.session.commit()
+
+
+@celery.task(name="Cleanup")
+def cleanup_scheduled_task():
+    logger.info("Start")
+
+    cleanup_data()
