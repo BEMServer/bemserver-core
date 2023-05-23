@@ -9,6 +9,7 @@ from celery import Celery, Task, signals
 from celery.utils.log import get_task_logger
 from celery.exceptions import WorkerShutdown
 
+from bemserver_core.database import db
 from bemserver_core.authorization import OpenBar
 from bemserver_core.exceptions import BEMServerCoreSettingsError
 from bemserver_core import utils
@@ -27,7 +28,7 @@ class DefaultCeleryConfig:
     task_send_sent_event = True
 
 
-def open_bar_wrap(func):
+def task_wrapper(func):
     """Wrap function in OpenBar context"""
 
     @wraps(func)
@@ -36,6 +37,12 @@ def open_bar_wrap(func):
             return func(*func_args, **func_kwargs)
 
     return wrapper
+
+
+@signals.task_postrun.connect
+def remove_session(sender=None, headers=None, body=None, **kwargs):
+    """Close session on end of task to rollback transaction"""
+    db.session.remove()
 
 
 class BEMServerCoreTask(Task):
@@ -47,7 +54,7 @@ class BEMServerCoreTask(Task):
     def __init__(self):
         # This seems to be the recommended way to wrap a task run method
         # https://github.com/celery/celery/issues/1282
-        self.run = open_bar_wrap(self.run)
+        self.run = task_wrapper(self.run)
 
 
 class BEMServerCoreCelery(Celery):

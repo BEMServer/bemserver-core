@@ -14,7 +14,7 @@ from bemserver_core.model import (
 from bemserver_core.scheduled_tasks.cleanup import (
     ST_CleanupByCampaign,
     ST_CleanupByTimeseries,
-    cleanup_scheduled_task,
+    cleanup_data,
 )
 from bemserver_core.database import db
 from bemserver_core.input_output import tsdio
@@ -481,7 +481,7 @@ class TestST_CleanupByTimeseriesModel:
 
 class TestCleanupScheduledTask:
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
-    def test_cleanup_scheduled_task(self, users, timeseries, campaigns):
+    def test_cleanup_data(self, users, timeseries, campaigns):
         admin_user = users[0]
         assert admin_user.is_admin
         ts_0 = timeseries[0]
@@ -513,7 +513,7 @@ class TestCleanupScheduledTask:
             assert ST_CleanupByTimeseries.get(timeseries_id=ts_0.id).first() is None
             assert ST_CleanupByTimeseries.get(timeseries_id=ts_1.id).first() is None
 
-            cleanup_scheduled_task.apply()
+            cleanup_data()
 
             # Campaign 1, TS 0, min 12, max None, [0, 13] -> [-, 13]
             data_df = tsdio.get_timeseries_data(start_dt, end_dt, (ts_0,), ds_2)
@@ -540,7 +540,7 @@ class TestCleanupScheduledTask:
             assert ST_CleanupByTimeseries.get(timeseries_id=ts_1.id).first() is None
 
             # Run a second time to test the case where CBT already exists
-            cleanup_scheduled_task.apply()
+            cleanup_data()
 
             st_cbt_1 = ST_CleanupByTimeseries.get(timeseries_id=ts_0.id).first()
             assert st_cbt_1.last_timestamp == dt.datetime(
