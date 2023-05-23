@@ -1,6 +1,17 @@
 Changelog
 ---------
 
+0.15.2 (2023-05-23)
++++++++++++++++++++
+
+Bug fixes:
+
+- Rollback session on end of task
+
+Other changes:
+
+- Remove official Python 3.11 support
+
 0.15.1 (2023-05-22)
 +++++++++++++++++++
 
