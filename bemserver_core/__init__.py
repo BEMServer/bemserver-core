@@ -13,7 +13,7 @@ from bemserver_core.process.weather import wdp
 from bemserver_core.exceptions import BEMServerCoreSettingsError
 
 
-__version__ = "0.15.1"
+__version__ = "0.15.2"
 
 
 class BEMServerCore:
