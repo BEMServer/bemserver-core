@@ -61,7 +61,7 @@ pint==0.21
     # via bemserver-core (setup.py)
 prompt-toolkit==3.0.38
     # via click-repl
-psycopg2==2.9.6
+psycopg==3.1.9
     # via bemserver-core (setup.py)
 pycparser==2.21
     # via cffi
@@ -86,6 +86,7 @@ sqlalchemy==2.0.12
 typing-extensions==4.5.0
     # via
     #   alembic
+    #   psycopg
     #   sqlalchemy
 tzdata==2023.3
     # via pandas

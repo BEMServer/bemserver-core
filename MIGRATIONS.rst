@@ -13,7 +13,7 @@ Environment Setup
 Alembic commands require a connection to a live database. The connection URI
 must be passed as environment variable::
 
-    $ export SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://user:password@localhost:5432/bemserver"
+    $ export SQLALCHEMY_DATABASE_URI="postgresql+psycopg://user:password@localhost:5432/bemserver"
 
 Generate Migration Scripts
 --------------------------
