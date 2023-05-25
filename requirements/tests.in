@@ -1,4 +1,3 @@
-# pytest-postgresql 4.x requires psycopg 3, not supported by SQLAlchemy until 2.x
 pytest
-pytest-postgresql>=3.1.3,<4
+pytest-postgresql>=5.0.0
 pytest-cov
