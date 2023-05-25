@@ -73,11 +73,11 @@ six==1.16.0
     # via
     #   click-repl
     #   python-dateutil
-sqlalchemy==2.0.0
+sqlalchemy==2.0.8
     # via
     #   -r requirements/install-min.in
     #   alembic
-typing-extensions==4.5.0
+typing-extensions==4.6.1
     # via sqlalchemy
 tzdata==2023.3
     # via pandas

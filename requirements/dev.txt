@@ -8,7 +8,7 @@ bump2version==1.0.1
     # via -r requirements/dev.in
 cfgv==3.3.1
     # via pre-commit
-coverage[toml]==7.2.5
+coverage[toml]==7.2.6
     # via pytest-cov
 distlib==0.3.6
     # via virtualenv
@@ -22,17 +22,17 @@ iniconfig==2.0.0
     # via pytest
 mirakuru==2.5.1
     # via pytest-postgresql
-nodeenv==1.7.0
+nodeenv==1.8.0
     # via pre-commit
 packaging==23.1
     # via pytest
-platformdirs==3.5.0
+platformdirs==3.5.1
     # via virtualenv
 pluggy==1.0.0
     # via pytest
 port-for==0.6.3
     # via pytest-postgresql
-pre-commit==3.3.1
+pre-commit==3.3.2
     # via -r requirements/dev.in
 psutil==5.9.5
     # via mirakuru
@@ -43,7 +43,7 @@ pytest==7.3.1
     #   -r requirements/tests.in
     #   pytest-cov
     #   pytest-postgresql
-pytest-cov==4.0.0
+pytest-cov==4.1.0
     # via -r requirements/tests.in
 pytest-postgresql==5.0.0
     # via -r requirements/tests.in
