@@ -5,7 +5,7 @@ Forward fill from timeseries data
 import pandas as pd
 
 from bemserver_core.input_output import tsdio
-from bemserver_core.time_utils import make_pandas_freq
+from bemserver_core.time_utils import ceil, make_pandas_freq
 
 
 def ffill(
@@ -19,6 +19,7 @@ def ffill(
     """Forward fill process"""
 
     # Define expected index
+    start_dt = ceil(start_dt, bucket_width_unit, bucket_width_value)
     pd_freq = make_pandas_freq(bucket_width_unit, bucket_width_value)
     complete_idx = pd.date_range(
         start_dt,
