@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.15.4 (2023-05-26)
++++++++++++++++++++
+
+Bug fixes:
+
+- Forward fill process: ceil start_dt to respect bucket width parameters
+
 0.15.3 (2023-05-26)
 +++++++++++++++++++
 
