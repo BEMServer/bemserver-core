@@ -149,7 +149,7 @@ def download_weather_data(
 
     for dwdbs in st_dwdbs_cls.get(is_enabled=True):
         site = dwdbs.site
-        logger.debug(
+        logger.info(
             "Getting weather data for site %s for period [%s, %s]",
             site.name,
             start_dt.isoformat(),
