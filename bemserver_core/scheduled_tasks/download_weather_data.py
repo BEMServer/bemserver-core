@@ -158,7 +158,7 @@ def download_weather_data(
         wdp.get_weather_data_for_site(site, start_dt, end_dt, forecast=forecast)
 
 
-@celery.task(name="DownloadWeatherDataScheduledTask")
+@celery.task(name="DownloadWeatherData")
 def download_weather_data_scheduled_task(
     period, period_multiplier, periods_before, periods_after, timezone="UTC"
 ):
@@ -177,7 +177,7 @@ def download_weather_data_scheduled_task(
     db.session.commit()
 
 
-@celery.task(name="DownloadWeatherForecastDataScheduledTask")
+@celery.task(name="DownloadWeatherForecastData")
 def download_weather_forecast_data_scheduled_task(
     period, period_multiplier, periods_before, periods_after, timezone="UTC"
 ):
