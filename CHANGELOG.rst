@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.15.3 (2023-05-26)
++++++++++++++++++++
+
+Bug fixes:
+
+- Fix DownloadWeatherData and DownloadWeatherForecastData tasks names
+
 0.15.2 (2023-05-23)
 +++++++++++++++++++
 
