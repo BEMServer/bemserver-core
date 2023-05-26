@@ -69,6 +69,26 @@ class TestForewardFillProcess:
             )
             assert_frame_equal(data_df, expected_data_df)
 
+            # Check start datetime is ceiled
+            data_df = ffill(
+                h4_dt + dt.timedelta(seconds=250), end_dt, ts_l, ds_1, 2, "hour"
+            )
+
+            timestamps = [
+                dt.datetime(2020, 1, 1, hour, 0, tzinfo=dt.timezone.utc)
+                for hour in (6, 8, 9, 10)
+            ]
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.id: [1.0, 1.0, np.nan, 1.0],
+                    ts_1.id: [6.0, 6.0, 9.0, 9.0],
+                    ts_2.id: [42.0, 42.0, np.nan, 42.0],
+                    ts_3.id: [np.nan, np.nan, np.nan, np.nan],
+                },
+                index=pd.DatetimeIndex(timestamps, name="timestamp"),
+            )
+            assert_frame_equal(data_df, expected_data_df)
+
             # Test with TS duplicate to ensure it doesn't crash
             ts_l = (ts_3, ts_2, ts_2, ts_0)
 
