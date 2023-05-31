@@ -57,7 +57,7 @@ passlib==1.7.4
     # via -r requirements/install-min.in
 prompt-toolkit==3.0.38
     # via click-repl
-psycopg2==2.9.0
+psycopg==3.0.2
     # via -r requirements/install-min.in
 pycparser==2.21
     # via cffi

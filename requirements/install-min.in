@@ -1,4 +1,4 @@
-psycopg2==2.9.0
+psycopg==3.0.2
 sqlalchemy==2.0.8
 pandas==2.0
 passlib==1.7.4
