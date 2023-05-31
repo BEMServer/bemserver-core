@@ -41,7 +41,10 @@ class TestForewardFillProcess:
         values_1 = [ts.hour % 2 for ts in timestamps_1]
         create_timeseries_data(ts_0, ds_1, timestamps_1, values_1)
 
-        timestamps_2 = pd.date_range(start_dt, end_dt, inclusive="left", freq="3H")
+        timestamps_2 = [start_dt]
+        values_2 = [ts.hour for ts in timestamps_2]
+        create_timeseries_data(ts_1, ds_1, timestamps_2, values_2)
+        timestamps_2 = pd.date_range(h6_dt, end_dt, inclusive="left", freq="3H")
         values_2 = [ts.hour for ts in timestamps_2]
         create_timeseries_data(ts_1, ds_1, timestamps_2, values_2)
 
@@ -61,7 +64,7 @@ class TestForewardFillProcess:
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.id: [0.0, 1.0, 1.0, 1.0, np.nan, 1.0],
-                    ts_1.id: [3.0, np.nan, 6.0, 6.0, 9.0, 9.0],
+                    ts_1.id: [0.0, np.nan, 6.0, 6.0, 9.0, 9.0],
                     ts_2.id: [np.nan, np.nan, 42.0, 42.0, np.nan, 42.0],
                     ts_3.id: [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
                 },
