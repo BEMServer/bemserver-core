@@ -33,7 +33,7 @@ postgresql = ppf.postgresql("postgresql_proc")
 
 def _get_db_url(postgresql):
     return (
-        "postgresql+psycopg2://"
+        "postgresql+psycopg://"
         f"{postgresql.info.user}:{postgresql.info.password}"
         f"@{postgresql.info.host}:{postgresql.info.port}/"
         f"{postgresql.info.dbname}"
