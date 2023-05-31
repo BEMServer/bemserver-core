@@ -20,8 +20,6 @@ port-for==0.6.3
     # via pytest-postgresql
 psutil==5.9.5
     # via mirakuru
-psycopg==3.1.9
-    # via pytest-postgresql
 pytest==7.3.1
     # via
     #   -r requirements/tests.in
@@ -35,8 +33,6 @@ tomli==2.0.1
     # via
     #   coverage
     #   pytest
-typing-extensions==4.6.1
-    # via psycopg
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
