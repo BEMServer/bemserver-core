@@ -313,6 +313,32 @@ class Timeseries(AuthMixin, Base):
             )
         return list(ts_d.values())
 
+    def get_property_value(self, property_name):
+        """Get propery value for a given property name
+
+        :param str property_name: Property name
+
+        Returns the value property cast to the property type
+        """
+        stmt = (
+            sqla.select(TimeseriesPropertyData, TimeseriesProperty)
+            .join(
+                TimeseriesProperty,
+                TimeseriesPropertyData.property_id == TimeseriesProperty.id,
+            )
+            .filter(TimeseriesPropertyData.timeseries_id == self.id)
+            .filter(TimeseriesProperty.name == property_name)
+        )
+        ret = db.session.execute(stmt).first()
+
+        # If none found, return None
+        if ret is None:
+            return None
+
+        # Value is stored in DB as string, cast to property type
+        prop_data, se_property = ret
+        return se_property.value_type.value(prop_data.value)
+
     @classmethod
     def get_property_for_many_timeseries(cls, timeseries, prop_name):
         """Get property by name for a list of timeseries

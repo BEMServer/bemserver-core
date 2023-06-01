@@ -248,6 +248,60 @@ class TestTimeseriesModel:
         with pytest.raises(TimeseriesNotFoundError):
             Timeseries.get_many_by_name(campaign_1, [ts_1.name, ts_2.name, dummy_name])
 
+    def test_timeseries_get_property_value(
+        self,
+        users,
+        timeseries,
+        timeseries_properties,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+
+        ts_1 = timeseries[0]
+        ts_p_3 = timeseries_properties[2]
+        ts_p_4 = timeseries_properties[3]
+        ts_p_5 = timeseries_properties[4]
+        ts_p_6 = timeseries_properties[5]
+
+        with OpenBar():
+            ts_p_d_3 = TimeseriesPropertyData.new(
+                timeseries_id=ts_1.id,
+                property_id=ts_p_3.id,
+                value="12.0",
+            )
+            ts_p_d_4 = TimeseriesPropertyData.new(
+                timeseries_id=ts_1.id,
+                property_id=ts_p_4.id,
+                value="42",
+            )
+            ts_p_d_5 = TimeseriesPropertyData.new(
+                timeseries_id=ts_1.id,
+                property_id=ts_p_5.id,
+                value="true",
+            )
+            ts_p_d_6 = TimeseriesPropertyData.new(
+                timeseries_id=ts_1.id,
+                property_id=ts_p_6.id,
+                value="test",
+            )
+            db.session.flush()
+
+        with CurrentUser(admin_user):
+            ret = ts_1.get_property_value(ts_p_3.name)
+            assert type(ret) == ts_p_3.value_type.value
+            assert ret == ts_p_3.value_type.value(ts_p_d_3.value)
+            ret = ts_1.get_property_value(ts_p_4.name)
+            assert type(ret) == ts_p_4.value_type.value
+            assert ret == ts_p_4.value_type.value(ts_p_d_4.value)
+            ret = ts_1.get_property_value(ts_p_5.name)
+            assert type(ret) == ts_p_5.value_type.value
+            assert ret == ts_p_5.value_type.value(ts_p_d_5.value)
+            ret = ts_1.get_property_value(ts_p_6.name)
+            assert type(ret) == ts_p_6.value_type.value
+            assert ret == ts_p_6.value_type.value(ts_p_d_6.value)
+            ret = ts_1.get_property_value("dummy")
+            assert ret is None
+
     @pytest.mark.usefixtures("as_admin")
     def test_timeseries_get_property_for_many_timeseries(self, timeseries):
         ts_1 = timeseries[0]
