@@ -145,3 +145,11 @@ class BEMServerCoreDegreeDayProcessMissingTemperatureError(
     BEMServerCoreDegreeDaysProcessError
 ):
     """Missing air temperature in degree days process"""
+
+
+class BEMServerCoreEnergyPowerProcessError(BEMServerCoreError):
+    """Error in energy power conversion process"""
+
+
+class BEMServerCoreEnergyPowerProcessMissingIntervalError(BEMServerCoreError):
+    """Missing timeseries interval property"""
