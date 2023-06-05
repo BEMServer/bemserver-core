@@ -1,6 +1,17 @@
 Changelog
 ---------
 
+0.16.0 (unreleased)
++++++++++++++++++++
+
+Features:
+
+- Add energy <=> power conversion processes
+
+Other changes:
+
+- Require psycopg 3.x
+
 0.15.4 (2023-05-26)
 +++++++++++++++++++
 
