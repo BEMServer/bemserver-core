@@ -135,3 +135,34 @@ def energyindex2power(
     )
 
     return power_s
+
+
+def energyindex2energy(
+    start_dt,
+    end_dt,
+    index_ts,
+    data_state,
+    interval,
+    convert_to,
+):
+    """Convert energy index to energy"""
+
+    power_s = energyindex2power(
+        start_dt,
+        end_dt,
+        index_ts,
+        data_state,
+        interval,
+        "W",
+    )
+
+    # Energy = Power * Time
+    energy_s = power_s * interval / 3600
+
+    # Convert to desired unit
+    energy_s = pd.Series(
+        ureg.convert(power_s.values, "Wh", convert_to),
+        index=power_s.index,
+    )
+
+    return energy_s
