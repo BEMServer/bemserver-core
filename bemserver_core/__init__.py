@@ -10,6 +10,7 @@ from bemserver_core import scheduled_tasks
 from bemserver_core import settings
 from bemserver_core import utils
 from bemserver_core.process.weather import wdp
+from bemserver_core.email import ems
 from bemserver_core.exceptions import BEMServerCoreSettingsError
 
 
@@ -55,6 +56,9 @@ class BEMServerCore:
 
         # Init weather data processor
         wdp.init_core(self)
+
+        # Init SMTP
+        ems.init_core(self)
 
     def load_units_definitions_file(self, file_path):
         common.ureg.load_definitions(file_path)
