@@ -1141,7 +1141,7 @@ class TestSitePropertyDataModel:
             spd_1 = SitePropertyData.new(
                 site_id=site_1.id,
                 site_property_id=site_p_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             SitePropertyData.get_by_id(spd_1.id)
@@ -1177,7 +1177,7 @@ class TestSitePropertyDataModel:
                 SitePropertyData.new(
                     site_id=site_2.id,
                     site_property_id=site_p_1.id,
-                    value=12,
+                    value="12",
                 )
             with pytest.raises(BEMServerAuthorizationError):
                 spd_2.update(value="69")
@@ -1204,7 +1204,7 @@ class TestSitePropertyDataModel:
             site_pd_1 = SitePropertyData.new(
                 site_id=site_1.id,
                 site_property_id=site_p_1.id,
-                value=42,
+                value="42",
             )
             db.session.commit()
             assert site_pd_1.value == "42"
@@ -1224,7 +1224,7 @@ class TestSitePropertyDataModel:
             site_pd_2 = SitePropertyData.new(
                 site_id=site_1.id,
                 site_property_id=site_p_2.id,
-                value=4.2,
+                value="4.2",
             )
             db.session.commit()
             assert site_pd_2.value == "4.2"
@@ -1269,7 +1269,7 @@ class TestSitePropertyDataModel:
             site_pd_4 = SitePropertyData.new(
                 site_id=site_1.id,
                 site_property_id=site_p_4.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             assert site_pd_4.value == "12"
@@ -1296,7 +1296,7 @@ class TestSitePropertyDataModel:
             spd = SitePropertyData.new(
                 site_id=site_1.id,
                 site_property_id=site_p_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             spd.site_id = site_2.id
@@ -1329,7 +1329,7 @@ class TestBuildingPropertyDataModel:
             bpd_1 = BuildingPropertyData.new(
                 building_id=building_1.id,
                 building_property_id=building_p_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             BuildingPropertyData.get_by_id(bpd_1.id)
@@ -1365,7 +1365,7 @@ class TestBuildingPropertyDataModel:
                 BuildingPropertyData.new(
                     building_id=building_2.id,
                     building_property_id=building_p_1.id,
-                    value=12,
+                    value="12",
                 )
             with pytest.raises(BEMServerAuthorizationError):
                 bpd_2.update(value="69")
@@ -1393,7 +1393,7 @@ class TestBuildingPropertyDataModel:
             building_pd_1 = BuildingPropertyData.new(
                 building_id=building_1.id,
                 building_property_id=building_p_1.id,
-                value=42,
+                value="42",
             )
             db.session.commit()
             assert building_pd_1.value == "42"
@@ -1416,7 +1416,7 @@ class TestBuildingPropertyDataModel:
             building_pd_2 = BuildingPropertyData.new(
                 building_id=building_1.id,
                 building_property_id=building_p_2.id,
-                value=4.2,
+                value="4.2",
             )
             db.session.commit()
             assert building_pd_2.value == "4.2"
@@ -1463,7 +1463,7 @@ class TestBuildingPropertyDataModel:
             building_pd_4 = BuildingPropertyData.new(
                 building_id=building_1.id,
                 building_property_id=building_p_4.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             assert building_pd_4.value == "12"
@@ -1490,7 +1490,7 @@ class TestBuildingPropertyDataModel:
             bpd = BuildingPropertyData.new(
                 building_id=building_1.id,
                 building_property_id=building_p_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             bpd.building_id = building_2.id
@@ -1523,7 +1523,7 @@ class TestStoreyPropertyDataModel:
             spd_1 = StoreyPropertyData.new(
                 storey_id=storey_1.id,
                 storey_property_id=storey_p_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             StoreyPropertyData.get_by_id(spd_1.id)
@@ -1559,7 +1559,7 @@ class TestStoreyPropertyDataModel:
                 StoreyPropertyData.new(
                     storey_id=storey_2.id,
                     storey_property_id=storey_p_1.id,
-                    value=12,
+                    value="12",
                 )
             with pytest.raises(BEMServerAuthorizationError):
                 spd_2.update(value="69")
@@ -1587,7 +1587,7 @@ class TestStoreyPropertyDataModel:
             storey_pd_1 = StoreyPropertyData.new(
                 storey_id=storey_1.id,
                 storey_property_id=storey_p_1.id,
-                value=42,
+                value="42",
             )
             db.session.commit()
             assert storey_pd_1.value == "42"
@@ -1609,7 +1609,7 @@ class TestStoreyPropertyDataModel:
             storey_pd_2 = StoreyPropertyData.new(
                 storey_id=storey_1.id,
                 storey_property_id=storey_p_2.id,
-                value=4.2,
+                value="4.2",
             )
             db.session.commit()
             assert storey_pd_2.value == "4.2"
@@ -1655,7 +1655,7 @@ class TestStoreyPropertyDataModel:
             storey_pd_4 = StoreyPropertyData.new(
                 storey_id=storey_1.id,
                 storey_property_id=storey_p_4.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             assert storey_pd_4.value == "12"
@@ -1682,7 +1682,7 @@ class TestStoreyPropertyDataModel:
             spd = StoreyPropertyData.new(
                 storey_id=storey_1.id,
                 storey_property_id=storey_p_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             spd.storey_id = storey_2.id
@@ -1715,7 +1715,7 @@ class TestSpacePropertyDataModel:
             spd_1 = SpacePropertyData.new(
                 space_id=space_1.id,
                 space_property_id=space_p_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             SpacePropertyData.get_by_id(spd_1.id)
@@ -1751,7 +1751,7 @@ class TestSpacePropertyDataModel:
                 SpacePropertyData.new(
                     space_id=space_2.id,
                     space_property_id=space_p_1.id,
-                    value=12,
+                    value="12",
                 )
             with pytest.raises(BEMServerAuthorizationError):
                 spd_2.update(value="69")
@@ -1778,7 +1778,7 @@ class TestSpacePropertyDataModel:
             space_pd_1 = SpacePropertyData.new(
                 space_id=space_1.id,
                 space_property_id=space_p_1.id,
-                value=42,
+                value="42",
             )
             db.session.commit()
             assert space_pd_1.value == "42"
@@ -1800,7 +1800,7 @@ class TestSpacePropertyDataModel:
             space_pd_2 = SpacePropertyData.new(
                 space_id=space_1.id,
                 space_property_id=space_p_2.id,
-                value=4.2,
+                value="4.2",
             )
             db.session.commit()
             assert space_pd_2.value == "4.2"
@@ -1845,7 +1845,7 @@ class TestSpacePropertyDataModel:
             space_pd_4 = SpacePropertyData.new(
                 space_id=space_1.id,
                 space_property_id=space_p_4.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             assert space_pd_4.value == "12"
@@ -1872,7 +1872,7 @@ class TestSpacePropertyDataModel:
             spd = SpacePropertyData.new(
                 space_id=space_1.id,
                 space_property_id=space_p_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             spd.space_id = space_2.id
@@ -1905,7 +1905,7 @@ class TestZonePropertyDataModel:
             zpd_1 = ZonePropertyData.new(
                 zone_id=zone_1.id,
                 zone_property_id=zone_p_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             ZonePropertyData.get_by_id(zpd_1.id)
@@ -1941,7 +1941,7 @@ class TestZonePropertyDataModel:
                 ZonePropertyData.new(
                     zone_id=zone_2.id,
                     zone_property_id=zone_p_1.id,
-                    value=12,
+                    value="12",
                 )
             with pytest.raises(BEMServerAuthorizationError):
                 zpd_2.update(value="69")
@@ -1968,7 +1968,7 @@ class TestZonePropertyDataModel:
             zone_pd_1 = ZonePropertyData.new(
                 zone_id=zone_1.id,
                 zone_property_id=zone_p_1.id,
-                value=42,
+                value="42",
             )
             db.session.commit()
             assert zone_pd_1.value == "42"
@@ -1988,7 +1988,7 @@ class TestZonePropertyDataModel:
             zone_pd_2 = ZonePropertyData.new(
                 zone_id=zone_1.id,
                 zone_property_id=zone_p_2.id,
-                value=4.2,
+                value="4.2",
             )
             db.session.commit()
             assert zone_pd_2.value == "4.2"
@@ -2033,7 +2033,7 @@ class TestZonePropertyDataModel:
             zone_pd_4 = ZonePropertyData.new(
                 zone_id=zone_1.id,
                 zone_property_id=zone_p_4.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             assert zone_pd_4.value == "12"
@@ -2060,7 +2060,7 @@ class TestZonePropertyDataModel:
             zpd = ZonePropertyData.new(
                 zone_id=zone_1.id,
                 zone_property_id=zone_p_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             zpd.zone_id = zone_2.id

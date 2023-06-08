@@ -93,7 +93,7 @@ class TestTimeseriesDataStateModel:
             TimeseriesData.new(
                 timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
                 timeseries_by_data_state_id=tsbds_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
 
@@ -160,7 +160,7 @@ class TestTimeseriesModel:
             TimeseriesData.new(
                 timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
                 timeseries_by_data_state_id=tsbds_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
 
@@ -726,7 +726,7 @@ class TestTimeseriesPropertyDataModel:
             tspd_1 = TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=tsp_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
 
@@ -735,7 +735,7 @@ class TestTimeseriesPropertyDataModel:
             tspd_l = list(TimeseriesPropertyData.get())
             assert len(tspd_l) == 1
             assert tspd_l[0].id == tspd.id
-            tspd.update(value=42)
+            tspd.update(value="42")
             tspd.delete()
             db.session.commit()
 
@@ -761,7 +761,7 @@ class TestTimeseriesPropertyDataModel:
                 TimeseriesPropertyData.new(
                     timeseries_id=ts_2.id,
                     property_id=tsp_1.id,
-                    value=12,
+                    value="12",
                 )
 
             tspd_l = list(TimeseriesPropertyData.get(timeseries_id=ts_2.id))
@@ -794,7 +794,7 @@ class TestTimeseriesPropertyDataModel:
             tspd_1 = TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=tsp_1.id,
-                value=4.2,
+                value="4.2",
             )
             db.session.commit()
             assert tspd_1.value == "4.2"
@@ -815,7 +815,7 @@ class TestTimeseriesPropertyDataModel:
             tspd_4 = TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=tsp_4.id,
-                value=42,
+                value="42",
             )
             db.session.commit()
             assert tspd_4.value == "42"
@@ -855,7 +855,7 @@ class TestTimeseriesPropertyDataModel:
             tspd_6 = TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=tsp_6.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             assert tspd_6.value == "12"
@@ -882,7 +882,7 @@ class TestTimeseriesPropertyDataModel:
             tspd = TimeseriesPropertyData.new(
                 timeseries_id=ts_1.id,
                 property_id=ts_p_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
             tspd.timeseries_id = ts_2.id
@@ -912,7 +912,7 @@ class TestTimeseriesByDataStateModel:
             TimeseriesData.new(
                 timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
                 timeseries_by_data_state_id=tsbds_1.id,
-                value=12,
+                value="12",
             )
             db.session.commit()
 
