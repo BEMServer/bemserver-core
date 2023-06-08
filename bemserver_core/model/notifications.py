@@ -6,6 +6,11 @@ from bemserver_core.authorization import auth, AuthMixin, Relation, get_current_
 from bemserver_core.model.users import User
 from bemserver_core.model.campaigns import Campaign, CampaignScope
 from bemserver_core.model.events import Event
+from bemserver_core.email import ems
+from bemserver_core.celery import celery, logger
+from bemserver_core.exceptions import (
+    BEMServerCoreTaskError,
+)
 
 
 class Notification(AuthMixin, Base):
@@ -123,6 +128,39 @@ class Notification(AuthMixin, Base):
             stmt = stmt.where(cls.id.in_(subq))
 
         db.session.execute(stmt)
+
+
+@sqla.event.listens_for(Notification, "after_insert")
+def notification_after_insert(_mapper, _connection, target):
+    """Callback executed on insert event
+
+    Email notification. Since the email is sent in a separate thread, we want to
+    ensure the notification is committed to database, so we register a callback
+    to run on the next commit event of the session.
+
+    https://stackoverflow.com/questions/25078815/
+    """
+
+    @sqla.event.listens_for(db.session, "after_commit", once=True)
+    def notification_after_commit_after_insert(_session):
+        """Callback executed on commit event after an insert"""
+        # Ensure the notification has not been deleted or rolled-back since flush
+        if sqla.inspect(target).persistent:
+            send_notification_email.delay(target.id)
+
+
+@celery.task(name="NotificationEmail")
+def send_notification_email(notification_id):
+    """Send notification email"""
+    logger.info("Send email for notification %s", notification_id)
+    notif = Notification.get_by_id(notification_id)
+    if notif is None:
+        raise BEMServerCoreTaskError(f"Unknown notification ID {notification_id}")
+    ems.send(
+        [notif.user.email],
+        f"[{notif.event.level}][{notif.event.category.name}]",
+        notif.event.description or "",
+    )
 
 
 def init_db_events_triggers():
