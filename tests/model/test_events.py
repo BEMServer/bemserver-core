@@ -615,13 +615,13 @@ def test_event_notify_task(events):
 @pytest.mark.usefixtures("as_admin")
 @mock.patch("bemserver_core.model.events.notify.delay")
 def test_event_after_insert(notify_delay_mock, campaign_scopes, event_categories):
-    """Test notify task paarmeters and call time"""
+    """Test notify task parameters and call time"""
 
     campaign_scope_1 = campaign_scopes[0]
     ec_1 = event_categories[0]
     dt_1 = dt.datetime(2020, 1, 1)
 
-    Event.new(
+    event_1 = Event.new(
         campaign_scope_id=campaign_scope_1.id,
         timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
         category_id=ec_1.id,
@@ -638,7 +638,7 @@ def test_event_after_insert(notify_delay_mock, campaign_scopes, event_categories
     # Commit. Notify called.
     db.session.commit()
     notify_delay_mock.assert_called_once()
-    notify_delay_mock.assert_called_with(1, dt_1)
+    notify_delay_mock.assert_called_with(event_1.id, dt_1)
 
     # Commit after flush + delete. Notify not called.
     notify_delay_mock.reset_mock()
