@@ -7,6 +7,8 @@ Changelog
 Features:
 
 - Add energy <=> power conversion processes
+- Add send email feature
+- Send email on notification
 
 Other changes:
 
