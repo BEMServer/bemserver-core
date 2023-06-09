@@ -166,7 +166,7 @@ class Base:
         """Hook executed before DB session flush"""
 
 
-SESSION_FACTORY = sessionmaker(future=True)
+SESSION_FACTORY = sessionmaker()
 DB_SESSION = scoped_session(SESSION_FACTORY)
 metadata = sqla.MetaData(naming_convention=NAMING_CONVENTION)
 Base = declarative_base(metadata=metadata, cls=Base)
@@ -193,7 +193,6 @@ class DBConnection:
             db_url,
             # Set UTC for all connections
             connect_args={"options": "-c timezone=utc"},
-            future=True,
         )
         SESSION_FACTORY.configure(bind=self.engine)
         # Remove any existing session from registry
