@@ -1,13 +1,23 @@
 """Notification tests"""
 import datetime as dt
+from email.message import EmailMessage
+from unittest import mock
+
 import sqlalchemy as sqla
 
 import pytest
 
 from bemserver_core.model import Notification, Event, EventLevelEnum
+from bemserver_core.model.notifications import send_notification_email
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.database import db
-from bemserver_core.exceptions import BEMServerAuthorizationError
+from bemserver_core.exceptions import (
+    BEMServerAuthorizationError,
+    BEMServerCoreTaskError,
+)
+
+
+DUMMY_ID = 69
 
 
 class TestNotificationModel:
@@ -336,3 +346,114 @@ class TestNotificationModel:
                 Notification.get_by_id(notif_1.id)
             with pytest.raises(BEMServerAuthorizationError):
                 notif_1.update(read=True)
+
+
+@pytest.mark.parametrize(
+    "config",
+    (
+        {
+            "SMTP_ENABLED": True,
+            "SMTP_FROM_ADDR": "test@bemserver.org",
+            "SMTP_HOST": "bemserver.org",
+        },
+    ),
+    indirect=True,
+)
+@mock.patch("smtplib.SMTP")
+@pytest.mark.usefixtures("as_admin")
+def test_send_notification_email_task(smtp_mock, users, events):
+    """Test send_email called on insert"""
+
+    user_1 = users[0]
+    event_1 = events[0]
+
+    timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
+
+    with pytest.raises(BEMServerCoreTaskError):
+        send_notification_email(DUMMY_ID)
+
+    notif_1 = Notification.new(
+        user_id=user_1.id,
+        event_id=event_1.id,
+        timestamp=timestamp_1,
+    )
+    db.session.flush()
+
+    with smtp_mock() as smtp:
+        smtp.sendmail.assert_not_called()
+
+        send_notification_email(notif_1.id)
+
+        smtp.sendmail.assert_called_once()
+        assert not smtp.sendmail.call_args.kwargs
+        call_args = smtp.sendmail.call_args.args
+        assert len(call_args) == 3
+        assert call_args[0] == "test@bemserver.org"
+        assert call_args[1] == [user_1.email]
+        msg = call_args[2]
+        assert isinstance(msg, EmailMessage)
+        assert msg["From"] == "test@bemserver.org"
+        assert msg["To"] == user_1.email
+        assert msg["Subject"] == f"[{event_1.level}][{event_1.category.name}]"
+        assert msg.get_content() == "\n"
+
+
+@pytest.mark.parametrize(
+    "config",
+    (
+        {
+            "SMTP_ENABLED": True,
+            "SMTP_FROM_ADDR": "test@bemserver.org",
+            "SMTP_HOST": "bemserver.org",
+        },
+    ),
+    indirect=True,
+)
+@pytest.mark.usefixtures("as_admin")
+@mock.patch("bemserver_core.model.notifications.send_notification_email.delay")
+def test_notification_after_insert(send_notification_email_delay_mock, users, events):
+    """Test notification mail task called on insert"""
+
+    user_1 = users[0]
+    event_1 = events[0]
+
+    timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
+
+    notif_1 = Notification.new(
+        user_id=user_1.id,
+        event_id=event_1.id,
+        timestamp=timestamp_1,
+    )
+
+    # Flush. send_email not called.
+    db.session.flush()
+    send_notification_email_delay_mock.assert_not_called()
+
+    # Commit. send_email called.
+    db.session.commit()
+    send_notification_email_delay_mock.assert_called_once()
+    send_notification_email_delay_mock.assert_called_with(notif_1.id)
+
+    # Commit after flush + delete. Notify not called.
+    send_notification_email_delay_mock.reset_mock()
+    notif = Notification.new(
+        user_id=user_1.id,
+        event_id=event_1.id,
+        timestamp=timestamp_1,
+    )
+    db.session.flush()
+    notif.delete()
+    db.session.commit()
+    send_notification_email_delay_mock.assert_not_called()
+
+    # Commit after flush + rollback. Notify not called.
+    send_notification_email_delay_mock.reset_mock()
+    notif = Notification.new(
+        user_id=user_1.id,
+        event_id=event_1.id,
+        timestamp=timestamp_1,
+    )
+    db.session.flush()
+    db.session.rollback()
+    db.session.commit()
+    send_notification_email_delay_mock.assert_not_called()
