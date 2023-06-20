@@ -27,6 +27,7 @@ from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
     TimeseriesNotFoundError,
     PropertyTypeInvalidError,
+    BEMServerCoreUndefinedUnitError,
 )
 
 
@@ -377,6 +378,31 @@ class TestTimeseriesModel:
         assert ts_list == [ts_1]
         ts_list = list(Timeseries.get(campaign_scope_id=2))
         assert ts_list == []
+
+    @pytest.mark.usefixtures("as_admin")
+    def test_timeseries_validate_unit(self, campaigns, campaign_scopes):
+        """Check timeseries unit symbol is validated on flush"""
+        campaign_1 = campaigns[0]
+        campaign_scope_1 = campaign_scopes[0]
+
+        # No unit: OK, defaults to ""
+        ts_1 = Timeseries.new(
+            name="Timeseries 1",
+            campaign_id=campaign_1.id,
+            campaign_scope_id=campaign_scope_1.id,
+        )
+        db.session.flush()
+        assert ts_1.unit_symbol == ""
+
+        # Undefined unit
+        Timeseries.new(
+            name="Timeseries 1",
+            campaign_id=campaign_1.id,
+            campaign_scope_id=campaign_scope_1.id,
+            unit_symbol="Dummy",
+        )
+        with pytest.raises(BEMServerCoreUndefinedUnitError):
+            db.session.flush()
 
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")

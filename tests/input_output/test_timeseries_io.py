@@ -289,8 +289,17 @@ class TestTimeseriesCSVIO:
                     timeseries_csv=timeseries_csv,
                 )
 
+    @pytest.mark.parametrize(
+        ("ts_name", "row"),
+        (
+            # Name too long
+            (100 * "A", 100 * "A" + ",,,{cs_name},,,,,\n"),
+            # Invalid unit
+            ("Test", "Test,,Dummy,{cs_name},,,,,\n"),
+        ),
+    )
     def test_timeseries_csv_io_import_csv_data_error(
-        self, users, campaigns, campaign_scopes
+        self, users, campaigns, campaign_scopes, ts_name, row
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -299,14 +308,13 @@ class TestTimeseriesCSVIO:
 
         timeseries_csv = (
             "Name,Description,Unit,Campaign scope,Site,Building,Storey,Space,Zone\n"
-            + 100 * "A"
-            + f",,,{cs_1.name},,,,,\n"
+            + row.format(cs_name=cs_1.name)
         )
 
         with CurrentUser(admin_user):
             with pytest.raises(
                 TimeseriesCSVIOError,
-                match=f"Timeseries \"{100 * 'A'}\" can't be created.",
+                match=f'Timeseries "{ts_name}" can\'t be created.',
             ):
                 timeseries_csv_io.import_csv(
                     campaign_1,

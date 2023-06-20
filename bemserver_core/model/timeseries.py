@@ -12,6 +12,7 @@ from bemserver_core.model.campaigns import (
 from bemserver_core.model.sites import Site, Building, Storey, Space, Zone
 from bemserver_core.model.events import Event, TimeseriesByEvent
 from bemserver_core.common import PropertyType
+from bemserver_core.common import ureg
 from bemserver_core.exceptions import TimeseriesNotFoundError
 
 
@@ -74,6 +75,10 @@ class Timeseries(AuthMixin, Base):
                 ),
             },
         )
+
+    def _before_flush(self):
+        if self.unit_symbol is not None:
+            ureg.validate_unit(self.unit_symbol)
 
     @classmethod
     def get(
