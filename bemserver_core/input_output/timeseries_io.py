@@ -3,7 +3,11 @@ import sqlalchemy as sqla
 
 from bemserver_core.database import db
 from bemserver_core import model
-from bemserver_core.exceptions import TimeseriesCSVIOError, PropertyTypeInvalidError
+from bemserver_core.exceptions import (
+    TimeseriesCSVIOError,
+    PropertyTypeInvalidError,
+    BEMServerCoreUndefinedUnitError,
+)
 from .base import BaseCSVFileIO
 
 
@@ -55,7 +59,7 @@ class TimeseriesCSVIO(BaseCSVFileIO):
             )
             try:
                 db.session.flush()
-            except sqla.exc.DataError as exc:
+            except (sqla.exc.DataError, BEMServerCoreUndefinedUnitError) as exc:
                 raise TimeseriesCSVIOError(
                     f'Timeseries "{timeseries.name}" can\'t be created.'
                 ) from exc
