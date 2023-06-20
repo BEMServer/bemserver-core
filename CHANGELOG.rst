@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.16.1 (2023-06-20)
++++++++++++++++++++
+
+Bug fixes:
+
+- Validate unit on Timeseries flush
+
 0.16.0 (2023-06-09)
 +++++++++++++++++++
 
