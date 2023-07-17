@@ -8,7 +8,7 @@ repos:
   - id: pyupgrade
     args: [--py39-plus]
 - repo: https://github.com/psf/black
-  rev: 23.3.0
+  rev: 23.7.0
   hooks:
   - id: black
     language_version: python3
@@ -18,7 +18,7 @@ repos:
   - id: flake8
     additional_dependencies: [flake8-bugbear==23.5.9]
 - repo: https://github.com/jazzband/pip-tools
-  rev: 6.14.0
+  rev: 7.0.0
   hooks:
     - id: pip-compile
       name: pip-compile setup.py
