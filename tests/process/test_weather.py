@@ -40,7 +40,8 @@ OIKOLAB_RESPONSE_ATTRIBUTES = {
 
 class TestWeatherClient:
     @patch("requests.get")
-    def test_get_weather_data(self, mock_get):
+    @pytest.mark.parametrize("forecast", (False, True))
+    def test_get_weather_data(self, mock_get, forecast):
         start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc)
         oik_end_dt = dt.datetime(2020, 1, 1, 1, 0, tzinfo=dt.timezone.utc)
@@ -74,6 +75,7 @@ class TestWeatherClient:
             longitude=6.0,
             start_dt=start_dt,
             end_dt=end_dt,
+            forecast=forecast,
         )
 
         mock_get.assert_called_with(
@@ -85,6 +87,7 @@ class TestWeatherClient:
                 "start": start_dt.isoformat(),
                 "end": oik_end_dt.isoformat(),
                 "api-key": "dummy-key",
+                "model": "gfs" if forecast else "era5",
             },
             timeout=60,
         )
@@ -296,7 +299,8 @@ class TestWeatherDataProcessor:
         oik_end_dt = dt.datetime(2020, 1, 1, 1, 0, tzinfo=dt.timezone.utc)
 
         # The payload should contain only air temp or RH depending on the call
-        # but it is easier here to write a single payload.
+        # but for the purpose of the test, it is easier here to write a single payload.
+        # Likewise, the model would be either era5 or gfs.
         resp_data = {
             "columns": [
                 "coordinates (lat,lon)",
@@ -310,7 +314,7 @@ class TestWeatherDataProcessor:
             "data": [
                 [
                     f"({site_1.latitude}, {site_1.longitude})",
-                    "era5",
+                    "dummy",
                     694.09,
                     1.0,
                     2.45,
@@ -318,7 +322,7 @@ class TestWeatherDataProcessor:
                 ],
                 [
                     f"({site_1.latitude}, {site_1.longitude})",
-                    "era5",
+                    "dummy",
                     694.09,
                     1.0,
                     2.59,

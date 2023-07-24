@@ -46,13 +46,18 @@ OIKOLAB_WEATHER_PARAMETERS_UNITS_MAPPING = {
     k: v[1] for k, v in OIKOLAB_WEATHER_PARAMETERS.items()
 }
 
+OIKOLAB_REANALYSIS_SOURCE = "era5"
+OIKOLAB_FORECAST_SOURCE = "gfs"
+
 
 class OikolabWeatherDataClient:
     def __init__(self, api_url, api_key):
         self._api_url = api_url
         self._api_key = api_key
 
-    def get_weather_data(self, params, latitude, longitude, start_dt, end_dt):
+    def get_weather_data(
+        self, params, latitude, longitude, start_dt, end_dt, forecast=False
+    ):
         # Translate BSC names into Oikolab names
         oik_params = [OIKOLAB_WEATHER_PARAMETERS_NAMES_MAPPING[p] for p in params]
 
@@ -61,6 +66,8 @@ class OikolabWeatherDataClient:
         oik_end_dt = floor(end_dt, "hour")
         if oik_end_dt == end_dt:
             oik_end_dt -= dt.timedelta(hours=1)
+
+        model = OIKOLAB_FORECAST_SOURCE if forecast else OIKOLAB_REANALYSIS_SOURCE
 
         try:
             resp = requests.get(
@@ -72,6 +79,7 @@ class OikolabWeatherDataClient:
                     "start": start_dt.isoformat(),
                     "end": oik_end_dt.isoformat(),
                     "api-key": self._api_key,
+                    "model": model,
                 },
                 # Set a long timeout as Oikolab responses may take a while
                 timeout=60,
@@ -146,10 +154,6 @@ class WeatherDataProcessor:
         :param datetime start_dt: Time interval lower bound (tz-aware)
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
         :param bool forecast: Whether or not the data is past data or forecast
-
-        The forecast argument only defines where to store the data in BEMServer.
-        The data source is the same and it is up to the caller to set it according
-        to the time interval.
         """
         auth.authorize(get_current_user(), "get_weather_data", site)
 
@@ -173,6 +177,7 @@ class WeatherDataProcessor:
                 longitude=site.longitude,
                 start_dt=start_dt,
                 end_dt=end_dt,
+                forecast=forecast,
             )
             weather_df.columns = [ts.id for ts in ts_l]
 
