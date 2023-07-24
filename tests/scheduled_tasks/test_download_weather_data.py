@@ -348,6 +348,7 @@ class TestDownloadWeatherDataScheduledTask:
                     "start": start_dt.isoformat(),
                     "end": oik_end_dt.isoformat(),
                     "api-key": "dummy-key",
+                    "model": "gfs" if forecast else "era5",
                 },
                 timeout=60,
             )
