@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.16.2 (2023-07-25)
++++++++++++++++++++
+
+Bug fixes:
+
+- Enforce model (reanalysis vs. forecast) when getting weather data
+
 0.16.1 (2023-06-20)
 +++++++++++++++++++
 
