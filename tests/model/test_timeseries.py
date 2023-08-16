@@ -289,16 +289,16 @@ class TestTimeseriesModel:
 
         with CurrentUser(admin_user):
             ret = ts_1.get_property_value(ts_p_3.name)
-            assert type(ret) == ts_p_3.value_type.value
+            assert type(ret) is ts_p_3.value_type.value
             assert ret == ts_p_3.value_type.value(ts_p_d_3.value)
             ret = ts_1.get_property_value(ts_p_4.name)
-            assert type(ret) == ts_p_4.value_type.value
+            assert type(ret) is ts_p_4.value_type.value
             assert ret == ts_p_4.value_type.value(ts_p_d_4.value)
             ret = ts_1.get_property_value(ts_p_5.name)
-            assert type(ret) == ts_p_5.value_type.value
+            assert type(ret) is ts_p_5.value_type.value
             assert ret == ts_p_5.value_type.value(ts_p_d_5.value)
             ret = ts_1.get_property_value(ts_p_6.name)
-            assert type(ret) == ts_p_6.value_type.value
+            assert type(ret) is ts_p_6.value_type.value
             assert ret == ts_p_6.value_type.value(ts_p_d_6.value)
             ret = ts_1.get_property_value("dummy")
             assert ret is None

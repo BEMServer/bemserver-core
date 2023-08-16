@@ -569,16 +569,16 @@ class TestSiteModel:
 
         with CurrentUser(admin_user):
             ret = site_1.get_property_value(sep_1.name)
-            assert type(ret) == sep_1.value_type.value
+            assert type(ret) is sep_1.value_type.value
             assert ret == sep_1.value_type.value(spd_1.value)
             ret = site_2.get_property_value(sep_2.name)
-            assert type(ret) == sep_2.value_type.value
+            assert type(ret) is sep_2.value_type.value
             assert ret == sep_2.value_type.value(spd_2.value)
             ret = site_2.get_property_value(sep_3.name)
-            assert type(ret) == sep_3.value_type.value
+            assert type(ret) is sep_3.value_type.value
             assert ret == sep_3.value_type.value(spd_3.value)
             ret = site_2.get_property_value(sep_4.name)
-            assert type(ret) == sep_4.value_type.value
+            assert type(ret) is sep_4.value_type.value
             assert ret == sep_4.value_type.value(spd_4.value)
             ret = site_2.get_property_value("dummy")
             assert ret is None
@@ -706,16 +706,16 @@ class TestBuildingModel:
 
         with CurrentUser(admin_user):
             ret = building_1.get_property_value(sep_1.name)
-            assert type(ret) == sep_1.value_type.value
+            assert type(ret) is sep_1.value_type.value
             assert ret == sep_1.value_type.value(spd_1.value)
             ret = building_2.get_property_value(sep_2.name)
-            assert type(ret) == sep_2.value_type.value
+            assert type(ret) is sep_2.value_type.value
             assert ret == sep_2.value_type.value(spd_2.value)
             ret = building_2.get_property_value(sep_3.name)
-            assert type(ret) == sep_3.value_type.value
+            assert type(ret) is sep_3.value_type.value
             assert ret == sep_3.value_type.value(spd_3.value)
             ret = building_2.get_property_value(sep_4.name)
-            assert type(ret) == sep_4.value_type.value
+            assert type(ret) is sep_4.value_type.value
             assert ret == sep_4.value_type.value(spd_4.value)
             ret = building_2.get_property_value("dummy")
             assert ret is None
@@ -852,16 +852,16 @@ class TestStoreyModel:
 
         with CurrentUser(admin_user):
             ret = storey_1.get_property_value(sep_1.name)
-            assert type(ret) == sep_1.value_type.value
+            assert type(ret) is sep_1.value_type.value
             assert ret == sep_1.value_type.value(spd_1.value)
             ret = storey_2.get_property_value(sep_2.name)
-            assert type(ret) == sep_2.value_type.value
+            assert type(ret) is sep_2.value_type.value
             assert ret == sep_2.value_type.value(spd_2.value)
             ret = storey_2.get_property_value(sep_3.name)
-            assert type(ret) == sep_3.value_type.value
+            assert type(ret) is sep_3.value_type.value
             assert ret == sep_3.value_type.value(spd_3.value)
             ret = storey_2.get_property_value(sep_4.name)
-            assert type(ret) == sep_4.value_type.value
+            assert type(ret) is sep_4.value_type.value
             assert ret == sep_4.value_type.value(spd_4.value)
             ret = storey_2.get_property_value("dummy")
             assert ret is None
@@ -1006,16 +1006,16 @@ class TestSpaceModel:
 
         with CurrentUser(admin_user):
             ret = space_1.get_property_value(sep_1.name)
-            assert type(ret) == sep_1.value_type.value
+            assert type(ret) is sep_1.value_type.value
             assert ret == sep_1.value_type.value(spd_1.value)
             ret = space_2.get_property_value(sep_2.name)
-            assert type(ret) == sep_2.value_type.value
+            assert type(ret) is sep_2.value_type.value
             assert ret == sep_2.value_type.value(spd_2.value)
             ret = space_2.get_property_value(sep_3.name)
-            assert type(ret) == sep_3.value_type.value
+            assert type(ret) is sep_3.value_type.value
             assert ret == sep_3.value_type.value(spd_3.value)
             ret = space_2.get_property_value(sep_4.name)
-            assert type(ret) == sep_4.value_type.value
+            assert type(ret) is sep_4.value_type.value
             assert ret == sep_4.value_type.value(spd_4.value)
             ret = space_2.get_property_value("dummy")
             assert ret is None
@@ -1111,16 +1111,16 @@ class TestZoneModel:
 
         with CurrentUser(admin_user):
             ret = zone_1.get_property_value(sep_1.name)
-            assert type(ret) == sep_1.value_type.value
+            assert type(ret) is sep_1.value_type.value
             assert ret == sep_1.value_type.value(spd_1.value)
             ret = zone_2.get_property_value(sep_2.name)
-            assert type(ret) == sep_2.value_type.value
+            assert type(ret) is sep_2.value_type.value
             assert ret == sep_2.value_type.value(spd_2.value)
             ret = zone_2.get_property_value(sep_3.name)
-            assert type(ret) == sep_3.value_type.value
+            assert type(ret) is sep_3.value_type.value
             assert ret == sep_3.value_type.value(spd_3.value)
             ret = zone_2.get_property_value(sep_4.name)
-            assert type(ret) == sep_4.value_type.value
+            assert type(ret) is sep_4.value_type.value
             assert ret == sep_4.value_type.value(spd_4.value)
             ret = zone_2.get_property_value("dummy")
             assert ret is None
