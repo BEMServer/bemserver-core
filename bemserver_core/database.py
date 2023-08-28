@@ -4,7 +4,7 @@ from itertools import chain
 from textwrap import dedent
 
 import sqlalchemy as sqla
-from sqlalchemy.orm import sessionmaker, scoped_session, declarative_base
+from sqlalchemy.orm import sessionmaker, scoped_session, DeclarativeBase
 
 
 # https://alembic.sqlalchemy.org/en/latest/naming.html
@@ -17,8 +17,14 @@ NAMING_CONVENTION = {
 }
 
 
-class Base:
+SESSION_FACTORY = sessionmaker()
+DB_SESSION = scoped_session(SESSION_FACTORY)
+
+
+class Base(DeclarativeBase):
     """Custom base class"""
+
+    metadata = sqla.MetaData(naming_convention=NAMING_CONVENTION)
 
     @classmethod
     def _query(cls, **kwargs):
@@ -164,12 +170,6 @@ class Base:
 
     def _before_flush(self):
         """Hook executed before DB session flush"""
-
-
-SESSION_FACTORY = sessionmaker()
-DB_SESSION = scoped_session(SESSION_FACTORY)
-metadata = sqla.MetaData(naming_convention=NAMING_CONVENTION)
-Base = declarative_base(metadata=metadata, cls=Base)
 
 
 # Inspired by https://stackoverflow.com/a/36732359
