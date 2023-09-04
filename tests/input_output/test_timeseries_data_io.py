@@ -2287,7 +2287,7 @@ class TestTimeseriesDataCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(exc_cls):
-                tsdcsvio.import_csv(csv_data, ds_1.id, campaign)
+                tsdcsvio.import_csv(csv_data, ds_1, campaign)
 
     @pytest.mark.parametrize(
         "row_error",
@@ -2335,7 +2335,7 @@ class TestTimeseriesDataCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(TimeseriesDataIOInvalidTimeseriesIDTypeError):
-                tsdcsvio.import_csv(csv_data, ds_1.id)
+                tsdcsvio.import_csv(csv_data, ds_1)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.parametrize("col_label", ("id", "name"))
