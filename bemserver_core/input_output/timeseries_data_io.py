@@ -637,6 +637,8 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             data_df = pd.read_csv(io.StringIO(csv_data), index_col=0)
         except pd.errors.EmptyDataError as exc:
             raise TimeseriesDataCSVIOError("Empty file") from exc
+        except pd.errors.ParserError as exc:
+            raise TimeseriesDataCSVIOError("Bad CSV file") from exc
 
         # Index
         data_df.index = to_utc_index(data_df.index)

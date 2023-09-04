@@ -2294,6 +2294,8 @@ class TestTimeseriesDataCSVIO:
         (
             # Value not float
             ("2020-01-01T00:00:00+00:00,a", TimeseriesDataCSVIOError),
+            # Too many columns
+            ("2500-01-01T00:00:00+00:00,1,2,3,4,5", TimeseriesDataCSVIOError),
             # Naive datetime
             ("2020-01-01T00:00:00,12", TimeseriesDataIODatetimeError),
             # Invalid timestamp
