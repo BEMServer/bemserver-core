@@ -14,7 +14,7 @@ from bemserver_core.email import ems
 from bemserver_core.exceptions import BEMServerCoreSettingsError
 
 
-__version__ = "0.16.2"
+__version__ = "0.16.3"
 
 
 class BEMServerCore:
