@@ -291,7 +291,7 @@ class TimeseriesDataIO:
 
         data_df = data_df.melt(
             value_vars=data_df.columns,
-            var_name="ts_by_data_state_id",
+            var_name="timeseries_by_data_state_id",
             ignore_index=False,
         )
         data_rows = [
@@ -303,12 +303,10 @@ class TimeseriesDataIO:
         if not data_rows:
             return
 
-        query = (
-            sqla.dialects.postgresql.insert(TimeseriesData)
-            .values(data_rows)
-            .on_conflict_do_nothing()
+        db.session.execute(
+            sqla.dialects.postgresql.insert(TimeseriesData).on_conflict_do_nothing(),
+            data_rows,
         )
-        db.session.execute(query)
 
     @staticmethod
     def _fill_missing_and_reorder_columns(data_df, ts_l, col_label, fill_value=np.nan):
