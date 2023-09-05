@@ -575,23 +575,12 @@ class TimeseriesDataIO:
         )
 
 
-def to_utc_index(series):
+def to_utc_index(index):
     """Create UTC datetime index from timezone aware datetime list"""
 
-    def to_utc_datetime(timestamp_dt):
-        try:
-            return timestamp_dt.astimezone(dt.timezone.utc)
-        except TypeError as exc:
-            if timestamp_dt.tzinfo is None:
-                raise TimeseriesDataIODatetimeError(
-                    "Invalid or TZ-naive timestamp"
-                ) from exc
-            raise
-
-    series = pd.Series(series)
-
     try:
-        index = pd.to_datetime(series, format="ISO8601")
+        # Cast to series so that output is series, with an apply method
+        index = pd.to_datetime(pd.Series(index), format="ISO8601")
     except (
         ValueError,
         pd.errors.OutOfBoundsDatetime,
@@ -600,7 +589,10 @@ def to_utc_index(series):
         raise TimeseriesDataIODatetimeError("Invalid timestamp") from exc
 
     # We can't just use tz_convert because it would silently swallow naive datetimes
-    index = index.apply(to_utc_datetime)
+    try:
+        index = index.apply(lambda x: x.astimezone(dt.timezone.utc))
+    except TypeError as exc:
+        raise TimeseriesDataIODatetimeError("Invalid or TZ-naive timestamp") from exc
 
     return pd.DatetimeIndex(index, name="timestamp")
 
@@ -637,6 +629,8 @@ class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):
             data_df = pd.read_csv(io.StringIO(csv_data), index_col=0)
         except pd.errors.EmptyDataError as exc:
             raise TimeseriesDataCSVIOError("Empty file") from exc
+        except pd.errors.ParserError as exc:
+            raise TimeseriesDataCSVIOError("Bad CSV file") from exc
 
         # Index
         data_df.index = to_utc_index(data_df.index)
