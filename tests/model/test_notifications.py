@@ -380,17 +380,15 @@ def test_send_notification_email_task(smtp_mock, users, events):
     db.session.flush()
 
     with smtp_mock() as smtp:
-        smtp.sendmail.assert_not_called()
+        smtp.send_message.assert_not_called()
 
         send_notification_email(notif_1.id)
 
-        smtp.sendmail.assert_called_once()
-        assert not smtp.sendmail.call_args.kwargs
-        call_args = smtp.sendmail.call_args.args
-        assert len(call_args) == 3
-        assert call_args[0] == "test@bemserver.org"
-        assert call_args[1] == [user_1.email]
-        msg = call_args[2]
+        smtp.send_message.assert_called_once()
+        assert not smtp.send_message.call_args.kwargs
+        call_args = smtp.send_message.call_args.args
+        assert len(call_args) == 1
+        msg = call_args[0]
         assert isinstance(msg, EmailMessage)
         assert msg["From"] == "test@bemserver.org"
         assert msg["To"] == user_1.email
