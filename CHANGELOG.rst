@@ -1,6 +1,15 @@
 Changelog
 ---------
 
+0.16.3 (2023-09-06)
++++++++++++++++++++
+
+Bug fixes:
+
+- CSV import: catch too many columns error
+- Bulk insert: don't use fixed VALUES clause
+- Email: use send_message, not sendmail
+
 0.16.2 (2023-07-25)
 +++++++++++++++++++
 
