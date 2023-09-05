@@ -31,8 +31,8 @@ class EmailSender:
             msg["From"] = self._sender_addr
             msg["To"] = ", ".join(dest_addrs)
             msg.set_content(content)
-            with smtplib.SMTP(self._host) as smtp:
-                smtp.sendmail(self._sender_addr, dest_addrs, msg)
+            with smtplib.SMTP(self._host, timeout=3) as smtp:
+                smtp.send_message(msg)
 
 
 ems = EmailSender()
