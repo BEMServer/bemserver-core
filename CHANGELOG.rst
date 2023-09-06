@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.16.4 (2023-09-06)
++++++++++++++++++++
+
+Features:
+
+- Improve notification email subject
+
 0.16.3 (2023-09-06)
 +++++++++++++++++++
 
