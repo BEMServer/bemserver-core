@@ -392,7 +392,7 @@ def test_send_notification_email_task(smtp_mock, users, events):
         assert isinstance(msg, EmailMessage)
         assert msg["From"] == "test@bemserver.org"
         assert msg["To"] == user_1.email
-        assert msg["Subject"] == f"[{event_1.level}][{event_1.category.name}]"
+        assert msg["Subject"] == "[Campaign 1] WARNING: Custom event category 1"
         assert msg.get_content() == "\n"
 
 

@@ -156,9 +156,13 @@ def send_notification_email(notification_id):
     notif = Notification.get_by_id(notification_id)
     if notif is None:
         raise BEMServerCoreTaskError(f"Unknown notification ID {notification_id}")
+    event = notif.event
     ems.send(
         [notif.user.email],
-        f"[{notif.event.level}][{notif.event.category.name}]",
+        (
+            f"[{event.campaign_scope.campaign.name}] "
+            f"{event.level.name}: {event.category.name}"
+        ),
         notif.event.description or "",
     )
 
