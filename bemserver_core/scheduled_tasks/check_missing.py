@@ -221,7 +221,8 @@ def check_missing_ts_data(
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
-                        f"Timeseries newly missing: {[ts[1] for ts in new_missing_ts]}"
+                        "The following timeseries are missing: "
+                        f"{','.join(ts[1] for ts in new_missing_ts)}"
                     ),
                 )
                 db.session.flush()
@@ -242,8 +243,8 @@ def check_missing_ts_data(
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
-                        "Timeseries still missing: "
-                        f"{[ts[1] for ts in already_missing_ts]}"
+                        "The following timeseries are still missing: "
+                        f"{','.join(ts[1] for ts in already_missing_ts)}"
                     ),
                 )
                 db.session.flush()
@@ -264,7 +265,8 @@ def check_missing_ts_data(
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
-                        f"Timeseries present: {[ts[1] for ts in new_present_ts]}"
+                        "The following timeseries are not missing anymore: "
+                        f"{','.join(ts[1] for ts in new_present_ts)}"
                     ),
                 )
                 db.session.flush()
