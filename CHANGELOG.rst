@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.16.5 (2023-09-08)
++++++++++++++++++++
+
+Features:
+
+- Improve missing/outlier data event description
+
 0.16.4 (2023-09-06)
 +++++++++++++++++++
 
