@@ -308,7 +308,10 @@ class TestCheckMissingScheduledTask:
             assert event_1.level == EventLevelEnum.WARNING
             assert event_1.timestamp == check_dt_1
             assert event_1.source == "BEMServer - Check missing data"
-            assert event_1.description == "Timeseries newly missing: ['Timeseries 3']"
+            assert (
+                event_1.description
+                == "The following timeseries are missing: Timeseries 3"
+            )
             tbes = list(TimeseriesByEvent.get(event=event_1))
             assert len(tbes) == 1
             assert tbes[0].timeseries_id == ts_2.id
@@ -318,7 +321,10 @@ class TestCheckMissingScheduledTask:
             assert event_2.level == EventLevelEnum.WARNING
             assert event_2.timestamp == check_dt_1
             assert event_2.source == "BEMServer - Check missing data"
-            assert event_2.description == "Timeseries newly missing: ['Timeseries 4']"
+            assert (
+                event_2.description
+                == "The following timeseries are missing: Timeseries 4"
+            )
             tbes = list(TimeseriesByEvent.get(event=event_2))
             assert len(tbes) == 1
             assert tbes[0].timeseries_id == ts_3.id
@@ -353,7 +359,10 @@ class TestCheckMissingScheduledTask:
             assert event_3.timestamp == check_dt_2
             assert event_3.level == EventLevelEnum.INFO
             assert event_3.source == "BEMServer - Check missing data"
-            assert event_3.description == "Timeseries still missing: ['Timeseries 3']"
+            assert (
+                event_3.description
+                == "The following timeseries are still missing: Timeseries 3"
+            )
             events = list(
                 Event.get(
                     category=ec_data_present,
@@ -381,7 +390,10 @@ class TestCheckMissingScheduledTask:
             event_4 = events[1]
             assert event_4.timestamp == check_dt_2
             assert event_4.source == "BEMServer - Check missing data"
-            assert event_4.description == "Timeseries newly missing: ['Timeseries 2']"
+            assert (
+                event_4.description
+                == "The following timeseries are missing: Timeseries 2"
+            )
             tbes = list(TimeseriesByEvent.get(event=event_4))
             assert len(tbes) == 1
             assert tbes[0].timeseries_id == ts_1.id
@@ -398,7 +410,10 @@ class TestCheckMissingScheduledTask:
             assert event_5.timestamp == check_dt_2
             assert event_5.level == EventLevelEnum.INFO
             assert event_5.source == "BEMServer - Check missing data"
-            assert event_5.description == "Timeseries still missing: ['Timeseries 4']"
+            assert (
+                event_5.description
+                == "The following timeseries are still missing: Timeseries 4"
+            )
             tbes = list(TimeseriesByEvent.get(event=event_5))
             assert len(tbes) == 1
             assert tbes[0].timeseries_id == ts_3.id
@@ -437,7 +452,10 @@ class TestCheckMissingScheduledTask:
             event_6 = events[0]
             assert event_6.level == EventLevelEnum.INFO
             assert event_6.source == "BEMServer - Check missing data"
-            assert event_6.description == "Timeseries present: ['Timeseries 3']"
+            assert (
+                event_6.description
+                == "The following timeseries are not missing anymore: Timeseries 3"
+            )
             tbes = list(TimeseriesByEvent.get(event=event_6))
             assert len(tbes) == 1
             assert tbes[0].timeseries_id == ts_2.id
@@ -456,7 +474,10 @@ class TestCheckMissingScheduledTask:
             event_7 = events[0]
             assert event_7.level == EventLevelEnum.INFO
             assert event_7.source == "BEMServer - Check missing data"
-            assert event_7.description == "Timeseries still missing: ['Timeseries 4']"
+            assert (
+                event_7.description
+                == "The following timeseries are still missing: Timeseries 4"
+            )
             tbes = list(TimeseriesByEvent.get(event=event_7))
             assert len(tbes) == 1
             assert tbes[0].timeseries_id == ts_3.id
@@ -471,7 +492,10 @@ class TestCheckMissingScheduledTask:
             event_8 = events[0]
             assert event_8.level == EventLevelEnum.INFO
             assert event_8.source == "BEMServer - Check missing data"
-            assert event_8.description == "Timeseries present: ['Timeseries 2']"
+            assert (
+                event_8.description
+                == "The following timeseries are not missing anymore: Timeseries 2"
+            )
             tbes = list(TimeseriesByEvent.get(event=event_8))
             assert len(tbes) == 1
             assert tbes[0].timeseries_id == ts_1.id

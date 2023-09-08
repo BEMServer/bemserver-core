@@ -313,7 +313,8 @@ class TestCheckOutliersScheduledTask:
             assert event_1.timestamp == check_dt_1
             assert event_1.source == "BEMServer - Check outliers"
             assert (
-                event_1.description == "New timeseries with outliers: ['Timeseries 3']"
+                event_1.description
+                == "The following timeseries have outliers: Timeseries 3"
             )
             tbes = list(TimeseriesByEvent.get(event=event_1))
             assert len(tbes) == 1
@@ -325,7 +326,8 @@ class TestCheckOutliersScheduledTask:
             assert event_2.timestamp == check_dt_1
             assert event_2.source == "BEMServer - Check outliers"
             assert (
-                event_2.description == "New timeseries with outliers: ['Timeseries 4']"
+                event_2.description
+                == "The following timeseries have outliers: Timeseries 4"
             )
             tbes = list(TimeseriesByEvent.get(event=event_2))
             assert len(tbes) == 1
@@ -363,7 +365,7 @@ class TestCheckOutliersScheduledTask:
             assert event_3.source == "BEMServer - Check outliers"
             assert (
                 event_3.description
-                == "Timeseries still having outliers: ['Timeseries 3']"
+                == "The following timeseries still have outliers: Timeseries 3"
             )
             events = list(
                 Event.get(
@@ -393,7 +395,8 @@ class TestCheckOutliersScheduledTask:
             assert event_4.timestamp == check_dt_2
             assert event_4.source == "BEMServer - Check outliers"
             assert (
-                event_4.description == "New timeseries with outliers: ['Timeseries 2']"
+                event_4.description
+                == "The following timeseries have outliers: Timeseries 2"
             )
             tbes = list(TimeseriesByEvent.get(event=event_4))
             assert len(tbes) == 1
@@ -413,7 +416,7 @@ class TestCheckOutliersScheduledTask:
             assert event_5.source == "BEMServer - Check outliers"
             assert (
                 event_5.description
-                == "Timeseries still having outliers: ['Timeseries 4']"
+                == "The following timeseries still have outliers: Timeseries 4"
             )
             tbes = list(TimeseriesByEvent.get(event=event_5))
             assert len(tbes) == 1
@@ -454,7 +457,8 @@ class TestCheckOutliersScheduledTask:
             assert event_6.level == EventLevelEnum.INFO
             assert event_6.source == "BEMServer - Check outliers"
             assert (
-                event_6.description == "Timeseries without outliers: ['Timeseries 3']"
+                event_6.description
+                == "The following timeseries don't have outliers anymore: Timeseries 3"
             )
             tbes = list(TimeseriesByEvent.get(event=event_6))
             assert len(tbes) == 1
@@ -476,7 +480,7 @@ class TestCheckOutliersScheduledTask:
             assert event_7.source == "BEMServer - Check outliers"
             assert (
                 event_7.description
-                == "Timeseries still having outliers: ['Timeseries 4']"
+                == "The following timeseries still have outliers: Timeseries 4"
             )
             tbes = list(TimeseriesByEvent.get(event=event_7))
             assert len(tbes) == 1
@@ -493,7 +497,8 @@ class TestCheckOutliersScheduledTask:
             assert event_8.level == EventLevelEnum.INFO
             assert event_8.source == "BEMServer - Check outliers"
             assert (
-                event_8.description == "Timeseries without outliers: ['Timeseries 2']"
+                event_8.description
+                == "The following timeseries don't have outliers anymore: Timeseries 2"
             )
             tbes = list(TimeseriesByEvent.get(event=event_8))
             assert len(tbes) == 1

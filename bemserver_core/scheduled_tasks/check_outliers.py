@@ -220,7 +220,7 @@ def check_outliers_ts_data(
 
             new_outliers_ts = [ts for ts in outliers_ts if not ts_status_outliers[ts]]
             already_outliers_ts = [ts for ts in outliers_ts if ts_status_outliers[ts]]
-            new_present_ts = [
+            new_no_outlier_ts = [
                 ts
                 for ts, outliers in ts_status_outliers.items()
                 if outliers and ts not in outliers_ts
@@ -237,8 +237,8 @@ def check_outliers_ts_data(
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
-                        "New timeseries with outliers: "
-                        f"{[ts[1] for ts in new_outliers_ts]}"
+                        "The following timeseries have outliers: "
+                        f"{','.join(ts[1] for ts in new_outliers_ts)}"
                     ),
                 )
                 db.session.flush()
@@ -259,8 +259,8 @@ def check_outliers_ts_data(
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
-                        "Timeseries still having outliers: "
-                        f"{[ts[1] for ts in already_outliers_ts]}"
+                        "The following timeseries still have outliers: "
+                        f"{','.join(ts[1] for ts in already_outliers_ts)}"
                     ),
                 )
                 db.session.flush()
@@ -271,7 +271,7 @@ def check_outliers_ts_data(
                     TimeseriesByEvent.new(event_id=event.id, timeseries_id=ts_id)
 
             # Create Event for (formerly outliers) present data
-            if new_present_ts:
+            if new_no_outlier_ts:
                 logger.debug("Creating timeseries without no outliers event")
 
                 event = Event.new(
@@ -281,15 +281,15 @@ def check_outliers_ts_data(
                     timestamp=datetime,
                     source=SERVICE_NAME,
                     description=(
-                        "Timeseries without outliers: "
-                        f"{[ts[1] for ts in new_present_ts]}"
+                        "The following timeseries don't have outliers anymore: "
+                        f"{','.join(ts[1] for ts in new_no_outlier_ts)}"
                     ),
                 )
                 db.session.flush()
 
                 logger.debug("Creating timeseries x event associations")
 
-                for ts_id, _ts_name in new_present_ts:
+                for ts_id, _ts_name in new_no_outlier_ts:
                     TimeseriesByEvent.new(event_id=event.id, timeseries_id=ts_id)
 
 
