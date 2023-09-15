@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.16.6 (2023-09-15)
++++++++++++++++++++
+
+Features:
+
+- Completeness: include full buckets on edges
+
 0.16.5 (2023-09-08)
 +++++++++++++++++++
 
