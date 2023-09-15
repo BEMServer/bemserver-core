@@ -214,7 +214,18 @@ class TestCompleteness:
                 1008,
                 864,
             ]
-            assert ret["timeseries"][1]["avg_ratio"] == 1.0
+            assert ret["timeseries"][1]["ratio"] == [
+                0.7142857142857143,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                0.8571428571428571,
+            ]
+            assert ret["timeseries"][1]["avg_ratio"] == 0.9523809523809523
             assert ret["timeseries"][3]["count"] == [
                 1005,
                 1407,
@@ -286,7 +297,6 @@ class TestCompleteness:
 
             # 2 hours - hour step with offset
             # Aggregation interval start time is floored to round to interval
-            # so we get the same intervals but less data in the first interval
             ret = compute_completeness(
                 start_dt + dt.timedelta(minutes=30),
                 start_dt + dt.timedelta(hours=3),
@@ -305,50 +315,50 @@ class TestCompleteness:
                     1: {
                         "name": "Timeseries 1",
                         "count": [6, 6, 6],
-                        "ratio": [2.0, 1.0, 1.0],
+                        "ratio": [1.0, 1.0, 1.0],
                         "total_count": 18,
                         "avg_count": 6.0,
-                        "avg_ratio": 1.3333333333333333,
+                        "avg_ratio": 1.0,
                         "interval": 600.0,
                         "undefined_interval": False,
-                        "expected_count": [3.0, 6.0, 6.0],
+                        "expected_count": [6.0, 6.0, 6.0],
                     },
                     2: {
                         "name": "Timeseries 2",
                         "count": [6, 6, 6],
-                        "ratio": [2.0, 1.0, 1.0],
+                        "ratio": [1.0, 1.0, 1.0],
                         "total_count": 18,
                         "avg_count": 6.0,
-                        "avg_ratio": 1.3333333333333333,
+                        "avg_ratio": 1.0,
                         "interval": 600.0,
                         "undefined_interval": False,
-                        "expected_count": [3.0, 6.0, 6.0],
+                        "expected_count": [6.0, 6.0, 6.0],
                     },
                     3: {
                         "name": "Timeseries 3",
                         "count": [9, 8, 9],
                         "ratio": [
-                            6,
+                            3.0,
                             2.6666666666666665,
                             3.0,
                         ],
                         "total_count": 26,
                         "avg_count": 8.6666666666666666,
-                        "avg_ratio": 3.8888888888888889,
+                        "avg_ratio": 2.8888888888888889,
                         "interval": 1200.0,
                         "undefined_interval": False,
-                        "expected_count": [1.5, 3.0, 3.0],
+                        "expected_count": [3.0, 3.0, 3.0],
                     },
                     4: {
                         "name": "Timeseries 4",
                         "count": [6, 6, 6],
-                        "ratio": [1.0, 0.5, 0.5],
+                        "ratio": [1.0, 1.0, 1.0],
                         "total_count": 18,
                         "avg_count": 6.0,
-                        "avg_ratio": 0.6666666666666666,
-                        "interval": 300.0,
+                        "avg_ratio": 1.0,
+                        "interval": 600.0,
                         "undefined_interval": True,
-                        "expected_count": [6.0, 12.0, 12.0],
+                        "expected_count": [6.0, 6.0, 6.0],
                     },
                     5: {
                         "name": "Timeseries 5",
