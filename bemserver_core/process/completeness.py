@@ -9,6 +9,7 @@ import pandas as pd
 
 from bemserver_core.model import Timeseries
 from bemserver_core.input_output import tsdio
+from bemserver_core.time_utils import floor, ceil
 
 
 def compute_completeness(
@@ -28,6 +29,10 @@ def compute_completeness(
     """
     timeseries_ids = [ts.id for ts in timeseries]
 
+    tz = ZoneInfo(timezone)
+    start_dt = floor(start_dt.astimezone(tz), bucket_width_unit, bucket_width_value)
+    end_dt = ceil(end_dt.astimezone(tz), bucket_width_unit, bucket_width_value)
+
     # Get data count per bucket (aggregation)
     counts_df = tsdio.get_timeseries_buckets_data(
         start_dt,
@@ -43,10 +48,8 @@ def compute_completeness(
     total_counts_df = counts_df.sum()
 
     # Compute number of seconds per bucket
-    tz = ZoneInfo(timezone)
     idx = pd.Series(counts_df.index)
-    idx[0] = pd.Timestamp(start_dt.astimezone(tz))
-    idx[len(idx)] = pd.Timestamp(end_dt.astimezone(tz))
+    idx[len(idx)] = end_dt
     nb_s_per_bucket = [i.total_seconds() for i in idx.diff().iloc[1:]]
 
     # Compute data rate (count / second)
