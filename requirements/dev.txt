@@ -6,17 +6,17 @@
 #
 bump2version==1.0.1
     # via -r requirements/dev.in
-cfgv==3.3.1
+cfgv==3.4.0
     # via pre-commit
-coverage[toml]==7.2.6
+coverage[toml]==7.3.1
     # via pytest-cov
-distlib==0.3.6
+distlib==0.3.7
     # via virtualenv
-exceptiongroup==1.1.1
+exceptiongroup==1.1.3
     # via pytest
-filelock==3.12.0
+filelock==3.12.4
     # via virtualenv
-identify==2.5.24
+identify==2.5.29
     # via pre-commit
 iniconfig==2.0.0
     # via pytest
@@ -26,19 +26,19 @@ nodeenv==1.8.0
     # via pre-commit
 packaging==23.1
     # via pytest
-platformdirs==3.5.1
+platformdirs==3.10.0
     # via virtualenv
-pluggy==1.0.0
+pluggy==1.3.0
     # via pytest
-port-for==0.6.3
+port-for==0.7.1
     # via pytest-postgresql
-pre-commit==3.3.2
+pre-commit==3.4.0
     # via -r requirements/dev.in
 psutil==5.9.5
     # via mirakuru
-psycopg==3.1.9
+psycopg==3.1.10
     # via pytest-postgresql
-pytest==7.3.1
+pytest==7.4.2
     # via
     #   -r requirements/tests.in
     #   pytest-cov
@@ -47,15 +47,15 @@ pytest-cov==4.1.0
     # via -r requirements/tests.in
 pytest-postgresql==5.0.0
     # via -r requirements/tests.in
-pyyaml==6.0
+pyyaml==6.0.1
     # via pre-commit
 tomli==2.0.1
     # via
     #   coverage
     #   pytest
-typing-extensions==4.6.1
+typing-extensions==4.8.0
     # via psycopg
-virtualenv==20.23.0
+virtualenv==20.24.5
     # via pre-commit
 
 # The following packages are considered to be unsafe in a requirements file:

@@ -30,7 +30,7 @@ setup(
     ],
     python_requires=">=3.9",
     install_requires=[
-        "psycopg>=3.0.0,<4.0",
+        "psycopg>=3.1.10,<4.0",
         "sqlalchemy>=2.0.8,<3.0",
         "pandas>=2.0,<3.0",
         "pint>=0.21.0",
@@ -39,7 +39,7 @@ setup(
         "oso>=0.26.0,<0.28",
         "alembic>=1.8.0,<2.0",
         "click>=8.1.3,<9.0",
-        "celery>=5.2.0,<6.0",
+        "celery>=5.3.1,<6.0",
         "redis>=4.3.4,<5.0",
         "requests>=2.28.2",
     ],
