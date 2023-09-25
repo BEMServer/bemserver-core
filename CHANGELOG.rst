@@ -1,6 +1,17 @@
 Changelog
 ---------
 
+0.16.7 (2023-09-25)
++++++++++++++++++++
+
+Bug fixes:
+
+- Don't forward fill interpolate after last value in indexenergy2power/energy
+
+Other changes:
+
+- Support Python 3.11
+
 0.16.6 (2023-09-15)
 +++++++++++++++++++
 
