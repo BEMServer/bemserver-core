@@ -289,7 +289,7 @@ class TestEnergyPowerProcess:
                 data_s = energy2power(start_dt, end_dt, ts_0, ds_1, "°C")
 
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
-    def test_indexenergy2power_process(self, users, timeseries):
+    def test_energyindex2power_process(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin
         # Data with higher frequency
@@ -335,7 +335,7 @@ class TestEnergyPowerProcess:
                 for hour in (0, 1, 2, 3, 4, 5)
             ]
             expected_data_s = pd.Series(
-                [1.0, 3.0, 5.0, 7.0, 9.0, 9.0],
+                [1.0, 3.0, 5.0, 7.0, 9.0, np.nan],
                 index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
             )
             assert_series_equal(data_s, expected_data_s)
@@ -357,7 +357,7 @@ class TestEnergyPowerProcess:
                 for hour in (0, 1, 2, 3, 4, 5)
             ]
             expected_data_s = pd.Series(
-                [1000.0, 3000.0, 5000.0, 7000.0, 9000.0, 9000.0],
+                [1000.0, 3000.0, 5000.0, 7000.0, 9000.0, np.nan],
                 index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
             )
             assert_series_equal(data_s, expected_data_s)
@@ -368,7 +368,7 @@ class TestEnergyPowerProcess:
                 for hour in (4, 5, 6, 7, 8, 9, 10, 11)
             ]
             expected_data_s = pd.Series(
-                [np.nan, np.nan, 14.0, 14.0, 18.0, 18.0, 18.0, 18.0],
+                [np.nan, np.nan, 14.0, 14.0, 18.0, 18.0, np.nan, np.nan],
                 index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
             )
             assert_series_equal(data_s, expected_data_s)
@@ -379,7 +379,7 @@ class TestEnergyPowerProcess:
                 for hour in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
             ]
             expected_data_s = pd.Series(
-                [6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 14.0, 14.0, 18.0, 18.0, 18.0, 18.0],
+                [6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 14.0, 14.0, 18.0, 18.0, np.nan, np.nan],
                 index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
             )
             assert_series_equal(data_s, expected_data_s)
@@ -416,7 +416,7 @@ class TestEnergyPowerProcess:
                 data_s = energyindex2power(start_dt, end_dt, ts_0, ds_1, 3600, "°C")
 
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
-    def test_indexenergy2energy_process(self, users, timeseries):
+    def test_energyindex2energy_process(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin
         # Data with higher frequency
@@ -462,7 +462,7 @@ class TestEnergyPowerProcess:
                 for hour in (0, 1, 2, 3, 4, 5)
             ]
             expected_data_s = pd.Series(
-                [1.0, 3.0, 5.0, 7.0, 9.0, 9.0],
+                [1.0, 3.0, 5.0, 7.0, 9.0, np.nan],
                 index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
             )
             assert_series_equal(data_s, expected_data_s)
@@ -484,7 +484,7 @@ class TestEnergyPowerProcess:
                 for hour in (0, 1, 2, 3, 4, 5)
             ]
             expected_data_s = pd.Series(
-                [1000.0, 3000.0, 5000.0, 7000.0, 9000.0, 9000.0],
+                [1000.0, 3000.0, 5000.0, 7000.0, 9000.0, np.nan],
                 index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
             )
             assert_series_equal(data_s, expected_data_s)
@@ -495,7 +495,7 @@ class TestEnergyPowerProcess:
                 for hour in (4, 5, 6, 7, 8, 9, 10, 11)
             ]
             expected_data_s = pd.Series(
-                [np.nan, np.nan, 14.0, 14.0, 18.0, 18.0, 18.0, 18.0],
+                [np.nan, np.nan, 14.0, 14.0, 18.0, 18.0, np.nan, np.nan],
                 index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
             )
             assert_series_equal(data_s, expected_data_s)
@@ -506,7 +506,7 @@ class TestEnergyPowerProcess:
                 for hour in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
             ]
             expected_data_s = pd.Series(
-                [6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 14.0, 14.0, 18.0, 18.0, 18.0, 18.0],
+                [6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 14.0, 14.0, 18.0, 18.0, np.nan, np.nan],
                 index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
             )
             assert_series_equal(data_s, expected_data_s)
