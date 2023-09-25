@@ -120,9 +120,12 @@ def energyindex2power(
         name="timestamp",
         inclusive="left",
     )
-    power_s = power_s.reindex(power_s.index.union(complete_idx)).interpolate(
-        method="ffill"
-    )
+    power_s = power_s.reindex(power_s.index.union(complete_idx))
+
+    # Forward fill up to last known value only
+    if not index_s.empty:
+        fill = power_s[power_s.index < index_s.index[-1]].interpolate(method="ffill")
+        power_s.update(fill)
 
     # Resample to expected interval
     power_s = power_s.resample(pd_freq, closed="left", label="left").agg("mean")
