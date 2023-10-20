@@ -194,7 +194,7 @@ def check_missing_ts_data(
                 # Timeseries missing if ratio < threshold
                 if (
                     (ratio := ts_info["avg_ratio"]) is not None
-                    and ratio < min_completeness_ratio
+                    and ratio <= min_completeness_ratio
                 )
                 # or no data in check period, whatever the expected interval
                 or ts_info["avg_count"] == 0
