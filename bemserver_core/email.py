@@ -8,7 +8,7 @@ from bemserver_core.celery import celery, logger
 class EmailSender:
     """Basic mail sender class
 
-    This implementaion does not provide SMTP authentication. It assumes an open
+    This implementation does not provide SMTP authentication. It assumes an open
     relay is available, typically localhost.
     """
 
