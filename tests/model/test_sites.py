@@ -1,4 +1,5 @@
 """Site tests"""
+
 import sqlalchemy as sqla
 
 import pytest

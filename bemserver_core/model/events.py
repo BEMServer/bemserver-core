@@ -1,4 +1,5 @@
 """Event"""
+
 import enum
 from functools import total_ordering
 import datetime as dt

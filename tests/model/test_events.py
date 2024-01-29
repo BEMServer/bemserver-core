@@ -1,4 +1,5 @@
 """Event tests"""
+
 import enum
 import datetime as dt
 from unittest import mock

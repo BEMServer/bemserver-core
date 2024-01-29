@@ -1,4 +1,5 @@
 """Timeseries"""
+
 import sqlalchemy as sqla
 
 from bemserver_core.database import Base, db, make_columns_read_only

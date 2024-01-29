@@ -5,6 +5,7 @@ Revises: 0.1
 Create Date: 2022-12-05 17:11:29.663991
 
 """
+
 from textwrap import dedent
 
 from alembic import op

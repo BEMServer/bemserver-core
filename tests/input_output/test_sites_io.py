@@ -1,4 +1,5 @@
 """Sites I/O tests"""
+
 import io
 
 import pytest

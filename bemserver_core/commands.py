@@ -2,6 +2,7 @@
 
 This module provides commands made available as CLI commands.
 """
+
 import click
 
 from bemserver_core import BEMServerCore, model, database, migrations

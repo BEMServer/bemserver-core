@@ -1,4 +1,5 @@
 """BEMServer Core"""
+
 import os
 
 from bemserver_core import authorization

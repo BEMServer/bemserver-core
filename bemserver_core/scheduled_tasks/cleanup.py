@@ -1,4 +1,5 @@
 """Cleanup scheduled task"""
+
 import sqlalchemy as sqla
 
 from bemserver_core.model import Timeseries, TimeseriesDataState, Campaign

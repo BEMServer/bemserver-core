@@ -1,4 +1,5 @@
 """Authorization"""
+
 from pathlib import Path
 import functools
 from contextvars import ContextVar

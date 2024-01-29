@@ -1,4 +1,5 @@
 """Authentication framework related tests"""
+
 import datetime as dt
 
 import sqlalchemy as sqla

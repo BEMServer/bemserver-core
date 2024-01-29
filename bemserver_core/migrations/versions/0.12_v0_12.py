@@ -5,6 +5,7 @@ Revises: 0.11
 Create Date: 2023-03-14 10:01:24.080592
 
 """
+
 import enum
 
 from alembic import op

@@ -1,4 +1,5 @@
 """Energy"""
+
 import sqlalchemy as sqla
 
 from bemserver_core.database import Base, db

@@ -1,4 +1,5 @@
 """DB migrations"""
+
 from pathlib import Path
 
 from alembic.config import Config

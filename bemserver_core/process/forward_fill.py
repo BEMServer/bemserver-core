@@ -2,6 +2,7 @@
 
 Forward fill from timeseries data
 """
+
 import pandas as pd
 
 from bemserver_core.input_output import tsdio

@@ -1,4 +1,5 @@
 """Weather forecast and historical data"""
+
 import datetime as dt
 import json
 

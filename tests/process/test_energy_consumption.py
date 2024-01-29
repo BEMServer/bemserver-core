@@ -1,4 +1,5 @@
 """Energy consumption tests"""
+
 from copy import deepcopy
 import datetime as dt
 

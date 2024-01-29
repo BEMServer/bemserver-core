@@ -1,4 +1,5 @@
 """Global conftest"""
+
 import datetime as dt
 from unittest import mock
 

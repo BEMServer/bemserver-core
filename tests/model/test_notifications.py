@@ -1,4 +1,5 @@
 """Notification tests"""
+
 import datetime as dt
 from email.message import EmailMessage
 from unittest import mock

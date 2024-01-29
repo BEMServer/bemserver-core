@@ -1,4 +1,5 @@
 """Test time utils"""
+
 import datetime as dt
 from zoneinfo import ZoneInfo
 
