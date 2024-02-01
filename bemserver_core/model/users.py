@@ -66,9 +66,12 @@ class User(AuthMixin, Base):
         if self.password is None:
             return False
         try:
-            return ph.verify(self.password, password)
+            ph.verify(self.password, password)
         except argon2.exceptions.VerifyMismatchError:
             return False
+        if ph.check_needs_rehash(self.password):
+            self.password = ph.hash(password)
+        return True
 
 
 class UserGroup(AuthMixin, Base):
