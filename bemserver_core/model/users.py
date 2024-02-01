@@ -1,5 +1,5 @@
 """Users"""
-from passlib.hash import argon2
+import argon2
 import sqlalchemy as sqla
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -7,8 +7,7 @@ from bemserver_core.database import Base
 from bemserver_core.authorization import AuthMixin, auth, Relation, get_current_user
 
 
-def hash_password(password):
-    return argon2.hash(password)
+ph = argon2.PasswordHasher()
 
 
 class User(AuthMixin, Base):
@@ -61,10 +60,18 @@ class User(AuthMixin, Base):
 
     def set_password(self, password: str) -> None:
         auth.authorize(get_current_user(), "update", self)
-        self.password = hash_password(password)
+        self.password = ph.hash(password)
 
     def check_password(self, password: str) -> bool:
-        return argon2.verify(password, self.password)
+        if self.password is None:
+            return False
+        try:
+            ph.verify(self.password, password)
+        except argon2.exceptions.VerifyMismatchError:
+            return False
+        if ph.check_needs_rehash(self.password):
+            self.password = ph.hash(password)
+        return True
 
 
 class UserGroup(AuthMixin, Base):

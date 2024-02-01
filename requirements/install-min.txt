@@ -8,7 +8,7 @@ alembic==1.8.0
     # via -r requirements/install-min.in
 amqp==5.1.1
     # via kombu
-argon2-cffi==21.3.0
+argon2-cffi==23.1.0
     # via -r requirements/install-min.in
 argon2-cffi-bindings==21.2.0
     # via argon2-cffi
@@ -58,8 +58,6 @@ oso==0.26.0
 packaging==23.1
     # via redis
 pandas==2.0.0
-    # via -r requirements/install-min.in
-passlib==1.7.4
     # via -r requirements/install-min.in
 pint==0.21
     # via -r requirements/install-min.in
