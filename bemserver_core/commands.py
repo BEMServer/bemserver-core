@@ -59,7 +59,7 @@ def create_user_cmd(name, email, admin, inactive, password):
         email=email,
         _is_admin=admin,
         _is_active=not inactive,
-        password=model.users.hash_password(password),
+        password=model.users.ph.hash(password),
     )
     database.db.session.add(user)
     database.db.session.commit()
