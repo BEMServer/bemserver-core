@@ -275,18 +275,18 @@ class TestCheckMissingScheduledTask:
         intermediate_dt = dt.datetime(2020, 1, 1, 12, 0, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc)
 
-        timestamps_1 = pd.date_range(start_dt, end_dt, inclusive="left", freq="600S")
+        timestamps_1 = pd.date_range(start_dt, end_dt, inclusive="left", freq="600s")
         values_1 = range(len(timestamps_1))
         create_timeseries_data(ts_0, ds_1, timestamps_1, values_1)
 
         timestamps_2 = pd.date_range(
-            start_dt, intermediate_dt, inclusive="left", freq="600S"
+            start_dt, intermediate_dt, inclusive="left", freq="600s"
         )
         values_2 = range(len(timestamps_2))
         create_timeseries_data(ts_1, ds_1, timestamps_2, values_2)
 
         timestamps_3 = pd.date_range(
-            start_dt, intermediate_dt, inclusive="left", freq="600S"
+            start_dt, intermediate_dt, inclusive="left", freq="600s"
         )
         values_3 = range(len(timestamps_3))
         create_timeseries_data(ts_2, ds_1, timestamps_3, values_3)

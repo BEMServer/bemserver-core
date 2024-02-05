@@ -57,7 +57,7 @@ oso==0.27.3
     # via -r requirements/install-min.in
 packaging==23.1
     # via redis
-pandas==2.0.0
+pandas==2.2.0
     # via -r requirements/install-min.in
 pint==0.21
     # via -r requirements/install-min.in

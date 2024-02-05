@@ -33,7 +33,7 @@ setup(
     install_requires=[
         "psycopg>=3.1.10,<4.0",
         "sqlalchemy>=2.0.8,<3.0",
-        "pandas>=2.0,<3.0",
+        "pandas>=2.2,<3.0",
         "pint>=0.21.0",
         "argon2_cffi>=23.1.0",
         "oso>=0.27.3,<0.28",

@@ -49,10 +49,12 @@ def ffill(
     # Interpolate each column independently and drop NaN, otherwise NaN in a
     # column due to data in another column generate unwanted extrapolated data
     columns = [
-        col.reindex(col.dropna().index.union(complete_idx)).interpolate(method="ffill")
+        col.reindex(col.dropna().index.union(complete_idx)).ffill()
         for _, col in data_df.items()
     ]
 
-    ret_df = pd.concat(columns, axis="columns")
+    # Not sorted by default since pandas 2.2
+    # https://github.com/pandas-dev/pandas/issues/57006
+    ret_df = pd.concat(columns, axis="columns", sort=True)
 
     return ret_df

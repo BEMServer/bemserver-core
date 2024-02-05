@@ -53,14 +53,14 @@ class TestEnergyPowerProcess:
         h6_dt = dt.datetime(2020, 1, 1, 6, 0, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 1, 1, 12, 0, tzinfo=dt.timezone.utc)
 
-        timestamps_1 = pd.date_range(start_dt, h6_dt, inclusive="left", freq="H")
+        timestamps_1 = pd.date_range(start_dt, h6_dt, inclusive="left", freq="h")
         values_1 = [ts.hour % 2 for ts in timestamps_1]
         create_timeseries_data(ts_0, ds_1, timestamps_1, values_1)
 
         timestamps_2 = [start_dt]
         values_2 = [ts.hour for ts in timestamps_2]
         create_timeseries_data(ts_1, ds_1, timestamps_2, values_2)
-        timestamps_2 = pd.date_range(h6_dt, end_dt, inclusive="left", freq="3H")
+        timestamps_2 = pd.date_range(h6_dt, end_dt, inclusive="left", freq="3h")
         values_2 = [ts.hour for ts in timestamps_2]
         create_timeseries_data(ts_1, ds_1, timestamps_2, values_2)
 
@@ -82,7 +82,7 @@ class TestEnergyPowerProcess:
             )
             expected_data_s = pd.Series(
                 [0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.5, 0.5],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="1800S"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="1800s"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -93,7 +93,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [0.0, 1.0, 0.0, 1.0],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="3600S"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="3600s"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -104,7 +104,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [1.0, 1.0],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="7200S"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="7200s"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -115,7 +115,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [0.0, 1000.0, 0.0, 1000.0],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="3600S"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="3600s"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -126,7 +126,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [0.0, 12.0, 15.0, 18.0],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="7200S"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="7200s"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -137,7 +137,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [np.nan, 168000.0, 168000.0],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="14400S"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="14400s"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -148,7 +148,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [np.nan, np.nan, np.nan],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="14400S"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="14400s"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -206,14 +206,14 @@ class TestEnergyPowerProcess:
         h6_dt = dt.datetime(2020, 1, 1, 6, 0, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 1, 1, 12, 0, tzinfo=dt.timezone.utc)
 
-        timestamps_1 = pd.date_range(start_dt, h6_dt, inclusive="left", freq="H")
+        timestamps_1 = pd.date_range(start_dt, h6_dt, inclusive="left", freq="h")
         values_1 = [ts.hour % 2 for ts in timestamps_1]
         create_timeseries_data(ts_0, ds_1, timestamps_1, values_1)
 
         timestamps_2 = [start_dt]
         values_2 = [ts.hour for ts in timestamps_2]
         create_timeseries_data(ts_1, ds_1, timestamps_2, values_2)
-        timestamps_2 = pd.date_range(h6_dt, end_dt, inclusive="left", freq="3H")
+        timestamps_2 = pd.date_range(h6_dt, end_dt, inclusive="left", freq="3h")
         values_2 = [ts.hour for ts in timestamps_2]
         create_timeseries_data(ts_1, ds_1, timestamps_2, values_2)
 
@@ -313,14 +313,14 @@ class TestEnergyPowerProcess:
         h6_dt = dt.datetime(2020, 1, 1, 6, 0, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 1, 1, 12, 0, tzinfo=dt.timezone.utc)
 
-        timestamps_1 = pd.date_range(start_dt, h6_dt, inclusive="left", freq="H")
+        timestamps_1 = pd.date_range(start_dt, h6_dt, inclusive="left", freq="h")
         values_1 = [ts.hour**2 for ts in timestamps_1]
         create_timeseries_data(ts_0, ds_1, timestamps_1, values_1)
 
         timestamps_2 = [start_dt]
         values_2 = [ts.hour**2 for ts in timestamps_2]
         create_timeseries_data(ts_1, ds_1, timestamps_2, values_2)
-        timestamps_2 = pd.date_range(h6_dt, end_dt, inclusive="left", freq="2H")
+        timestamps_2 = pd.date_range(h6_dt, end_dt, inclusive="left", freq="2h")
         values_2 = [ts.hour**2 for ts in timestamps_2]
         create_timeseries_data(ts_1, ds_1, timestamps_2, values_2)
 
@@ -336,7 +336,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [1.0, 3.0, 5.0, 7.0, 9.0, np.nan],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="h"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -347,7 +347,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [2.0, 6.0, 9.0],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="2H"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="2h"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -358,7 +358,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [1000.0, 3000.0, 5000.0, 7000.0, 9000.0, np.nan],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="h"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -369,7 +369,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [np.nan, np.nan, 14.0, 14.0, 18.0, 18.0, np.nan, np.nan],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="h"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -380,7 +380,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 14.0, 14.0, 18.0, 18.0, np.nan, np.nan],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="h"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -391,7 +391,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 12 * [np.nan],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="h"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -403,7 +403,7 @@ class TestEnergyPowerProcess:
             expected_data_s = pd.Series(
                 3 * [np.nan],
                 index=pd.DatetimeIndex(
-                    timestamps, name="timestamp", tz=dt.timezone.utc, freq="4H"
+                    timestamps, name="timestamp", tz=dt.timezone.utc, freq="4h"
                 ),
                 dtype=float,
             )
@@ -440,14 +440,14 @@ class TestEnergyPowerProcess:
         h6_dt = dt.datetime(2020, 1, 1, 6, 0, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 1, 1, 12, 0, tzinfo=dt.timezone.utc)
 
-        timestamps_1 = pd.date_range(start_dt, h6_dt, inclusive="left", freq="H")
+        timestamps_1 = pd.date_range(start_dt, h6_dt, inclusive="left", freq="h")
         values_1 = [ts.hour**2 for ts in timestamps_1]
         create_timeseries_data(ts_0, ds_1, timestamps_1, values_1)
 
         timestamps_2 = [start_dt]
         values_2 = [ts.hour**2 for ts in timestamps_2]
         create_timeseries_data(ts_1, ds_1, timestamps_2, values_2)
-        timestamps_2 = pd.date_range(h6_dt, end_dt, inclusive="left", freq="2H")
+        timestamps_2 = pd.date_range(h6_dt, end_dt, inclusive="left", freq="2h")
         values_2 = [ts.hour**2 for ts in timestamps_2]
         create_timeseries_data(ts_1, ds_1, timestamps_2, values_2)
 
@@ -463,7 +463,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [1.0, 3.0, 5.0, 7.0, 9.0, np.nan],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="h"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -474,7 +474,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [2.0, 6.0, 9.0],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="2H"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="2h"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -485,7 +485,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [1000.0, 3000.0, 5000.0, 7000.0, 9000.0, np.nan],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="h"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -496,7 +496,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [np.nan, np.nan, 14.0, 14.0, 18.0, 18.0, np.nan, np.nan],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="h"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -507,7 +507,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 [6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 14.0, 14.0, 18.0, 18.0, np.nan, np.nan],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="h"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -518,7 +518,7 @@ class TestEnergyPowerProcess:
             ]
             expected_data_s = pd.Series(
                 12 * [np.nan],
-                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="H"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="h"),
             )
             assert_series_equal(data_s, expected_data_s)
 
@@ -530,7 +530,7 @@ class TestEnergyPowerProcess:
             expected_data_s = pd.Series(
                 3 * [np.nan],
                 index=pd.DatetimeIndex(
-                    timestamps, name="timestamp", tz=dt.timezone.utc, freq="4H"
+                    timestamps, name="timestamp", tz=dt.timezone.utc, freq="4h"
                 ),
                 dtype=float,
             )

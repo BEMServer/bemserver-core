@@ -124,7 +124,7 @@ def energyindex2power(
 
     # Forward fill up to last known value only
     if not index_s.empty:
-        fill = power_s[power_s.index < index_s.index[-1]].interpolate(method="ffill")
+        fill = power_s[power_s.index < index_s.index[-1]].ffill()
         power_s.update(fill)
 
     # Resample to expected interval
