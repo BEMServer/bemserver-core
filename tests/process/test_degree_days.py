@@ -24,7 +24,7 @@ from bemserver_core.exceptions import (
 @pytest.mark.parametrize("timezone", (dt.timezone.utc, ZoneInfo("Europe/Paris")))
 def test_compute_dd(type_, base, timezone):
     index = pd.date_range(
-        "2020-01-01", "2021-01-01", freq="H", tz=timezone, inclusive="left"
+        "2020-01-01", "2021-01-01", freq="h", tz=timezone, inclusive="left"
     )
     weather_df = pd.DataFrame(index=index)
     weather_df["temperature"] = index.month
@@ -33,7 +33,7 @@ def test_compute_dd(type_, base, timezone):
 
     # Introduce a bias to check that computation method uses min/max
     weather_df["temperature"] += 5
-    weather_df["temperature"][index.hour == 1] -= 10
+    weather_df.loc[index.hour == 1, "temperature"] -= 10
 
     # Daily HDD
     dd_s = compute_dd(weather_df["temperature"], "day", type_=type_, base=base)
@@ -58,11 +58,11 @@ def test_compute_dd(type_, base, timezone):
 
     # Yearly HDD
     dd_s = compute_dd(weather_df["temperature"], "year", type_=type_, base=base)
-    expected_y = expected_d.resample("AS").sum()
+    expected_y = expected_d.resample("YS").sum()
     assert_series_equal(dd_s, expected_y)
 
     # Return NaN if no value
-    weather_df["temperature"][index.month > 6] = np.nan
+    weather_df.loc[index.month > 6, "temperature"] = np.nan
     dd_s = compute_dd(weather_df["temperature"], "day", type_=type_, base=base)
     expected_d[expected_d.index.month > 6] = np.nan
     assert_series_equal(dd_s, expected_d)
@@ -90,7 +90,7 @@ def test_compute_dd_for_site(sites, weather_timeseries_by_sites, type_, base, un
     ds_clean = TimeseriesDataState.get(name="Clean").first()
 
     index = pd.date_range(
-        start_d, end_d, freq="H", tz="UTC", inclusive="left", name="timestamp"
+        start_d, end_d, freq="h", tz="UTC", inclusive="left", name="timestamp"
     )
     weather_df = pd.DataFrame(index=index)
     weather_df[wtbs_1.timeseries_id] = index.month
@@ -99,7 +99,7 @@ def test_compute_dd_for_site(sites, weather_timeseries_by_sites, type_, base, un
 
     # Introduce a bias to check that computation method uses min/max
     weather_df[wtbs_1.timeseries_id] += 5
-    weather_df[wtbs_1.timeseries_id][index.hour == 1] -= 10
+    weather_df.loc[index.hour == 1, wtbs_1.timeseries_id] -= 10
 
     tsdio.set_timeseries_data(weather_df, data_state=ds_clean)
 
@@ -140,7 +140,7 @@ def test_compute_dd_for_site(sites, weather_timeseries_by_sites, type_, base, un
     dd_s = compute_dd_for_site(
         site_1, start_d, end_d, "year", type_=type_, base=base, unit=unit
     )
-    expected_y = expected_d.resample("AS").sum()
+    expected_y = expected_d.resample("YS").sum()
     assert_series_equal(dd_s, expected_y)
 
     # Missing data

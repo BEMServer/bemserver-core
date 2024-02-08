@@ -33,7 +33,7 @@ class TestEnergyConsumption:
         start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc)
 
-        timestamps = pd.date_range(start_dt, end_dt, inclusive="left", freq="H")
+        timestamps = pd.date_range(start_dt, end_dt, inclusive="left", freq="h")
 
         # Create timeseries and timeseries data
         ds_clean = TimeseriesDataState.get(name="Clean").first()

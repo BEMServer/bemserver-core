@@ -63,24 +63,24 @@ class TestCompleteness:
         intermediate_dt_2 = dt.datetime(2020, 2, 1, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 3, 1, tzinfo=dt.timezone.utc)
 
-        timestamps_1 = pd.date_range(start_dt, end_dt, inclusive="left", freq="600S")
+        timestamps_1 = pd.date_range(start_dt, end_dt, inclusive="left", freq="600s")
         values_1 = range(len(timestamps_1))
         create_timeseries_data(ts_0, ds_1, timestamps_1, values_1)
 
         timestamps_2 = pd.date_range(
-            start_dt, intermediate_dt_1, inclusive="left", freq="600S"
-        ).union(pd.date_range(intermediate_dt_2, end_dt, inclusive="left", freq="600S"))
+            start_dt, intermediate_dt_1, inclusive="left", freq="600s"
+        ).union(pd.date_range(intermediate_dt_2, end_dt, inclusive="left", freq="600s"))
         values_2 = range(len(timestamps_2))
         create_timeseries_data(ts_1, ds_1, timestamps_2, values_2)
 
         # 430 is a manually randomized number chosen to get uneven buckets
-        timestamps_3 = pd.date_range(start_dt, end_dt, inclusive="left", freq="430S")
+        timestamps_3 = pd.date_range(start_dt, end_dt, inclusive="left", freq="430s")
         values_3 = range(len(timestamps_3))
         create_timeseries_data(ts_2, ds_1, timestamps_3, values_3)
 
         timestamps_4 = pd.date_range(
-            start_dt, intermediate_dt_1, inclusive="left", freq="600S"
-        ).union(pd.date_range(intermediate_dt_2, end_dt, inclusive="left", freq="430S"))
+            start_dt, intermediate_dt_1, inclusive="left", freq="600s"
+        ).union(pd.date_range(intermediate_dt_2, end_dt, inclusive="left", freq="430s"))
         values_4 = range(len(timestamps_4))
         create_timeseries_data(ts_3, ds_1, timestamps_4, values_4)
 

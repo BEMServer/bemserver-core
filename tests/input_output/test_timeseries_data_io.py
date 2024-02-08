@@ -384,7 +384,7 @@ class TestTimeseriesDataIO:
 
         # Create data
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         create_timeseries_data(ts_0, ds_1, timestamps, [None, 0, 2])
         create_timeseries_data(ts_4, ds_1, timestamps, [12, 10, None])
@@ -484,7 +484,7 @@ class TestTimeseriesDataIO:
 
         # Create data
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         create_timeseries_data(ts_1, ds_1, timestamps, [None, 0, 2])
         create_timeseries_data(ts_3, ds_1, timestamps, [12, 10, None])
@@ -565,7 +565,7 @@ class TestTimeseriesDataIO:
 
         # Create data
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         create_timeseries_data(ts_0, ds_1, timestamps, [None, 0, 2])
         create_timeseries_data(ts_4, ds_1, timestamps, [10, 12, None])
@@ -623,7 +623,7 @@ class TestTimeseriesDataIO:
 
         # Create data
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         create_timeseries_data(ts_1, ds_1, timestamps, [None, 0, 2])
         create_timeseries_data(ts_3, ds_1, timestamps, [10, 12, None])
@@ -696,7 +696,7 @@ class TestTimeseriesDataIO:
 
         # Create data
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         values_1 = range(3)
         create_timeseries_data(ts_0, ds_1, timestamps, values_1)
@@ -870,7 +870,7 @@ class TestTimeseriesDataIO:
         end_dt = start_dt + dt.timedelta(hours=3)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         values_1 = range(3)
         create_timeseries_data(ts_1, ds_1, timestamps, values_1)
@@ -927,7 +927,7 @@ class TestTimeseriesDataIO:
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
 
         ts_l = (ts_0, ts_2, ts_4)
@@ -1469,7 +1469,7 @@ class TestTimeseriesDataIO:
         end_dt = dt.datetime(2020, 10, 26, tzinfo=dt.timezone.utc)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
 
         ts_l = (ts_0,)
@@ -1531,12 +1531,12 @@ class TestTimeseriesDataIO:
         ).astimezone(dt.timezone.utc)
 
         timestamps_1 = pd.date_range(
-            start=start_dt_1, end=end_dt_1, inclusive="left", freq="H"
+            start=start_dt_1, end=end_dt_1, inclusive="left", freq="h"
         )
         values_1 = range(len(timestamps_1))
         create_timeseries_data(ts_0, ds_1, timestamps_1, values_1)
         timestamps_2 = pd.date_range(
-            start=start_dt_2, end=end_dt_2, inclusive="left", freq="H"
+            start=start_dt_2, end=end_dt_2, inclusive="left", freq="h"
         )
         values_2 = [10 + 2 * i for i in range(len(timestamps_2))]
         create_timeseries_data(ts_0, ds_1, timestamps_2, values_2)
@@ -1587,7 +1587,7 @@ class TestTimeseriesDataIO:
         end_dt = start_dt + dt.timedelta(days=366 + 365)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         values_1 = range(24 * (366 + 365))
         create_timeseries_data(ts_0, ds_1, timestamps, values_1)
@@ -1964,7 +1964,7 @@ class TestTimeseriesDataIO:
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         values_1 = range(24 * 3)
         create_timeseries_data(ts_1, ds_1, timestamps, values_1)
@@ -2024,7 +2024,7 @@ class TestTimeseriesDataIO:
         end_dt = start_dt + dt.timedelta(hours=3)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         values = range(3)
         create_timeseries_data(ts_0, ds_1, timestamps, values)
@@ -2058,7 +2058,7 @@ class TestTimeseriesDataIO:
         end_dt = start_dt + dt.timedelta(hours=3)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         values = range(3)
         create_timeseries_data(ts_0, ds_1, timestamps, values)
@@ -2356,7 +2356,7 @@ class TestTimeseriesDataCSVIO:
         end_dt = start_dt + dt.timedelta(hours=3)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         values_1 = range(3)
         create_timeseries_data(ts_0, ds_1, timestamps, values_1)
@@ -2450,7 +2450,7 @@ class TestTimeseriesDataCSVIO:
         end_dt = start_dt + dt.timedelta(hours=3)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         values_1 = range(3)
         create_timeseries_data(ts_1, ds_1, timestamps, values_1)
@@ -2501,7 +2501,7 @@ class TestTimeseriesDataCSVIO:
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         values_1 = range(24 * 3)
         create_timeseries_data(ts_0, ds_1, timestamps, values_1)
@@ -2665,7 +2665,7 @@ class TestTimeseriesDataCSVIO:
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         values_1 = range(24 * 3)
         create_timeseries_data(ts_1, ds_1, timestamps, values_1)
@@ -2965,7 +2965,7 @@ class TestTimeseriesDataJSONIO:
         end_dt = start_dt + dt.timedelta(hours=3)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         values_1 = range(3)
         create_timeseries_data(ts_0, ds_1, timestamps, values_1)
@@ -3084,7 +3084,7 @@ class TestTimeseriesDataJSONIO:
         end_dt = start_dt + dt.timedelta(hours=3)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         values_1 = range(3)
         create_timeseries_data(ts_1, ds_1, timestamps, values_1)
@@ -3138,7 +3138,7 @@ class TestTimeseriesDataJSONIO:
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         values_1 = range(24 * 3)
         create_timeseries_data(ts_0, ds_1, timestamps, values_1)
@@ -3373,7 +3373,7 @@ class TestTimeseriesDataJSONIO:
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
         timestamps = pd.date_range(
-            start=start_dt, end=end_dt, inclusive="left", freq="H"
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
         )
         values_1 = range(24 * 3)
         create_timeseries_data(ts_1, ds_1, timestamps, values_1)

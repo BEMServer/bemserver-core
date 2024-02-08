@@ -8,13 +8,13 @@ from bemserver_core.exceptions import BEMServerCorePeriodError
 
 
 PANDAS_PERIOD_ALIASES = {
-    "second": "S",
-    "minute": "T",
-    "hour": "H",
+    "second": "s",
+    "minute": "min",
+    "hour": "h",
     "day": "D",
     "week": "W-MON",
     "month": "MS",
-    "year": "AS",
+    "year": "YS",
 }
 
 

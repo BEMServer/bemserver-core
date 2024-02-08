@@ -1,6 +1,8 @@
 """BEMServer Core"""
 import os
 
+import pandas as pd
+
 from bemserver_core import authorization
 from bemserver_core import model
 from bemserver_core import common
@@ -15,6 +17,10 @@ from bemserver_core.exceptions import BEMServerCoreSettingsError
 
 
 __version__ = "0.16.7"
+
+
+# Set pandas future flags to silence deprecation warnings
+pd.set_option("future.no_silent_downcasting", True)
 
 
 class BEMServerCore:

@@ -504,7 +504,7 @@ class TestCleanupScheduledTask:
 
         start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc)
-        timestamps = pd.date_range(start_dt, end_dt, inclusive="left", freq="12H")
+        timestamps = pd.date_range(start_dt, end_dt, inclusive="left", freq="12h")
         values = [0, 13]
         create_timeseries_data(ts_0, ds_1, timestamps, values)
         create_timeseries_data(ts_1, ds_1, timestamps, values)

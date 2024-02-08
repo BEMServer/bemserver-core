@@ -578,7 +578,7 @@ def to_utc_index(index):
 
     try:
         # Cast to series so that output is series, with an apply method
-        index = pd.to_datetime(pd.Series(index), format="ISO8601")
+        index = pd.Series(index).apply(lambda x: pd.to_datetime(x, format="ISO8601"))
     except (
         ValueError,
         pd.errors.OutOfBoundsDatetime,
@@ -729,7 +729,9 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
         """
         # Load JSON into DataFrame
         try:
-            data_df = pd.read_json(json_data, orient="columns", dtype=False)
+            data_df = pd.read_json(
+                io.StringIO(json_data), orient="columns", dtype=False
+            )
         except ValueError as exc:
             raise TimeseriesDataJSONIOError("Wrong JSON file") from exc
 

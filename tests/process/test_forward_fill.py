@@ -37,14 +37,14 @@ class TestForewardFillProcess:
         h6_dt = dt.datetime(2020, 1, 1, 6, 0, tzinfo=dt.timezone.utc)
         end_dt = dt.datetime(2020, 1, 1, 12, 0, tzinfo=dt.timezone.utc)
 
-        timestamps_1 = pd.date_range(start_dt, h6_dt, inclusive="left", freq="H")
+        timestamps_1 = pd.date_range(start_dt, h6_dt, inclusive="left", freq="h")
         values_1 = [ts.hour % 2 for ts in timestamps_1]
         create_timeseries_data(ts_0, ds_1, timestamps_1, values_1)
 
         timestamps_2 = [start_dt]
         values_2 = [ts.hour for ts in timestamps_2]
         create_timeseries_data(ts_1, ds_1, timestamps_2, values_2)
-        timestamps_2 = pd.date_range(h6_dt, end_dt, inclusive="left", freq="3H")
+        timestamps_2 = pd.date_range(h6_dt, end_dt, inclusive="left", freq="3h")
         values_2 = [ts.hour for ts in timestamps_2]
         create_timeseries_data(ts_1, ds_1, timestamps_2, values_2)
 
