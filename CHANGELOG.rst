@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+0.17.0 (unreleased)
++++++++++++++++++++
+
+Features:
+
+- Rehash password on login if needed
+
+Other changes:
+
+- Remove passlib dependency
+- Require pandas >= 2.2.0
+
 0.16.7 (2023-09-25)
 +++++++++++++++++++
 
