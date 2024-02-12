@@ -17,7 +17,7 @@ from bemserver_core.email import ems
 from bemserver_core.exceptions import BEMServerCoreSettingsError
 
 
-__version__ = "0.17.0"
+__version__ = "0.17.1"
 
 
 # Set pandas future flags to silence deprecation warnings
