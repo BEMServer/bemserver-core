@@ -1,4 +1,5 @@
 """Scheduled tasks"""
+
 from pathlib import Path
 
 from .cleanup import ST_CleanupByCampaign, ST_CleanupByTimeseries

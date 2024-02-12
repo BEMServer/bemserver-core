@@ -1,4 +1,5 @@
 """Utils"""
+
 import functools
 from contextlib import AbstractContextManager
 from pathlib import Path

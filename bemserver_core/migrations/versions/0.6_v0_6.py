@@ -5,6 +5,7 @@ Revises: 0.4
 Create Date: 2023-01-06 16:53:58.160326
 
 """
+
 from textwrap import dedent
 import enum
 

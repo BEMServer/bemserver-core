@@ -1,4 +1,5 @@
 """Timeseries data I/O"""
+
 import io
 import datetime as dt
 from zoneinfo import ZoneInfo

@@ -1,4 +1,5 @@
 """PropertyType tests"""
+
 import pytest
 
 from bemserver_core.common import PropertyType

@@ -1,4 +1,5 @@
 """User tests"""
+
 import pytest
 
 from bemserver_core.model import (

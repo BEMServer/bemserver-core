@@ -1,4 +1,5 @@
 """Energy <=> Power conversions tests"""
+
 import datetime as dt
 
 import numpy as np

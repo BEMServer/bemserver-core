@@ -1,4 +1,5 @@
 """Email tests"""
+
 from email.message import EmailMessage
 from unittest import mock
 

@@ -1,4 +1,5 @@
 """Check outliers scheduled task"""
+
 import datetime as dt
 from zoneinfo import ZoneInfo
 

@@ -1,4 +1,5 @@
 """Timeseries I/O tests"""
+
 import math
 import json
 import datetime as dt

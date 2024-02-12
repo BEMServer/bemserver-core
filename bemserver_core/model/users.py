@@ -1,4 +1,5 @@
 """Users"""
+
 import argon2
 import sqlalchemy as sqla
 from sqlalchemy.ext.hybrid import hybrid_property

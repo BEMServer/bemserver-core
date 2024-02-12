@@ -1,4 +1,5 @@
 """Heating / Cooling Degree Days computations"""
+
 import datetime as dt
 from zoneinfo import ZoneInfo
 

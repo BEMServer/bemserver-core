@@ -1,4 +1,5 @@
 """Download weather data scheduled task"""
+
 import datetime as dt
 from zoneinfo import ZoneInfo
 

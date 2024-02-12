@@ -1,4 +1,5 @@
 """Celery task manager tests"""
+
 import pytest
 
 import sqlalchemy as sqla

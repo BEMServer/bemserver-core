@@ -1,4 +1,5 @@
 """Test utils"""
+
 import sqlalchemy as sqla
 import pandas as pd
 

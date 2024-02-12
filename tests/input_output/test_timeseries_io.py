@@ -1,4 +1,5 @@
 """Timeseries I/O tests"""
+
 import io
 
 import pytest

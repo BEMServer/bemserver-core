@@ -2,6 +2,7 @@
 
 Compute energy consumption breakdowns
 """
+
 from collections import defaultdict
 
 import numpy as np

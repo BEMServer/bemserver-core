@@ -2,6 +2,7 @@
 
 Remove outliers from timeseries data
 """
+
 import numpy as np
 
 from bemserver_core.model import Timeseries

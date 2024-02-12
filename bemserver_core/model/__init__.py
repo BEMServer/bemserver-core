@@ -1,4 +1,5 @@
 """Model"""
+
 from pathlib import Path
 
 from .users import User, UserGroup, UserByUserGroup

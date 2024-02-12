@@ -1,4 +1,5 @@
 """Property types"""
+
 import enum
 
 from bemserver_core.exceptions import PropertyTypeInvalidError

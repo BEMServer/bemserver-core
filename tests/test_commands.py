@@ -1,4 +1,5 @@
 """Commands tests"""
+
 import sqlalchemy as sqla
 from click.testing import CliRunner
 

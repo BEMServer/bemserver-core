@@ -1,4 +1,5 @@
 """Weather data"""
+
 import enum
 import sqlalchemy as sqla
 
