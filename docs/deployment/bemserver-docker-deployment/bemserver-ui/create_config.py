@@ -14,7 +14,7 @@ def main():
 
     with open(BEMSERVER_UI_SETTINGS_FILE, "w") as fd:
         fd.write(f'BEMSERVER_API_HOST="{BEMSERVER_API_HOST}"\n')
-        fd.write(f'BEMSERVER_API_USE_SSL={BEMSERVER_API_USE_SSL}\n')
+        fd.write(f"BEMSERVER_API_USE_SSL={BEMSERVER_API_USE_SSL}\n")
         fd.write(f'SECRET_KEY="{SECRET_KEY}"\n')
 
 
