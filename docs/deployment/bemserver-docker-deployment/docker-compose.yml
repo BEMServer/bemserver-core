@@ -1,0 +1,78 @@
+services:
+  timescaledb:
+    #image: timescale/timescaledb:2.14.2-pg16
+    #container_name: timescaledb
+    build: 
+      context: timescaledb
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
+  redis-stack:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379"
+      #- "8001:8001"
+    volumes:
+      - redis-data:/root/redis
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    environment:
+      - "REDIS_ARGS=--requirepass ${REDIS_PASSWORD} --user ${REDIS_USERNAME} on >password ~* allcommands --user default off nopass nocommands"
+    restart: unless-stopped
+
+  bemserver-api:
+    build: 
+      context: bemserver-api
+      dockerfile: Dockerfile
+    volumes:
+      - ./bemserver-api/config:/config
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+    environment:
+      BEMSERVER_NAME: ${BEMSERVER_NAME}
+      BEMSERVER_EMAIL: ${BEMSERVER_EMAIL}
+      BEMSERVER_CORE_SETTINGS_FILE: "/config/bemserver-core-settings.py"
+      SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@timescaledb:5432/bemserver"
+      WEATHER_DATA_CLIENT_API_KEY: ${WEATHER_DATA_CLIENT_API_KEY}
+
+  bemserver-ui:
+    build: 
+      context: bemserver-ui
+      dockerfile: Dockerfile
+    volumes:
+      - ./bemserver-ui/config:/config
+    ports:
+      - "5001:5001"
+    restart: unless-stopped
+    environment:
+      BEMSERVER_UI_SETTINGS_FILE: "/config/bemserver-ui.cfg"
+      BEMSERVER_API_HOST: "bemserver-api:5000"
+      #BEMSERVER_API_HOST: "localhost"
+      BEMSERVER_API_USE_SSL: 0
+
+
+volumes:
+  postgres-data:
+  pgadmin-data:
+  redis-data:
+
