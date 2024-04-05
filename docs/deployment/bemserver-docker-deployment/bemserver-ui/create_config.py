@@ -17,6 +17,7 @@ def main():
         fd.write(f"BEMSERVER_API_USE_SSL={BEMSERVER_API_USE_SSL}\n")
         fd.write(f'SECRET_KEY="{SECRET_KEY}"\n')
 
+    print(f"Config '{BEMSERVER_UI_SETTINGS_FILE}' created.")
 
 if __name__ == "__main__":
     main()

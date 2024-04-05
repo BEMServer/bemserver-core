@@ -31,18 +31,36 @@ services:
     container_name: redis-stack
     ports:
       - "6379:6379"
-      #- "8001:8001"
+      - "8001:8001"  # net stop winnat will be required under windows
     volumes:
       - redis-data:/root/redis
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redis/config/redis.conf:/usr/local/etc/redis/redis.conf
     environment:
-      - "REDIS_ARGS=--requirepass ${REDIS_PASSWORD} --user ${REDIS_USERNAME} on >password ~* allcommands --user default off nopass nocommands"
+      #REDIS_ARGS: "--requirepass ${REDIS_PASSWORD}"
+      REDIS_ARGS: "--requirepass ${REDIS_PASSWORD} --user ${REDIS_USERNAME} on >password ~* allcommands --user default off nopass nocommands"
     restart: unless-stopped
+
+  wait-for-pg:
+    image: atkrad/wait4x
+    depends_on:
+      - timescaledb
+    command: postgresql 'postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@timescaledb:5432/postgres?sslmode=disable' -t 90s -i 250ms
+
+  wait-for-redis:
+    image: atkrad/wait4x
+    depends_on:
+      - redis-stack
+    command: redis redis://${REDIS_USERNAME}:${REDIS_PASSWORD}@redis-stack:6379/0
 
   bemserver-api:
     build: 
       context: bemserver-api
       dockerfile: Dockerfile
+    depends_on:
+      wait-for-pg:
+        condition: service_completed_successfully
+      wait-for-redis:
+        condition: service_completed_successfully
     volumes:
       - ./bemserver-api/config:/config
     ports:
@@ -52,13 +70,26 @@ services:
       BEMSERVER_NAME: ${BEMSERVER_NAME}
       BEMSERVER_EMAIL: ${BEMSERVER_EMAIL}
       BEMSERVER_CORE_SETTINGS_FILE: "/config/bemserver-core-settings.py"
+      BEMSERVER_CELERY_SETTINGS_FILE: "/config/bemserver-celery-settings.py"
       SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@timescaledb:5432/bemserver"
       WEATHER_DATA_CLIENT_API_KEY: ${WEATHER_DATA_CLIENT_API_KEY}
+      APP: ${CELERY_WORKER_NAME}
+      BROKER_URL: ${CELERY_BROKER_URL}
+      RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+
+  wait-for-bemserver-api:
+    image: atkrad/wait4x
+    depends_on:
+      - bemserver-api
+    command:  http http://bemserver-api:5000 --expect-status-code 200
 
   bemserver-ui:
     build: 
       context: bemserver-ui
       dockerfile: Dockerfile
+    depends_on:
+      wait-for-bemserver-api:
+        condition: service_completed_successfully
     volumes:
       - ./bemserver-ui/config:/config
     ports:
@@ -67,12 +98,9 @@ services:
     environment:
       BEMSERVER_UI_SETTINGS_FILE: "/config/bemserver-ui.cfg"
       BEMSERVER_API_HOST: "bemserver-api:5000"
-      #BEMSERVER_API_HOST: "localhost"
       BEMSERVER_API_USE_SSL: 0
-
 
 volumes:
   postgres-data:
   pgadmin-data:
   redis-data:
-

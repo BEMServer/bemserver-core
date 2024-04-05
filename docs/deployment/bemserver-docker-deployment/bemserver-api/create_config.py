@@ -16,8 +16,8 @@ def main():
     with open(BEMSERVER_CORE_SETTINGS_FILE, "w") as fd:
         fd.write(f'SQLALCHEMY_DATABASE_URI="{SQLALCHEMY_DATABASE_URI}"\n')
         fd.write(f'WEATHER_DATA_CLIENT_API_KEY="{WEATHER_DATA_CLIENT_API_KEY}"\n')
-    # print(f'SQLALCHEMY_DATABASE_URI="{SQLALCHEMY_DATABASE_URI}"')
-    # print(f'WEATHER_DATA_CLIENT_API_KEY="{WEATHER_DATA_CLIENT_API_KEY}"')
+
+    print(f"Config '{BEMSERVER_CORE_SETTINGS_FILE}' created")
 
 
 if __name__ == "__main__":
