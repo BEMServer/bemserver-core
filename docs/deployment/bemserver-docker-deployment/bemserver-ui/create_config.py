@@ -19,5 +19,6 @@ def main():
 
     print(f"Config '{BEMSERVER_UI_SETTINGS_FILE}' created.")
 
+
 if __name__ == "__main__":
     main()
