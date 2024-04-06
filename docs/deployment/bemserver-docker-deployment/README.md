@@ -32,10 +32,15 @@ Enter into running container to verify auth
 
     $ docker compose exec redis-stack /bin/sh
     # redis-cli
+
+or directly
+
+    $ docker compose exec redis-stack redis-cli
     127.0.0.1:6379> AUTH redisuser password
     OK
-
-    (...)
+    127.0.0.1:6379> ACL LIST
+    1) "user default off nopass sanitize-payload resetchannels -@all"
+    2) "user redisuser on sanitize-payload #5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8 ~* &* +@all"
 
 You can also browse Redis Insight at http://127.0.0.1:8001
 
@@ -159,3 +164,11 @@ In an another shell, start Celery beat to trigger tasks at regular intervals
         . db -> celerybeat-schedule
         . logfile -> [stderr]@%WARNING
         . maxinterval -> 5.00 minutes (300s)
+
+
+(optional)
+Start Celery Flower https://flower.readthedocs.io/
+
+    $ docker compose up -d celery-flower
+
+Browse Flower web user interface at http://127.0.0.1:5555/

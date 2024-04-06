@@ -37,7 +37,7 @@ services:
       - ./redis/config/redis.conf:/usr/local/etc/redis/redis.conf
     environment:
       #REDIS_ARGS: "--requirepass ${REDIS_PASSWORD}"
-      REDIS_ARGS: "--requirepass ${REDIS_PASSWORD} --user ${REDIS_USERNAME} on >password ~* allcommands --user default off nopass nocommands"
+      REDIS_ARGS: "--requirepass ${REDIS_PASSWORD} --user ${REDIS_USERNAME} on >password &* ~* allcommands --user default off nopass nocommands"
     restart: unless-stopped
 
   wait-for-pg:
@@ -99,6 +99,42 @@ services:
       BEMSERVER_UI_SETTINGS_FILE: "/config/bemserver-ui.cfg"
       BEMSERVER_API_HOST: "bemserver-api:5000"
       BEMSERVER_API_USE_SSL: 0
+
+  #celery-worker:
+  #  build: 
+  #    context: celery
+  #    dockerfile: Dockerfile
+  #  restart: unless-stopped
+  #  command: worker
+  #  environment:
+  #    APP: ${CELERY_WORKER_NAME}
+  #    BROKER_URL: ${CELERY_BROKER_URL}
+  #    RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+
+  #celery-beat:
+  #  build: 
+  #    context: celery
+  #    dockerfile: Dockerfile
+  #  restart: unless-stopped
+  #  command: beat
+  #  environment:
+  #    APP: ${CELERY_WORKER_NAME}
+  #    BROKER_URL: ${CELERY_BROKER_URL}
+  #    RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+
+  celery-flower:
+    image: mher/flower
+    volumes:
+      - ./celery/flower/data:/data
+    ports:
+      - 5555:5555
+    command: celery flower
+    #restart: unless-stopped
+    environment:
+      APP: ${CELERY_WORKER_NAME}
+      BROKER_URL: ${CELERY_BROKER_URL}
+      RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+
 
 volumes:
   postgres-data:
