@@ -166,4 +166,4 @@ Celery Flower https://flower.readthedocs.io/ is a web UI to show tasks
 
     $ docker compose up -d celery-flower
 
-Browse Flower web user interface at http://127.0.0.1:5555/
+Browse Flower web user interface at http://127.0.0.1:5555/ log with `CELERY_FLOWER_USERNAME` / `CELERY_FLOWER_PASSWORD` (default is `admin` / `password`).
