@@ -6,4 +6,5 @@ RUN mkdir /config
 COPY app.py /app/app.py
 WORKDIR /app
 EXPOSE 5001
-ENTRYPOINT FLASK_APP=/app/app.py flask run --host=0.0.0.0 --debug -p 5001
+ENTRYPOINT ["flask", "run"]
+

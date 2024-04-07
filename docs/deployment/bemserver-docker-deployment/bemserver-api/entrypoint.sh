@@ -1,7 +1,9 @@
 #!/usr/bin/env sh
 
-celery worker &
+# celery worker &
 
-celery beat &
+# celery beat &
 
-FLASK_APP=/app/app.py flask run --host=0.0.0.0 --debug
+# celery flower &
+
+flask run

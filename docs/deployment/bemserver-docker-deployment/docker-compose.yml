@@ -9,8 +9,8 @@ services:
     ports:
       - 5432:5432
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
@@ -21,8 +21,8 @@ services:
     ports:
       - "8888:80"
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
     volumes:
       - pgadmin-data:/var/lib/pgadmin
 
@@ -31,26 +31,25 @@ services:
     container_name: redis-stack
     ports:
       - "6379:6379"
-      - "8001:8001"  # net stop winnat will be required under windows
+      - "8001:8001"  # net stop winnat will probably be required under windows
     volumes:
       - redis-data:/root/redis
       - ./redis/config/redis.conf:/usr/local/etc/redis/redis.conf
     environment:
-      #REDIS_ARGS: "--requirepass ${REDIS_PASSWORD}"
-      REDIS_ARGS: "--requirepass ${REDIS_PASSWORD} --user ${REDIS_USERNAME} on >password &* ~* allcommands --user default off nopass nocommands"
+      - REDIS_ARGS=--requirepass ${REDIS_PASSWORD} --user ${REDIS_USERNAME} on >password &* ~* allcommands --user default off nopass nocommands
     restart: unless-stopped
 
   wait-for-pg:
     image: atkrad/wait4x
     depends_on:
       - timescaledb
-    command: postgresql 'postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@timescaledb:5432/postgres?sslmode=disable' -t 90s -i 250ms
+    command: postgresql 'postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@timescaledb:5432/postgres?sslmode=disable' --timeout 90s --interval 250ms
 
   wait-for-redis:
     image: atkrad/wait4x
     depends_on:
       - redis-stack
-    command: redis redis://${REDIS_USERNAME}:${REDIS_PASSWORD}@redis-stack:6379/0
+    command: redis redis://${REDIS_USERNAME}:${REDIS_PASSWORD}@redis-stack:6379/0 --timeout 90s --interval 250ms
 
   bemserver-api:
     build: 
@@ -65,23 +64,28 @@ services:
       - ./bemserver-api/config:/config
     ports:
       - "5000:5000"
+      #- "5555:5555"  # Celery Flower
     restart: unless-stopped
     environment:
-      BEMSERVER_NAME: ${BEMSERVER_NAME}
-      BEMSERVER_EMAIL: ${BEMSERVER_EMAIL}
-      BEMSERVER_CORE_SETTINGS_FILE: "/config/bemserver-core-settings.py"
-      BEMSERVER_CELERY_SETTINGS_FILE: "/config/bemserver-celery-settings.py"
-      SQLALCHEMY_DATABASE_URI: "postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@timescaledb:5432/bemserver"
-      WEATHER_DATA_CLIENT_API_KEY: ${WEATHER_DATA_CLIENT_API_KEY}
-      APP: ${CELERY_WORKER_NAME}
-      BROKER_URL: ${CELERY_BROKER_URL}
-      RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_RUN_PORT=5000
+      - FLASK_APP=/app/app.py
+      - FLASK_ENV=development  # development, production
+      - BEMSERVER_NAME=${BEMSERVER_NAME}
+      - BEMSERVER_EMAIL=${BEMSERVER_EMAIL}
+      - BEMSERVER_CORE_SETTINGS_FILE=/config/bemserver-core-settings.py
+      - BEMSERVER_CELERY_SETTINGS_FILE=/config/bemserver-celery-settings.py
+      - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@timescaledb:5432/bemserver
+      - WEATHER_DATA_CLIENT_API_KEY=${WEATHER_DATA_CLIENT_API_KEY}
+      - APP=${CELERY_WORKER_NAME}
+      - BROKER_URL=${CELERY_BROKER_URL}
+      - RESULT_BACKEND=${CELERY_RESULT_BACKEND}
 
   wait-for-bemserver-api:
     image: atkrad/wait4x
     depends_on:
       - bemserver-api
-    command:  http http://bemserver-api:5000 --expect-status-code 200
+    command:  http http://bemserver-api:5000 --expect-status-code 200 --timeout 90s --interval 1s
 
   bemserver-ui:
     build: 
@@ -96,9 +100,13 @@ services:
       - "5001:5001"
     restart: unless-stopped
     environment:
-      BEMSERVER_UI_SETTINGS_FILE: "/config/bemserver-ui.cfg"
-      BEMSERVER_API_HOST: "bemserver-api:5000"
-      BEMSERVER_API_USE_SSL: 0
+      - FLASK_RUN_HOST=0.0.0.0
+      - FLASK_RUN_PORT=5001
+      - FLASK_APP=/app/app.py
+      - FLASK_ENV=development  # development, production
+      - BEMSERVER_UI_SETTINGS_FILE=/config/bemserver-ui.cfg
+      - BEMSERVER_API_HOST=bemserver-api:5000
+      - BEMSERVER_API_USE_SSL=0
 
   #celery-worker:
   #  build: 
@@ -106,10 +114,14 @@ services:
   #    dockerfile: Dockerfile
   #  restart: unless-stopped
   #  command: worker
+  #  volumes:
+  #    - ./bemserver-api/config:/data
   #  environment:
-  #    APP: ${CELERY_WORKER_NAME}
-  #    BROKER_URL: ${CELERY_BROKER_URL}
-  #    RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+  #    - APP=${CELERY_WORKER_NAME}
+  #    - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+  #    - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+  #    #- PYTHONPATH=/data
+  #    #- FLASK_APP=/app/app.py
 
   #celery-beat:
   #  build: 
@@ -118,23 +130,28 @@ services:
   #  restart: unless-stopped
   #  command: beat
   #  environment:
-  #    APP: ${CELERY_WORKER_NAME}
-  #    BROKER_URL: ${CELERY_BROKER_URL}
-  #    RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+  #    - APP=${CELERY_WORKER_NAME}
+  #    - BROKER_URL=${CELERY_BROKER_URL}
+  #    - RESULT_BACKEND=${CELERY_RESULT_BACKEND}
 
-  celery-flower:
-    image: mher/flower
-    volumes:
-      - ./celery/flower/data:/data
-    ports:
-      - 5555:5555
-    command: celery flower
-    #restart: unless-stopped
-    environment:
-      APP: ${CELERY_WORKER_NAME}
-      BROKER_URL: ${CELERY_BROKER_URL}
-      RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-
+  #celery-flower:
+  #  image: mher/flower
+  #  volumes:
+  #    - ./celery/flower/data:/data
+  #    #- ./bemserver-api/config:/data
+  #  ports:
+  #    - 5555:5555
+  #  command: celery flower
+  #  #restart: unless-stopped
+  #  environment:
+  #    - APP=${CELERY_WORKER_NAME}
+  #    - BROKER_URL=${CELERY_BROKER_URL}
+  #    - RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+  #    - BEMSERVER_CELERY_SETTINGS_FILE=/config/bemserver-celery-settings.py
+  #  depends_on:
+  #    - bemserver-api  # should be in worker
+  #  #  - celery-worker
+  #  #  - redis-stack
 
 volumes:
   postgres-data:
