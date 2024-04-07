@@ -12,15 +12,28 @@ This is currently not suitable for production!
 
 Copy `.env.default` to `.env` and change values to your own settings.
 
+### Create SSL certificate
+
+Install [mkcert](https://github.com/FiloSottile/mkcert).
+
+mkcert is a simple tool for making locally-trusted development certificates. It requires no configuration. It's only for development.
+
+    $ cd certs
+    $ mkcert -install bemserver.localhost
+
+You should get 2 files named `bemserver.localhost-key.pem` and `bemserver.localhost.pem`.
+
 ### TimescaleDB
 
-Run TimescaleDB and pgAdmin
+Run TimescaleDB (a PostgreSQL extension for timeseries) and pgAdmin (web interface for PostgreSQL database)
 
     $ docker compose up -d timescaledb pgadmin
 
 Create database `bemserver`
 
     $ docker compose exec timescaledb /install/create_db.sh
+
+With pgAdmin, you can have a look at created database browsing https://127.0.0.1:8888
 
 ### Redis
 
@@ -94,7 +107,7 @@ Run BEMServer API
 
     $ docker compose up -d bemserver-api
 
-Browse to BEMServer API web user interface at http://127.0.0.1:5000
+Browse to BEMServer API web user interface at http://127.0.0.1:5000 (or https://)
 
 ### BEMServer UI
 
@@ -117,7 +130,7 @@ Run BEMServer UI
 
     $ docker compose up -d bemserver-ui
 
-Browse to BEMServer web user interface at http://127.0.0.1:5001/ and log with `BEMSERVER_EMAIL` (default was admin@domain.com) and password defined previously in `bemserver_create_user` step.
+Browse to BEMServer web user interface at http://127.0.0.1:5001/ (or https://) and log with `BEMSERVER_EMAIL` (default was admin@domain.com) and password defined previously in `bemserver_create_user` step.
 
 ### Scheduled Tasks
 
@@ -166,4 +179,4 @@ Celery Flower https://flower.readthedocs.io/ is a web UI to show tasks
 
     $ docker compose up -d celery-flower
 
-Browse Flower web user interface at http://127.0.0.1:5555/ log with `CELERY_FLOWER_USERNAME` / `CELERY_FLOWER_PASSWORD` (default is `admin` / `password`).
+Browse Flower web user interface at http://127.0.0.1:5555/ or http://celery-flower.localhost:5555/ log with `CELERY_FLOWER_USERNAME` / `CELERY_FLOWER_PASSWORD` (default is `admin` / `password`).

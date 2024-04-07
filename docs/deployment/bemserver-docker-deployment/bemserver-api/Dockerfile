@@ -34,3 +34,4 @@ EXPOSE 5000
 
 #ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:create_app()"]
+#CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--certfile=/etc/ssl/server.crt", "--keyfile=/etc/ssl/server.key", "app:create_app()"]

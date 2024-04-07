@@ -16,3 +16,4 @@ EXPOSE 5001
 
 #ENTRYPOINT ["flask", "run"]
 CMD ["gunicorn", "--bind", "0.0.0.0:5001", "app:create_app()"]
+#CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--certfile=/etc/ssl/server.crt", "--keyfile=/etc/ssl/server.key", "app:create_app()"]
