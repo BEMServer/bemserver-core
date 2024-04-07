@@ -1,6 +1,6 @@
 FROM python:alpine3.19
 
-RUN pip install bemserver_ui
+RUN pip --no-cache install bemserver_ui gunicorn
 COPY create_config.py /install/create_config.py
 
 COPY install.sh /install/install.sh
@@ -14,4 +14,5 @@ WORKDIR /app
 
 EXPOSE 5001
 
-ENTRYPOINT ["flask", "run"]
+#ENTRYPOINT ["flask", "run"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5001", "app:create_app()"]

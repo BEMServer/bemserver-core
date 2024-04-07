@@ -1,7 +1,7 @@
 FROM python:alpine3.19
 
 RUN apk add --no-cache python3-dev libpq-dev build-base
-RUN pip install bemserver_api psycopg_binary psycopg2 flower
+RUN pip install --no-cache bemserver_api psycopg_binary psycopg2 gunicorn flower
 
 RUN bemserver_db_upgrade
 
@@ -32,4 +32,5 @@ RUN sed -i 's/\r$//g' /app/entrypoint.sh
 WORKDIR /app
 EXPOSE 5000
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+#ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:create_app()"]
