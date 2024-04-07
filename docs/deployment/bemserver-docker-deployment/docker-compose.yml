@@ -108,50 +108,53 @@ services:
       - BEMSERVER_API_HOST=bemserver-api:5000
       - BEMSERVER_API_USE_SSL=0
 
-  #celery-worker:
-  #  build: 
-  #    context: celery
-  #    dockerfile: Dockerfile
-  #  restart: unless-stopped
-  #  command: worker
-  #  volumes:
-  #    - ./bemserver-api/config:/data
-  #  environment:
-  #    - APP=${CELERY_WORKER_NAME}
-  #    - CELERY_BROKER_URL=${CELERY_BROKER_URL}
-  #    - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
-  #    #- PYTHONPATH=/data
-  #    #- FLASK_APP=/app/app.py
+  celery-worker:
+    build: 
+      context: bemserver-api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    entrypoint: /app/start-celery-worker.sh
+    volumes:
+      - ./bemserver-api/config:/config
+    environment:
+      - FLASK_APP=/app/app.py
+      - BEMSERVER_CORE_SETTINGS_FILE=/config/bemserver-core-settings.py
+      - BEMSERVER_CELERY_SETTINGS_FILE=/config/bemserver-celery-settings.py
+      - APP=${CELERY_WORKER_NAME}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      - bemserver-api
 
-  #celery-beat:
-  #  build: 
-  #    context: celery
-  #    dockerfile: Dockerfile
-  #  restart: unless-stopped
-  #  command: beat
-  #  environment:
-  #    - APP=${CELERY_WORKER_NAME}
-  #    - BROKER_URL=${CELERY_BROKER_URL}
-  #    - RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+  celery-beat:
+    build: 
+      context: bemserver-api
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    entrypoint: /app/start-celery-beat.sh
+    environment:
+      - FLASK_APP=/app/app.py
+      - APP=${CELERY_WORKER_NAME}
+      - BROKER_URL=${CELERY_BROKER_URL}
+      - RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      - bemserver-api
 
-  #celery-flower:
-  #  image: mher/flower
-  #  volumes:
-  #    - ./celery/flower/data:/data
-  #    #- ./bemserver-api/config:/data
-  #  ports:
-  #    - 5555:5555
-  #  command: celery flower
-  #  #restart: unless-stopped
-  #  environment:
-  #    - APP=${CELERY_WORKER_NAME}
-  #    - BROKER_URL=${CELERY_BROKER_URL}
-  #    - RESULT_BACKEND=${CELERY_RESULT_BACKEND}
-  #    - BEMSERVER_CELERY_SETTINGS_FILE=/config/bemserver-celery-settings.py
-  #  depends_on:
-  #    - bemserver-api  # should be in worker
-  #  #  - celery-worker
-  #  #  - redis-stack
+  celery-flower:
+    build: 
+      context: bemserver-api
+      dockerfile: Dockerfile
+    ports:
+      - 5555:5555
+    restart: unless-stopped
+    entrypoint: /app/start-celery-flower.sh
+    environment:
+      - APP=${CELERY_WORKER_NAME}
+      - BROKER_URL=${CELERY_BROKER_URL}
+      - RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+    depends_on:
+      - celery-worker
+      - redis-stack
 
 volumes:
   postgres-data:
