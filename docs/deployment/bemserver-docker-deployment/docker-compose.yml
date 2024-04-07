@@ -124,7 +124,8 @@ services:
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
     depends_on:
-      - bemserver-api
+      wait-for-bemserver-api:
+        condition: service_completed_successfully
 
   celery-beat:
     build: 
@@ -132,13 +133,17 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     entrypoint: /app/start-celery-beat.sh
+    volumes:
+      - ./bemserver-api/config:/config
     environment:
       - FLASK_APP=/app/app.py
+      - BEMSERVER_CELERY_SETTINGS_FILE=/config/bemserver-celery-settings.py
       - APP=${CELERY_WORKER_NAME}
       - BROKER_URL=${CELERY_BROKER_URL}
       - RESULT_BACKEND=${CELERY_RESULT_BACKEND}
     depends_on:
-      - bemserver-api
+      wait-for-bemserver-api:
+        condition: service_completed_successfully
 
   celery-flower:
     build: 

@@ -82,8 +82,7 @@ and ask for password and confirmation
 
 Create shell in a new container from `bemserver-api` image to show config
 
-    $ docker compose run --rm --entrypoint="" bemserver-api /bin/sh
-    # cat /config/bemserver-core-settings.py
+    $ docker compose run --rm --entrypoint="" bemserver-api cat /config/bemserver-core-settings.py
     SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://timescaledb:password@timescaledb:5432/bemserver"  # this is just an example
     WEATHER_DATA_CLIENT_API_KEY="apikey"
 

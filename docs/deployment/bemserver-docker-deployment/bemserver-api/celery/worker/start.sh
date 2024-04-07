@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 
-celery worker
+celery worker --hostname localhost
