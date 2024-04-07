@@ -64,7 +64,6 @@ services:
       - ./bemserver-api/config:/config
     ports:
       - "5000:5000"
-      #- "5555:5555"  # Celery Flower
     restart: unless-stopped
     environment:
       - FLASK_RUN_HOST=0.0.0.0
@@ -85,7 +84,7 @@ services:
     image: atkrad/wait4x
     depends_on:
       - bemserver-api
-    command:  http http://bemserver-api:5000 --expect-status-code 200 --timeout 90s --interval 1s
+    command: http http://bemserver-api:5000 --expect-status-code 200 --timeout 90s --interval 1s
 
   bemserver-ui:
     build: 
@@ -159,7 +158,6 @@ services:
       - RESULT_BACKEND=${CELERY_RESULT_BACKEND}
     depends_on:
       - celery-worker
-      - redis-stack
 
 volumes:
   postgres-data:

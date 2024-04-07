@@ -108,8 +108,7 @@ Create config file `bemserver-ui.cfg`
 
 Create shell in a new container from `bemserver-ui` image to see config
 
-    $ docker compose run --rm --entrypoint="" bemserver-ui /bin/sh
-    # cat /config/bemserver-ui.cfg
+    $ docker compose run --rm --entrypoint="" bemserver-ui cat /config/bemserver-ui.cfg
     BEMSERVER_API_HOST="bemserver-api:5000"
     BEMSERVER_API_USE_SSL=False  # This is just for testing...
     SECRET_KEY="c55...9c5"
@@ -122,13 +121,17 @@ Browse to BEMServer web user interface at http://127.0.0.1:5001/ and log with `B
 
 ### Scheduled Tasks
 
+#### Configure tasks
+
 Modify `bemserver_api/config/bemserver-celery-settings.py`
 
+#### Launch celery worker
 
-Enter into running container `bemserver-api` and launch worker
+    $ docker compose up -d celery-worker
 
-    $ docker compose exec bemserver-api /bin/sh
-    # celery worker
+Display worker logs
+
+    $ docker compose logs celery-worker
     -------------- celery@53ea74e281d4 v5.3.6 (emerald-rush)
     --- ***** -----
     -- ******* ---- Linux-5.15.146.1-microsoft-standard-WSL2-x86_64-with 2024-04-05 19:06:39
@@ -149,24 +152,17 @@ You should also see
 
 This is just for testing. Not production!
 
-In an another shell, start Celery beat to trigger tasks at regular intervals
+#### Launch celery beat
 
-    $ docker compose exec bemserver-api /bin/sh
-    # celery beat
-    celery beat v5.3.6 (emerald-rush) is starting.
-    __    -    ... __   -        _
-    LocalTime -> 2024-04-05 19:10:54
-    Configuration ->
-        . broker -> redis://default:**@redis-stack:6379/0
-        . loader -> celery.loaders.app.AppLoader
-        . scheduler -> celery.beat.PersistentScheduler
-        . db -> celerybeat-schedule
-        . logfile -> [stderr]@%WARNING
-        . maxinterval -> 5.00 minutes (300s)
+    $ docker compose up -d celery-beat
 
+Display celery beat logs
 
-(optional)
-Start Celery Flower https://flower.readthedocs.io/
+    $ docker compose logs celery-beat
+
+#### Celery Flower (optional)
+
+Celery Flower https://flower.readthedocs.io/ is a web UI to show tasks
 
     $ docker compose up -d celery-flower
 

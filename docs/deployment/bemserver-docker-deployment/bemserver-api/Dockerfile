@@ -31,7 +31,5 @@ RUN sed -i 's/\r$//g' /app/entrypoint.sh
 
 WORKDIR /app
 EXPOSE 5000
-# Expose Celery Flower
-# EXPOSE 5555
-#ENTRYPOINT flask run
+
 ENTRYPOINT ["/app/entrypoint.sh"]

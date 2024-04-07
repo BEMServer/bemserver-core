@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 
-celery beat
+celery beat --loglevel INFO

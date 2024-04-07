@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
 
-celery flower
+celery flower --loglevel INFO
