@@ -163,6 +163,10 @@ services:
       - 5555:5555
     restart: unless-stopped
     entrypoint: /app/start-celery-flower.sh
+    volumes:
+      - ./bemserver-api/celery/flower/data:/data
+      - ${BEMSERVER_SSL_CRT}:/etc/ssl/server.crt
+      - ${BEMSERVER_SSL_KEY}:/etc/ssl/server.key
     environment:
       - APP=${CELERY_WORKER_NAME}
       - BROKER_URL=${CELERY_BROKER_URL}
