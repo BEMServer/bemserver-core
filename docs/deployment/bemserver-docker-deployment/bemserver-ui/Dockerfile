@@ -10,10 +10,11 @@ RUN mkdir /config
 
 COPY app.py /app/app.py
 
+COPY entrypoint.sh /app/entrypoint.sh
+RUN sed -i 's/\r$//g' /app/entrypoint.sh
+
 WORKDIR /app
 
 EXPOSE 5001
 
-#ENTRYPOINT ["flask", "run"]
-CMD ["gunicorn", "--bind", "0.0.0.0:5001", "app:create_app()"]
-#CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--certfile=/etc/ssl/server.crt", "--keyfile=/etc/ssl/server.key", "app:create_app()"]
+ENTRYPOINT ["/app/entrypoint.sh"]

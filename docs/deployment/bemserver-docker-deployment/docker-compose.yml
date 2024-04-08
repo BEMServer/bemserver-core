@@ -67,8 +67,8 @@ services:
         condition: service_completed_successfully
     volumes:
       - ./bemserver-api/config:/config
-      #- ${BEMSERVER_SSL_CRT}:/etc/ssl/server.crt
-      #- ${BEMSERVER_SSL_KEY}:/etc/ssl/server.key
+      - ${BEMSERVER_SSL_CRT}:/etc/ssl/server.crt
+      - ${BEMSERVER_SSL_KEY}:/etc/ssl/server.key
     ports:
       - "5000:5000"
     restart: unless-stopped
@@ -76,7 +76,7 @@ services:
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=5000
       - FLASK_APP=/app/app.py
-      - FLASK_ENV=development  # development, production
+      - FLASK_ENV=${FLASK_ENV}
       - BEMSERVER_NAME=${BEMSERVER_NAME}
       - BEMSERVER_EMAIL=${BEMSERVER_EMAIL}
       - BEMSERVER_CORE_SETTINGS_FILE=/config/bemserver-core-settings.py
@@ -86,6 +86,7 @@ services:
       - APP=${CELERY_WORKER_NAME}
       - BROKER_URL=${CELERY_BROKER_URL}
       - RESULT_BACKEND=${CELERY_RESULT_BACKEND}
+      - BEMSERVER_API_USE_SSL=${BEMSERVER_API_USE_SSL}
 
   wait-for-bemserver-api:
     image: atkrad/wait4x
@@ -112,7 +113,7 @@ services:
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=5001
       - FLASK_APP=/app/app.py
-      - FLASK_ENV=development  # development, production
+      - FLASK_ENV=${FLASK_ENV}
       - BEMSERVER_UI_SETTINGS_FILE=/config/bemserver-ui.cfg
       - BEMSERVER_API_HOST=bemserver-api:5000
       - BEMSERVER_API_USE_SSL=${BEMSERVER_API_USE_SSL}
