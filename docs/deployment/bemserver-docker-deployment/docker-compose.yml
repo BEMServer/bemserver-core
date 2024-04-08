@@ -5,10 +5,6 @@ services:
     build: 
       context: timescaledb
       dockerfile: Dockerfile
-      args:
-        - USER=${USER}
-        - UID=${UID}
-        - GID=${GID}
     restart: always
     ports:
       - 5432:5432
@@ -64,10 +60,6 @@ services:
     build: 
       context: bemserver-api
       dockerfile: Dockerfile
-      args:
-        - USER=${USER}
-        - UID=${UID}
-        - GID=${GID}
     depends_on:
       wait-for-pg:
         condition: service_completed_successfully
@@ -107,10 +99,6 @@ services:
     build: 
       context: bemserver-ui
       dockerfile: Dockerfile
-      args:
-        - USER=${USER}
-        - UID=${UID}
-        - GID=${GID}
     depends_on:
       wait-for-bemserver-api:
         condition: service_completed_successfully
@@ -135,10 +123,6 @@ services:
     build: 
       context: bemserver-api
       dockerfile: Dockerfile
-      args:
-        - USER=${USER}
-        - UID=${UID}
-        - GID=${GID}
     restart: unless-stopped
     entrypoint: /home/${USER}/app/start-celery-worker.sh
     volumes:
@@ -158,10 +142,6 @@ services:
     build: 
       context: bemserver-api
       dockerfile: Dockerfile
-      args:
-        - USER=${USER}
-        - UID=${UID}
-        - GID=${GID}
     restart: unless-stopped
     entrypoint: /home/${USER}/app/start-celery-beat.sh
     volumes:
@@ -180,10 +160,6 @@ services:
     build: 
       context: bemserver-api
       dockerfile: Dockerfile
-      args:
-        - USER=${USER}
-        - UID=${UID}
-        - GID=${GID}
     ports:
       - 5555:5555
     restart: unless-stopped

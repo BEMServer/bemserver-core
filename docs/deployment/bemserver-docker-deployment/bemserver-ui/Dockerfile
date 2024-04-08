@@ -1,8 +1,8 @@
 FROM python:alpine3.19
 
-ARG USER
-ARG UID
-ARG GID
+ARG USER=nonroot
+ARG UID=1010
+ARG GID=1010
 ENV GROUP=${USER}
 
 # Create a non-root user
