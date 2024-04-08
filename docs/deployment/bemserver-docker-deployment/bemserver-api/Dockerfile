@@ -19,28 +19,28 @@ RUN pip install --no-cache bemserver_api psycopg_binary psycopg2 gunicorn flower
 
 RUN bemserver_db_upgrade
 
-COPY --chown=${USER}:${GROUP} database_setup.sh /home/${USER}/install/database_setup.sh
+COPY --chown=${USER}:${GROUP} --chmod=500 database_setup.sh /home/${USER}/install/database_setup.sh
 RUN sed -i 's/\r$//g' /home/${USER}/install/database_setup.sh
 
-COPY --chown=${USER}:${GROUP} create_config.py /home/${USER}/install/create_config.py
+COPY --chown=${USER}:${GROUP} --chmod=500 create_config.py /home/${USER}/install/create_config.py
 
-COPY --chown=${USER}:${GROUP} install.sh /home/${USER}/install/install.sh
+COPY --chown=${USER}:${GROUP} --chmod=500 install.sh /home/${USER}/install/install.sh
 RUN sed -i 's/\r$//g' /home/${USER}/install/install.sh
 
 RUN mkdir /home/${USER}/config
 
-COPY --chown=${USER}:${GROUP} app.py /home/${USER}/app/app.py
+COPY --chown=${USER}:${GROUP} --chmod=500 app.py /home/${USER}/app/app.py
 
-COPY --chown=${USER}:${GROUP} celery/worker/start.sh /home/${USER}/app/start-celery-worker.sh
+COPY --chown=${USER}:${GROUP} --chmod=500 celery/worker/start.sh /home/${USER}/app/start-celery-worker.sh
 RUN sed -i 's/\r$//g' /home/${USER}/app/start-celery-worker.sh
 
-COPY --chown=${USER}:${GROUP} celery/beat/start.sh /home/${USER}/app/start-celery-beat.sh
+COPY --chown=${USER}:${GROUP} --chmod=500 celery/beat/start.sh /home/${USER}/app/start-celery-beat.sh
 RUN sed -i 's/\r$//g' /home/${USER}/app/start-celery-beat.sh
 
-COPY --chown=${USER}:${GROUP} celery/flower/start.sh /home/${USER}/app/start-celery-flower.sh
+COPY --chown=${USER}:${GROUP} --chmod=500 celery/flower/start.sh /home/${USER}/app/start-celery-flower.sh
 RUN sed -i 's/\r$//g' /home/${USER}/app/start-celery-flower.sh
 
-COPY --chown=${USER}:${GROUP} entrypoint.sh /home/${USER}/app/entrypoint.sh
+COPY --chown=${USER}:${GROUP} --chmod=500 entrypoint.sh /home/${USER}/app/entrypoint.sh
 RUN sed -i 's/\r$//g' /home/${USER}/app/entrypoint.sh
 
 WORKDIR /home/${USER}/app

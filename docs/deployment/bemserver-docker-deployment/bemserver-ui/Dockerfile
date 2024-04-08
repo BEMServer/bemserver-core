@@ -15,16 +15,16 @@ USER $USER
 
 RUN pip --no-cache install bemserver_ui gunicorn
 
-COPY --chown=${USER}:${GROUP} create_config.py /home/${USER}/install/create_config.py
+COPY --chown=${USER}:${GROUP} --chmod=500 create_config.py /home/${USER}/install/create_config.py
 
-COPY --chown=${USER}:${GROUP} install.sh /home/${USER}/install/install.sh
+COPY --chown=${USER}:${GROUP} --chmod=500 install.sh /home/${USER}/install/install.sh
 RUN sed -i 's/\r$//g' /home/${USER}/install/install.sh
 
 RUN mkdir /home/${USER}/config
 
-COPY --chown=${USER}:${GROUP} app.py /home/${USER}/app/app.py
+COPY --chown=${USER}:${GROUP} --chmod=400 app.py /home/${USER}/app/app.py
 
-COPY --chown=${USER}:${GROUP} entrypoint.sh /home/${USER}/app/entrypoint.sh
+COPY --chown=${USER}:${GROUP} --chmod=500 entrypoint.sh /home/${USER}/app/entrypoint.sh
 RUN sed -i 's/\r$//g' /home/${USER}/app/entrypoint.sh
 
 WORKDIR /home/${USER}/app
