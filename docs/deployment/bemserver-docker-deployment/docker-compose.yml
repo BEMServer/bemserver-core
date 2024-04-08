@@ -5,6 +5,10 @@ services:
     build: 
       context: timescaledb
       dockerfile: Dockerfile
+      args:
+        - USER=${USER}
+        - UID=${UID}
+        - GID=${GID}
     restart: always
     ports:
       - 5432:5432
@@ -60,13 +64,17 @@ services:
     build: 
       context: bemserver-api
       dockerfile: Dockerfile
+      args:
+        - USER=${USER}
+        - UID=${UID}
+        - GID=${GID}
     depends_on:
       wait-for-pg:
         condition: service_completed_successfully
       wait-for-redis:
         condition: service_completed_successfully
     volumes:
-      - ./bemserver-api/config:/config
+      - ./bemserver-api/config:/home/${USER}/config
       - ${BEMSERVER_SSL_CRT}:/etc/ssl/server.crt
       - ${BEMSERVER_SSL_KEY}:/etc/ssl/server.key
     ports:
@@ -75,12 +83,12 @@ services:
     environment:
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=5000
-      - FLASK_APP=/app/app.py
+      - FLASK_APP=/home/${USER}/app/app.py
       - FLASK_ENV=${FLASK_ENV}
       - BEMSERVER_NAME=${BEMSERVER_NAME}
       - BEMSERVER_EMAIL=${BEMSERVER_EMAIL}
-      - BEMSERVER_CORE_SETTINGS_FILE=/config/bemserver-core-settings.py
-      - BEMSERVER_CELERY_SETTINGS_FILE=/config/bemserver-celery-settings.py
+      - BEMSERVER_CORE_SETTINGS_FILE=/home/${USER}/config/bemserver-core-settings.py
+      - BEMSERVER_CELERY_SETTINGS_FILE=/home/${USER}/config/bemserver-celery-settings.py
       - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@timescaledb:5432/${BEMSERVER_DBNAME}
       - WEATHER_DATA_CLIENT_API_KEY=${WEATHER_DATA_CLIENT_API_KEY}
       - APP=${CELERY_WORKER_NAME}
@@ -99,11 +107,15 @@ services:
     build: 
       context: bemserver-ui
       dockerfile: Dockerfile
+      args:
+        - USER=${USER}
+        - UID=${UID}
+        - GID=${GID}
     depends_on:
       wait-for-bemserver-api:
         condition: service_completed_successfully
     volumes:
-      - ./bemserver-ui/config:/config
+      - ./bemserver-ui/config:/home/${USER}/config
       #- ${BEMSERVER_SSL_CRT}:/etc/ssl/server.crt
       #- ${BEMSERVER_SSL_KEY}:/etc/ssl/server.key
     ports:
@@ -112,9 +124,9 @@ services:
     environment:
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=5001
-      - FLASK_APP=/app/app.py
+      - FLASK_APP=/home/${USER}/app/app.py
       - FLASK_ENV=${FLASK_ENV}
-      - BEMSERVER_UI_SETTINGS_FILE=/config/bemserver-ui.cfg
+      - BEMSERVER_UI_SETTINGS_FILE=/home/${USER}/config/bemserver-ui.cfg
       - BEMSERVER_API_HOST=bemserver-api:5000
       - BEMSERVER_API_USE_SSL=${BEMSERVER_API_USE_SSL}
       #- REQUESTS_CA_BUNDLE=/etc/ssl/server.crt  # just for testing purpose
@@ -123,14 +135,18 @@ services:
     build: 
       context: bemserver-api
       dockerfile: Dockerfile
+      args:
+        - USER=${USER}
+        - UID=${UID}
+        - GID=${GID}
     restart: unless-stopped
-    entrypoint: /app/start-celery-worker.sh
+    entrypoint: /home/${USER}/app/start-celery-worker.sh
     volumes:
-      - ./bemserver-api/config:/config
+      - ./bemserver-api/config:/home/${USER}/config
     environment:
-      - FLASK_APP=/app/app.py
-      - BEMSERVER_CORE_SETTINGS_FILE=/config/bemserver-core-settings.py
-      - BEMSERVER_CELERY_SETTINGS_FILE=/config/bemserver-celery-settings.py
+      - FLASK_APP=/home/${USER}/app/app.py
+      - BEMSERVER_CORE_SETTINGS_FILE=/home/${USER}/config/bemserver-core-settings.py
+      - BEMSERVER_CELERY_SETTINGS_FILE=/home/${USER}/config/bemserver-celery-settings.py
       - APP=${CELERY_WORKER_NAME}
       - CELERY_BROKER_URL=${CELERY_BROKER_URL}
       - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND}
@@ -142,13 +158,17 @@ services:
     build: 
       context: bemserver-api
       dockerfile: Dockerfile
+      args:
+        - USER=${USER}
+        - UID=${UID}
+        - GID=${GID}
     restart: unless-stopped
-    entrypoint: /app/start-celery-beat.sh
+    entrypoint: /home/${USER}/app/start-celery-beat.sh
     volumes:
-      - ./bemserver-api/config:/config
+      - ./bemserver-api/config:/home/${USER}/config
     environment:
-      - FLASK_APP=/app/app.py
-      - BEMSERVER_CELERY_SETTINGS_FILE=/config/bemserver-celery-settings.py
+      - FLASK_APP=/home/${USER}/app/app.py
+      - BEMSERVER_CELERY_SETTINGS_FILE=/home/${USER}/config/bemserver-celery-settings.py
       - APP=${CELERY_WORKER_NAME}
       - BROKER_URL=${CELERY_BROKER_URL}
       - RESULT_BACKEND=${CELERY_RESULT_BACKEND}
@@ -160,12 +180,16 @@ services:
     build: 
       context: bemserver-api
       dockerfile: Dockerfile
+      args:
+        - USER=${USER}
+        - UID=${UID}
+        - GID=${GID}
     ports:
       - 5555:5555
     restart: unless-stopped
-    entrypoint: /app/start-celery-flower.sh
+    entrypoint: /home/${USER}/app/start-celery-flower.sh
     volumes:
-      - ./bemserver-api/celery/flower/data:/data
+      - ./bemserver-api/celery/flower/data:/home/${USER}/data
       - ${BEMSERVER_SSL_CRT}:/etc/ssl/server.crt
       - ${BEMSERVER_SSL_KEY}:/etc/ssl/server.key
     environment:

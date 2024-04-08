@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 
 echo "=== create config ==="
-python /install/create_config.py
+python /home/${USER}/install/create_config.py

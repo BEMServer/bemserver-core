@@ -65,7 +65,7 @@ Build image
 
 Create config file `bemserver-core-settings.py`
 
-    $ docker compose run --rm --entrypoint="" bemserver-api /install/install.sh
+    $ docker compose run --rm --entrypoint="" --env USER=nonroot bemserver-api /home/nonroot/install/install.sh
 
 this should display
 
@@ -95,7 +95,7 @@ and ask for password and confirmation
 
 Create shell in a new container from `bemserver-api` image to show config
 
-    $ docker compose run --rm --entrypoint="" bemserver-api cat /config/bemserver-core-settings.py
+    $ docker compose run --rm --entrypoint="" bemserver-api cat /home/nonroot/config/bemserver-core-settings.py
     SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://timescaledb:password@timescaledb:5432/bemserver"  # this is just an example
     WEATHER_DATA_CLIENT_API_KEY="apikey"
 
@@ -117,11 +117,11 @@ Build image
 
 Create config file `bemserver-ui.cfg`
 
-    $ docker compose run --rm --entrypoint="" bemserver-ui /install/install.sh
+    $ docker compose run --rm --entrypoint="" --env USER=nonroot bemserver-ui /home/nonroot/install/install.sh
 
 Create shell in a new container from `bemserver-ui` image to see config
 
-    $ docker compose run --rm --entrypoint="" bemserver-ui cat /config/bemserver-ui.cfg
+    $ docker compose run --rm --entrypoint="" --env USER=nonroot bemserver-ui cat /home/nonroot/config/bemserver-ui.cfg
     BEMSERVER_API_HOST="bemserver-api:5000"
     BEMSERVER_API_USE_SSL=False  # This is just for testing...
     SECRET_KEY="c55...9c5"
