@@ -159,12 +159,6 @@ Display worker logs
     -------------- [queues]
                     .> bemserver_core   exchange=bemserver_core(direct) key=bemserver_core
 
-You should also see
-
-    SecurityWarning: You're running the worker with superuser privileges: this is absolutely not recommended! 
-
-This is just for testing. Not production!
-
 #### Launch celery beat
 
     $ docker compose up -d celery-beat

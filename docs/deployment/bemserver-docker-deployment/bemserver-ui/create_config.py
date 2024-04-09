@@ -5,8 +5,8 @@ import secrets
 
 
 def str_to_bool(value: any) -> bool:
-    """Return whether the provided string (or any value really) represents true. Otherwise false.
-    Just like plugin server stringToBoolean.
+    """Return whether the provided string (or any value really) represents true.
+    Otherwise false.
     """
     if not value:
         return False
