@@ -1,4 +1,4 @@
-from bemserver_ui import create_app
+from bemserver_ui import create_app  # noqa
 
 # app = create_app()
 
