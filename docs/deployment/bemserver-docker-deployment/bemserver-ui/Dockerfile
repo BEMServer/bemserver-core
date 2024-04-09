@@ -31,4 +31,4 @@ WORKDIR /home/${USER}/app
 
 EXPOSE 5001
 
-ENTRYPOINT ["/home/nonroot/app/entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]

@@ -46,4 +46,4 @@ RUN sed -i 's/\r$//g' /home/${USER}/app/entrypoint.sh
 WORKDIR /home/${USER}/app
 EXPOSE 5000
 
-ENTRYPOINT ["/home/nonroot/app/entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
