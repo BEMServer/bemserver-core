@@ -24,8 +24,8 @@ services:
       - "8888:443"
     volumes:
       - pgadmin-data:/var/lib/pgadmin
-      - ${BEMSERVER_SSL_CRT}:/certs/server.cert
-      - ${BEMSERVER_SSL_KEY}:/certs/server.key
+      - ${BEMSERVER_SSL_CRT}:/certs/server.cert:ro
+      - ${BEMSERVER_SSL_KEY}:/certs/server.key:ro
     environment:
       - PGADMIN_ENABLE_TLS=${PGADMIN_ENABLE_TLS}
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
@@ -39,7 +39,7 @@ services:
       - "8001:8001"  # net stop winnat will probably be required under windows
     volumes:
       - redis-data:/root/redis
-      - ./redis/config/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redis/config/redis.conf:/usr/local/etc/redis/redis.conf:ro
     environment:
       - REDIS_ARGS=--requirepass ${REDIS_PASSWORD} --user ${REDIS_USERNAME} on >password &* ~* allcommands --user default off nopass nocommands
     restart: unless-stopped
@@ -67,8 +67,8 @@ services:
         condition: service_completed_successfully
     volumes:
       - ./bemserver-api/config:/home/${USER}/config
-      - ${BEMSERVER_SSL_CRT}:/etc/ssl/server.crt
-      - ${BEMSERVER_SSL_KEY}:/etc/ssl/server.key
+      - ${BEMSERVER_SSL_CRT}:/etc/ssl/server.crt:ro
+      - ${BEMSERVER_SSL_KEY}:/etc/ssl/server.key:ro
     ports:
       - "5000:5000"
     restart: unless-stopped
@@ -104,8 +104,8 @@ services:
         condition: service_completed_successfully
     volumes:
       - ./bemserver-ui/config:/home/${USER}/config
-      #- ${BEMSERVER_SSL_CRT}:/etc/ssl/server.crt
-      #- ${BEMSERVER_SSL_KEY}:/etc/ssl/server.key
+      #- ${BEMSERVER_SSL_CRT}:/etc/ssl/server.crt:ro
+      #- ${BEMSERVER_SSL_KEY}:/etc/ssl/server.key:ro
     ports:
       - "5001:5001"
     #restart: unless-stopped
@@ -126,7 +126,7 @@ services:
     restart: unless-stopped
     entrypoint: /home/${USER}/app/start-celery-worker.sh
     volumes:
-      - ./bemserver-api/config:/home/${USER}/config
+      - ./bemserver-api/config:/home/${USER}/config:ro
     environment:
       - FLASK_APP=/home/${USER}/app/app.py
       - BEMSERVER_CORE_SETTINGS_FILE=/home/${USER}/config/bemserver-core-settings.py
@@ -145,7 +145,7 @@ services:
     restart: unless-stopped
     entrypoint: /home/${USER}/app/start-celery-beat.sh
     volumes:
-      - ./bemserver-api/config:/home/${USER}/config
+      - ./bemserver-api/config:/home/${USER}/config:ro
     environment:
       - FLASK_APP=/home/${USER}/app/app.py
       - BEMSERVER_CELERY_SETTINGS_FILE=/home/${USER}/config/bemserver-celery-settings.py
@@ -166,8 +166,8 @@ services:
     entrypoint: /home/${USER}/app/start-celery-flower.sh
     volumes:
       - ./bemserver-api/celery/flower/data:/home/${USER}/data
-      - ${BEMSERVER_SSL_CRT}:/etc/ssl/server.crt
-      - ${BEMSERVER_SSL_KEY}:/etc/ssl/server.key
+      - ${BEMSERVER_SSL_CRT}:/etc/ssl/server.crt:ro
+      - ${BEMSERVER_SSL_KEY}:/etc/ssl/server.key:ro
     environment:
       - APP=${CELERY_WORKER_NAME}
       - BROKER_URL=${CELERY_BROKER_URL}
