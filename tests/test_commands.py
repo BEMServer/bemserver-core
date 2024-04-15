@@ -1,9 +1,10 @@
 """Commands tests"""
 
-import sqlalchemy as sqla
-from click.testing import CliRunner
-
 import pytest
+
+import sqlalchemy as sqla
+
+from click.testing import CliRunner
 
 from bemserver_core.commands import create_user_cmd, setup_db_cmd
 

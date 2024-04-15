@@ -2,28 +2,29 @@
 
 import datetime as dt
 
+import pytest
+
 import sqlalchemy as sqla
+
 import pandas as pd
 
-import pytest
-from tests.utils import create_timeseries_data
-
+from bemserver_core.authorization import CurrentUser, OpenBar
+from bemserver_core.database import db
+from bemserver_core.exceptions import BEMServerAuthorizationError
 from bemserver_core.model import (
+    Event,
+    EventCategory,
+    EventLevelEnum,
+    TimeseriesByEvent,
     TimeseriesDataState,
     TimeseriesProperty,
     TimeseriesPropertyData,
-    EventLevelEnum,
-    EventCategory,
-    Event,
-    TimeseriesByEvent,
 )
 from bemserver_core.scheduled_tasks.check_missing import (
     ST_CheckMissingByCampaign,
     check_missing_ts_data,
 )
-from bemserver_core.database import db
-from bemserver_core.authorization import CurrentUser, OpenBar
-from bemserver_core.exceptions import BEMServerAuthorizationError
+from tests.utils import create_timeseries_data
 
 
 class TestST_CheckMissingByCampaignModel:

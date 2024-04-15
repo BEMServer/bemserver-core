@@ -1,25 +1,25 @@
 """Campaign tests"""
 
-import sqlalchemy as sqla
-
 import pytest
 
+import sqlalchemy as sqla
+
+from bemserver_core.authorization import CurrentUser
+from bemserver_core.database import db
+from bemserver_core.exceptions import BEMServerAuthorizationError
 from bemserver_core.model import (
+    Building,
     Campaign,
     CampaignScope,
+    Event,
+    Site,
+    Space,
+    Storey,
+    Timeseries,
     UserGroupByCampaign,
     UserGroupByCampaignScope,
-    Site,
-    Building,
-    Storey,
-    Space,
     Zone,
-    Timeseries,
-    Event,
 )
-from bemserver_core.database import db
-from bemserver_core.authorization import CurrentUser
-from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestCampaignModel:

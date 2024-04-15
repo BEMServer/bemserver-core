@@ -3,21 +3,21 @@
 import datetime as dt
 from zoneinfo import ZoneInfo
 
+import pytest
+
 import numpy as np
 import pandas as pd
 from pandas.testing import assert_series_equal
 
-import pytest
-
+from bemserver_core.exceptions import (
+    BEMServerCoreDegreeDayProcessMissingTemperatureError,
+)
+from bemserver_core.input_output import tsdio
 from bemserver_core.model import (
     TimeseriesDataState,
     WeatherParameterEnum,
 )
-from bemserver_core.input_output import tsdio
 from bemserver_core.process.degree_days import compute_dd, compute_dd_for_site
-from bemserver_core.exceptions import (
-    BEMServerCoreDegreeDayProcessMissingTemperatureError,
-)
 
 
 @pytest.mark.parametrize("type_", ("heating", "cooling"))

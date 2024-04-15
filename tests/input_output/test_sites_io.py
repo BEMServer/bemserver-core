@@ -4,27 +4,26 @@ import io
 
 import pytest
 
-from bemserver_core.input_output import sites_csv_io
+from bemserver_core.authorization import CurrentUser
 from bemserver_core.database import db
+from bemserver_core.exceptions import (
+    BEMServerCoreCSVIOError,
+    BEMServerCoreIOError,
+    SitesCSVIOError,
+)
+from bemserver_core.input_output import sites_csv_io
 from bemserver_core.model import (
-    Site,
-    SitePropertyData,
     Building,
     BuildingPropertyData,
-    Storey,
-    StoreyPropertyData,
+    Site,
+    SitePropertyData,
     Space,
     SpacePropertyData,
+    Storey,
+    StoreyPropertyData,
     Zone,
     ZonePropertyData,
 )
-from bemserver_core.authorization import CurrentUser
-from bemserver_core.exceptions import (
-    BEMServerCoreIOError,
-    BEMServerCoreCSVIOError,
-    SitesCSVIOError,
-)
-
 
 DUMMY_ID = 69
 DUMMY_NAME = "Dummy name"

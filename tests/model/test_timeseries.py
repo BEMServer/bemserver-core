@@ -1,34 +1,35 @@
 """Timeseries tests"""
 
 import datetime as dt
-import sqlalchemy as sqla
 
 import pytest
 
-from bemserver_core.model import (
-    TimeseriesProperty,
-    TimeseriesDataState,
-    Timeseries,
-    TimeseriesData,
-    TimeseriesPropertyData,
-    TimeseriesByDataState,
-    TimeseriesBySite,
-    TimeseriesByBuilding,
-    TimeseriesByStorey,
-    TimeseriesBySpace,
-    TimeseriesByZone,
-    EnergyConsumptionTimeseriesBySite,
-    EnergyConsumptionTimeseriesByBuilding,
-    TimeseriesByEvent,
-)
-from bemserver_core.database import db
+import sqlalchemy as sqla
+
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.common import PropertyType
+from bemserver_core.database import db
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
-    TimeseriesNotFoundError,
-    PropertyTypeInvalidError,
     BEMServerCoreUndefinedUnitError,
+    PropertyTypeInvalidError,
+    TimeseriesNotFoundError,
+)
+from bemserver_core.model import (
+    EnergyConsumptionTimeseriesByBuilding,
+    EnergyConsumptionTimeseriesBySite,
+    Timeseries,
+    TimeseriesByBuilding,
+    TimeseriesByDataState,
+    TimeseriesByEvent,
+    TimeseriesBySite,
+    TimeseriesBySpace,
+    TimeseriesByStorey,
+    TimeseriesByZone,
+    TimeseriesData,
+    TimeseriesDataState,
+    TimeseriesProperty,
+    TimeseriesPropertyData,
 )
 
 

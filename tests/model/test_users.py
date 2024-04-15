@@ -2,18 +2,18 @@
 
 import pytest
 
+from bemserver_core.authorization import CurrentUser
+from bemserver_core.database import db
+from bemserver_core.exceptions import BEMServerAuthorizationError
 from bemserver_core.model import (
-    User,
-    UserGroup,
-    UserByUserGroup,
-    UserGroupByCampaign,
-    UserGroupByCampaignScope,
     EventCategoryByUser,
     Notification,
+    User,
+    UserByUserGroup,
+    UserGroup,
+    UserGroupByCampaign,
+    UserGroupByCampaignScope,
 )
-from bemserver_core.database import db
-from bemserver_core.authorization import CurrentUser
-from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestUserModel:

@@ -4,19 +4,18 @@ import datetime as dt
 from email.message import EmailMessage
 from unittest import mock
 
-import sqlalchemy as sqla
-
 import pytest
 
-from bemserver_core.model import Notification, Event, EventLevelEnum
-from bemserver_core.model.notifications import send_notification_email
+import sqlalchemy as sqla
+
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.database import db
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
     BEMServerCoreTaskError,
 )
-
+from bemserver_core.model import Event, EventLevelEnum, Notification
+from bemserver_core.model.notifications import send_notification_email
 
 DUMMY_ID = 69
 

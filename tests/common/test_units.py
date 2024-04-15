@@ -2,15 +2,15 @@
 
 from unittest import mock
 
-import pandas as pd
-
 import pytest
+
+import pandas as pd
 
 from bemserver_core import BEMServerCore
 from bemserver_core.common import ureg
 from bemserver_core.exceptions import (
-    BEMServerCoreUndefinedUnitError,
     BEMServerCoreDimensionalityError,
+    BEMServerCoreUndefinedUnitError,
 )
 
 

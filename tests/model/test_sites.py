@@ -1,40 +1,40 @@
 """Site tests"""
 
-import sqlalchemy as sqla
-
 import pytest
 
-from bemserver_core.model import (
-    StructuralElementProperty,
-    SiteProperty,
-    BuildingProperty,
-    StoreyProperty,
-    SpaceProperty,
-    ZoneProperty,
-    Site,
-    Building,
-    Storey,
-    Space,
-    Zone,
-    SitePropertyData,
-    BuildingPropertyData,
-    StoreyPropertyData,
-    SpacePropertyData,
-    ZonePropertyData,
-    TimeseriesBySite,
-    TimeseriesByBuilding,
-    TimeseriesByStorey,
-    TimeseriesBySpace,
-    TimeseriesByZone,
-    EnergyConsumptionTimeseriesBySite,
-    EnergyConsumptionTimeseriesByBuilding,
-)
-from bemserver_core.database import db
+import sqlalchemy as sqla
+
 from bemserver_core.authorization import CurrentUser
 from bemserver_core.common import PropertyType
+from bemserver_core.database import db
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
     PropertyTypeInvalidError,
+)
+from bemserver_core.model import (
+    Building,
+    BuildingProperty,
+    BuildingPropertyData,
+    EnergyConsumptionTimeseriesByBuilding,
+    EnergyConsumptionTimeseriesBySite,
+    Site,
+    SiteProperty,
+    SitePropertyData,
+    Space,
+    SpaceProperty,
+    SpacePropertyData,
+    Storey,
+    StoreyProperty,
+    StoreyPropertyData,
+    StructuralElementProperty,
+    TimeseriesByBuilding,
+    TimeseriesBySite,
+    TimeseriesBySpace,
+    TimeseriesByStorey,
+    TimeseriesByZone,
+    Zone,
+    ZoneProperty,
+    ZonePropertyData,
 )
 
 

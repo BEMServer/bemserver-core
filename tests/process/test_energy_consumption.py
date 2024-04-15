@@ -1,32 +1,31 @@
 """Energy consumption tests"""
 
-from copy import deepcopy
 import datetime as dt
-
-import pandas as pd
+from copy import deepcopy
 
 import pytest
 
-from tests.utils import create_timeseries_data
+import pandas as pd
 
-from bemserver_core.database import db
-from bemserver_core.model import (
-    Timeseries,
-    TimeseriesDataState,
-    Energy,
-    EnergyEndUse,
-    EnergyConsumptionTimeseriesBySite,
-    EnergyConsumptionTimeseriesByBuilding,
-)
 from bemserver_core.authorization import CurrentUser, OpenBar
-from bemserver_core.process.energy_consumption import (
-    compute_energy_consumption_breakdown_for_site,
-    compute_energy_consumption_breakdown_for_building,
-)
+from bemserver_core.database import db
 from bemserver_core.exceptions import (
     BEMServerCoreDimensionalityError,
     BEMServerCoreEnergyBreakdownProcessZeroDivisionError,
 )
+from bemserver_core.model import (
+    Energy,
+    EnergyConsumptionTimeseriesByBuilding,
+    EnergyConsumptionTimeseriesBySite,
+    EnergyEndUse,
+    Timeseries,
+    TimeseriesDataState,
+)
+from bemserver_core.process.energy_consumption import (
+    compute_energy_consumption_breakdown_for_building,
+    compute_energy_consumption_breakdown_for_site,
+)
+from tests.utils import create_timeseries_data
 
 
 class TestEnergyConsumption:

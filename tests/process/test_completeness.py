@@ -3,19 +3,18 @@
 import datetime as dt
 from zoneinfo import ZoneInfo
 
+import pytest
+
 import pandas as pd
 
-import pytest
-from tests.utils import create_timeseries_data
-
+from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.model import (
     TimeseriesDataState,
     TimeseriesProperty,
     TimeseriesPropertyData,
 )
-from bemserver_core.authorization import CurrentUser, OpenBar
-
 from bemserver_core.process.completeness import compute_completeness
+from tests.utils import create_timeseries_data
 
 
 class TestCompleteness:

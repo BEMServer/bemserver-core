@@ -16,10 +16,11 @@ jobs:
           - {name: '3.12', python: '3.12', tox: py312}
           - {name: 'min', python: '3.9', tox: min}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
+          allow-prereleases: true
       - run:
           sudo sh -c "echo 'deb https://packagecloud.io/timescale/timescaledb/ubuntu/
           `lsb_release -c -s` main' > /etc/apt/sources.list.d/timescaledb.list"
@@ -30,32 +31,59 @@ jobs:
       - run: sudo apt-get install timescaledb-2-postgresql-14
       - name: Run test
         run: |
-          python -m pip install --upgrade pip wheel
-          pip install tox
-          tox -e${{ matrix.tox }}
+          python -m pip install tox
+          python -m tox -e${{ matrix.tox }}
       - name: Upload coverage
         uses: codecov/codecov-action@v3
+  build:
+    name: Build package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pypa/build
+        run: python -m pip install build
+      - name: Build a binary wheel and a source tarball
+        run: python -m build
+      - name: Install twine
+        run: python -m pip install twine
+      - name: Check build
+        run: python -m twine check --strict dist/*
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+  # this duplicates pre-commit.ci, so only run it on tags
+  # it guarantees that linting is passing prior to a release
   lint-pre-release:
     name: lint
     if: startsWith(github.ref, 'refs/tags')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.12
-      - run: python -m pip install --upgrade pip wheel
-      - run: pip install tox
-      - run: tox -elint
-  release:
-    needs: [lint-pre-release, tests]
+      - run: python -m pip install tox
+      - run: python -m tox -elint
+  publish-to-pypi:
     name: PyPI release
-    if: startsWith(github.ref, 'refs/tags')
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build, tests, lint-pre-release]
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/bemserver-core
+    permissions:
+      id-token: write
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-      - run: python -m pip install --upgrade pip wheel
-      - run: pip install twine
-      - run: python setup.py sdist bdist_wheel
-      - run: twine upload -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} dist/*
+      - name: Download all the dists
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+      - name: Publish distribution to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

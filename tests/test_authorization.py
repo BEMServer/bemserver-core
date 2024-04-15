@@ -2,12 +2,12 @@
 
 import datetime as dt
 
-import sqlalchemy as sqla
-
 import pytest
 
-from bemserver_core.database import Base, db
+import sqlalchemy as sqla
+
 from bemserver_core.authorization import AuthMixin
+from bemserver_core.database import Base, db
 
 
 class TestAuthMixin:

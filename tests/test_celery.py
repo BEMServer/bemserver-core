@@ -4,10 +4,10 @@ import pytest
 
 import sqlalchemy as sqla
 
+from bemserver_core.authorization import OPEN_BAR, auth, get_current_user
+from bemserver_core.celery import BEMServerCoreCelery, BEMServerCoreTask
 from bemserver_core.database import db
 from bemserver_core.model import User
-from bemserver_core.authorization import auth, get_current_user, OPEN_BAR
-from bemserver_core.celery import BEMServerCoreCelery, BEMServerCoreTask
 
 
 class TestCelery:

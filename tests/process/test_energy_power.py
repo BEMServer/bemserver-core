@@ -2,30 +2,30 @@
 
 import datetime as dt
 
+import pytest
+
 import numpy as np
 import pandas as pd
 from pandas.testing import assert_series_equal
 
-import pytest
-from tests.utils import create_timeseries_data
-
+from bemserver_core.authorization import CurrentUser, OpenBar
+from bemserver_core.exceptions import (
+    BEMServerCoreDimensionalityError,
+    BEMServerCoreEnergyPowerProcessMissingIntervalError,
+    BEMServerCoreUndefinedUnitError,
+)
 from bemserver_core.model import (
     TimeseriesDataState,
     TimeseriesProperty,
     TimeseriesPropertyData,
 )
-from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.process.energy_power import (
-    power2energy,
     energy2power,
-    energyindex2power,
     energyindex2energy,
+    energyindex2power,
+    power2energy,
 )
-from bemserver_core.exceptions import (
-    BEMServerCoreUndefinedUnitError,
-    BEMServerCoreDimensionalityError,
-    BEMServerCoreEnergyPowerProcessMissingIntervalError,
-)
+from tests.utils import create_timeseries_data
 
 
 class TestEnergyPowerProcess:

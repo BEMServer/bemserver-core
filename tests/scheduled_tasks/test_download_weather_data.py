@@ -4,22 +4,22 @@ import datetime as dt
 import json
 from unittest.mock import patch
 
+import pytest
+
 import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-import pytest
-
-from bemserver_core.model import Site, TimeseriesDataState
+from bemserver_core.authorization import CurrentUser, OpenBar
+from bemserver_core.database import db
+from bemserver_core.exceptions import BEMServerAuthorizationError
 from bemserver_core.input_output import tsdio
+from bemserver_core.model import Site, TimeseriesDataState
 from bemserver_core.scheduled_tasks.download_weather_data import (
     ST_DownloadWeatherDataBySite,
     ST_DownloadWeatherForecastDataBySite,
     download_weather_data,
 )
-from bemserver_core.database import db
-from bemserver_core.authorization import CurrentUser, OpenBar
-from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestST_DownloadWeatherDataBySiteModel:
