@@ -9,25 +9,24 @@ import pytest
 import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
+
 from requests.exceptions import RequestException
 
-from bemserver_core.model import TimeseriesDataState
-from bemserver_core.process.weather import OikolabWeatherDataClient, wdp
-from bemserver_core.input_output import tsdio
-from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser
-
+from bemserver_core.database import db
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
+    BEMServerCoreDimensionalityError,
     BEMServerCoreSettingsError,
+    BEMServerCoreWeatherAPIAuthenticationError,
     BEMServerCoreWeatherAPIConnectionError,
     BEMServerCoreWeatherAPIQueryError,
     BEMServerCoreWeatherAPIResponseError,
-    BEMServerCoreWeatherAPIAuthenticationError,
     BEMServerCoreWeatherProcessMissingCoordinatesError,
-    BEMServerCoreDimensionalityError,
 )
-
+from bemserver_core.input_output import tsdio
+from bemserver_core.model import TimeseriesDataState
+from bemserver_core.process.weather import OikolabWeatherDataClient, wdp
 
 OIKOLAB_RESPONSE_ATTRIBUTES = {
     "processing_time": 1.89,

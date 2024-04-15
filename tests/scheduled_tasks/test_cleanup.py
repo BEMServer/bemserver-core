@@ -2,11 +2,14 @@
 
 import datetime as dt
 
+import pytest
+
 import pandas as pd
 
-import pytest
-from tests.utils import create_timeseries_data
-
+from bemserver_core.authorization import CurrentUser, OpenBar
+from bemserver_core.database import db
+from bemserver_core.exceptions import BEMServerAuthorizationError
+from bemserver_core.input_output import tsdio
 from bemserver_core.model import (
     TimeseriesDataState,
     TimeseriesProperty,
@@ -17,10 +20,7 @@ from bemserver_core.scheduled_tasks.cleanup import (
     ST_CleanupByTimeseries,
     cleanup_data,
 )
-from bemserver_core.database import db
-from bemserver_core.input_output import tsdio
-from bemserver_core.authorization import CurrentUser, OpenBar
-from bemserver_core.exceptions import BEMServerAuthorizationError
+from tests.utils import create_timeseries_data
 
 
 class TestST_CleanupByCampaignModel:

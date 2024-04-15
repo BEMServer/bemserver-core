@@ -2,9 +2,9 @@
 
 import datetime as dt
 
-import sqlalchemy as sqla
-
 import pytest
+
+import sqlalchemy as sqla
 
 from bemserver_core.database import Base, db
 

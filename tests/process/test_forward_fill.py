@@ -2,18 +2,18 @@
 
 import datetime as dt
 
+import pytest
+
 import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-import pytest
-from tests.utils import create_timeseries_data
-
+from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.model import (
     TimeseriesDataState,
 )
-from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.process.forward_fill import ffill
+from tests.utils import create_timeseries_data
 
 
 class TestForewardFillProcess:

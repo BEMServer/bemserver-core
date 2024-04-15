@@ -3,18 +3,17 @@
 import datetime as dt
 from zoneinfo import ZoneInfo
 
-from pandas.tseries.offsets import DateOffset
-
 import pytest
 
+from pandas.tseries.offsets import DateOffset
+
+from bemserver_core.exceptions import BEMServerCorePeriodError
 from bemserver_core.time_utils import (
-    make_date_offset,
-    floor,
     ceil,
+    floor,
+    make_date_offset,
     make_date_range_around_datetime,
 )
-from bemserver_core.exceptions import BEMServerCorePeriodError
-
 
 PERIODS = ("second", "minute", "hour", "day", "week", "month", "year")
 

@@ -4,24 +4,23 @@ import io
 
 import pytest
 
-from bemserver_core.input_output import timeseries_csv_io
-from bemserver_core.database import db
-from bemserver_core.model import (
-    Timeseries,
-    TimeseriesPropertyData,
-    TimeseriesBySite,
-    TimeseriesByBuilding,
-    TimeseriesByStorey,
-    TimeseriesBySpace,
-    TimeseriesByZone,
-)
 from bemserver_core.authorization import CurrentUser
+from bemserver_core.database import db
 from bemserver_core.exceptions import (
-    BEMServerCoreIOError,
     BEMServerCoreCSVIOError,
+    BEMServerCoreIOError,
     TimeseriesCSVIOError,
 )
-
+from bemserver_core.input_output import timeseries_csv_io
+from bemserver_core.model import (
+    Timeseries,
+    TimeseriesByBuilding,
+    TimeseriesBySite,
+    TimeseriesBySpace,
+    TimeseriesByStorey,
+    TimeseriesByZone,
+    TimeseriesPropertyData,
+)
 
 DUMMY_ID = 69
 DUMMY_NAME = "Dummy name"

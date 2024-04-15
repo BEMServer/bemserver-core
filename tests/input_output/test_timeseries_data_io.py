@@ -1,38 +1,38 @@
 """Timeseries I/O tests"""
 
-import math
-import json
 import datetime as dt
+import json
+import math
 from zoneinfo import ZoneInfo
+
+import pytest
 
 import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-import pytest
-from tests.utils import create_timeseries_data
-
-from bemserver_core.model import (
-    TimeseriesData,
-    TimeseriesDataState,
-    TimeseriesByDataState,
-)
-from bemserver_core.input_output import tsdio, tsdcsvio, tsdjsonio
-from bemserver_core.database import db
 from bemserver_core.authorization import CurrentUser, OpenBar
+from bemserver_core.database import db
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
+    BEMServerCoreDimensionalityError,
     BEMServerCorePeriodError,
-    TimeseriesDataIODatetimeError,
-    TimeseriesDataIOInvalidTimeseriesIDTypeError,
-    TimeseriesDataIOInvalidBucketWidthError,
-    TimeseriesDataIOInvalidAggregationError,
+    BEMServerCoreUndefinedUnitError,
     TimeseriesDataCSVIOError,
+    TimeseriesDataIODatetimeError,
+    TimeseriesDataIOInvalidAggregationError,
+    TimeseriesDataIOInvalidBucketWidthError,
+    TimeseriesDataIOInvalidTimeseriesIDTypeError,
     TimeseriesDataJSONIOError,
     TimeseriesNotFoundError,
-    BEMServerCoreUndefinedUnitError,
-    BEMServerCoreDimensionalityError,
 )
+from bemserver_core.input_output import tsdcsvio, tsdio, tsdjsonio
+from bemserver_core.model import (
+    TimeseriesByDataState,
+    TimeseriesData,
+    TimeseriesDataState,
+)
+from tests.utils import create_timeseries_data
 
 
 class TestTimeseriesDataIO:

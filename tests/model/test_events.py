@@ -1,27 +1,13 @@
 """Event tests"""
 
-import enum
 import datetime as dt
+import enum
 from unittest import mock
-
-import sqlalchemy as sqla
 
 import pytest
 
-from bemserver_core.model import (
-    EventLevelEnum,
-    EventCategory,
-    Event,
-    EventCategoryByUser,
-    TimeseriesByEvent,
-    EventBySite,
-    EventByBuilding,
-    EventByStorey,
-    EventBySpace,
-    EventByZone,
-    Notification,
-)
-from bemserver_core.model.events import notify as notify_task
+import sqlalchemy as sqla
+
 from bemserver_core.authorization import CurrentUser
 from bemserver_core.database import db
 from bemserver_core.exceptions import (
@@ -30,7 +16,20 @@ from bemserver_core.exceptions import (
     BEMServerCoreCampaignScopeError,
     BEMServerCoreTaskError,
 )
-
+from bemserver_core.model import (
+    Event,
+    EventByBuilding,
+    EventBySite,
+    EventBySpace,
+    EventByStorey,
+    EventByZone,
+    EventCategory,
+    EventCategoryByUser,
+    EventLevelEnum,
+    Notification,
+    TimeseriesByEvent,
+)
+from bemserver_core.model.events import notify as notify_task
 
 DUMMY_ID = 69
 

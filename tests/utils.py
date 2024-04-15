@@ -1,13 +1,14 @@
 """Test utils"""
 
 import sqlalchemy as sqla
+
 import pandas as pd
 
+from bemserver_core.authorization import OpenBar
+from bemserver_core.database import db
 from bemserver_core.model import (
     TimeseriesData,
 )
-from bemserver_core.database import db
-from bemserver_core.authorization import OpenBar
 
 
 def create_timeseries_data(timeseries, data_state, timestamps, values):

@@ -3,17 +3,15 @@
 import datetime as dt
 from unittest import mock
 
-import sqlalchemy as sqla
-
 import pytest
+
 from pytest_postgresql import factories as ppf
 
-from bemserver_core import BEMServerCore
-from bemserver_core.database import db
+from bemserver_core import BEMServerCore, model, scheduled_tasks
 from bemserver_core.authorization import CurrentUser, OpenBar
-from bemserver_core import model, scheduled_tasks
 from bemserver_core.commands import setup_db
 from bemserver_core.common import PropertyType
+from bemserver_core.database import db
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -23,12 +21,7 @@ def inhibit_celery():
         yield
 
 
-postgresql_proc = ppf.postgresql_proc(
-    postgres_options=(
-        "-c shared_preload_libraries='timescaledb' "
-        "-c timescaledb.telemetry_level=off"
-    )
-)
+postgresql_proc = ppf.postgresql_proc()
 postgresql = ppf.postgresql("postgresql_proc")
 
 
@@ -48,23 +41,16 @@ def postgresql_db(postgresql):
 
 
 @pytest.fixture
-def timescale_db(postgresql_db):
-    with sqla.create_engine(postgresql_db).begin() as connection:
-        connection.execute(sqla.text("CREATE EXTENSION IF NOT EXISTS timescaledb;"))
+def database(postgresql_db):
+    db.set_db_url(postgresql_db)
     yield postgresql_db
-
-
-@pytest.fixture
-def database(timescale_db):
-    db.set_db_url(timescale_db)
-    yield timescale_db
 
 
 # param dict: Additional config parameters
 @pytest.fixture(params=(None,))
-def config(request, timescale_db, tmp_path, monkeypatch):
+def config(request, postgresql_db, tmp_path, monkeypatch):
     cfg_dict = {
-        "SQLALCHEMY_DATABASE_URI": timescale_db,
+        "SQLALCHEMY_DATABASE_URI": postgresql_db,
         **(request.param or {}),
     }
     cfg = "".join([f"{k}={v!r}\n" for k, v in cfg_dict.items()])

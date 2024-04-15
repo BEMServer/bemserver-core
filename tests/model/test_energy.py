@@ -2,18 +2,18 @@
 
 import pytest
 
+from bemserver_core.authorization import CurrentUser
+from bemserver_core.database import db
+from bemserver_core.exceptions import BEMServerAuthorizationError
 from bemserver_core.model import (
     Energy,
+    EnergyConsumptionTimeseriesByBuilding,
+    EnergyConsumptionTimeseriesBySite,
     EnergyEndUse,
     EnergyProductionTechnology,
-    EnergyConsumptionTimeseriesBySite,
-    EnergyConsumptionTimeseriesByBuilding,
-    EnergyProductionTimeseriesBySite,
     EnergyProductionTimeseriesByBuilding,
+    EnergyProductionTimeseriesBySite,
 )
-from bemserver_core.database import db
-from bemserver_core.authorization import CurrentUser
-from bemserver_core.exceptions import BEMServerAuthorizationError
 
 
 class TestEnergyModel:

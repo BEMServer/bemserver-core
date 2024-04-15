@@ -2,19 +2,19 @@
 
 import datetime as dt
 
+import pytest
+
 import numpy as np
 import pandas as pd
 
-import pytest
-from tests.utils import create_timeseries_data
-
+from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.model import (
     TimeseriesDataState,
     TimeseriesProperty,
     TimeseriesPropertyData,
 )
-from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.process.cleanup import cleanup
+from tests.utils import create_timeseries_data
 
 
 class TestCleanupProcess:
