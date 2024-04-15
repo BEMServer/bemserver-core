@@ -11,14 +11,14 @@ from bemserver_core.commands import create_user_cmd, setup_db_cmd
 
 class TestCommands:
     @pytest.mark.usefixtures("config")
-    def test_setup_db_cmd(self, timescale_db):
+    def test_setup_db_cmd(self, postgresql_db):
         """Check bemserver_setup_db runs without error
 
         Also check at least one table is created
         """
 
         # Check there are no tables in DB
-        with sqla.create_engine(timescale_db).connect() as connection:
+        with sqla.create_engine(postgresql_db).connect() as connection:
             assert not list(
                 connection.execute(
                     sqla.text(
@@ -34,7 +34,7 @@ class TestCommands:
         assert result.exit_code == 0
 
         # Check tables are created
-        with sqla.create_engine(timescale_db).connect() as connection:
+        with sqla.create_engine(postgresql_db).connect() as connection:
             assert list(
                 connection.execute(
                     sqla.text(

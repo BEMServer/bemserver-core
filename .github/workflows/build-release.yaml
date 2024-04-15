@@ -21,14 +21,6 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
-      - run:
-          sudo sh -c "echo 'deb https://packagecloud.io/timescale/timescaledb/ubuntu/
-          `lsb_release -c -s` main' > /etc/apt/sources.list.d/timescaledb.list"
-      - run:
-          wget --quiet -O - https://packagecloud.io/timescale/timescaledb/gpgkey |
-          sudo apt-key add -
-      - run: sudo apt-get update
-      - run: sudo apt-get install timescaledb-2-postgresql-14
       - name: Run test
         run: |
           python -m pip install tox
