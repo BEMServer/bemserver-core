@@ -18,9 +18,6 @@ from bemserver_core.email import ems
 from bemserver_core.exceptions import BEMServerCoreSettingsError
 from bemserver_core.process.weather import wdp
 
-__version__ = "0.17.1"
-
-
 # Set pandas future flags to silence deprecation warnings
 pd.set_option("future.no_silent_downcasting", True)
 
