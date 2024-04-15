@@ -1,6 +1,17 @@
 Changelog
 ---------
 
+0.18.0 (unreleased)
++++++++++++++++++++
+
+Features:
+
+- Remove bemserver_core.__version__
+
+Other changes:
+
+- Require pint>=0.23
+
 0.17.1 (2024-02-12)
 +++++++++++++++++++
 
