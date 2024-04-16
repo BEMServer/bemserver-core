@@ -4,7 +4,6 @@ import datetime as dt
 from unittest import mock
 
 import pytest
-
 from pytest_postgresql import factories as ppf
 
 from bemserver_core import BEMServerCore, model, scheduled_tasks
