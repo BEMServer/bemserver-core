@@ -1,3 +1,2 @@
 -r tests.in
 pre-commit
-bump2version

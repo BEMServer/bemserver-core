@@ -4,8 +4,6 @@
 #
 #    pip-compile --unsafe-package=psycopg requirements/dev.in
 #
-bump2version==1.0.1
-    # via -r requirements/dev.in
 cfgv==3.4.0
     # via pre-commit
 coverage[toml]==7.4.1
