@@ -14,11 +14,11 @@ BEMServer Core
     :target: https://github.com/bemserver/bemserver-core/actions?query=workflow%3ATests
     :alt: Build status
 
-.. image:: https://results.pre-commit.ci/badge/github/bemserver/bemserver-core/dev.svg
-   :target: https://results.pre-commit.ci/latest/github/bemserver/bemserver-core/dev
+.. image:: https://results.pre-commit.ci/badge/github/bemserver/bemserver-core/main.svg
+   :target: https://results.pre-commit.ci/latest/github/bemserver/bemserver-core/main
    :alt: pre-commit.ci status
 
-.. image:: https://codecov.io/gh/BEMServer/bemserver-core/branch/master/graph/badge.svg?token=WL145WNZ61
+.. image:: https://codecov.io/gh/BEMServer/bemserver-core/branch/main/graph/badge.svg?token=WL145WNZ61
     :target: https://codecov.io/gh/bemserver/bemserver-core
     :alt: Code coverage
 
