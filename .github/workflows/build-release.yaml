@@ -27,6 +27,8 @@ jobs:
           python -m tox -e${{ matrix.tox }}
       - name: Upload coverage
         uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.codecov_token }}
   build:
     name: Build package
     runs-on: ubuntu-latest
