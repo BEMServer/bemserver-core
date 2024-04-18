@@ -11,6 +11,7 @@ Features:
 Other changes:
 
 - Require pint>=0.23
+- Change license to MIT
 
 0.17.1 (2024-02-12)
 +++++++++++++++++++
