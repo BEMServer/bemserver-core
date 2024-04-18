@@ -18,7 +18,7 @@ BEMServer Core
    :target: https://results.pre-commit.ci/latest/github/bemserver/bemserver-core/main
    :alt: pre-commit.ci status
 
-.. image:: https://codecov.io/gh/BEMServer/bemserver-core/branch/main/graph/badge.svg?token=WL145WNZ61
+.. image:: https://codecov.io/gh/BEMServer/bemserver-core/branch/main/graph/badge.svg
     :target: https://codecov.io/gh/bemserver/bemserver-core
     :alt: Code coverage
 
