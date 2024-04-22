@@ -1,6 +1,5 @@
 from celery.schedules import crontab
 
-
 timezone = "Europe/Paris"
 beat_schedule = {
     "cleanup": {
