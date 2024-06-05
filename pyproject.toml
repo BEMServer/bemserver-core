@@ -1,6 +1,6 @@
 [project]
 name = "bemserver-core"
-version = "0.17.1"
+version = "0.18.0"
 description = "BEMServer Core"
 readme = "README.rst"
 license = { file = "LICENSE" }
