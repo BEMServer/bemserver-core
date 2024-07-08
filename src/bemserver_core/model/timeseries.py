@@ -93,6 +93,7 @@ class Timeseries(AuthMixin, Base):
         space_id=None,
         zone_id=None,
         event_id=None,
+        properties=None,
         **kwargs,
     ):
         if "campaign_id" in kwargs:
@@ -142,6 +143,8 @@ class Timeseries(AuthMixin, Base):
             query = cls._filter_by_zone(query, zone_id)
         if event_id is not None:
             query = cls._filter_by_event(query, event_id)
+        if properties is not None:
+            query = cls._filter_by_properties(query, properties)
         return query
 
     @staticmethod
@@ -261,6 +264,16 @@ class Timeseries(AuthMixin, Base):
         query = (
             base_query.join(TimeseriesByEvent).join(Event).filter(Event.id == event_id)
         )
+        return query
+
+    @staticmethod
+    def _filter_by_properties(query, properties):
+        for prop_id, value in properties.items():
+            query = (
+                query.join(TimeseriesPropertyData)
+                .filter(TimeseriesPropertyData.property_id == prop_id)
+                .filter(TimeseriesPropertyData.value == value)
+            )
         return query
 
     def get_timeseries_by_data_state(self, data_state):
