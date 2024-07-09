@@ -172,7 +172,7 @@ class TestTimeseriesModel:
             assert len(list(TimeseriesByStorey.get())) == 2
             assert len(list(TimeseriesBySpace.get())) == 2
             assert len(list(TimeseriesByZone.get())) == 2
-            assert len(list(TimeseriesPropertyData.get())) == 4
+            assert len(list(TimeseriesPropertyData.get())) == 2
             assert len(list(TimeseriesByDataState.get())) == 2
             assert len(list(db.session.query(TimeseriesData))) == 1
             assert len(list(EnergyConsumptionTimeseriesBySite.get())) == 2
@@ -186,7 +186,7 @@ class TestTimeseriesModel:
             assert len(list(TimeseriesByStorey.get())) == 1
             assert len(list(TimeseriesBySpace.get())) == 1
             assert len(list(TimeseriesByZone.get())) == 1
-            assert len(list(TimeseriesPropertyData.get())) == 2
+            assert len(list(TimeseriesPropertyData.get())) == 1
             assert len(list(TimeseriesByDataState.get())) == 1
             assert len(list(db.session.query(TimeseriesData))) == 0
             assert len(list(EnergyConsumptionTimeseriesBySite.get())) == 1
@@ -793,7 +793,7 @@ class TestTimeseriesPropertyDataModel:
                 )
 
             tspd_l = list(TimeseriesPropertyData.get(timeseries_id=ts_2.id))
-            assert len(tspd_l) == 2
+            assert len(tspd_l) == 1
             tspd_2 = tspd_l[0]
             tspd = TimeseriesPropertyData.get_by_id(tspd_2.id)
             assert tspd.id == tspd_2.id
