@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.18.1 (2024-07-10)
++++++++++++++++++++
+
+Features:
+
+- Allow filtering by property data when querying timeseries
+
 0.18.0 (2024-06-05)
 +++++++++++++++++++
 
