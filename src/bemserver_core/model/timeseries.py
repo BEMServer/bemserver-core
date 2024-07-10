@@ -268,11 +268,12 @@ class Timeseries(AuthMixin, Base):
 
     @staticmethod
     def _filter_by_properties(query, properties):
-        for prop_id, value in properties.items():
+        for prop_name, value in properties.items():
             query = (
                 query.join(TimeseriesPropertyData)
-                .filter(TimeseriesPropertyData.property_id == prop_id)
                 .filter(TimeseriesPropertyData.value == value)
+                .join(TimeseriesProperty)
+                .filter(TimeseriesProperty.name == prop_name)
             )
         return query
 

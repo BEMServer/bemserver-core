@@ -492,14 +492,16 @@ class TestTimeseriesModel:
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
 
-            ts_l = list(Timeseries.get(properties={ts_prop_1.id: ts_prop_val_1.value}))
+            ts_l = list(
+                Timeseries.get(properties={ts_prop_1.name: ts_prop_val_1.value})
+            )
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
 
-            ts_l = list(Timeseries.get(properties={DUMMY_ID: ts_prop_val_1.value}))
+            ts_l = list(Timeseries.get(properties={DUMMY_NAME: ts_prop_val_1.value}))
             assert not ts_l
 
-            ts_l = list(Timeseries.get(properties={ts_prop_1.id: DUMMY_NAME}))
+            ts_l = list(Timeseries.get(properties={ts_prop_1.name: DUMMY_NAME}))
             assert not ts_l
 
             # Can't filter by both site and recurse site
