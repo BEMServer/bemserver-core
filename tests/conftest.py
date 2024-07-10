@@ -266,21 +266,23 @@ def timeseries(request, bemservercore, campaigns, campaign_scopes):
 def timeseries_property_data(request, bemservercore, timeseries_properties, timeseries):
     with OpenBar():
         tspd_l = []
-        for ts in timeseries:
-            tspd_l.append(
-                model.TimeseriesPropertyData.new(
-                    timeseries_id=ts.id,
-                    property_id=timeseries_properties[0].id,
-                    value="12",
+        for idx, ts in enumerate(timeseries):
+            if idx % 2 == 0:
+                tspd_l.append(
+                    model.TimeseriesPropertyData.new(
+                        timeseries_id=ts.id,
+                        property_id=timeseries_properties[0].id,
+                        value="12",
+                    )
                 )
-            )
-            tspd_l.append(
-                model.TimeseriesPropertyData.new(
-                    timeseries_id=ts.id,
-                    property_id=timeseries_properties[1].id,
-                    value="42",
+            else:
+                tspd_l.append(
+                    model.TimeseriesPropertyData.new(
+                        timeseries_id=ts.id,
+                        property_id=timeseries_properties[1].id,
+                        value="42",
+                    )
                 )
-            )
         db.session.commit()
         return tspd_l
 

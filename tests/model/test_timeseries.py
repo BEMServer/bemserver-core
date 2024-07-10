@@ -32,6 +32,9 @@ from bemserver_core.model import (
     TimeseriesPropertyData,
 )
 
+DUMMY_ID = 69
+DUMMY_NAME = "Dummy name"
+
 
 class TestTimeseriesPropertyModel:
     def test_timeseries_property_authorizations_as_admin(self, users):
@@ -172,7 +175,7 @@ class TestTimeseriesModel:
             assert len(list(TimeseriesByStorey.get())) == 2
             assert len(list(TimeseriesBySpace.get())) == 2
             assert len(list(TimeseriesByZone.get())) == 2
-            assert len(list(TimeseriesPropertyData.get())) == 4
+            assert len(list(TimeseriesPropertyData.get())) == 2
             assert len(list(TimeseriesByDataState.get())) == 2
             assert len(list(db.session.query(TimeseriesData))) == 1
             assert len(list(EnergyConsumptionTimeseriesBySite.get())) == 2
@@ -186,7 +189,7 @@ class TestTimeseriesModel:
             assert len(list(TimeseriesByStorey.get())) == 1
             assert len(list(TimeseriesBySpace.get())) == 1
             assert len(list(TimeseriesByZone.get())) == 1
-            assert len(list(TimeseriesPropertyData.get())) == 2
+            assert len(list(TimeseriesPropertyData.get())) == 1
             assert len(list(TimeseriesByDataState.get())) == 1
             assert len(list(db.session.query(TimeseriesData))) == 0
             assert len(list(EnergyConsumptionTimeseriesBySite.get())) == 1
@@ -224,20 +227,18 @@ class TestTimeseriesModel:
     def test_timeseries_get_many_by_id(self, timeseries):
         ts_1 = timeseries[0]
         ts_2 = timeseries[1]
-        dummy_id = 69
 
         assert set(Timeseries.get_many_by_id([ts_1.id, ts_2.id])) == {ts_1, ts_2}
         assert set(Timeseries.get_many_by_id([ts_1.id])) == {ts_1}
 
         with pytest.raises(TimeseriesNotFoundError):
-            Timeseries.get_many_by_id([ts_1.id, ts_2.id, dummy_id])
+            Timeseries.get_many_by_id([ts_1.id, ts_2.id, DUMMY_ID])
 
     @pytest.mark.usefixtures("as_admin")
     def test_timeseries_get_many_by_name(self, campaigns, timeseries):
         campaign_1 = campaigns[0]
         ts_1 = timeseries[0]
         ts_2 = timeseries[1]
-        dummy_name = "dummy_name"
 
         assert set(
             Timeseries.get_many_by_name(
@@ -249,7 +250,7 @@ class TestTimeseriesModel:
         ) == {ts_1}
 
         with pytest.raises(TimeseriesNotFoundError):
-            Timeseries.get_many_by_name(campaign_1, [ts_1.name, ts_2.name, dummy_name])
+            Timeseries.get_many_by_name(campaign_1, [ts_1.name, ts_2.name, DUMMY_NAME])
 
     def test_timeseries_get_property_value(
         self,
@@ -302,7 +303,7 @@ class TestTimeseriesModel:
             ret = ts_1.get_property_value(ts_p_6.name)
             assert type(ret) is ts_p_6.value_type.value
             assert ret == ts_p_6.value_type.value(ts_p_d_6.value)
-            ret = ts_1.get_property_value("dummy")
+            ret = ts_1.get_property_value(DUMMY_NAME)
             assert ret is None
 
     @pytest.mark.usefixtures("as_admin")
@@ -401,7 +402,7 @@ class TestTimeseriesModel:
             name="Timeseries 1",
             campaign_id=campaign_1.id,
             campaign_scope_id=campaign_scope_1.id,
-            unit_symbol="Dummy",
+            unit_symbol=DUMMY_NAME,
         )
         with pytest.raises(BEMServerCoreUndefinedUnitError):
             db.session.flush()
@@ -426,6 +427,8 @@ class TestTimeseriesModel:
         timeseries_by_buildings,
         timeseries_by_storeys,
         timeseries_by_spaces,
+        timeseries_properties,
+        timeseries_property_data,
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -446,8 +449,13 @@ class TestTimeseriesModel:
         tbb_1 = timeseries_by_buildings[0]
         tbst_1 = timeseries_by_storeys[0]
         tbsp_1 = timeseries_by_spaces[0]
+        ts_prop_1 = timeseries_properties[0]
+        ts_prop_val_1 = timeseries_property_data[0]
 
         with CurrentUser(admin_user):
+            ts_l = list(Timeseries.get())
+            assert len(ts_l) == 2
+
             ts_l = list(Timeseries.get(campaign_id=campaign_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
@@ -483,6 +491,18 @@ class TestTimeseriesModel:
             ts_l = list(Timeseries.get(event_id=event_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
+
+            ts_l = list(
+                Timeseries.get(properties={ts_prop_1.name: ts_prop_val_1.value})
+            )
+            assert len(ts_l) == 1
+            assert ts_l[0] == ts_1
+
+            ts_l = list(Timeseries.get(properties={DUMMY_NAME: ts_prop_val_1.value}))
+            assert not ts_l
+
+            ts_l = list(Timeseries.get(properties={ts_prop_1.name: DUMMY_NAME}))
+            assert not ts_l
 
             # Can't filter by both site and recurse site
             with pytest.raises(ValueError):
@@ -793,7 +813,7 @@ class TestTimeseriesPropertyDataModel:
                 )
 
             tspd_l = list(TimeseriesPropertyData.get(timeseries_id=ts_2.id))
-            assert len(tspd_l) == 2
+            assert len(tspd_l) == 1
             tspd_2 = tspd_l[0]
             tspd = TimeseriesPropertyData.get_by_id(tspd_2.id)
             assert tspd.id == tspd_2.id
