@@ -450,7 +450,9 @@ class TestTimeseriesModel:
         tbst_1 = timeseries_by_storeys[0]
         tbsp_1 = timeseries_by_spaces[0]
         ts_prop_1 = timeseries_properties[0]
+        ts_prop_2 = timeseries_properties[1]
         ts_prop_val_1 = timeseries_property_data[0]
+        ts_prop_val_2 = timeseries_property_data[1]
 
         with CurrentUser(admin_user):
             ts_l = list(Timeseries.get())
@@ -497,6 +499,16 @@ class TestTimeseriesModel:
             )
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
+
+            ts_l = list(
+                Timeseries.get(
+                    properties={
+                        ts_prop_1.name: ts_prop_val_1.value,
+                        ts_prop_2.name: ts_prop_val_2.value,
+                    },
+                )
+            )
+            assert not ts_l
 
             ts_l = list(Timeseries.get(properties={DUMMY_NAME: ts_prop_val_1.value}))
             assert not ts_l
