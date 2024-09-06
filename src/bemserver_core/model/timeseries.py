@@ -269,11 +269,13 @@ class Timeseries(AuthMixin, Base):
     @staticmethod
     def _filter_by_properties(query, properties):
         for prop_name, value in properties.items():
+            tspd = sqla.orm.aliased(TimeseriesPropertyData)
+            tsp = sqla.orm.aliased(TimeseriesProperty)
             query = (
-                query.join(TimeseriesPropertyData)
-                .filter(TimeseriesPropertyData.value == value)
-                .join(TimeseriesProperty)
-                .filter(TimeseriesProperty.name == prop_name)
+                query.join(tspd)
+                .filter(tspd.value == value)
+                .join(tsp)
+                .filter(tsp.name == prop_name)
             )
         return query
 
