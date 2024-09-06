@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.18.2 (2024-09-06)
++++++++++++++++++++
+
+Bug fixes:
+
+- Fix filtering timeseries by multiple properties
+
 0.18.1 (2024-07-10)
 +++++++++++++++++++
 
