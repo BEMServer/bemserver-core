@@ -427,8 +427,6 @@ class TestTimeseriesModel:
         timeseries_by_buildings,
         timeseries_by_storeys,
         timeseries_by_spaces,
-        timeseries_properties,
-        timeseries_property_data,
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -449,10 +447,6 @@ class TestTimeseriesModel:
         tbb_1 = timeseries_by_buildings[0]
         tbst_1 = timeseries_by_storeys[0]
         tbsp_1 = timeseries_by_spaces[0]
-        ts_prop_1 = timeseries_properties[0]
-        ts_prop_2 = timeseries_properties[1]
-        ts_prop_val_1 = timeseries_property_data[0]
-        ts_prop_val_2 = timeseries_property_data[1]
 
         with CurrentUser(admin_user):
             ts_l = list(Timeseries.get())
@@ -493,28 +487,6 @@ class TestTimeseriesModel:
             ts_l = list(Timeseries.get(event_id=event_1.id))
             assert len(ts_l) == 1
             assert ts_l[0] == ts_1
-
-            ts_l = list(
-                Timeseries.get(properties={ts_prop_1.name: ts_prop_val_1.value})
-            )
-            assert len(ts_l) == 1
-            assert ts_l[0] == ts_1
-
-            ts_l = list(
-                Timeseries.get(
-                    properties={
-                        ts_prop_1.name: ts_prop_val_1.value,
-                        ts_prop_2.name: ts_prop_val_2.value,
-                    },
-                )
-            )
-            assert not ts_l
-
-            ts_l = list(Timeseries.get(properties={DUMMY_NAME: ts_prop_val_1.value}))
-            assert not ts_l
-
-            ts_l = list(Timeseries.get(properties={ts_prop_1.name: DUMMY_NAME}))
-            assert not ts_l
 
             # Can't filter by both site and recurse site
             with pytest.raises(ValueError):
@@ -569,6 +541,57 @@ class TestTimeseriesModel:
             assert not list(Timeseries.get(storey_id=storey_1.id))
             assert not list(Timeseries.get(building_id=building_1.id))
             assert not list(Timeseries.get(site_id=site_1.id))
+
+    @pytest.mark.parametrize("timeseries", (3,), indirect=True)
+    def test_timeseries_filter_by_property_as_admin(
+        self,
+        users,
+        timeseries,
+        timeseries_properties,
+        timeseries_property_data,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        user_1 = users[1]
+        assert not user_1.is_admin
+        ts_1 = timeseries[0]
+        ts_3 = timeseries[2]
+        ts_prop_1 = timeseries_properties[0]
+        ts_prop_2 = timeseries_properties[1]
+        ts_prop_val_1 = timeseries_property_data[0]
+        ts_prop_val_2 = timeseries_property_data[1]
+
+        with CurrentUser(admin_user):
+            TimeseriesPropertyData.new(
+                timeseries_id=ts_3.id,
+                property_id=ts_prop_2.id,
+                value=ts_prop_val_2.value,
+            )
+
+            ts_l = list(Timeseries.get())
+            assert len(ts_l) == 3
+
+            ts_l = list(
+                Timeseries.get(properties={ts_prop_1.name: ts_prop_val_1.value})
+            )
+            assert len(ts_l) == 2
+            assert set(ts_l) == {ts_1, ts_3}
+
+            ts_l = list(
+                Timeseries.get(
+                    properties={
+                        ts_prop_1.name: ts_prop_val_1.value,
+                        ts_prop_2.name: ts_prop_val_2.value,
+                    },
+                )
+            )
+            assert ts_l == [ts_3]
+
+            ts_l = list(Timeseries.get(properties={DUMMY_NAME: ts_prop_val_1.value}))
+            assert not ts_l
+
+            ts_l = list(Timeseries.get(properties={ts_prop_1.name: DUMMY_NAME}))
+            assert not ts_l
 
     @pytest.mark.usefixtures("users_by_user_groups")
     @pytest.mark.usefixtures("user_groups_by_campaigns")

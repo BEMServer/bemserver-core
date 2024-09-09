@@ -271,12 +271,9 @@ class Timeseries(AuthMixin, Base):
         for prop_name, value in properties.items():
             tspd = sqla.orm.aliased(TimeseriesPropertyData)
             tsp = sqla.orm.aliased(TimeseriesProperty)
-            query = (
-                query.join(tspd)
-                .filter(tspd.value == value)
-                .join(tsp)
-                .filter(tsp.name == prop_name)
-            )
+            query = query.join(
+                tspd, (tspd.timeseries_id == Timeseries.id) & (tspd.value == value)
+            ).join(tsp, (tspd.property_id == tsp.id) & (tsp.name == prop_name))
         return query
 
     def get_timeseries_by_data_state(self, data_state):
