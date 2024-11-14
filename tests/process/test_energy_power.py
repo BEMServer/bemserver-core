@@ -474,7 +474,7 @@ class TestEnergyPowerProcess:
                 for hour in (0, 2, 4)
             ]
             expected_data_s = pd.Series(
-                [2.0, 6.0, 9.0],
+                [4.0, 12.0, 18.0],
                 index=pd.DatetimeIndex(timestamps, name="timestamp", freq="2h"),
             )
             assert_series_equal(data_s, expected_data_s)
