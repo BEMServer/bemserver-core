@@ -164,8 +164,8 @@ def energyindex2energy(
 
     # Convert to desired unit
     energy_s = pd.Series(
-        ureg.convert(power_s.values, "Wh", convert_to),
-        index=power_s.index,
+        ureg.convert(energy_s.values, "Wh", convert_to),
+        index=energy_s.index,
     )
 
     return energy_s
