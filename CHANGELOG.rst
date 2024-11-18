@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.18.4 (2024-01-18)
++++++++++++++++++++
+
+Bug fixes:
+
+- Fix energyindex2energy: divide by interval
+
 0.18.3 (2024-09-09)
 +++++++++++++++++++
 
