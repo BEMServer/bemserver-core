@@ -10,6 +10,7 @@ from bemserver_core import (
     database,
     input_output,  # noqa
     model,
+    plugins,
     scheduled_tasks,
     settings,
     utils,
@@ -68,6 +69,9 @@ class BEMServerCore:
 
         # Configure Celery
         celery_app.conf.update(self.config["CELERY_CONFIG"])
+
+        # Load plugins
+        plugins.init_core(self)
 
     def load_units_definitions_file(self, file_path):
         common.ureg.load_definitions(file_path)

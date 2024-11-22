@@ -14,4 +14,6 @@ DEFAULT_CONFIG = {
     "SMTP_HOST": "localhost",
     # Celery config
     "CELERY_CONFIG": {},
+    # Plugins
+    "PLUGIN_PATHS": [],
 }
