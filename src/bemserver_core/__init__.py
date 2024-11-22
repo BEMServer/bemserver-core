@@ -14,6 +14,7 @@ from bemserver_core import (
     settings,
     utils,
 )
+from bemserver_core.celery import celery as celery_app
 from bemserver_core.email import ems
 from bemserver_core.exceptions import BEMServerCoreSettingsError
 from bemserver_core.process.weather import wdp
@@ -64,6 +65,9 @@ class BEMServerCore:
 
         # Init SMTP
         ems.init_core(self)
+
+        # Configure Celery
+        celery_app.conf.update(self.config["CELERY_CONFIG"])
 
     def load_units_definitions_file(self, file_path):
         common.ureg.load_definitions(file_path)

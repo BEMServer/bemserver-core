@@ -12,4 +12,6 @@ DEFAULT_CONFIG = {
     "SMTP_ENABLED": False,
     "SMTP_FROM_ADDR": "",
     "SMTP_HOST": "localhost",
+    # Celery config
+    "CELERY_CONFIG": {},
 }
