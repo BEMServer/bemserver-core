@@ -1,27 +1,16 @@
 import importlib
+import sys
 from pathlib import Path
 
 
-def load_package(path):
-    """Import package at a given path
-
-    :param Path path: Package (file or directory) to import
-    """
-    name = path.stem
-    if path.is_dir():
-        path /= "__init__.py"
-
-    # https://docs.python.org/3/library/importlib.html#importing-a-source-file-directly
-    spec = importlib.util.spec_from_file_location(name, path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
 def init_core(bsc):
-    """Load Core plugins"""
-    plugin_paths = bsc.config.get("PLUGIN_PATHS")
+    """Load Core plugins
 
-    for plugin_path in plugin_paths:
+    Loading a plugin adds its parent directory to sys.path. It is wise to store plugins
+    in dedicated directories.
+    """
+    for plugin_path in bsc.config.get("PLUGIN_PATHS"):
         plugin_path = Path(plugin_path)
-        load_package(plugin_path)
+        name = plugin_path.stem
+        sys.path.append(str(plugin_path.parent))
+        importlib.import_module(name)
