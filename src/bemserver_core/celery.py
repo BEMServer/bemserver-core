@@ -3,14 +3,12 @@
 Manages scheduled and asynchronous tasks
 """
 
-import os
 from functools import wraps
 
 from celery import Celery, Task, signals
 from celery.exceptions import WorkerShutdown
 from celery.utils.log import get_task_logger
 
-from bemserver_core import utils
 from bemserver_core.authorization import OpenBar
 from bemserver_core.database import db
 from bemserver_core.exceptions import BEMServerCoreSettingsError
@@ -66,9 +64,6 @@ class BEMServerCoreCelery(Celery):
 
 celery = BEMServerCoreCelery("BEMServer Core", task_cls=BEMServerCoreTask)
 celery.config_from_object(DefaultCeleryConfig)
-celery_cfg_file = os.environ.get("BEMSERVER_CELERY_SETTINGS_FILE")
-if celery_cfg_file is not None:
-    celery.conf.update(utils.get_dict_from_pyfile(celery_cfg_file))
 
 
 @signals.worker_process_init.connect
