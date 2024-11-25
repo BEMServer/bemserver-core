@@ -1,6 +1,18 @@
 Changelog
 ---------
 
+0.19.0 (2024-11-25)
++++++++++++++++++++
+
+Features:
+
+- Add plugin feature to define custom tasks
+
+Other changes:
+
+- Celery config is merged with core config
+- Celery worker should now be launched as bemserver_core.celery_worker
+
 0.18.4 (2024-01-18)
 +++++++++++++++++++
 
