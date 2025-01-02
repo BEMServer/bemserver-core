@@ -52,23 +52,38 @@ class TimeseriesCSVIO(BaseCSVFileIO):
 
         for row in reader:
             cs_name = row.pop("Campaign scope")
-            timeseries = model.Timeseries.new(
-                campaign_id=campaign.id,
-                name=row.pop("Name"),
-                description=row.pop("Description"),
-                unit_symbol=row.pop("Unit"),
-                campaign_scope=cls._get_campaign_scope_by_name(campaign, cs_name),
-            )
+            name = row.pop("Name")
+            kwargs = {
+                "campaign_id": campaign.id,
+                "name": name,
+                "description": row.pop("Description"),
+                "unit_symbol": row.pop("Unit"),
+                "campaign_scope": cls._get_campaign_scope_by_name(campaign, cs_name),
+            }
+            timeseries = model.Timeseries.get(
+                campaign_id=campaign.id, name=name
+            ).first()
+            if timeseries is None:
+                timeseries = model.Timeseries.new(**kwargs)
+            else:
+                timeseries.update(**kwargs)
+                for ts_relation_table in (
+                    model.TimeseriesBySite,
+                    model.TimeseriesByBuilding,
+                    model.TimeseriesByStorey,
+                    model.TimeseriesBySpace,
+                    model.TimeseriesByZone,
+                ):
+                    relation = ts_relation_table.get(
+                        timeseries_id=timeseries.id
+                    ).first()
+                    if relation is not None:
+                        relation.delete()
             try:
                 db.session.flush()
             except (sqla.exc.DataError, BEMServerCoreUndefinedUnitError) as exc:
                 raise TimeseriesCSVIOError(
                     f'Timeseries "{timeseries.name}" can\'t be created.'
-                ) from exc
-            except sqla.exc.IntegrityError as exc:
-                db.session.rollback()
-                raise TimeseriesCSVIOError(
-                    f'Timeseries "{campaign.name}/{timeseries.name}" already exists.'
                 ) from exc
 
             site_name = row.pop("Site")
@@ -125,11 +140,14 @@ class TimeseriesCSVIO(BaseCSVFileIO):
             for key, value in ((k, v) for k, v in row.items() if k is not None):
                 if value:
                     prop = properties[key]
-                    model.TimeseriesPropertyData.new(
-                        property_id=prop.id,
-                        timeseries=timeseries,
-                        value=value,
-                    )
+                    kwargs = {
+                        "property_id": prop.id,
+                        "timeseries": timeseries,
+                    }
+                    tpd = model.TimeseriesPropertyData.get(**kwargs).first()
+                    if tpd is None:
+                        tpd = model.TimeseriesPropertyData.new(**kwargs)
+                    tpd.value = value
                     try:
                         db.session.flush()
                     except (sqla.exc.DataError, PropertyTypeInvalidError) as exc:
