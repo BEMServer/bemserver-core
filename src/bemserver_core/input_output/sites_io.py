@@ -39,26 +39,34 @@ class SitesCSVIO(BaseCSVFileIO):
         properties = _get_se_properties(model.SiteProperty, reader, cls.SITE_FIELDS)
 
         for row in reader:
-            site = model.Site.new(
-                campaign_id=campaign.id,
-                name=row.pop("Name"),
-                description=row.pop("Description"),
-                ifc_id=row.pop("IFC_ID"),
-            )
+            name = row.pop("Name")
+            kwargs = {
+                "campaign_id": campaign.id,
+                "name": name,
+                "description": row.pop("Description"),
+                "ifc_id": row.pop("IFC_ID"),
+            }
+            site = model.Site.get(campaign_id=campaign.id, name=name).first()
+            if site is None:
+                site = model.Site.new(**kwargs)
+            else:
+                site.update(**kwargs)
             try:
                 db.session.flush()
             except sqla.exc.DataError as exc:
                 raise SitesCSVIOError(f'Site "{site.name}" can\'t be created.') from exc
-            except sqla.exc.IntegrityError as exc:
-                raise SitesCSVIOError(f'Site "{site.name}" already exists.') from exc
+
             for key, value in ((k, v) for k, v in row.items() if k is not None):
                 if value:
                     prop = properties[key]
-                    model.SitePropertyData.new(
-                        site_property_id=prop.id,
-                        site=site,
-                        value=value,
-                    )
+                    kwargs = {
+                        "site_property_id": prop.id,
+                        "site": site,
+                    }
+                    spd = model.SitePropertyData.get(**kwargs).first()
+                    if spd is None:
+                        spd = model.SitePropertyData.new(**kwargs)
+                    spd.value = value
                     try:
                         db.session.flush()
                     except (sqla.exc.DataError, PropertyTypeInvalidError) as exc:
@@ -77,31 +85,36 @@ class SitesCSVIO(BaseCSVFileIO):
         for row in reader:
             site_name = row.pop("Site")
             site = cls._get_site_by_name(campaign, site_name)
-            building = model.Building.new(
-                site_id=site.id,
-                name=row.pop("Name"),
-                description=row.pop("Description"),
-                ifc_id=row.pop("IFC_ID"),
-            )
+            name = row.pop("Name")
+            kwargs = {
+                "site_id": site.id,
+                "name": name,
+                "description": row.pop("Description"),
+                "ifc_id": row.pop("IFC_ID"),
+            }
+            building = model.Building.get(site_id=site.id, name=name).first()
+            if building is None:
+                building = model.Building.new(**kwargs)
+            else:
+                building.update(**kwargs)
             try:
                 db.session.flush()
             except sqla.exc.DataError as exc:
                 raise SitesCSVIOError(
                     f'Building "{building.name}" can\'t be created.'
                 ) from exc
-            except sqla.exc.IntegrityError as exc:
-                raise SitesCSVIOError(
-                    f'Building "{site_name}/{building.name}" already exists.'
-                ) from exc
 
             for key, value in ((k, v) for k, v in row.items() if k is not None):
                 if value:
                     prop = properties[key]
-                    model.BuildingPropertyData.new(
-                        building_property_id=prop.id,
-                        building=building,
-                        value=value,
-                    )
+                    kwargs = {
+                        "building_property_id": prop.id,
+                        "building": building,
+                    }
+                    bpd = model.BuildingPropertyData.get(**kwargs).first()
+                    if bpd is None:
+                        bpd = model.BuildingPropertyData.new(**kwargs)
+                    bpd.value = value
                     try:
                         db.session.flush()
                     except (sqla.exc.DataError, PropertyTypeInvalidError) as exc:
@@ -121,32 +134,36 @@ class SitesCSVIO(BaseCSVFileIO):
             site = cls._get_site_by_name(campaign, site_name)
             building_name = row.pop("Building")
             building = cls._get_building_by_name(site, building_name)
-            storey = model.Storey.new(
-                building_id=building.id,
-                name=row.pop("Name"),
-                description=row.pop("Description"),
-                ifc_id=row.pop("IFC_ID"),
-            )
+            name = row.pop("Name")
+            kwargs = {
+                "building_id": building.id,
+                "name": name,
+                "description": row.pop("Description"),
+                "ifc_id": row.pop("IFC_ID"),
+            }
+            storey = model.Storey.get(building_id=building.id, name=name).first()
+            if storey is None:
+                storey = model.Storey.new(**kwargs)
+            else:
+                storey.update(**kwargs)
             try:
                 db.session.flush()
             except sqla.exc.DataError as exc:
                 raise SitesCSVIOError(
                     f'Storey "{storey.name}" can\'t be created.'
                 ) from exc
-            except sqla.exc.IntegrityError as exc:
-                raise SitesCSVIOError(
-                    f'Storey "{site_name}/{building_name}/{storey.name}" '
-                    "already exists."
-                ) from exc
 
             for key, value in ((k, v) for k, v in row.items() if k is not None):
                 if value:
                     prop = properties[key]
-                    model.StoreyPropertyData.new(
-                        storey_property_id=prop.id,
-                        storey=storey,
-                        value=value,
-                    )
+                    kwargs = {
+                        "storey_property_id": prop.id,
+                        "storey": storey,
+                    }
+                    spd = model.StoreyPropertyData.get(**kwargs).first()
+                    if spd is None:
+                        spd = model.StoreyPropertyData.new(**kwargs)
+                    spd.value = value
                     try:
                         db.session.flush()
                     except (sqla.exc.DataError, PropertyTypeInvalidError) as exc:
@@ -168,32 +185,36 @@ class SitesCSVIO(BaseCSVFileIO):
             building = cls._get_building_by_name(site, building_name)
             storey_name = row.pop("Storey")
             storey = cls._get_storey_by_name(site, building, storey_name)
-            space = model.Space.new(
-                storey_id=storey.id,
-                name=row.pop("Name"),
-                description=row.pop("Description"),
-                ifc_id=row.pop("IFC_ID"),
-            )
+            name = row.pop("Name")
+            kwargs = {
+                "storey_id": storey.id,
+                "name": name,
+                "description": row.pop("Description"),
+                "ifc_id": row.pop("IFC_ID"),
+            }
+            space = model.Space.get(storey_id=storey.id, name=name).first()
+            if space is None:
+                space = model.Space.new(**kwargs)
+            else:
+                space.update(**kwargs)
             try:
                 db.session.flush()
             except sqla.exc.DataError as exc:
                 raise SitesCSVIOError(
                     f'Space "{space.name}" can\'t be created.'
                 ) from exc
-            except sqla.exc.IntegrityError as exc:
-                raise SitesCSVIOError(
-                    f'Space "{site_name}/{building_name}/{storey_name}/{space.name}" '
-                    "already exists."
-                ) from exc
 
             for key, value in ((k, v) for k, v in row.items() if k is not None):
                 if value:
                     prop = properties[key]
-                    model.SpacePropertyData.new(
-                        space_property_id=prop.id,
-                        space=space,
-                        value=value,
-                    )
+                    kwargs = {
+                        "space_property_id": prop.id,
+                        "space": space,
+                    }
+                    spd = model.SpacePropertyData.get(**kwargs).first()
+                    if spd is None:
+                        spd = model.SpacePropertyData.new(**kwargs)
+                    spd.value = value
                     try:
                         db.session.flush()
                     except (sqla.exc.DataError, PropertyTypeInvalidError) as exc:
@@ -208,27 +229,34 @@ class SitesCSVIO(BaseCSVFileIO):
         properties = _get_se_properties(model.ZoneProperty, reader, cls.ZONE_FIELDS)
 
         for row in reader:
-            zone = model.Zone.new(
-                campaign_id=campaign.id,
-                name=row.pop("Name"),
-                description=row.pop("Description"),
-                ifc_id=row.pop("IFC_ID"),
-            )
+            name = row.pop("Name")
+            kwargs = {
+                "campaign_id": campaign.id,
+                "name": name,
+                "description": row.pop("Description"),
+                "ifc_id": row.pop("IFC_ID"),
+            }
+            zone = model.Zone.get(campaign_id=campaign.id, name=name).first()
+            if zone is None:
+                zone = model.Zone.new(**kwargs)
+            else:
+                zone.update(**kwargs)
             try:
                 db.session.flush()
             except sqla.exc.DataError as exc:
                 raise SitesCSVIOError(f'Zone "{zone.name}" can\'t be created.') from exc
-            except sqla.exc.IntegrityError as exc:
-                raise SitesCSVIOError(f'Zone "{zone.name}" already exists.') from exc
 
             for key, value in ((k, v) for k, v in row.items() if k is not None):
                 if value:
                     prop = properties[key]
-                    model.ZonePropertyData.new(
-                        zone_property_id=prop.id,
-                        zone=zone,
-                        value=value,
-                    )
+                    kwargs = {
+                        "zone_property_id": prop.id,
+                        "zone": zone,
+                    }
+                    zpd = model.ZonePropertyData.get(**kwargs).first()
+                    if zpd is None:
+                        zpd = model.ZonePropertyData.new(**kwargs)
+                    zpd.value = value
                     try:
                         db.session.flush()
                     except (sqla.exc.DataError, PropertyTypeInvalidError) as exc:
