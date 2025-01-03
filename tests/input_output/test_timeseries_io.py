@@ -101,6 +101,65 @@ class TestTimeseriesCSVIO:
         assert len(timeseries_2_property_data) == 1
         assert timeseries_2_property_data[0].value == "60"
 
+    def test_timeseries_csv_io_import_csv_update(
+        self,
+        users,
+        campaigns,
+        campaign_scopes,
+        sites,
+        buildings,
+        storeys,
+        spaces,
+        zones,
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        cs_1 = campaign_scopes[0]
+        site_1 = sites[0]
+        building_1 = buildings[0]
+        storey_1 = storeys[0]
+        space_1 = spaces[0]
+        zone_1 = zones[0]
+
+        timeseries_csv = (
+            "Name,Description,Unit,Campaign scope,Site,Building,Storey,Space,Zone,Min\n"
+            f"Temp 1,Temperature 1,,{cs_1.name},"
+            f"{site_1.name},{building_1.name},{storey_1.name},{space_1.name},,12\n"
+            f"Temp 1,Temperature 2,,{cs_1.name},"
+            f"{site_1.name},{building_1.name},{storey_1.name},,{zone_1.name},42\n"
+        )
+
+        with CurrentUser(admin_user):
+            timeseries_csv_io.import_csv(
+                campaign_1,
+                timeseries_csv=timeseries_csv,
+            )
+
+        timeseries = db.session.query(Timeseries).all()
+        assert len(timeseries) == 1
+        timeseries_1 = timeseries[0]
+        assert timeseries_1.description == "Temperature 2"
+
+        timeseries_property_data = db.session.query(TimeseriesPropertyData).all()
+        assert len(timeseries_property_data) == 1
+        assert timeseries_property_data[0].value == "42"
+        assert timeseries_property_data[0].timeseries_id == timeseries_1.id
+
+        for ts_relation_table in (
+            TimeseriesBySite,
+            TimeseriesByBuilding,
+            TimeseriesBySpace,
+        ):
+            relations = db.session.query(ts_relation_table).all()
+            assert not relations
+        for ts_relation_table in (
+            TimeseriesByStorey,
+            TimeseriesByZone,
+        ):
+            relations = db.session.query(ts_relation_table).all()
+            assert len(relations) == 1
+
     def test_timeseries_csv_io_import_csv_missing_column(
         self,
         users,
@@ -179,30 +238,6 @@ class TestTimeseriesCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(TimeseriesCSVIOError, match=f"Missing {missing}"):
-                timeseries_csv_io.import_csv(
-                    campaign_1,
-                    timeseries_csv=timeseries_csv,
-                )
-
-    def test_timeseries_csv_io_import_csv_already_exists(
-        self, users, campaigns, campaign_scopes
-    ):
-        admin_user = users[0]
-        assert admin_user.is_admin
-        campaign_1 = campaigns[0]
-        cs_1 = campaign_scopes[0]
-
-        timeseries_csv = (
-            "Name,Description,Unit,Campaign scope,Site,Building,Storey,Space,Zone\n"
-            f"Temp 1,,,{cs_1.name},,,,,\n"
-            f"Temp 1,,,{cs_1.name},,,,,\n"
-        )
-
-        with CurrentUser(admin_user):
-            with pytest.raises(
-                TimeseriesCSVIOError,
-                match=f'Timeseries "{campaign_1.name}/Temp 1" already exists.',
-            ):
                 timeseries_csv_io.import_csv(
                     campaign_1,
                     timeseries_csv=timeseries_csv,

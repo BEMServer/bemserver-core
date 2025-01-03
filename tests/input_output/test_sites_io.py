@@ -57,6 +57,31 @@ class TestSitesCSVIO:
         assert site_property_data[0].value == "1000"
         assert site_property_data[0].site_id == site_1.id
 
+    @pytest.mark.usefixtures("site_properties")
+    def test_site_data_io_import_csv_update(self, users, campaigns):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+
+        csv_file = (
+            "Name,Description,IFC_ID,Area\n"
+            "Site 1,Great site 1,,12\n"
+            "Site 1,Great site 2,,42\n"
+        )
+
+        with CurrentUser(admin_user):
+            sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
+
+        sites = db.session.query(Site).all()
+        assert len(sites) == 1
+        site_1 = sites[0]
+        assert site_1.description == "Great site 2"
+
+        site_property_data = db.session.query(SitePropertyData).all()
+        assert len(site_property_data) == 1
+        assert site_property_data[0].value == "42"
+        assert site_property_data[0].site_id == site_1.id
+
     def test_site_data_io_import_csv_missing_column(self, users, campaigns):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -91,19 +116,6 @@ class TestSitesCSVIO:
         )
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Unknown property: "Area"'):
-                sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
-
-    def test_site_data_io_import_csv_already_exists(self, users, campaigns):
-        admin_user = users[0]
-        assert admin_user.is_admin
-        campaign_1 = campaigns[0]
-
-        csv_file = (
-            "Name,Description,IFC_ID\nSite 1,Great site 1,\nSite 1,Great site 2,\n"
-        )
-
-        with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match='Site "Site 1" already exists.'):
                 sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
 
     def test_site_data_io_import_csv_too_many_cols(self, users, campaigns):
@@ -172,6 +184,32 @@ class TestSitesCSVIO:
         assert building_property_data[0].value == "1000"
         assert building_property_data[0].building_id == building_1.id
 
+    @pytest.mark.usefixtures("building_properties")
+    def test_building_data_io_import_csv_update(self, users, campaigns, sites):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        site_1 = sites[0]
+
+        csv_file = (
+            "Name,Description,Site,IFC_ID,Area\n"
+            f"Building 1,Great building 1,{site_1.name},,12\n"
+            f"Building 1,Great building 2,{site_1.name},,42\n"
+        )
+
+        with CurrentUser(admin_user):
+            sites_csv_io.import_csv(campaign_1, buildings_csv=csv_file)
+
+        buildings = db.session.query(Building).all()
+        assert len(buildings) == 1
+        building_1 = buildings[0]
+        assert building_1.description == "Great building 2"
+
+        building_property_data = db.session.query(BuildingPropertyData).all()
+        assert len(building_property_data) == 1
+        assert building_property_data[0].value == "42"
+        assert building_property_data[0].building_id == building_1.id
+
     def test_building_data_io_import_csv_missing_column(self, users, campaigns, sites):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -215,24 +253,6 @@ class TestSitesCSVIO:
 
         with CurrentUser(admin_user):
             with pytest.raises(BEMServerCoreIOError, match='Unknown site: "Dummy"'):
-                sites_csv_io.import_csv(campaign_1, buildings_csv=csv_file)
-
-    def test_building_data_io_import_csv_already_exists(self, users, campaigns, sites):
-        admin_user = users[0]
-        assert admin_user.is_admin
-        campaign_1 = campaigns[0]
-        site_1 = sites[0]
-
-        csv_file = (
-            "Name,Description,Site,IFC_ID\n"
-            f"Building 1,Great building 1,{site_1.name},\n"
-            f"Building 1,Great building 2,{site_1.name},\n"
-        )
-
-        with CurrentUser(admin_user):
-            with pytest.raises(
-                SitesCSVIOError, match='Building "Site 1/Building 1" already exists.'
-            ):
                 sites_csv_io.import_csv(campaign_1, buildings_csv=csv_file)
 
     def test_building_data_io_import_csv_too_many_cols(self, users, campaigns, sites):
@@ -317,6 +337,33 @@ class TestSitesCSVIO:
         assert storey_property_data[0].value == "1000"
         assert storey_property_data[0].storey_id == storey_1.id
 
+    @pytest.mark.usefixtures("storey_properties")
+    def test_storey_data_io_import_csv_update(self, users, campaigns, sites, buildings):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        site_1 = sites[0]
+        building_1 = buildings[0]
+
+        csv_file = (
+            "Name,Description,Site,Building,IFC_ID,Area\n"
+            f"Storey 1,Great storey 1,{site_1.name},{building_1.name},,12\n"
+            f"Storey 1,Great storey 2,{site_1.name},{building_1.name},,42\n"
+        )
+
+        with CurrentUser(admin_user):
+            sites_csv_io.import_csv(campaign_1, storeys_csv=csv_file)
+
+        storeys = db.session.query(Storey).all()
+        assert len(storeys) == 1
+        storey_1 = storeys[0]
+        assert storey_1.description == "Great storey 2"
+
+        storey_property_data = db.session.query(StoreyPropertyData).all()
+        assert len(storey_property_data) == 1
+        assert storey_property_data[0].value == "42"
+        assert storey_property_data[0].storey_id == storey_1.id
+
     def test_storey_data_io_import_csv_missing_column(
         self, users, campaigns, sites, buildings
     ):
@@ -366,28 +413,6 @@ class TestSitesCSVIO:
         with CurrentUser(admin_user):
             with pytest.raises(
                 BEMServerCoreIOError, match='Unknown building: "Site 1/Dummy"'
-            ):
-                sites_csv_io.import_csv(campaign_1, storeys_csv=csv_file)
-
-    def test_storey_data_io_import_csv_already_exists(
-        self, users, campaigns, sites, buildings
-    ):
-        admin_user = users[0]
-        assert admin_user.is_admin
-        campaign_1 = campaigns[0]
-        site_1 = sites[0]
-        building_1 = buildings[0]
-
-        csv_file = (
-            "Name,Description,Site,Building,IFC_ID\n"
-            f"Storey 1,Great storey 1,{site_1.name},{building_1.name},\n"
-            f"Storey 1,Great storey 2,{site_1.name},{building_1.name},\n"
-        )
-
-        with CurrentUser(admin_user):
-            with pytest.raises(
-                SitesCSVIOError,
-                match='Storey "Site 1/Building 1/Storey 1" already exists.',
             ):
                 sites_csv_io.import_csv(campaign_1, storeys_csv=csv_file)
 
@@ -487,6 +512,38 @@ class TestSitesCSVIO:
         assert space_property_data[0].value == "1000"
         assert space_property_data[0].space_id == space_1.id
 
+    @pytest.mark.usefixtures("space_properties")
+    def test_space_data_io_import_csv_update(
+        self, users, campaigns, sites, buildings, storeys
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+        site_1 = sites[0]
+        building_1 = buildings[0]
+        storey_1 = storeys[0]
+
+        csv_file = (
+            "Name,Description,Site,Building,Storey,IFC_ID,Area\n"
+            "Space 1,Great space 1,"
+            f"{site_1.name},{building_1.name},{storey_1.name},,12\n"
+            "Space 1,Great space 2,"
+            f"{site_1.name},{building_1.name},{storey_1.name},,42\n"
+        )
+
+        with CurrentUser(admin_user):
+            sites_csv_io.import_csv(campaign_1, spaces_csv=csv_file)
+
+        spaces = db.session.query(Space).all()
+        assert len(spaces) == 1
+        space_1 = spaces[0]
+        assert space_1.description == "Great space 2"
+
+        space_property_data = db.session.query(SpacePropertyData).all()
+        assert len(space_property_data) == 1
+        assert space_property_data[0].value == "42"
+        assert space_property_data[0].space_id == space_1.id
+
     def test_space_data_io_import_csv_missing_column(
         self, users, campaigns, sites, buildings, storeys
     ):
@@ -546,31 +603,6 @@ class TestSitesCSVIO:
         with CurrentUser(admin_user):
             with pytest.raises(
                 BEMServerCoreIOError, match='Unknown storey: "Site 1/Building 1/Dummy"'
-            ):
-                sites_csv_io.import_csv(campaign_1, spaces_csv=csv_file)
-
-    def test_space_data_io_import_csv_already_exists(
-        self, users, campaigns, sites, buildings, storeys
-    ):
-        admin_user = users[0]
-        assert admin_user.is_admin
-        campaign_1 = campaigns[0]
-        site_1 = sites[0]
-        building_1 = buildings[0]
-        storey_1 = storeys[0]
-
-        csv_file = (
-            "Name,Description,Site,Building,Storey,IFC_ID\n"
-            "Space 1,Great storey 1,"
-            f"{site_1.name},{building_1.name},{storey_1.name},\n"
-            "Space 1,Great storey 2,"
-            f"{site_1.name},{building_1.name},{storey_1.name},\n"
-        )
-
-        with CurrentUser(admin_user):
-            with pytest.raises(
-                SitesCSVIOError,
-                match='Space "Site 1/Building 1/Storey 1/Space 1" already exists.',
             ):
                 sites_csv_io.import_csv(campaign_1, spaces_csv=csv_file)
 
@@ -664,6 +696,31 @@ class TestSitesCSVIO:
         assert len(zone_property_data) == 1
         assert zone_property_data[0].zone_id == zone_1.id
 
+    @pytest.mark.usefixtures("zone_properties")
+    def test_zone_data_io_import_csv_update(self, users, campaigns):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        campaign_1 = campaigns[0]
+
+        csv_file = (
+            "Name,Description,IFC_ID,Area\n"
+            "Zone 1,Great zone 1,,12\n"
+            "Zone 1,Great zone 2,,42\n"
+        )
+
+        with CurrentUser(admin_user):
+            sites_csv_io.import_csv(campaign_1, zones_csv=csv_file)
+
+        zones = db.session.query(Zone).all()
+        assert len(zones) == 1
+        zone_1 = zones[0]
+        assert zone_1.description == "Great zone 2"
+
+        zone_property_data = db.session.query(ZonePropertyData).all()
+        assert len(zone_property_data) == 1
+        assert zone_property_data[0].value == "42"
+        assert zone_property_data[0].zone_id == zone_1.id
+
     def test_zone_data_io_import_csv_missing_column(self, users, campaigns):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -687,19 +744,6 @@ class TestSitesCSVIO:
         )
         with CurrentUser(admin_user):
             with pytest.raises(SitesCSVIOError, match='Unknown property: "Area"'):
-                sites_csv_io.import_csv(campaign_1, zones_csv=csv_file)
-
-    def test_zone_data_io_import_csv_already_exists(self, users, campaigns):
-        admin_user = users[0]
-        assert admin_user.is_admin
-        campaign_1 = campaigns[0]
-
-        csv_file = (
-            "Name,Description,IFC_ID\nZone 1,Great zone 1,\nZone 1,Great zone 2,\n"
-        )
-
-        with CurrentUser(admin_user):
-            with pytest.raises(SitesCSVIOError, match='Zone "Zone 1" already exists.'):
                 sites_csv_io.import_csv(campaign_1, zones_csv=csv_file)
 
     def test_zone_data_io_import_csv_too_many_cols(self, users, campaigns):
