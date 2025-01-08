@@ -4,32 +4,32 @@
 #
 #    pip-compile --unsafe-package=psycopg requirements/tests.in
 #
-coverage[toml]==7.5.3
+coverage[toml]==7.6.10
     # via pytest-cov
 iniconfig==2.0.0
     # via pytest
-mirakuru==2.5.2
+mirakuru==2.5.3
     # via pytest-postgresql
-packaging==24.0
+packaging==24.2
     # via pytest
 pluggy==1.5.0
     # via pytest
-port-for==0.7.2
+port-for==0.7.4
     # via pytest-postgresql
-psutil==5.9.8
+psutil==6.1.1
     # via mirakuru
-pytest==8.2.2
+pytest==8.3.4
     # via
     #   -r requirements/tests.in
     #   pytest-cov
     #   pytest-postgresql
-pytest-cov==5.0.0
+pytest-cov==6.0.0
     # via -r requirements/tests.in
-pytest-postgresql==6.0.0
+pytest-postgresql==6.1.1
     # via -r requirements/tests.in
-setuptools==70.0.0
+setuptools==75.7.0
     # via pytest-postgresql
-typing-extensions==4.12.1
+typing-extensions==4.12.2
     # via psycopg
 
 # The following packages are considered to be unsafe in a requirements file:
