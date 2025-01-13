@@ -770,7 +770,7 @@ class TimeseriesDataJSONIO(TimeseriesDataIO, BaseJSONIO):
             if dropna:
                 val = val.dropna()
             else:
-                val = val.replace([np.nan], [None])
+                val = val.replace(np.nan, None)
             if not val.empty:
                 ret[str(col)] = val.to_dict()
 
