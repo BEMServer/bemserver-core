@@ -142,7 +142,7 @@ def campaigns(request, bemservercore):
         campaigns = []
         for i in range(max(2, request.param)):
             campaign_i = model.Campaign.new(
-                name=f"Campaign {i+1}",
+                name=f"Campaign {i + 1}",
                 start_time=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
                 end_time=dt.datetime(2020, 2, 1, tzinfo=dt.timezone.utc),
             )
@@ -252,8 +252,8 @@ def timeseries(request, bemservercore, campaigns, campaign_scopes):
         ts_l = []
         for i in range(request.param):
             ts_i = model.Timeseries.new(
-                name=f"Timeseries {i+1}",
-                description=f"Test timeseries #{i+1}",
+                name=f"Timeseries {i + 1}",
+                description=f"Test timeseries #{i + 1}",
                 campaign=campaigns[i % len(campaigns)],
                 campaign_scope=campaign_scopes[i % len(campaign_scopes)],
             )

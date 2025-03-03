@@ -136,7 +136,7 @@ class TestSitesCSVIO:
         csv_file = "Name,Description,IFC_ID\n" + 100 * "A" + ",Great site 1,\n"
         with CurrentUser(admin_user):
             with pytest.raises(
-                SitesCSVIOError, match=f"Site \"{100 * 'A'}\" can't be created."
+                SitesCSVIOError, match=f'Site "{100 * "A"}" can\'t be created.'
             ):
                 sites_csv_io.import_csv(campaign_1, sites_csv=csv_file)
 
@@ -282,7 +282,7 @@ class TestSitesCSVIO:
         )
         with CurrentUser(admin_user):
             with pytest.raises(
-                SitesCSVIOError, match=f"Building \"{100 * 'A'}\" can't be created."
+                SitesCSVIOError, match=f'Building "{100 * "A"}" can\'t be created.'
             ):
                 sites_csv_io.import_csv(campaign_1, buildings_csv=csv_file)
 
@@ -449,7 +449,7 @@ class TestSitesCSVIO:
         )
         with CurrentUser(admin_user):
             with pytest.raises(
-                SitesCSVIOError, match=f"Storey \"{100 * 'A'}\" can't be created."
+                SitesCSVIOError, match=f'Storey "{100 * "A"}" can\'t be created.'
             ):
                 sites_csv_io.import_csv(campaign_1, storeys_csv=csv_file)
 
@@ -642,7 +642,7 @@ class TestSitesCSVIO:
         )
         with CurrentUser(admin_user):
             with pytest.raises(
-                SitesCSVIOError, match=f"Space \"{100 * 'A'}\" can't be created."
+                SitesCSVIOError, match=f'Space "{100 * "A"}" can\'t be created.'
             ):
                 sites_csv_io.import_csv(campaign_1, spaces_csv=csv_file)
 
@@ -764,7 +764,7 @@ class TestSitesCSVIO:
         csv_file = "Name,Description,IFC_ID\n" + 100 * "A" + ",Great zone 1,\n"
         with CurrentUser(admin_user):
             with pytest.raises(
-                SitesCSVIOError, match=f"Zone \"{100 * 'A'}\" can't be created."
+                SitesCSVIOError, match=f'Zone "{100 * "A"}" can\'t be created.'
             ):
                 sites_csv_io.import_csv(campaign_1, zones_csv=csv_file)
 

@@ -41,7 +41,7 @@ class TestEnergyConsumption:
         timeseries = []
         for i in range(9):
             ts_i = Timeseries.new(
-                name=f"Timeseries {i+1}",
+                name=f"Timeseries {i + 1}",
                 campaign=campaign,
                 campaign_scope=campaign_scope,
                 unit_symbol=("Wh" if i < 6 else "kWh"),
