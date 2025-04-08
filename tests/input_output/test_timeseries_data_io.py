@@ -493,7 +493,7 @@ class TestTimeseriesDataIO:
         with CurrentUser(user_1):
             ts_l = (ts_0, ts_2, ts_4)
             with pytest.raises(BEMServerAuthorizationError):
-                tsdio.get_timeseries_stats(ts_l, ds_1, timezone=timezone)
+                tsdio.get_last(None, None, ts_l, ds_1, timezone=timezone)
 
             ts_l = (ts_1, ts_3)
             data_df = tsdio.get_last(None, None, ts_l, ds_1, timezone=timezone)
