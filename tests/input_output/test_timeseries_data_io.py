@@ -912,6 +912,74 @@ class TestTimeseriesDataIO:
         assert data_df.equals(expected_data_df)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
+    @pytest.mark.parametrize("agg", ("avg", "min", "max", "count"))
+    @pytest.mark.parametrize("col_label", ("id", "name"))
+    def test_timeseries_data_io_get_aggreagate_data(
+        self, users, timeseries, agg, col_label
+    ):
+        admin_user = users[0]
+        assert admin_user.is_admin
+        ts_0 = timeseries[0]
+        ts_2 = timeseries[2]
+        ts_4 = timeseries[4]
+
+        with OpenBar():
+            ds_1 = TimeseriesDataState.get(name="Raw").first()
+
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        end_dt = start_dt + dt.timedelta(hours=24 * 3)
+
+        timestamps = pd.date_range(
+            start=start_dt, end=end_dt, inclusive="left", freq="h"
+        )
+
+        ts_l = (ts_0, ts_2, ts_4)
+
+        with CurrentUser(admin_user):
+            # No data
+            data_df = tsdio.get_timeseries_aggregate_data(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                agg=agg,
+                col_label=col_label,
+            )
+            expected_data_df = pd.DataFrame(
+                {agg: (0, 0, 0) if agg == "count" else (np.nan, np.nan, np.nan)},
+                index=pd.Index((getattr(ts, col_label) for ts in ts_l), name=col_label),
+            )
+            assert data_df.equals(expected_data_df)
+
+        values_1 = range(24 * 3)
+        create_timeseries_data(ts_0, ds_1, timestamps, values_1)
+        values_2 = [10 + 2 * i for i in range(24 * 2)]
+        create_timeseries_data(ts_4, ds_1, timestamps[: 24 * 2], values_2)
+
+        with CurrentUser(admin_user):
+            data_df = tsdio.get_timeseries_aggregate_data(
+                start_dt,
+                end_dt,
+                ts_l,
+                ds_1,
+                agg=agg,
+                col_label=col_label,
+            )
+            if agg == "avg":
+                expected_values = (35.5, np.nan, 57.0)
+            elif agg == "min":
+                expected_values = (0, np.nan, 10)
+            elif agg == "max":
+                expected_values = (71.0, np.nan, 104.0)
+            elif agg == "count":
+                expected_values = (72, 0, 48)
+            expected_data_df = pd.DataFrame(
+                {agg: expected_values},
+                index=pd.Index((getattr(ts, col_label) for ts in ts_l), name=col_label),
+            )
+            assert data_df.equals(expected_data_df)
+
+    @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     def test_timeseries_data_io_get_timeseries_buckets_data_fixed_size_as_admin(
         self, users, timeseries
     ):

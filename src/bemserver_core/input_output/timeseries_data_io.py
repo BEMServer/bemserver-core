@@ -547,6 +547,82 @@ class TimeseriesDataIO:
         return data_df
 
     @classmethod
+    def get_timeseries_aggregate_data(
+        cls,
+        start_dt,
+        end_dt,
+        timeseries,
+        data_state,
+        *,
+        agg="avg",
+        inclusive="left",
+        col_label="id",
+    ):
+        """Export aggregated timeseries data
+
+        :param datetime start_dt: Time interval lower bound (tz-aware)
+        :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
+        :param list timeseries: List of timeseries
+        :param TimeseriesDataState data_state: Timeseries data state
+        :param str agg: Aggreagation method.
+            Must be "avg", "min", "max" or "count". Default: "avg".
+        :param str inclusive: Whether to set each bound as closed or open.
+            Must be "both", "neither", "left" or "right". Default: "left".
+        :param string col_label: Timeseries attribute to use as key in returned dict.
+            Should be "id" or "name". Default: "id".
+
+        Returns a dataframe.
+        """
+        for ts in timeseries:
+            auth.authorize(get_current_user(), "read_data", ts)
+
+        if agg == "avg":
+            agg_func = sqla.func.avg(TimeseriesData.value)
+        elif agg == "min":
+            agg_func = sqla.func.min(TimeseriesData.value)
+        elif agg == "max":
+            agg_func = sqla.func.max(TimeseriesData.value)
+        elif agg == "count":
+            agg_func = sqla.func.count(TimeseriesData.value)
+
+        stmt = (
+            sqla.select(Timeseries.id, Timeseries.name, agg_func)
+            .filter(
+                TimeseriesData.timeseries_by_data_state_id == TimeseriesByDataState.id
+            )
+            .filter(TimeseriesByDataState.timeseries_id == Timeseries.id)
+            .filter(TimeseriesByDataState.data_state_id == data_state.id)
+            .filter(TimeseriesByDataState.timeseries_id.in_(ts.id for ts in timeseries))
+            .group_by(Timeseries.id)
+        )
+        if start_dt:
+            if inclusive in {"both", "left"}:
+                stmt = stmt.filter(start_dt <= TimeseriesData.timestamp)
+            else:
+                stmt = stmt.filter(start_dt < TimeseriesData.timestamp)
+        if end_dt:
+            if inclusive in {"both", "right"}:
+                stmt = stmt.filter(TimeseriesData.timestamp <= end_dt)
+            else:
+                stmt = stmt.filter(TimeseriesData.timestamp < end_dt)
+
+        ts_counts = {
+            ts_id if col_label == "id" else ts_name: count
+            for ts_id, ts_name, count in db.session.execute(stmt).all()
+        }
+
+        data_df = pd.DataFrame.from_dict(
+            ts_counts, orient="index", columns=(agg,)
+        ).reindex(getattr(ts, col_label) for ts in timeseries)
+        data_df.index.name = col_label
+        if agg == "count":
+            data_df["count"] = data_df["count"].fillna(0).astype(int)
+        else:
+            data_df[agg] = data_df[agg].astype(float)
+
+        return data_df
+
+    @classmethod
     def delete(cls, start_dt, end_dt, timeseries, data_state):
         """Delete timeseries data
 
