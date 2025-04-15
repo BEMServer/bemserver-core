@@ -9,15 +9,16 @@ from bemserver_core.authorization import AuthMixin, Relation, auth
 from bemserver_core.celery import celery, logger
 from bemserver_core.database import Base, db
 from bemserver_core.exceptions import BEMServerCorePeriodError
+from bemserver_core.input_output import tsdio
 from bemserver_core.model import (
     Campaign,
     Event,
     EventCategory,
     EventLevelEnum,
+    Timeseries,
     TimeseriesByEvent,
     TimeseriesDataState,
 )
-from bemserver_core.process.completeness import compute_completeness
 from bemserver_core.time_utils import floor, make_date_range_around_datetime
 
 SERVICE_NAME = "BEMServer - Check missing data"
@@ -172,33 +173,32 @@ def check_missing_ts_data(
 
             logger.debug("Timeseries missing status: %s", ts_status_missing)
 
-            # Compute completeness
-            completeness = compute_completeness(
+            # Get count for each TS
+            counts_df = tsdio.get_timeseries_aggregate_data(
                 start_dt,
                 end_dt,
                 c_scope.timeseries,
                 ds_raw,
-                period_multiplier,
-                period,
-                timezone=str(datetime.tzinfo),
+                agg="count",
             )
 
-            # If interval is unknown, compute_completeness tries to guess
-            # Since it works on a single bucket, either there is data and
-            # ratio is 1, either there is no data and ratio is 0.
-            # Consider missing only if 0. If even a single sample is present,
-            # we can't conclude without knowing the expected interval.
-            missing_ts = [
-                (ts_id, ts_info["name"])
-                for ts_id, ts_info in completeness["timeseries"].items()
-                # Timeseries missing if ratio < threshold
-                if (
-                    (ratio := ts_info["avg_ratio"]) is not None
-                    and ratio <= min_completeness_ratio
-                )
-                # or no data in check period, whatever the expected interval
-                or ts_info["avg_count"] == 0
-            ]
+            # TS is missing if either count/expected < min or no expectation and count=0
+            nb_s = (end_dt - start_dt).total_seconds()
+            ts_intervals = Timeseries.get_property_for_many_timeseries(
+                [ts.id for ts in c_scope.timeseries], "Interval"
+            )
+            missing_ts = []
+            for timeseries in c_scope.timeseries:
+                if ts_intervals[timeseries.id] is not None:
+                    if (
+                        counts_df.loc[timeseries.id, "count"]
+                        * float(ts_intervals[timeseries.id])
+                        / nb_s
+                        < min_completeness_ratio
+                    ):
+                        missing_ts.append((timeseries.id, timeseries.name))
+                elif counts_df.loc[timeseries.id, "count"] == 0:
+                    missing_ts.append((timeseries.id, timeseries.name))
 
             logger.debug("Missing timeseries: %s", missing_ts)
 
