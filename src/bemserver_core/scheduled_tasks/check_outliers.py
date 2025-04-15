@@ -9,15 +9,13 @@ from bemserver_core.authorization import AuthMixin, Relation, auth
 from bemserver_core.celery import celery, logger
 from bemserver_core.database import Base, db
 from bemserver_core.exceptions import BEMServerCorePeriodError
+from bemserver_core.input_output import tsdio
 from bemserver_core.model import (
     Campaign,
     Event,
     EventCategory,
     EventLevelEnum,
-    Timeseries,
-    TimeseriesByDataState,
     TimeseriesByEvent,
-    TimeseriesData,
     TimeseriesDataState,
 )
 from bemserver_core.process.cleanup import cleanup
@@ -176,44 +174,34 @@ def check_outliers_ts_data(
             logger.debug("Timeseries outliers status: %s", ts_status_outliers)
 
             # Get count for each TS
-            stmt = (
-                sqla.select(
-                    Timeseries.id,
-                    Timeseries.name,
-                    sqla.func.count(TimeseriesData.value),
-                )
-                .filter(
-                    TimeseriesData.timeseries_by_data_state_id
-                    == TimeseriesByDataState.id
-                )
-                .filter(TimeseriesByDataState.timeseries_id == Timeseries.id)
-                .filter(TimeseriesByDataState.data_state_id == ds_raw.id)
-                .filter(
-                    TimeseriesByDataState.timeseries_id.in_(
-                        ts.id for ts in c_scope.timeseries
-                    )
-                )
-                .filter(start_dt <= TimeseriesData.timestamp)
-                .filter(TimeseriesData.timestamp < end_dt)
-                .group_by(Timeseries.id)
+            data_df = tsdio.get_timeseries_aggregate_data(
+                start_dt,
+                end_dt,
+                c_scope.timeseries,
+                ds_raw,
+                agg="count",
             )
             ts_counts = {
-                ts_id: {"name": name, "count": count}
-                for ts_id, name, count in db.session.execute(stmt).all()
+                ts.id: {"name": ts.name, "count": data_df.loc[ts.id, "count"]}
+                for ts in c_scope.timeseries
+                # Only keep TS with count > 0 to avoid zero division later
+                # 0 count TS don't have outliers anyway
+                if data_df.loc[ts.id, "count"]
             }
 
             logger.debug("Timeseries counts: %s", ts_counts)
 
-            # Get outliers
-            outliers_df = cleanup(
+            # Get correct data count for each TS
+            correct_df = cleanup(
                 start_dt, end_dt, c_scope.timeseries, ds_raw, inclusive="left"
             )
-            outliers_count = outliers_df.count()
+            correct_count = correct_df.count()
 
+            # Compare correct/total to min correctness ratio
             outliers_ts = [
                 (ts_id, ts_info["name"])
                 for ts_id, ts_info in ts_counts.items()
-                if outliers_count[ts_id] / ts_info["count"] < min_correctness_ratio
+                if correct_count[ts_id] / ts_info["count"] < min_correctness_ratio
             ]
 
             logger.debug("Timeseries with outliers: %s", outliers_ts)
