@@ -6,17 +6,18 @@ from unittest import mock
 import pytest
 from pytest_postgresql import factories as ppf
 
-from bemserver_core import BEMServerCore, model, scheduled_tasks
+from bemserver_core import BEMServerCore, model, tasks
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.commands import setup_db
 from bemserver_core.common import PropertyType
 from bemserver_core.database import db
+from bemserver_core.time_utils import PeriodEnum
 
 
 @pytest.fixture(scope="session", autouse=True)
 def inhibit_celery():
-    """Inhibit celery tasks by mocking the method launching tasks"""
-    with mock.patch("bemserver_core.celery.BEMServerCoreTask.apply_async"):
+    """Inhibit celery system tasks by mocking the method launching tasks"""
+    with mock.patch("bemserver_core.celery.BEMServerCoreSystemTask.apply_async"):
         yield
 
 
@@ -964,74 +965,19 @@ def weather_timeseries_by_sites(bemservercore, timeseries, sites):
 
 
 @pytest.fixture
-def st_cleanups_by_campaigns(bemservercore, campaigns):
+def tasks_by_campaigns(bemservercore, campaigns):
     with OpenBar():
-        st_cbc_1 = scheduled_tasks.ST_CleanupByCampaign.new(campaign_id=campaigns[0].id)
-        st_cbc_2 = scheduled_tasks.ST_CleanupByCampaign.new(
+        tbc_1 = tasks.TaskByCampaign.new(
+            task_name="TASK",
+            campaign_id=campaigns[0].id,
+            offset_unit=PeriodEnum.day,
+        )
+        tbc_2 = tasks.TaskByCampaign.new(
+            task_name="TASK",
             campaign_id=campaigns[1].id,
+            offset_unit=PeriodEnum.hour,
+            start_offset=-6,
             is_enabled=False,
         )
         db.session.commit()
-    return (st_cbc_1, st_cbc_2)
-
-
-@pytest.fixture
-def st_cleanups_by_timeseries(bemservercore, timeseries):
-    with OpenBar():
-        st_cbt_1 = scheduled_tasks.ST_CleanupByTimeseries.new(
-            timeseries_id=timeseries[0].id,
-        )
-        st_cbt_2 = scheduled_tasks.ST_CleanupByTimeseries.new(
-            timeseries_id=timeseries[1].id,
-        )
-        db.session.commit()
-    return (st_cbt_1, st_cbt_2)
-
-
-@pytest.fixture
-def st_check_missings_by_campaigns(bemservercore, campaigns):
-    with OpenBar():
-        st_cbc_1 = scheduled_tasks.ST_CheckMissingByCampaign.new(
-            campaign_id=campaigns[0].id
-        )
-        st_cbc_2 = scheduled_tasks.ST_CheckMissingByCampaign.new(
-            campaign_id=campaigns[1].id,
-            is_enabled=False,
-        )
-        db.session.commit()
-    return (st_cbc_1, st_cbc_2)
-
-
-@pytest.fixture
-def st_check_outliers_by_campaigns(bemservercore, campaigns):
-    with OpenBar():
-        st_cbc_1 = scheduled_tasks.ST_CheckOutliersByCampaign.new(
-            campaign_id=campaigns[0].id
-        )
-        st_cbc_2 = scheduled_tasks.ST_CheckOutliersByCampaign.new(
-            campaign_id=campaigns[1].id,
-            is_enabled=False,
-        )
-        db.session.commit()
-    return (st_cbc_1, st_cbc_2)
-
-
-@pytest.fixture
-def st_download_weather_data_by_sites(bemservercore, sites):
-    with OpenBar():
-        st_dwdbs_1 = scheduled_tasks.ST_DownloadWeatherDataBySite.new(
-            site_id=sites[0].id,
-        )
-        st_dwdbs_2 = scheduled_tasks.ST_DownloadWeatherDataBySite.new(
-            site_id=sites[1].id,
-            is_enabled=False,
-        )
-        st_dwdbs_3 = scheduled_tasks.ST_DownloadWeatherForecastDataBySite.new(
-            site_id=sites[0].id,
-            is_enabled=False,
-        )
-        st_dwdbs_4 = scheduled_tasks.ST_DownloadWeatherForecastDataBySite.new(
-            site_id=sites[1].id,
-        )
-        db.session.commit()
-    return (st_dwdbs_1, st_dwdbs_2, st_dwdbs_3, st_dwdbs_4)
+    return (tbc_1, tbc_2)

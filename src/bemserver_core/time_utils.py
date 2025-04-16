@@ -1,6 +1,7 @@
 """Time utils"""
 
 import datetime as dt
+import enum
 
 import pandas as pd
 from pandas.tseries.offsets import DateOffset
@@ -16,6 +17,18 @@ PANDAS_PERIOD_ALIASES = {
     "month": "MS",
     "year": "YS",
 }
+
+
+class PeriodEnum(enum.Enum):
+    """Period names enum"""
+
+    second = "second"
+    minute = "minute"
+    hour = "hour"
+    day = "day"
+    week = "week"
+    month = "month"
+    year = "year"
 
 
 # Day / week may not be fixed size periods because of DST

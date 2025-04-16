@@ -43,7 +43,7 @@ def remove_session(sender=None, headers=None, body=None, **kwargs):
     db.session.remove()
 
 
-class BEMServerCoreTask(Task):
+class BEMServerCoreSystemTask(Task):
     """Celery Task override
 
     - Wrap tasks in OpenBar context
@@ -62,7 +62,7 @@ class BEMServerCoreCelery(Celery):
     """
 
 
-celery = BEMServerCoreCelery("BEMServer Core", task_cls=BEMServerCoreTask)
+celery = BEMServerCoreCelery("BEMServer Core")
 celery.config_from_object(DefaultCeleryConfig)
 
 

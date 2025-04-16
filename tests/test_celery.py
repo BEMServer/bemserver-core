@@ -5,7 +5,7 @@ import pytest
 import sqlalchemy as sqla
 
 from bemserver_core.authorization import OPEN_BAR, auth, get_current_user
-from bemserver_core.celery import BEMServerCoreCelery, BEMServerCoreTask
+from bemserver_core.celery import BEMServerCoreCelery, BEMServerCoreSystemTask
 from bemserver_core.database import db
 from bemserver_core.model import User
 
@@ -17,9 +17,9 @@ class TestCelery:
 
         Check task runs with all permissions (OpenBar mode)
         """
-        celery = BEMServerCoreCelery("BEMServer Core", task_cls=BEMServerCoreTask)
+        celery = BEMServerCoreCelery("BEMServer Core")
 
-        @celery.task
+        @celery.task(base=BEMServerCoreSystemTask)
         def dummy_task():
             assert OPEN_BAR.get()
             auth.authorized_query(get_current_user(), "read", User)
@@ -34,14 +34,14 @@ class TestCelery:
 
         Check transaction is rolled back at end of task if left uncommitted
         """
-        celery = BEMServerCoreCelery("BEMServer Core", task_cls=BEMServerCoreTask)
+        celery = BEMServerCoreCelery("BEMServer Core", task_cls=BEMServerCoreSystemTask)
 
-        @celery.task
+        @celery.task(base=BEMServerCoreSystemTask)
         def failure_session_error():
             User.new(name="Chuck")
             db.session.commit()
 
-        @celery.task
+        @celery.task(base=BEMServerCoreSystemTask)
         def success_session_error():
             User.new(name="Chuck")
             try:
@@ -49,7 +49,7 @@ class TestCelery:
             except sqla.exc.IntegrityError:
                 pass
 
-        @celery.task
+        @celery.task(base=BEMServerCoreSystemTask)
         def success_session_ok_1():
             user_1 = User.new(
                 name="John",
@@ -60,7 +60,7 @@ class TestCelery:
             user_1.set_password("D0e")
             db.session.commit()
 
-        @celery.task
+        @celery.task(base=BEMServerCoreSystemTask)
         def success_session_ok_2():
             user_2 = User.new(
                 name="Jane",
