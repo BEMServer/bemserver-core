@@ -153,3 +153,7 @@ class BEMServerCoreEnergyPowerProcessError(BEMServerCoreError):
 
 class BEMServerCoreEnergyPowerProcessMissingIntervalError(BEMServerCoreError):
     """Missing timeseries interval property"""
+
+
+class BEMServerCoreScheduledTaskParametersError(BEMServerCoreError):
+    """Error in scheduled task parameter"""
