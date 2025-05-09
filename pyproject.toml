@@ -44,6 +44,7 @@ bemserver_create_user = "bemserver_core.commands:create_user_cmd"
 bemserver_db_current = "bemserver_core.commands:db_current_cmd"
 bemserver_db_upgrade =" bemserver_core.commands:db_upgrade_cmd"
 bemserver_db_downgrade = "bemserver_core.commands:db_downgrade_cmd"
+bemserver_db_revision = "bemserver_core.commands:db_revision_cmd"
 
 [project.urls]
 Issues = "https://github.com/bemserver/bemserver-core/issues"

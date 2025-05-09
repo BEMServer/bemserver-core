@@ -85,3 +85,11 @@ def db_upgrade_cmd(revision):
 def db_downgrade_cmd(revision):
     """Revert to a previous database revision"""
     migrations.downgrade(revision)
+
+
+@click.command()
+@click.option("-m", "--message", required=True, help="Revision message")
+@click.option("-r", "--rev_id", required=True, help="Revision ID")
+def db_revision_cmd(message, rev_id):
+    """Create a new revision"""
+    migrations.revision(message, rev_id)
