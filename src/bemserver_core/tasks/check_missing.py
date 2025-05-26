@@ -2,12 +2,7 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.celery import (
-    BEMServerCoreAsyncTask,
-    BEMServerCoreScheduledTask,
-    celery,
-    logger,
-)
+from bemserver_core.celery import BEMServerCoreAsyncTask, celery, logger
 from bemserver_core.database import db
 from bemserver_core.input_output import tsdio
 from bemserver_core.model import (
@@ -170,15 +165,7 @@ def check_missing_ts_data(campaign, start_dt, end_dt, min_completeness_ratio=0.9
 
 
 @celery.register_task
-class CheckMissingDataTask(BEMServerCoreAsyncTask):
-    TASK_FUNCTION = check_missing_ts_data
-    DEFAULT_PARAMETERS = {
-        "min_completeness_ratio": 0.9,
-    }
-
-
-@celery.register_task
-class CheckMissingDataScheduledTask(BEMServerCoreScheduledTask):
+class CheckMissingData(BEMServerCoreAsyncTask):
     TASK_FUNCTION = check_missing_ts_data
     DEFAULT_PARAMETERS = {
         "min_completeness_ratio": 0.9,

@@ -59,7 +59,7 @@ class BEMServerCoreSystemTask(Task):
 class BEMServerCoreClassBasedTaskMixin:
     @property
     def name(self):
-        return self.__class__.__name__.removesuffix("Task")
+        return self.__class__.__name__
 
 
 class BEMServerCoreAsyncTask(BEMServerCoreClassBasedTaskMixin, Task):
@@ -114,6 +114,26 @@ class BEMServerCoreCelery(Celery):
 
     In case we need to override someday so we don't have to fix imports everywhere
     """
+
+    SCHEDULED_TASKS_NAME_SUFFIX = "Scheduled"
+
+    def register_task(self, task, **options):
+        """Register task
+
+        When registering an AsyncTask, also register corresponding Scheduled task
+        """
+        task = super().register_task(task, **options)
+        if isinstance(task, BEMServerCoreAsyncTask):
+            scheduled_task = type(
+                f"{task.__name__}{self.SCHEDULED_TASKS_NAME_SUFFIX}",
+                (BEMServerCoreScheduledTask,),
+                {
+                    "TASK_FUNCTION": task.TASK_FUNCTION,
+                    "DEFAULT_PARAMETERS": task.DEFAULT_PARAMETERS,
+                },
+            )
+            super().register_task(scheduled_task, **options)
+        return task
 
 
 celery = BEMServerCoreCelery("BEMServer Core")

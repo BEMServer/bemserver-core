@@ -2,12 +2,7 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.celery import (
-    BEMServerCoreAsyncTask,
-    BEMServerCoreScheduledTask,
-    celery,
-    logger,
-)
+from bemserver_core.celery import BEMServerCoreAsyncTask, celery, logger
 from bemserver_core.database import db
 from bemserver_core.input_output import tsdio
 from bemserver_core.model import (
@@ -179,15 +174,7 @@ def check_outliers_ts_data(
 
 
 @celery.register_task
-class CheckOutliersTask(BEMServerCoreAsyncTask):
-    TASK_FUNCTION = check_outliers_ts_data
-    DEFAULT_PARAMETERS = {
-        "min_correctness_ratio": 0.9,
-    }
-
-
-@celery.register_task
-class CheckOutliersScheduledTask(BEMServerCoreScheduledTask):
+class CheckOutliers(BEMServerCoreAsyncTask):
     TASK_FUNCTION = check_outliers_ts_data
     DEFAULT_PARAMETERS = {
         "min_correctness_ratio": 0.9,

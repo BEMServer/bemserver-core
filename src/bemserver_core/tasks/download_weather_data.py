@@ -2,12 +2,7 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.celery import (
-    BEMServerCoreAsyncTask,
-    BEMServerCoreScheduledTask,
-    celery,
-    logger,
-)
+from bemserver_core.celery import BEMServerCoreAsyncTask, celery, logger
 from bemserver_core.database import db
 from bemserver_core.exceptions import BEMServerCoreScheduledTaskParametersError
 from bemserver_core.model import Site
@@ -35,16 +30,7 @@ def download_weather_data(campaign, start_dt, end_dt, sites, forecast=False):
 
 
 @celery.register_task
-class DownloadWeatherDataTask(BEMServerCoreAsyncTask):
-    TASK_FUNCTION = download_weather_data
-    DEFAULT_PARAMETERS = {
-        "sites": [],
-        "forecast": False,
-    }
-
-
-@celery.register_task
-class DownloadWeatherDataScheduledTask(BEMServerCoreScheduledTask):
+class DownloadWeatherData(BEMServerCoreAsyncTask):
     TASK_FUNCTION = download_weather_data
     DEFAULT_PARAMETERS = {
         "sites": [],

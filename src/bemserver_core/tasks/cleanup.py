@@ -1,11 +1,6 @@
 """Cleanup scheduled task"""
 
-from bemserver_core.celery import (
-    BEMServerCoreAsyncTask,
-    BEMServerCoreScheduledTask,
-    celery,
-    logger,
-)
+from bemserver_core.celery import BEMServerCoreAsyncTask, celery, logger
 from bemserver_core.database import db
 from bemserver_core.input_output import tsdio
 from bemserver_core.model import TimeseriesDataState
@@ -41,12 +36,6 @@ def cleanup_data(campaign, start_dt, end_dt):
 
 
 @celery.register_task
-class CleanupTask(BEMServerCoreAsyncTask):
-    TASK_FUNCTION = cleanup_data
-    DEFAULT_PARAMETERS = {}
-
-
-@celery.register_task
-class CleanupScheduledTask(BEMServerCoreScheduledTask):
+class Cleanup(BEMServerCoreAsyncTask):
     TASK_FUNCTION = cleanup_data
     DEFAULT_PARAMETERS = {}
