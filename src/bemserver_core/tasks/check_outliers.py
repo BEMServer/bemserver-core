@@ -2,7 +2,12 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.celery import celery, logger
+from bemserver_core.celery import (
+    BEMServerCoreAsyncTask,
+    BEMServerCoreScheduledTask,
+    celery,
+    logger,
+)
 from bemserver_core.database import db
 from bemserver_core.input_output import tsdio
 from bemserver_core.model import (
@@ -13,10 +18,6 @@ from bemserver_core.model import (
     TimeseriesDataState,
 )
 from bemserver_core.process.cleanup import cleanup
-from bemserver_core.tasks.tasks import (
-    BEMServerCoreAsyncTask,
-    BEMServerCoreScheduledTask,
-)
 
 SERVICE_NAME = "BEMServer - Check outliers"
 

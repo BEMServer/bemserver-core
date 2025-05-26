@@ -2,15 +2,16 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.celery import celery, logger
+from bemserver_core.celery import (
+    BEMServerCoreAsyncTask,
+    BEMServerCoreScheduledTask,
+    celery,
+    logger,
+)
 from bemserver_core.database import db
 from bemserver_core.exceptions import BEMServerCoreScheduledTaskParametersError
 from bemserver_core.model import Site
 from bemserver_core.process.weather import wdp
-from bemserver_core.tasks.tasks import (
-    BEMServerCoreAsyncTask,
-    BEMServerCoreScheduledTask,
-)
 
 
 def download_weather_data(campaign, start_dt, end_dt, sites, forecast=False):
