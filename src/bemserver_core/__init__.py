@@ -12,6 +12,7 @@ from bemserver_core import (
     model,
     plugins,
     settings,
+    tasks,  # noqa
     utils,
 )
 from bemserver_core.celery import celery as celery_app
