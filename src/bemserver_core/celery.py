@@ -97,9 +97,7 @@ class BEMServerCoreScheduledTask(
     def run(self):
         logger.info("Start")
 
-        from bemserver_core import tasks
-
-        for tbc in tasks.TaskByCampaign.get(task_name=self.name, is_enabled=True):
+        for tbc in model.TaskByCampaign.get(task_name=self.name, is_enabled=True):
             start_dt, end_dt = tbc.make_interval()
 
             # Function is bound at init. Use __func__ to avoid passing self

@@ -9,7 +9,7 @@ import pytest
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.database import db
 from bemserver_core.exceptions import BEMServerAuthorizationError
-from bemserver_core.tasks.tasks import TaskByCampaign
+from bemserver_core.model import TaskByCampaign
 from bemserver_core.time_utils import PeriodEnum
 
 

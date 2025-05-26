@@ -12,7 +12,6 @@ from bemserver_core import (
     model,
     plugins,
     settings,
-    tasks,
     utils,
 )
 from bemserver_core.celery import celery as celery_app
@@ -26,11 +25,10 @@ pd.set_option("future.no_silent_downcasting", True)
 
 class BEMServerCore:
     def __init__(self):
-        self.auth_model_classes = model.AUTH_MODEL_CLASSES + tasks.AUTH_MODEL_CLASSES
+        self.auth_model_classes = model.AUTH_MODEL_CLASSES
         self.auth_polar_files = [
             authorization.AUTH_POLAR_FILE,
             model.AUTH_POLAR_FILE,
-            tasks.AUTH_POLAR_FILE,
         ]
 
         # Load config

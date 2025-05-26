@@ -6,7 +6,7 @@ from unittest import mock
 import pytest
 from pytest_postgresql import factories as ppf
 
-from bemserver_core import BEMServerCore, model, tasks
+from bemserver_core import BEMServerCore, model
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.commands import setup_db
 from bemserver_core.common import PropertyType
@@ -967,12 +967,12 @@ def weather_timeseries_by_sites(bemservercore, timeseries, sites):
 @pytest.fixture
 def tasks_by_campaigns(bemservercore, campaigns):
     with OpenBar():
-        tbc_1 = tasks.TaskByCampaign.new(
+        tbc_1 = model.TaskByCampaign.new(
             task_name="TASK",
             campaign_id=campaigns[0].id,
             offset_unit=PeriodEnum.day,
         )
-        tbc_2 = tasks.TaskByCampaign.new(
+        tbc_2 = model.TaskByCampaign.new(
             task_name="TASK",
             campaign_id=campaigns[1].id,
             offset_unit=PeriodEnum.hour,
