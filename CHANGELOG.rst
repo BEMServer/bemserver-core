@@ -1,14 +1,14 @@
 Changelog
 ---------
 
-0.21.0 (unreleased)
+0.21.0 (2025-05-27)
 +++++++++++++++++++
 
 Features:
 
 - Rework of the tasks feature:
   - All scheduled tasks share the same interface and campaign association table
-  - Tasks can now be called asynchronously anytime
+  - Tasks can now be called asynchronously
 
 0.20.0 (2025-01-03)
 +++++++++++++++++++
