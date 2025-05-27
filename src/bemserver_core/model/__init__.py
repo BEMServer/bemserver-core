@@ -48,6 +48,7 @@ from .sites import (
     ZoneProperty,
     ZonePropertyData,
 )
+from .tasks import TaskByCampaign
 from .timeseries import (
     Timeseries,
     TimeseriesByBuilding,
@@ -91,6 +92,7 @@ __all__ = [
     "StoreyPropertyData",
     "SpacePropertyData",
     "ZonePropertyData",
+    "TaskByCampaign",
     "TimeseriesDataState",
     "TimeseriesProperty",
     "Timeseries",
@@ -149,6 +151,7 @@ AUTH_MODEL_CLASSES = [
     StoreyPropertyData,
     SpacePropertyData,
     ZonePropertyData,
+    TaskByCampaign,
     TimeseriesDataState,
     TimeseriesProperty,
     Timeseries,

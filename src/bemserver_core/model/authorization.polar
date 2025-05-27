@@ -530,3 +530,11 @@ resource WeatherTimeseriesBySite {
 }
 has_relation(ts: Timeseries, "timeseries", wtsbd: WeatherTimeseriesBySite) if
     ts = wtsbd.timeseries;
+
+
+resource TaskByCampaign {
+    permissions = ["create", "read", "update", "delete"];
+}
+
+has_permission(user: User, "read", tbc: TaskByCampaign ) if
+    has_role(user, "member", tbc.campaign);

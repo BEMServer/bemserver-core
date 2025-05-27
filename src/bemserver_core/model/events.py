@@ -7,7 +7,7 @@ from functools import total_ordering
 import sqlalchemy as sqla
 
 from bemserver_core.authorization import AuthMixin, Relation, auth
-from bemserver_core.celery import celery, logger
+from bemserver_core.celery import BEMServerCoreSystemTask, celery, logger
 from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.exceptions import (
     BEMServerCoreCampaignError,
@@ -317,7 +317,7 @@ def event_after_insert(_mapper, _connection, target):
             notify.delay(target.id, timestamp)
 
 
-@celery.task(name="Notify")
+@celery.task(name="Notify", base=BEMServerCoreSystemTask)
 def notify(event_id, timestamp):
     """Create notifications for an event with a given timestamp"""
     logger.info("Notify event %s", event_id)

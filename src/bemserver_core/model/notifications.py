@@ -3,7 +3,7 @@
 import sqlalchemy as sqla
 
 from bemserver_core.authorization import AuthMixin, Relation, auth, get_current_user
-from bemserver_core.celery import celery, logger
+from bemserver_core.celery import BEMServerCoreSystemTask, celery, logger
 from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.email import ems
 from bemserver_core.exceptions import (
@@ -150,7 +150,7 @@ def notification_after_insert(_mapper, _connection, target):
             send_notification_email.delay(target.id)
 
 
-@celery.task(name="NotificationEmail")
+@celery.task(name="NotificationEmail", base=BEMServerCoreSystemTask)
 def send_notification_email(notification_id):
     """Send notification email"""
     logger.info("Send email for notification %s", notification_id)

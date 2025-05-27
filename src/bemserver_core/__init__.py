@@ -11,8 +11,8 @@ from bemserver_core import (
     input_output,  # noqa
     model,
     plugins,
-    scheduled_tasks,
     settings,
+    tasks,  # noqa
     utils,
 )
 from bemserver_core.celery import celery as celery_app
@@ -26,13 +26,10 @@ pd.set_option("future.no_silent_downcasting", True)
 
 class BEMServerCore:
     def __init__(self):
-        self.auth_model_classes = (
-            model.AUTH_MODEL_CLASSES + scheduled_tasks.AUTH_MODEL_CLASSES
-        )
+        self.auth_model_classes = model.AUTH_MODEL_CLASSES
         self.auth_polar_files = [
             authorization.AUTH_POLAR_FILE,
             model.AUTH_POLAR_FILE,
-            scheduled_tasks.AUTH_POLAR_FILE,
         ]
 
         # Load config
@@ -68,6 +65,7 @@ class BEMServerCore:
         ems.init_core(self)
 
         # Configure Celery
+        celery_app.set_default()
         celery_app.conf.update(self.config["CELERY_CONFIG"])
 
         # Load plugins

@@ -3,7 +3,7 @@
 import smtplib
 from email.message import EmailMessage
 
-from bemserver_core.celery import celery, logger
+from bemserver_core.celery import BEMServerCoreSystemTask, celery, logger
 
 
 class EmailSender:
@@ -39,7 +39,7 @@ class EmailSender:
 ems = EmailSender()
 
 
-@celery.task(name="Email")
+@celery.task(name="Email", base=BEMServerCoreSystemTask)
 def send_email(dest_addrs, subject, content):
     """Send message in a task"""
     logger.info("Send email to %", dest_addrs)
