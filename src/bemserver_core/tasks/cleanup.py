@@ -9,6 +9,7 @@ from bemserver_core.process.cleanup import cleanup as cleanup_process
 
 def cleanup_data(campaign, start_dt, end_dt):
     logger.info("Cleanup campaign %s", campaign.name)
+    logger.info("Time interval: [%s - %s]", start_dt, end_dt)
 
     ds_raw = TimeseriesDataState.get(name="Raw").first()
     ds_clean = TimeseriesDataState.get(name="Clean").first()

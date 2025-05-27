@@ -23,13 +23,13 @@ def check_outliers_ts_data(
     end_dt,
     min_correctness_ratio=0.9,
 ):
-    logger.debug("Check interval: [%s - %s]", start_dt, end_dt)
+    logger.info("Check outliers for campaign %s", campaign.name)
+    logger.info("Time interval: [%s - %s]", start_dt, end_dt)
+    logger.info("min_correctness_ratio: %s", min_correctness_ratio)
 
     ds_raw = TimeseriesDataState.get(name="Raw").first()
     ec_data_outliers = EventCategory.get(name="Data outliers").first()
     ec_data_no_outliers = EventCategory.get(name="No data outliers").first()
-
-    logger.info("Checking outliers data for campaign %s", campaign.name)
 
     for c_scope in campaign.campaign_scopes:
         logger.debug("Checking outliers data for campaign scope %s", c_scope.name)

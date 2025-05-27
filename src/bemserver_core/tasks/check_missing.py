@@ -18,13 +18,13 @@ SERVICE_NAME = "BEMServer - Check missing data"
 
 
 def check_missing_ts_data(campaign, start_dt, end_dt, min_completeness_ratio=0.9):
-    logger.debug("Check interval: [%s - %s]", start_dt, end_dt)
+    logger.info("Check missing data for campaign %s", campaign.name)
+    logger.info("Time interval: [%s - %s]", start_dt, end_dt)
+    logger.info("min_completeness_ratio: %s", min_completeness_ratio)
 
     ds_raw = TimeseriesDataState.get(name="Raw").first()
     ec_data_missing = EventCategory.get(name="Data missing").first()
     ec_data_present = EventCategory.get(name="Data present").first()
-
-    logger.info("Checking missing data for campaign %s", campaign.name)
 
     for c_scope in campaign.campaign_scopes:
         logger.debug("Checking missing data for campaign scope %s", c_scope.name)
