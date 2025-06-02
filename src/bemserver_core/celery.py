@@ -117,6 +117,11 @@ class BEMServerCoreCelery(Celery):
 
     SCHEDULED_TASKS_NAME_SUFFIX = "Scheduled"
 
+    def init_app(self, bsc):
+        """Init Celery app with BEMServerCore instance"""
+        self.bsc = bsc
+        self.conf.update(bsc.config["CELERY_CONFIG"])
+
     def register_task(self, task, **options):
         """Register task
 
