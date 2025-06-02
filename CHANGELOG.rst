@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.21.1 (2025-06-02)
++++++++++++++++++++
+
+Features:
+
+- Store BEMServerCore instance as Celery app attribute
+
 0.21.0 (2025-05-27)
 +++++++++++++++++++
 
