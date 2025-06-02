@@ -66,7 +66,7 @@ class BEMServerCore:
 
         # Configure Celery
         celery_app.set_default()
-        celery_app.conf.update(self.config["CELERY_CONFIG"])
+        celery_app.init_app(self)
 
         # Load plugins
         plugins.init_core(self)
