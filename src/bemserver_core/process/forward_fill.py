@@ -18,6 +18,8 @@ def ffill(
     bucket_width_unit,
 ):
     """Forward fill process"""
+    timezone = start_dt.tzinfo
+    end_dt = end_dt.astimezone(timezone)
 
     # Define expected index
     start_dt = ceil(start_dt, bucket_width_unit, bucket_width_value)
@@ -41,6 +43,7 @@ def ffill(
         end_dt,
         timeseries,
         data_state,
+        timezone=str(timezone),
     )
 
     # For each TS, set last value before time interval as first value for interval

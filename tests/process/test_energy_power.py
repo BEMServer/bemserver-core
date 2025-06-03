@@ -1,6 +1,7 @@
 """Energy <=> Power conversions tests"""
 
 import datetime as dt
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -153,6 +154,35 @@ class TestEnergyPowerProcess:
             )
             assert_series_equal(data_s, expected_data_s)
 
+            # Check result is in start_dt timezone
+            data_s = power2energy(
+                start_dt.astimezone(ZoneInfo("Europe/Paris")),
+                h4_dt,
+                ts_0,
+                ds_1,
+                1800,
+                "Wh",
+            )
+            timestamps = sum(
+                [
+                    [
+                        dt.datetime(
+                            2020, 1, 1, hour, 0, tzinfo=dt.timezone.utc
+                        ).astimezone(ZoneInfo("Europe/Paris")),
+                        dt.datetime(
+                            2020, 1, 1, hour, 30, tzinfo=dt.timezone.utc
+                        ).astimezone(ZoneInfo("Europe/Paris")),
+                    ]
+                    for hour in (0, 1, 2, 3)
+                ],
+                [],
+            )
+            expected_data_s = pd.Series(
+                [0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.5, 0.5],
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="1800s"),
+            )
+            assert_series_equal(data_s, expected_data_s)
+
             with pytest.raises(BEMServerCoreUndefinedUnitError):
                 data_s = power2energy(start_dt, h4_dt, ts_0, ds_1, 3600, "dummy")
 
@@ -283,6 +313,22 @@ class TestEnergyPowerProcess:
             ):
                 data_s = energy2power(start_dt, end_dt, ts_4, ds_1, "W")
 
+            # Check result is in start_dt timezone
+            data_s = energy2power(
+                start_dt.astimezone(ZoneInfo("Europe/Paris")), h4_dt, ts_0, ds_1, "W"
+            )
+            timestamps = [
+                dt.datetime(2020, 1, 1, hour, 0, tzinfo=dt.timezone.utc).astimezone(
+                    ZoneInfo("Europe/Paris")
+                )
+                for hour in (0, 1, 2, 3)
+            ]
+            expected_data_s = pd.Series(
+                [0.0, 1.0, 0.0, 1.0],
+                index=pd.DatetimeIndex(timestamps, name="timestamp"),
+            )
+            assert_series_equal(data_s, expected_data_s)
+
             with pytest.raises(BEMServerCoreUndefinedUnitError):
                 data_s = energy2power(start_dt, end_dt, ts_0, ds_1, "dummy")
 
@@ -410,6 +456,27 @@ class TestEnergyPowerProcess:
             )
             assert_series_equal(data_s, expected_data_s)
 
+            # Check result is in start_dt timezone
+            data_s = energyindex2power(
+                start_dt.astimezone(ZoneInfo("Europe/Paris")),
+                h6_dt,
+                ts_0,
+                ds_1,
+                3600,
+                "W",
+            )
+            timestamps = [
+                dt.datetime(2020, 1, 1, hour, 0, tzinfo=dt.timezone.utc).astimezone(
+                    ZoneInfo("Europe/Paris")
+                )
+                for hour in (0, 1, 2, 3, 4, 5)
+            ]
+            expected_data_s = pd.Series(
+                [1.0, 3.0, 5.0, 7.0, 9.0, np.nan],
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="h"),
+            )
+            assert_series_equal(data_s, expected_data_s)
+
             with pytest.raises(BEMServerCoreUndefinedUnitError):
                 data_s = energyindex2power(start_dt, end_dt, ts_0, ds_1, 3600, "dummy")
 
@@ -534,6 +601,27 @@ class TestEnergyPowerProcess:
                     timestamps, name="timestamp", tz=dt.timezone.utc, freq="4h"
                 ),
                 dtype=float,
+            )
+            assert_series_equal(data_s, expected_data_s)
+
+            # Check result is in start_dt timezone
+            data_s = energyindex2energy(
+                start_dt.astimezone(ZoneInfo("Europe/Paris")),
+                h6_dt,
+                ts_0,
+                ds_1,
+                3600,
+                "Wh",
+            )
+            timestamps = [
+                dt.datetime(2020, 1, 1, hour, 0, tzinfo=dt.timezone.utc).astimezone(
+                    ZoneInfo("Europe/Paris")
+                )
+                for hour in (0, 1, 2, 3, 4, 5)
+            ]
+            expected_data_s = pd.Series(
+                [1.0, 3.0, 5.0, 7.0, 9.0, np.nan],
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq="h"),
             )
             assert_series_equal(data_s, expected_data_s)
 

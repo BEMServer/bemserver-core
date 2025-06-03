@@ -58,6 +58,8 @@ def energy2power(
     convert_to,
 ):
     """Convert energy to power"""
+    timezone = start_dt.tzinfo
+    end_dt = end_dt.astimezone(timezone)
 
     interval = energy_ts.get_property_value("Interval")
     if interval is None:
@@ -71,6 +73,7 @@ def energy2power(
         end_dt,
         (energy_ts,),
         data_state,
+        timezone=str(timezone),
     )[energy_ts.id]
 
     # Power = Energy / Time
@@ -93,6 +96,8 @@ def energyindex2power(
     convert_to,
 ):
     """Convert energy index to power"""
+    timezone = start_dt.tzinfo
+    end_dt = end_dt.astimezone(timezone)
 
     # Get energy index values
     index_s = tsdio.get_timeseries_data(
@@ -100,6 +105,7 @@ def energyindex2power(
         end_dt,
         (index_ts,),
         data_state,
+        timezone=str(timezone),
     )[index_ts.id]
 
     # Compute energy as diff, with a 0 min for index rollover or meter change

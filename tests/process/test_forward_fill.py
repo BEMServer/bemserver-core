@@ -1,6 +1,7 @@
 """Forward fill tests"""
 
 import datetime as dt
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -112,4 +113,31 @@ class TestForewardFillProcess:
                 index=pd.DatetimeIndex(timestamps, name="timestamp"),
             )
             expected_data_df.columns = [ts_3.id, ts_2.id, ts_2.id, ts_0.id]
+            assert_frame_equal(data_df, expected_data_df)
+
+            # Check result is in start_dt timezone
+            ts_l = (ts_0, ts_1, ts_2, ts_3)
+
+            data_df = ffill(
+                h4_dt.astimezone(ZoneInfo("Europe/Paris")),
+                end_dt,
+                ts_l,
+                ds_1,
+                2,
+                "hour",
+            )
+
+            timestamps = [
+                dt.datetime(2020, 1, 1, hour, 0, tzinfo=ZoneInfo("Europe/Paris"))
+                for hour in (6, 7, 8, 10, 12)
+            ]
+            expected_data_df = pd.DataFrame(
+                {
+                    ts_0.id: [1.0, np.nan, 1.0, 1.0, 1.0],
+                    ts_1.id: [0.0, 6.0, 6.0, 9.0, 9.0],
+                    ts_2.id: [np.nan, 42.0, 42.0, 42.0, 42.0],
+                    ts_3.id: [np.nan, np.nan, np.nan, np.nan, np.nan],
+                },
+                index=pd.DatetimeIndex(timestamps, name="timestamp"),
+            )
             assert_frame_equal(data_df, expected_data_df)
