@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.21.2 (2025-06-03)
++++++++++++++++++++
+
+Features:
+
+- Ensure start_dt.timezone is used in ffill and power/energy processes
+
 0.21.1 (2025-06-02)
 +++++++++++++++++++
 
