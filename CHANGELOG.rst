@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.21.4 (2025-06-06)
++++++++++++++++++++
+
+Bug fixes:
+
+- Fix call to task function in BEMServerCoreAsyncTask
+
 0.21.3 (2025-06-06)
 +++++++++++++++++++
 
