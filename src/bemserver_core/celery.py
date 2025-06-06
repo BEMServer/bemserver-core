@@ -66,7 +66,7 @@ class BEMServerCoreAsyncTask(BEMServerCoreClassBasedTaskMixin, Task):
     TASK_FUNCTION = None
     DEFAULT_PARAMETERS = {}
 
-    def run(self, user_id, campaign_id, start_td, end_dt, **kwargs):
+    def run(self, user_id, campaign_id, start_dt, end_dt, **kwargs):
         logger.info("Start")
 
         with OpenBar():
@@ -82,8 +82,8 @@ class BEMServerCoreAsyncTask(BEMServerCoreClassBasedTaskMixin, Task):
             # Function is bound at init. Use __func__ to avoid passing self
             self.TASK_FUNCTION.__func__(
                 campaign,
-                start_td,
-                end_dt,
+                start_dt.astimezone(campaign.timezone),
+                end_dt.astimezone(campaign.timezone),
                 **{**self.DEFAULT_PARAMETERS, **kwargs},
             )
 
