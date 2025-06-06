@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+0.21.3 (2025-06-06)
++++++++++++++++++++
+
+Features:
+
+- Ensure start_dt and end_dt are expressed in campaign timezone in async tasks too
+
 0.21.2 (2025-06-03)
 +++++++++++++++++++
 
