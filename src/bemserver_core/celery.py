@@ -4,6 +4,7 @@ Manages scheduled and asynchronous tasks
 """
 
 from functools import wraps
+from zoneinfo import ZoneInfo
 
 from celery import Celery, Task, signals
 from celery.exceptions import WorkerShutdown
@@ -82,8 +83,8 @@ class BEMServerCoreAsyncTask(BEMServerCoreClassBasedTaskMixin, Task):
             # Function is bound at init. Use __func__ to avoid passing self
             self.TASK_FUNCTION.__func__(
                 campaign,
-                start_dt.astimezone(campaign.timezone),
-                end_dt.astimezone(campaign.timezone),
+                start_dt.astimezone(ZoneInfo(campaign.timezone)),
+                end_dt.astimezone(ZoneInfo(campaign.timezone)),
                 **{**self.DEFAULT_PARAMETERS, **kwargs},
             )
 
