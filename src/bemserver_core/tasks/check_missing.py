@@ -17,7 +17,7 @@ from bemserver_core.model import (
 SERVICE_NAME = "BEMServer - Check missing data"
 
 
-def check_missing_ts_data(campaign, start_dt, end_dt, min_completeness_ratio=0.9):
+def check_missing_ts_data(task, campaign, start_dt, end_dt, min_completeness_ratio=0.9):
     logger.info("Check missing data for campaign %s", campaign.name)
     logger.info("Time interval: [%s - %s]", start_dt, end_dt)
     logger.info("min_completeness_ratio: %s", min_completeness_ratio)

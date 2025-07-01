@@ -80,8 +80,7 @@ class BEMServerCoreAsyncTask(BEMServerCoreClassBasedTaskMixin, Task):
             if campaign is None:
                 raise BEMServerCoreTaskError(f"Unknown campaign ID {campaign_id}")
 
-            # Function is bound at init. Use __func__ to avoid passing self
-            self.TASK_FUNCTION.__func__(
+            return self.TASK_FUNCTION(
                 campaign,
                 start_dt.astimezone(ZoneInfo(campaign.timezone)),
                 end_dt.astimezone(ZoneInfo(campaign.timezone)),
@@ -101,8 +100,7 @@ class BEMServerCoreScheduledTask(
         for tbc in model.TaskByCampaign.get(task_name=self.name, is_enabled=True):
             start_dt, end_dt = tbc.make_interval()
 
-            # Function is bound at init. Use __func__ to avoid passing self
-            self.TASK_FUNCTION.__func__(
+            self.TASK_FUNCTION(
                 tbc.campaign,
                 start_dt,
                 end_dt,
@@ -111,10 +109,7 @@ class BEMServerCoreScheduledTask(
 
 
 class BEMServerCoreCelery(Celery):
-    """Celery app class override
-
-    In case we need to override someday so we don't have to fix imports everywhere
-    """
+    """Celery app class override"""
 
     SCHEDULED_TASKS_NAME_SUFFIX = "Scheduled"
 
@@ -157,3 +152,12 @@ def worker_process_init_cb(**kwargs):
     except BEMServerCoreSettingsError as exc:
         logger.critical(str(exc))
         raise WorkerShutdown() from exc
+
+
+# https://stackoverflow.com/questions/9824172/find-out-whether-celery-task-exists
+@signals.before_task_publish.connect
+def cb_set_sent_state(sender=None, headers=None, **kwargs):
+    """Set SENT custom status when the task is enqueued"""
+    task = celery.tasks.get(sender)
+    backend = task.backend
+    backend.store_result(headers["id"], None, "SENT")

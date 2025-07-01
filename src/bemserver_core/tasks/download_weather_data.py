@@ -9,7 +9,7 @@ from bemserver_core.model import Site
 from bemserver_core.process.weather import wdp
 
 
-def download_weather_data(campaign, start_dt, end_dt, sites, forecast=False):
+def download_weather_data(task, campaign, start_dt, end_dt, sites, forecast=False):
     frcst_str = " forecast" if forecast else ""
     logger.info(f"Download weather{frcst_str} data for campaign %s", campaign.name)
     logger.info("Time interval: [%s - %s]", start_dt, end_dt)

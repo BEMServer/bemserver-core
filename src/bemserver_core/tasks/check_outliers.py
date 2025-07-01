@@ -18,6 +18,7 @@ SERVICE_NAME = "BEMServer - Check outliers"
 
 
 def check_outliers_ts_data(
+    task,
     campaign,
     start_dt,
     end_dt,

@@ -7,7 +7,7 @@ from bemserver_core.model import TimeseriesDataState
 from bemserver_core.process.cleanup import cleanup as cleanup_process
 
 
-def cleanup_data(campaign, start_dt, end_dt):
+def cleanup_data(task, campaign, start_dt, end_dt):
     logger.info("Cleanup campaign %s", campaign.name)
     logger.info("Time interval: [%s - %s]", start_dt, end_dt)
 
