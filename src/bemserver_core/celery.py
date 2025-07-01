@@ -67,6 +67,9 @@ class BEMServerCoreAsyncTask(BEMServerCoreClassBasedTaskMixin, Task):
     TASK_FUNCTION = None
     DEFAULT_PARAMETERS = {}
 
+    def set_progress(self, done, total):
+        self.update_state(state="PROGRESS", meta={"done": done, "total": total})
+
     def run(self, user_id, campaign_id, start_dt, end_dt, **kwargs):
         logger.info("Start")
 
