@@ -3,6 +3,7 @@
 Manages scheduled and asynchronous tasks
 """
 
+import abc
 from functools import wraps
 from zoneinfo import ZoneInfo
 
@@ -45,8 +46,19 @@ def remove_session(sender=None, headers=None, body=None, **kwargs):
     db.session.remove()
 
 
-class BEMServerCoreSystemTask(Task):
-    """Celery Task override
+class BEMServerCoreTask(Task):
+    """BEMServerCore task base class"""
+
+    def set_progress(self, done, total):
+        self.update_state(state="PROGRESS", meta={"done": done, "total": total})
+
+    @property
+    def name(self):
+        return self.__class__.__name__
+
+
+class BEMServerCoreSystemTask(BEMServerCoreTask):
+    """BEMServerCore system task
 
     - Wrap tasks in OpenBar context
     """
@@ -57,18 +69,8 @@ class BEMServerCoreSystemTask(Task):
         self.run = task_wrapper(self.run)
 
 
-class BEMServerCoreClassBasedTaskMixin:
-    @property
-    def name(self):
-        return self.__class__.__name__
-
-
-class BEMServerCoreAsyncTask(BEMServerCoreClassBasedTaskMixin, Task):
-    TASK_FUNCTION = None
+class BEMServerCoreAsyncTask(BEMServerCoreTask, Task, abc.ABC):
     DEFAULT_PARAMETERS = {}
-
-    def set_progress(self, done, total):
-        self.update_state(state="PROGRESS", meta={"done": done, "total": total})
 
     def run(self, user_id, campaign_id, start_dt, end_dt, **kwargs):
         logger.info("Start")
@@ -83,18 +85,19 @@ class BEMServerCoreAsyncTask(BEMServerCoreClassBasedTaskMixin, Task):
             if campaign is None:
                 raise BEMServerCoreTaskError(f"Unknown campaign ID {campaign_id}")
 
-            return self.TASK_FUNCTION(
+            return self.do_run(
                 campaign,
                 start_dt.astimezone(ZoneInfo(campaign.timezone)),
                 end_dt.astimezone(ZoneInfo(campaign.timezone)),
                 **{**self.DEFAULT_PARAMETERS, **kwargs},
             )
 
+    @abc.abstractmethod
+    def do_run(self, campaign, start_dt, end_dt):
+        """Task implementation"""
 
-class BEMServerCoreScheduledTask(
-    BEMServerCoreClassBasedTaskMixin, BEMServerCoreSystemTask
-):
-    TASK_FUNCTION = None
+
+class BEMServerCoreScheduledTask(BEMServerCoreSystemTask, abc.ABC):
     DEFAULT_PARAMETERS = {}
 
     def run(self):
@@ -103,41 +106,25 @@ class BEMServerCoreScheduledTask(
         for tbc in model.TaskByCampaign.get(task_name=self.name, is_enabled=True):
             start_dt, end_dt = tbc.make_interval()
 
-            self.TASK_FUNCTION(
+            self.do_run(
                 tbc.campaign,
                 start_dt,
                 end_dt,
                 **{**self.DEFAULT_PARAMETERS, **tbc.parameters},
             )
 
+    @abc.abstractmethod
+    def do_run(self, campaign, start_dt, end_dt):
+        """Task implementation"""
+
 
 class BEMServerCoreCelery(Celery):
     """Celery app class override"""
-
-    SCHEDULED_TASKS_NAME_SUFFIX = "Scheduled"
 
     def init_app(self, bsc):
         """Init Celery app with BEMServerCore instance"""
         self.bsc = bsc
         self.conf.update(bsc.config["CELERY_CONFIG"])
-
-    def register_task(self, task, **options):
-        """Register task
-
-        When registering an AsyncTask, also register corresponding Scheduled task
-        """
-        task = super().register_task(task, **options)
-        if isinstance(task, BEMServerCoreAsyncTask):
-            scheduled_task = type(
-                f"{task.__name__}{self.SCHEDULED_TASKS_NAME_SUFFIX}",
-                (BEMServerCoreScheduledTask,),
-                {
-                    "TASK_FUNCTION": task.TASK_FUNCTION,
-                    "DEFAULT_PARAMETERS": task.DEFAULT_PARAMETERS,
-                },
-            )
-            super().register_task(scheduled_task, **options)
-        return task
 
 
 celery = BEMServerCoreCelery("BEMServer Core")

@@ -1,6 +1,7 @@
 """Cleanup task tests"""
 
 import datetime as dt
+from unittest import mock
 
 import pytest
 
@@ -14,13 +15,14 @@ from bemserver_core.model import (
     TimeseriesProperty,
     TimeseriesPropertyData,
 )
-from bemserver_core.tasks.cleanup import cleanup_data
+from bemserver_core.tasks.cleanup import CleanupBase
 from tests.utils import create_timeseries_data
 
 
 class TestCleanupScheduledTask:
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
-    def test_cleanup_data(self, users, timeseries, campaigns):
+    @mock.patch("celery.Task.update_state")
+    def test_cleanup_data(self, mock_update_state, users, timeseries, campaigns):
         admin_user = users[0]
         assert admin_user.is_admin
         ts_0 = timeseries[0]
@@ -46,7 +48,7 @@ class TestCleanupScheduledTask:
         create_timeseries_data(ts_1, ds_1, timestamps, values)
 
         with OpenBar():
-            cleanup_data(campaign_1, start_dt, end_dt)
+            CleanupBase().do_run(campaign_1, start_dt, end_dt)
 
             # Campaign 1, TS 0, min 12, max None, [0, 13] -> [-, 13]
             data_df = tsdio.get_timeseries_data(start_dt, end_dt, (ts_0,), ds_2)

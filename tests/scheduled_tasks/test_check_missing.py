@@ -1,6 +1,7 @@
 """Check missing data task tests"""
 
 import datetime as dt
+from unittest import mock
 
 import pytest
 
@@ -19,14 +20,17 @@ from bemserver_core.model import (
     TimeseriesProperty,
     TimeseriesPropertyData,
 )
-from bemserver_core.tasks.check_missing import check_missing_ts_data
+from bemserver_core.tasks.check_missing import CheckMissingDataBase
 from tests.utils import create_timeseries_data
 
 
 class TestCheckMissingScheduledTask:
     @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
-    def test_check_missing_ts_data(self, users, timeseries, campaigns):
+    @mock.patch("celery.Task.update_state")
+    def test_check_missing_ts_data(
+        self, mock_update_state, users, timeseries, campaigns
+    ):
         admin_user = users[0]
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
@@ -87,10 +91,10 @@ class TestCheckMissingScheduledTask:
 
             # Min ratio = 90 % -> 2 TS with missing data (different campaign scope)
 
-            check_missing_ts_data(
+            CheckMissingDataBase().do_run(
                 campaign_1, start_dt, end_dt, min_completeness_ratio=0.9
             )
-            check_missing_ts_data(
+            CheckMissingDataBase().do_run(
                 campaign_2, start_dt, end_dt, min_completeness_ratio=0.9
             )
 
@@ -132,10 +136,10 @@ class TestCheckMissingScheduledTask:
                 value="600",
             )
 
-            check_missing_ts_data(
+            CheckMissingDataBase().do_run(
                 campaign_1, start_dt, end_dt, min_completeness_ratio=0.9
             )
-            check_missing_ts_data(
+            CheckMissingDataBase().do_run(
                 campaign_2, start_dt, end_dt, min_completeness_ratio=0.9
             )
 
@@ -225,10 +229,10 @@ class TestCheckMissingScheduledTask:
 
             # Min ratio = 40 % -> 1 TS with missing data (TS 3)
 
-            check_missing_ts_data(
+            CheckMissingDataBase().do_run(
                 campaign_1, start_dt, end_dt, min_completeness_ratio=0.4
             )
-            check_missing_ts_data(
+            CheckMissingDataBase().do_run(
                 campaign_2, start_dt, end_dt, min_completeness_ratio=0.4
             )
 

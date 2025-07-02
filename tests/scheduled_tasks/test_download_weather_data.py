@@ -2,7 +2,7 @@
 
 import datetime as dt
 import json
-from unittest.mock import patch
+from unittest import mock
 
 import pytest
 
@@ -14,7 +14,7 @@ from bemserver_core.authorization import OpenBar
 from bemserver_core.exceptions import BEMServerCoreScheduledTaskParametersError
 from bemserver_core.input_output import tsdio
 from bemserver_core.model import TimeseriesDataState
-from bemserver_core.tasks.download_weather_data import download_weather_data
+from bemserver_core.tasks.download_weather_data import DownloadWeatherDataBase
 
 OIKOLAB_RESPONSE_ATTRIBUTES = {
     "processing_time": 1.89,
@@ -35,10 +35,11 @@ class TestDownloadWeatherDataScheduledTask:
         ({"WEATHER_DATA_CLIENT_API_KEY": "dummy-key"},),
         indirect=True,
     )
-    @patch("requests.get")
     @pytest.mark.parametrize("forecast", (False, True))
+    @mock.patch("requests.get")
+    @mock.patch("celery.Task.update_state")
     def test_download_weather_data(
-        self, mock_get, users, campaigns, timeseries, forecast
+        self, mock_update_state, mock_get, users, campaigns, timeseries, forecast
     ):
         admin_user = users[0]
         assert admin_user.is_admin
@@ -92,11 +93,11 @@ class TestDownloadWeatherDataScheduledTask:
 
             # Call service at end_dt for last 2 hours, get 1 2-hour period before
             if forecast is False:
-                download_weather_data(
+                DownloadWeatherDataBase().do_run(
                     campaign_1, start_dt, end_dt, ["Site 1"], forecast=forecast
                 )
             else:
-                download_weather_data(
+                DownloadWeatherDataBase().do_run(
                     campaign_2, start_dt, end_dt, ["Site 2"], forecast=forecast
                 )
 
@@ -156,6 +157,6 @@ class TestDownloadWeatherDataScheduledTask:
 
             # Test "site does not exist" exception
             with pytest.raises(BEMServerCoreScheduledTaskParametersError):
-                download_weather_data(
+                DownloadWeatherDataBase().do_run(
                     campaign_1, start_dt, end_dt, ["Site 42"], forecast=forecast
                 )

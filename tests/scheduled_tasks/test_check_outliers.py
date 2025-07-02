@@ -1,6 +1,7 @@
 """Check outliers task tests"""
 
 import datetime as dt
+from unittest import mock
 
 import pytest
 
@@ -19,14 +20,17 @@ from bemserver_core.model import (
     TimeseriesProperty,
     TimeseriesPropertyData,
 )
-from bemserver_core.tasks.check_outliers import check_outliers_ts_data
+from bemserver_core.tasks.check_outliers import CheckOutliersBase
 from tests.utils import create_timeseries_data
 
 
 class TestCheckOutliersScheduledTask:
     @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
-    def test_check_outliers_ts_data(self, users, timeseries, campaigns):
+    @mock.patch("celery.Task.update_state")
+    def test_check_outliers_ts_data(
+        self, mock_update_state, users, timeseries, campaigns
+    ):
         admin_user = users[0]
         assert admin_user.is_admin
         campaign_1 = campaigns[0]
@@ -91,10 +95,10 @@ class TestCheckOutliersScheduledTask:
             assert not list(Event.get())
             assert not list(TimeseriesByEvent.get())
 
-            check_outliers_ts_data(
+            CheckOutliersBase().do_run(
                 campaign_1, start_dt, end_dt, min_correctness_ratio=0.9
             )
-            check_outliers_ts_data(
+            CheckOutliersBase().do_run(
                 campaign_2, start_dt, end_dt, min_correctness_ratio=0.9
             )
 
@@ -136,10 +140,10 @@ class TestCheckOutliersScheduledTask:
                 value="12",
             )
 
-            check_outliers_ts_data(
+            CheckOutliersBase().do_run(
                 campaign_1, start_dt, end_dt, min_correctness_ratio=0.9
             )
-            check_outliers_ts_data(
+            CheckOutliersBase().do_run(
                 campaign_2, start_dt, end_dt, min_correctness_ratio=0.9
             )
 
@@ -229,10 +233,10 @@ class TestCheckOutliersScheduledTask:
 
             # Min ratio = 70 % -> 1 TS with outliers data (TS 3)
 
-            check_outliers_ts_data(
+            CheckOutliersBase().do_run(
                 campaign_1, start_dt, end_dt, min_correctness_ratio=0.7
             )
-            check_outliers_ts_data(
+            CheckOutliersBase().do_run(
                 campaign_2, start_dt, end_dt, min_correctness_ratio=0.7
             )
 
