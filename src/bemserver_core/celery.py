@@ -4,6 +4,7 @@ Manages scheduled and asynchronous tasks
 """
 
 import abc
+from copy import deepcopy
 from functools import wraps
 from zoneinfo import ZoneInfo
 
@@ -89,7 +90,7 @@ class BEMServerCoreAsyncTask(BEMServerCoreTask, Task, abc.ABC):
                 campaign,
                 start_dt.astimezone(ZoneInfo(campaign.timezone)),
                 end_dt.astimezone(ZoneInfo(campaign.timezone)),
-                **{**self.DEFAULT_PARAMETERS, **kwargs},
+                **{**deepcopy(self.DEFAULT_PARAMETERS), **kwargs},
             )
 
     @abc.abstractmethod
@@ -110,7 +111,7 @@ class BEMServerCoreScheduledTask(BEMServerCoreSystemTask, abc.ABC):
                 tbc.campaign,
                 start_dt,
                 end_dt,
-                **{**self.DEFAULT_PARAMETERS, **tbc.parameters},
+                **{**deepcopy(self.DEFAULT_PARAMETERS), **tbc.parameters},
             )
 
     @abc.abstractmethod
