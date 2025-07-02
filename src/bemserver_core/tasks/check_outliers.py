@@ -197,3 +197,5 @@ class CheckOutliers(CheckOutliersBase, BEMServerCoreAsyncTask):
 @celery.register_task
 class CheckOutliersScheduled(CheckOutliersBase, BEMServerCoreScheduledTask):
     """CheckOutliers scheduled task"""
+
+    ASYNC_TASK = CheckOutliers

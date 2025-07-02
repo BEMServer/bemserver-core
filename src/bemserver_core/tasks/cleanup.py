@@ -59,3 +59,5 @@ class Cleanup(CleanupBase, BEMServerCoreAsyncTask):
 @celery.register_task
 class CleanupScheduled(CleanupBase, BEMServerCoreScheduledTask):
     """Cleanup scheduled task"""
+
+    ASYNC_TASK = Cleanup

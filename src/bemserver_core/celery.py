@@ -100,6 +100,8 @@ class BEMServerCoreAsyncTask(BEMServerCoreTask, Task, abc.ABC):
 
 class BEMServerCoreScheduledTask(BEMServerCoreSystemTask, abc.ABC):
     DEFAULT_PARAMETERS = {}
+    # Equivalent asynchronous task
+    ASYNC_TASK = None
 
     def run(self):
         logger.info("Start")

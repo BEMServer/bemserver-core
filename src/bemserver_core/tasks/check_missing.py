@@ -189,3 +189,5 @@ class CheckMissingData(CheckMissingDataBase, BEMServerCoreAsyncTask):
 @celery.register_task
 class CheckMissingDataScheduled(CheckMissingDataBase, BEMServerCoreScheduledTask):
     """CheckMissingData scheduled task"""
+
+    ASYNC_TASK = CheckMissingData

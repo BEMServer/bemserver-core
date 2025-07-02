@@ -56,3 +56,5 @@ class DownloadWeatherData(DownloadWeatherDataBase, BEMServerCoreAsyncTask):
 @celery.register_task
 class DownloadWeatherDataScheduled(DownloadWeatherDataBase, BEMServerCoreScheduledTask):
     """DownloadWeatherData scheduled task"""
+
+    ASYNC_TASK = DownloadWeatherData
