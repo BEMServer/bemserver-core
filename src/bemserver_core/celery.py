@@ -4,6 +4,7 @@ Manages scheduled and asynchronous tasks
 """
 
 import abc
+import enum
 from copy import deepcopy
 from functools import wraps
 from zoneinfo import ZoneInfo
@@ -18,6 +19,17 @@ from bemserver_core.database import db
 from bemserver_core.exceptions import BEMServerCoreSettingsError, BEMServerCoreTaskError
 
 logger = get_task_logger(__name__)
+
+
+class TaskStateEnum(enum.Enum):
+    PENDING = "pending"
+    SENT = "sent"
+    STARTED = "started"
+    PROGRESS = "progress"
+    SUCCESS = "success"
+    FAILURE = "failure"
+    RETRY = "retry"
+    REVOKED = "revoked"
 
 
 class DefaultCeleryConfig:
