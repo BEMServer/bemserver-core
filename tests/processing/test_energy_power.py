@@ -12,7 +12,7 @@ from pandas.testing import assert_series_equal
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.exceptions import (
     BEMServerCoreDimensionalityError,
-    BEMServerCoreEnergyPowerProcessMissingIntervalError,
+    BEMServerCoreEnergyPowerProcessingMissingIntervalError,
     BEMServerCoreUndefinedUnitError,
 )
 from bemserver_core.model import (
@@ -20,7 +20,7 @@ from bemserver_core.model import (
     TimeseriesProperty,
     TimeseriesPropertyData,
 )
-from bemserver_core.process.energy_power import (
+from bemserver_core.processing.energy_power import (
     energy2power,
     energyindex2energy,
     energyindex2power,
@@ -29,9 +29,9 @@ from bemserver_core.process.energy_power import (
 from tests.utils import create_timeseries_data
 
 
-class TestEnergyPowerProcess:
+class TestEnergyPowerProcessing:
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
-    def test_power2energy_process(self, users, timeseries):
+    def test_power2energy(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin
         # Data with higher frequency
@@ -201,7 +201,7 @@ class TestEnergyPowerProcess:
                 data_s = power2energy(start_dt, h4_dt, ts_0, ds_1, 3600, "°C")
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
-    def test_energy2power_process(self, users, timeseries):
+    def test_energy2power(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin
         # Data with higher frequency
@@ -316,7 +316,7 @@ class TestEnergyPowerProcess:
             assert_series_equal(data_s, expected_data_s)
 
             with pytest.raises(
-                BEMServerCoreEnergyPowerProcessMissingIntervalError,
+                BEMServerCoreEnergyPowerProcessingMissingIntervalError,
                 match=f"Missing interval for timeseries {ts_4.name}",
             ):
                 data_s = energy2power(start_dt, end_dt, ts_4, ds_1, "W")
@@ -344,7 +344,7 @@ class TestEnergyPowerProcess:
                 data_s = energy2power(start_dt, end_dt, ts_0, ds_1, "°C")
 
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
-    def test_energyindex2power_process(self, users, timeseries):
+    def test_energyindex2power(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin
         # Data with higher frequency
@@ -504,7 +504,7 @@ class TestEnergyPowerProcess:
                 data_s = energyindex2power(start_dt, end_dt, ts_0, ds_1, 3600, "°C")
 
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
-    def test_energyindex2energy_process(self, users, timeseries):
+    def test_energyindex2energy(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin
         # Data with higher frequency

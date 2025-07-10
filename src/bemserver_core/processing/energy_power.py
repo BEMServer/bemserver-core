@@ -5,10 +5,10 @@ import pandas as pd
 
 from bemserver_core.common import ureg
 from bemserver_core.exceptions import (
-    BEMServerCoreEnergyPowerProcessMissingIntervalError,
+    BEMServerCoreEnergyPowerProcessingMissingIntervalError,
 )
 from bemserver_core.input_output import tsdio
-from bemserver_core.process.forward_fill import ffill
+from bemserver_core.processing.forward_fill import ffill
 from bemserver_core.time_utils import ceil, make_pandas_freq
 
 
@@ -63,7 +63,7 @@ def energy2power(
 
     interval = energy_ts.get_property_value("Interval")
     if interval is None:
-        raise BEMServerCoreEnergyPowerProcessMissingIntervalError(
+        raise BEMServerCoreEnergyPowerProcessingMissingIntervalError(
             f"Missing interval for timeseries {energy_ts.name}"
         )
 

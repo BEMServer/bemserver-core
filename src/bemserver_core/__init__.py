@@ -14,7 +14,7 @@ from bemserver_core import (
 from bemserver_core.celery import celery as celery_app
 from bemserver_core.email import ems
 from bemserver_core.exceptions import BEMServerCoreSettingsError
-from bemserver_core.process.weather import wdp
+from bemserver_core.processing.weather import wdp
 
 
 class BEMServerCore:
