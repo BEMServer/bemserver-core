@@ -169,3 +169,15 @@ class BEMServerCoreScheduledTaskParametersError(BEMServerCoreError):
 
 class BEMServerCoreProcessTimeoutError(BEMServerCoreError):
     """Base BEMServer process timeout error"""
+
+
+class BEMServerCoreExpressionError(BEMServerCoreError):
+    """Base BEMServer expression error"""
+
+
+class BEMServerCoreExpressionValidationError(BEMServerCoreExpressionError):
+    """BEMServer expression validation error"""
+
+
+class BEMServerCoreExpressionEvaluationError(BEMServerCoreExpressionError):
+    """BEMServer expression evaluation error"""
