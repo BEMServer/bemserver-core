@@ -12,7 +12,7 @@ from bemserver_core.model import (
     TimeseriesByEvent,
     TimeseriesDataState,
 )
-from bemserver_core.process.cleanup import cleanup
+from bemserver_core.processing.cleanup import cleanup
 
 SERVICE_NAME = "BEMServer - Check outliers"
 

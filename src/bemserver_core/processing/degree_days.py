@@ -4,7 +4,7 @@ import datetime as dt
 from zoneinfo import ZoneInfo
 
 from bemserver_core.exceptions import (
-    BEMServerCoreDegreeDayProcessMissingTemperatureError,
+    BEMServerCoreDegreeDayProcessingMissingTemperatureError,
 )
 from bemserver_core.input_output import tsdio
 from bemserver_core.model import (
@@ -63,7 +63,7 @@ def compute_dd_for_site(
     ).first()
 
     if wtbs is None:
-        raise BEMServerCoreDegreeDayProcessMissingTemperatureError(
+        raise BEMServerCoreDegreeDayProcessingMissingTemperatureError(
             "Air temperature for site undefined or access denied."
         )
 

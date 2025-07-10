@@ -14,13 +14,13 @@ from bemserver_core.model import (
     TimeseriesProperty,
     TimeseriesPropertyData,
 )
-from bemserver_core.process.cleanup import cleanup
+from bemserver_core.processing.cleanup import cleanup
 from tests.utils import create_timeseries_data
 
 
-class TestCleanupProcess:
+class TestCleanupProcessing:
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
-    def test_cleanup_process(self, users, timeseries):
+    def test_cleanup(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin
         # Min/Max

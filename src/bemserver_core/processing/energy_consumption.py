@@ -8,7 +8,7 @@ from collections import defaultdict
 import numpy as np
 
 from bemserver_core.exceptions import (
-    BEMServerCoreEnergyBreakdownProcessZeroDivisionError,
+    BEMServerCoreEnergyBreakdownProcessingZeroDivisionError,
 )
 from bemserver_core.input_output import tsdio
 from bemserver_core.model import (
@@ -99,7 +99,7 @@ def compute_energy_consumption_breakdown(
     )
 
     if np.isinf(data_df).any().any():
-        raise BEMServerCoreEnergyBreakdownProcessZeroDivisionError(
+        raise BEMServerCoreEnergyBreakdownProcessingZeroDivisionError(
             "Dividing by ratio with value 0"
         )
 

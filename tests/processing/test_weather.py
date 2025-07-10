@@ -22,11 +22,11 @@ from bemserver_core.exceptions import (
     BEMServerCoreWeatherAPIConnectionError,
     BEMServerCoreWeatherAPIQueryError,
     BEMServerCoreWeatherAPIResponseError,
-    BEMServerCoreWeatherProcessMissingCoordinatesError,
+    BEMServerCoreWeatherProcessingMissingCoordinatesError,
 )
 from bemserver_core.input_output import tsdio
 from bemserver_core.model import TimeseriesDataState
-from bemserver_core.process.weather import OikolabWeatherDataClient, wdp
+from bemserver_core.processing.weather import OikolabWeatherDataClient, wdp
 
 OIKOLAB_RESPONSE_ATTRIBUTES = {
     "processing_time": 1.89,
@@ -493,7 +493,7 @@ class TestWeatherDataProcessor:
         end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.UTC)
 
         with pytest.raises(
-            BEMServerCoreWeatherProcessMissingCoordinatesError,
+            BEMServerCoreWeatherProcessingMissingCoordinatesError,
             match="Missing site coordinates.",
         ):
             wdp.get_weather_data_for_site(site_1, start_dt, end_dt)

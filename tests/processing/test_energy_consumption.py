@@ -11,7 +11,7 @@ from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.database import db
 from bemserver_core.exceptions import (
     BEMServerCoreDimensionalityError,
-    BEMServerCoreEnergyBreakdownProcessZeroDivisionError,
+    BEMServerCoreEnergyBreakdownProcessingZeroDivisionError,
 )
 from bemserver_core.model import (
     Energy,
@@ -21,7 +21,7 @@ from bemserver_core.model import (
     Timeseries,
     TimeseriesDataState,
 )
-from bemserver_core.process.energy_consumption import (
+from bemserver_core.processing.energy_consumption import (
     compute_energy_consumption_breakdown_for_building,
     compute_energy_consumption_breakdown_for_site,
 )
@@ -193,7 +193,7 @@ class TestEnergyConsumption:
             assert ret["energy"]["all"]["all"] == [142.0]
 
             # Check zero ratio
-            with pytest.raises(BEMServerCoreEnergyBreakdownProcessZeroDivisionError):
+            with pytest.raises(BEMServerCoreEnergyBreakdownProcessingZeroDivisionError):
                 ret = compute_energy_consumption_breakdown_for_site(
                     site_1, start_dt, end_dt, 1, "hour", ratio=0
                 )
@@ -301,7 +301,7 @@ class TestEnergyConsumption:
             assert ret["energy"]["all"]["all"] == [142.0]
 
             # Check zero ratio
-            with pytest.raises(BEMServerCoreEnergyBreakdownProcessZeroDivisionError):
+            with pytest.raises(BEMServerCoreEnergyBreakdownProcessingZeroDivisionError):
                 ret = compute_energy_consumption_breakdown_for_building(
                     building_1, start_dt, end_dt, 1, "hour", ratio=0
                 )

@@ -15,7 +15,7 @@ from bemserver_core.exceptions import (
     BEMServerCoreWeatherAPIConnectionError,
     BEMServerCoreWeatherAPIQueryError,
     BEMServerCoreWeatherAPIResponseError,
-    BEMServerCoreWeatherProcessMissingCoordinatesError,
+    BEMServerCoreWeatherProcessingMissingCoordinatesError,
 )
 from bemserver_core.input_output import tsdio
 from bemserver_core.model import TimeseriesDataState, WeatherTimeseriesBySite
@@ -169,7 +169,7 @@ class WeatherDataProcessor:
 
             latitude, longitude = site.latitude, site.longitude
             if latitude is None or longitude is None:
-                raise BEMServerCoreWeatherProcessMissingCoordinatesError(
+                raise BEMServerCoreWeatherProcessingMissingCoordinatesError(
                     "Missing site coordinates."
                 )
 

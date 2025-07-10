@@ -13,7 +13,7 @@ from bemserver_core.model import (
     TimeseriesProperty,
     TimeseriesPropertyData,
 )
-from bemserver_core.process.completeness import compute_completeness
+from bemserver_core.processing.completeness import compute_completeness
 from tests.utils import create_timeseries_data
 
 
