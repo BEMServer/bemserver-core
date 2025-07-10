@@ -121,41 +121,41 @@ class BEMServerCoreWeatherAPIAuthenticationError(BEMServerCoreWeatherAPIError):
     """Error in weather API authentication"""
 
 
-class BEMServerCoreEnergyBreakdownProcessError(BEMServerCoreError):
+class BEMServerCoreEnergyBreakdownProcessingError(BEMServerCoreError):
     """Error in energy breakdown computation process"""
 
 
-class BEMServerCoreEnergyBreakdownProcessZeroDivisionError(
-    BEMServerCoreEnergyBreakdownProcessError
+class BEMServerCoreEnergyBreakdownProcessingZeroDivisionError(
+    BEMServerCoreEnergyBreakdownProcessingError
 ):
     """Division by zero in energy breakdown computation process"""
 
 
-class BEMServerCoreWeatherProcessError(BEMServerCoreError):
+class BEMServerCoreWeatherProcessingError(BEMServerCoreError):
     """Error in weather process"""
 
 
-class BEMServerCoreWeatherProcessMissingCoordinatesError(
-    BEMServerCoreWeatherProcessError
+class BEMServerCoreWeatherProcessingMissingCoordinatesError(
+    BEMServerCoreWeatherProcessingError
 ):
     """Missing coordinates in weather process"""
 
 
-class BEMServerCoreDegreeDaysProcessError(BEMServerCoreError):
+class BEMServerCoreDegreeDaysProcessingError(BEMServerCoreError):
     """Error in degree days process"""
 
 
-class BEMServerCoreDegreeDayProcessMissingTemperatureError(
-    BEMServerCoreDegreeDaysProcessError
+class BEMServerCoreDegreeDayProcessingMissingTemperatureError(
+    BEMServerCoreDegreeDaysProcessingError
 ):
     """Missing air temperature in degree days process"""
 
 
-class BEMServerCoreEnergyPowerProcessError(BEMServerCoreError):
+class BEMServerCoreEnergyPowerProcessingError(BEMServerCoreError):
     """Error in energy power conversion process"""
 
 
-class BEMServerCoreEnergyPowerProcessMissingIntervalError(BEMServerCoreError):
+class BEMServerCoreEnergyPowerProcessingMissingIntervalError(BEMServerCoreError):
     """Missing timeseries interval property"""
 
 
