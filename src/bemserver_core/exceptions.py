@@ -161,3 +161,7 @@ class BEMServerCoreEnergyPowerProcessingMissingIntervalError(BEMServerCoreError)
 
 class BEMServerCoreScheduledTaskParametersError(BEMServerCoreError):
     """Error in scheduled task parameter"""
+
+
+class BEMServerCoreProcessTimeoutError(BEMServerCoreError):
+    """Base BEMServer process timeout error"""
