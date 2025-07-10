@@ -10,14 +10,14 @@ import pandas as pd
 from pandas.testing import assert_series_equal
 
 from bemserver_core.exceptions import (
-    BEMServerCoreDegreeDayProcessMissingTemperatureError,
+    BEMServerCoreDegreeDayProcessingMissingTemperatureError,
 )
 from bemserver_core.input_output import tsdio
 from bemserver_core.model import (
     TimeseriesDataState,
     WeatherParameterEnum,
 )
-from bemserver_core.process.degree_days import compute_dd, compute_dd_for_site
+from bemserver_core.processing.degree_days import compute_dd, compute_dd_for_site
 
 
 @pytest.mark.parametrize("type_", ("heating", "cooling"))
@@ -154,7 +154,7 @@ def test_compute_dd_for_site(sites, weather_timeseries_by_sites, type_, base, un
     # Missing temperature
     wtbs_1.forecast = True
     with pytest.raises(
-        BEMServerCoreDegreeDayProcessMissingTemperatureError,
+        BEMServerCoreDegreeDayProcessingMissingTemperatureError,
         match="Air temperature for site undefined or access denied.",
     ):
         compute_dd_for_site(
@@ -162,7 +162,7 @@ def test_compute_dd_for_site(sites, weather_timeseries_by_sites, type_, base, un
         )
     wtbs_1.delete()
     with pytest.raises(
-        BEMServerCoreDegreeDayProcessMissingTemperatureError,
+        BEMServerCoreDegreeDayProcessingMissingTemperatureError,
         match="Air temperature for site undefined or access denied.",
     ):
         compute_dd_for_site(

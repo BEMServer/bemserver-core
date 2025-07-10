@@ -13,13 +13,13 @@ from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.model import (
     TimeseriesDataState,
 )
-from bemserver_core.process.forward_fill import ffill
+from bemserver_core.processing.forward_fill import ffill
 from tests.utils import create_timeseries_data
 
 
-class TestForewardFillProcess:
+class TestForewardFillProcessing:
     @pytest.mark.parametrize("timeseries", (4,), indirect=True)
-    def test_ffill_process(self, users, timeseries):
+    def test_ffill(self, users, timeseries):
         admin_user = users[0]
         assert admin_user.is_admin
         # Data with higher frequency

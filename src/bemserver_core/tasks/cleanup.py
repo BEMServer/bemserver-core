@@ -4,7 +4,7 @@ from bemserver_core.celery import BEMServerCoreAsyncTask, celery, logger
 from bemserver_core.database import db
 from bemserver_core.input_output import tsdio
 from bemserver_core.model import TimeseriesDataState
-from bemserver_core.process.cleanup import cleanup as cleanup_process
+from bemserver_core.processing.cleanup import cleanup
 
 
 def cleanup_data(campaign, start_dt, end_dt):
@@ -17,7 +17,7 @@ def cleanup_data(campaign, start_dt, end_dt):
     for ts in campaign.timeseries:
         logger.debug("Cleaning data for timeseries %s", ts.name)
 
-        data_df = cleanup_process(
+        data_df = cleanup(
             start_dt,
             end_dt,
             [ts],
