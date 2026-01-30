@@ -2,13 +2,15 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMixin, Relation, auth
+from bemserver_core.authorization import AuthMgrMixin, Relation
 from bemserver_core.common import PropertyType
 from bemserver_core.database import Base, db, make_columns_read_only
-from bemserver_core.model import Campaign
+
+from .campaigns import Campaign, UserGroupByCampaign
+from .users import UserByUserGroup, UserGroup
 
 
-class StructuralElementProperty(AuthMixin, Base):
+class StructuralElementProperty(AuthMgrMixin, Base):
     __tablename__ = "struct_elem_props"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -21,8 +23,11 @@ class StructuralElementProperty(AuthMixin, Base):
     )
     unit_symbol = sqla.Column(sqla.String(20))
 
+    def authorize_read(self, actor):
+        return True
 
-class SiteProperty(AuthMixin, Base):
+
+class SiteProperty(AuthMgrMixin, Base):
     __tablename__ = "site_props"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -37,8 +42,11 @@ class SiteProperty(AuthMixin, Base):
         backref=sqla.orm.backref("site_properties", cascade="all, delete-orphan"),
     )
 
+    def authorize_read(self, actor):
+        return True
 
-class BuildingProperty(AuthMixin, Base):
+
+class BuildingProperty(AuthMgrMixin, Base):
     __tablename__ = "building_props"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -53,8 +61,11 @@ class BuildingProperty(AuthMixin, Base):
         backref=sqla.orm.backref("building_properties", cascade="all, delete-orphan"),
     )
 
+    def authorize_read(self, actor):
+        return True
 
-class StoreyProperty(AuthMixin, Base):
+
+class StoreyProperty(AuthMgrMixin, Base):
     __tablename__ = "storey_props"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -69,8 +80,11 @@ class StoreyProperty(AuthMixin, Base):
         backref=sqla.orm.backref("storey_properties", cascade="all, delete-orphan"),
     )
 
+    def authorize_read(self, actor):
+        return True
 
-class SpaceProperty(AuthMixin, Base):
+
+class SpaceProperty(AuthMgrMixin, Base):
     __tablename__ = "space_props"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -85,8 +99,11 @@ class SpaceProperty(AuthMixin, Base):
         backref=sqla.orm.backref("space_properties", cascade="all, delete-orphan"),
     )
 
+    def authorize_read(self, actor):
+        return True
 
-class ZoneProperty(AuthMixin, Base):
+
+class ZoneProperty(AuthMgrMixin, Base):
     __tablename__ = "zone_props"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -101,8 +118,11 @@ class ZoneProperty(AuthMixin, Base):
         backref=sqla.orm.backref("zone_properties", cascade="all, delete-orphan"),
     )
 
+    def authorize_read(self, actor):
+        return True
 
-class SitePropertyData(AuthMixin, Base):
+
+class SitePropertyData(AuthMgrMixin, Base):
     __tablename__ = "site_prop_data"
     __table_args__ = (sqla.UniqueConstraint("site_id", "site_prop_id"),)
 
@@ -124,8 +144,7 @@ class SitePropertyData(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "site": Relation(
                     kind="one",
@@ -141,8 +160,31 @@ class SitePropertyData(AuthMixin, Base):
         if (prop := SiteProperty.get_by_id(self.site_property_id)) is not None:
             prop.structural_element_property.value_type.verify(self.value)
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return (
+            query.join(Site)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+        )
 
-class BuildingPropertyData(AuthMixin, Base):
+    def authorize_read(self, actor):
+        return db.session.query(
+            db.session.query(Site)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+            .filter(Site.id == self.site_id)
+            .exists()
+        ).scalar()
+
+
+class BuildingPropertyData(AuthMgrMixin, Base):
     __tablename__ = "building_prop_data"
     __table_args__ = (sqla.UniqueConstraint("building_id", "building_prop_id"),)
 
@@ -168,8 +210,7 @@ class BuildingPropertyData(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "building": Relation(
                     kind="one",
@@ -185,8 +226,33 @@ class BuildingPropertyData(AuthMixin, Base):
         if (prop := BuildingProperty.get_by_id(self.building_property_id)) is not None:
             prop.structural_element_property.value_type.verify(self.value)
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return (
+            query.join(Building)
+            .join(Site)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+        )
 
-class StoreyPropertyData(AuthMixin, Base):
+    def authorize_read(self, actor):
+        return db.session.query(
+            db.session.query(Building)
+            .join(Site)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+            .filter(Building.id == self.building_id)
+            .exists()
+        ).scalar()
+
+
+class StoreyPropertyData(AuthMgrMixin, Base):
     __tablename__ = "storey_prop_data"
     __table_args__ = (sqla.UniqueConstraint("storey_id", "storey_prop_id"),)
 
@@ -208,8 +274,7 @@ class StoreyPropertyData(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "storey": Relation(
                     kind="one",
@@ -225,8 +290,35 @@ class StoreyPropertyData(AuthMixin, Base):
         if (prop := StoreyProperty.get_by_id(self.storey_property_id)) is not None:
             prop.structural_element_property.value_type.verify(self.value)
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return (
+            query.join(Storey)
+            .join(Building)
+            .join(Site)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+        )
 
-class SpacePropertyData(AuthMixin, Base):
+    def authorize_read(self, actor):
+        return db.session.query(
+            db.session.query(Storey)
+            .join(Building)
+            .join(Site)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+            .filter(Storey.id == self.storey_id)
+            .exists()
+        ).scalar()
+
+
+class SpacePropertyData(AuthMgrMixin, Base):
     __tablename__ = "space_prop_data"
     __table_args__ = (sqla.UniqueConstraint("space_id", "space_prop_id"),)
 
@@ -248,8 +340,7 @@ class SpacePropertyData(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "space": Relation(
                     kind="one",
@@ -265,8 +356,37 @@ class SpacePropertyData(AuthMixin, Base):
         if (prop := SpaceProperty.get_by_id(self.space_property_id)) is not None:
             prop.structural_element_property.value_type.verify(self.value)
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return (
+            query.join(Space)
+            .join(Storey)
+            .join(Building)
+            .join(Site)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+        )
 
-class ZonePropertyData(AuthMixin, Base):
+    def authorize_read(self, actor):
+        return db.session.query(
+            db.session.query(Space)
+            .join(Storey)
+            .join(Building)
+            .join(Site)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+            .filter(Space.id == self.space_id)
+            .exists()
+        ).scalar()
+
+
+class ZonePropertyData(AuthMgrMixin, Base):
     __tablename__ = "zone_prop_data"
     __table_args__ = (sqla.UniqueConstraint("zone_id", "zone_prop_id"),)
 
@@ -288,8 +408,7 @@ class ZonePropertyData(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "zone": Relation(
                     kind="one",
@@ -304,6 +423,29 @@ class ZonePropertyData(AuthMixin, Base):
         # Get property type and try to parse value to ensure its type validity.
         if (prop := ZoneProperty.get_by_id(self.zone_property_id)) is not None:
             prop.structural_element_property.value_type.verify(self.value)
+
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return (
+            query.join(Zone)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+        )
+
+    def authorize_read(self, actor):
+        return db.session.query(
+            db.session.query(Zone)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+            .filter(Zone.id == self.zone_id)
+            .exists()
+        ).scalar()
 
 
 PROPERTIES_MAPPING = {
@@ -355,7 +497,7 @@ class StructuralElementBase(Base):
         return se_property.value_type.value(prop_data.value)
 
 
-class Site(AuthMixin, StructuralElementBase):
+class Site(AuthMgrMixin, StructuralElementBase):
     __tablename__ = "sites"
     __table_args__ = (sqla.UniqueConstraint("campaign_id", "name"),)
 
@@ -373,8 +515,7 @@ class Site(AuthMixin, StructuralElementBase):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "campaign": Relation(
                     kind="one",
@@ -385,8 +526,29 @@ class Site(AuthMixin, StructuralElementBase):
             },
         )
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return (
+            query.join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+        )
 
-class Building(AuthMixin, StructuralElementBase):
+    def authorize_read(self, actor):
+        return db.session.query(
+            db.session.query(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+            .filter(Campaign.id == self.campaign_id)
+            .exists()
+        ).scalar()
+
+
+class Building(AuthMgrMixin, StructuralElementBase):
     __tablename__ = "buildings"
     __table_args__ = (sqla.UniqueConstraint("site_id", "name"),)
 
@@ -413,8 +575,7 @@ class Building(AuthMixin, StructuralElementBase):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "site": Relation(
                     kind="one",
@@ -425,8 +586,31 @@ class Building(AuthMixin, StructuralElementBase):
             },
         )
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return (
+            query.join(Site)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+        )
 
-class Storey(AuthMixin, StructuralElementBase):
+    def authorize_read(self, actor):
+        return db.session.query(
+            db.session.query(Site)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+            .filter(Site.id == self.site_id)
+            .exists()
+        ).scalar()
+
+
+class Storey(AuthMgrMixin, StructuralElementBase):
     __tablename__ = "storeys"
     __table_args__ = (sqla.UniqueConstraint("building_id", "name"),)
 
@@ -462,8 +646,7 @@ class Storey(AuthMixin, StructuralElementBase):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "building": Relation(
                     kind="one",
@@ -474,8 +657,33 @@ class Storey(AuthMixin, StructuralElementBase):
             },
         )
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return (
+            query.join(Building)
+            .join(Site)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+        )
 
-class Space(AuthMixin, StructuralElementBase):
+    def authorize_read(self, actor):
+        return db.session.query(
+            db.session.query(Building)
+            .join(Site)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+            .filter(Building.id == self.building_id)
+            .exists()
+        ).scalar()
+
+
+class Space(AuthMgrMixin, StructuralElementBase):
     __tablename__ = "spaces"
     __table_args__ = (sqla.UniqueConstraint("storey_id", "name"),)
 
@@ -522,8 +730,7 @@ class Space(AuthMixin, StructuralElementBase):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "storey": Relation(
                     kind="one",
@@ -534,8 +741,35 @@ class Space(AuthMixin, StructuralElementBase):
             },
         )
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return (
+            query.join(Storey)
+            .join(Building)
+            .join(Site)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+        )
 
-class Zone(AuthMixin, StructuralElementBase):
+    def authorize_read(self, actor):
+        return db.session.query(
+            db.session.query(Storey)
+            .join(Building)
+            .join(Site)
+            .join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+            .filter(Storey.id == self.storey_id)
+            .exists()
+        ).scalar()
+
+
+class Zone(AuthMgrMixin, StructuralElementBase):
     __tablename__ = "zones"
     __table_args__ = (sqla.UniqueConstraint("campaign_id", "name"),)
 
@@ -551,8 +785,7 @@ class Zone(AuthMixin, StructuralElementBase):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "campaign": Relation(
                     kind="one",
@@ -562,6 +795,27 @@ class Zone(AuthMixin, StructuralElementBase):
                 ),
             },
         )
+
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return (
+            query.join(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+        )
+
+    def authorize_read(self, actor):
+        return db.session.query(
+            db.session.query(Campaign)
+            .join(UserGroupByCampaign)
+            .join(UserGroup)
+            .join(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+            .filter(Campaign.id == self.campaign_id)
+            .exists()
+        ).scalar()
 
 
 def init_db_structural_elements_triggers():
