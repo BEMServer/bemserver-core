@@ -33,11 +33,9 @@ class Campaign(AuthMgrMixin, Base):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return (
-            query.join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
+        return UserGroupByCampaign.authorize_query(
+            actor,
+            query.join(UserGroupByCampaign),
         )
 
     def authorize_read(self, actor):
@@ -80,11 +78,9 @@ class CampaignScope(AuthMgrMixin, Base):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return (
-            query.join(UserGroupByCampaignScope)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
+        return UserGroupByCampaignScope.authorize_query(
+            actor,
+            query.join(UserGroupByCampaignScope),
         )
 
     def authorize_read(self, actor):
@@ -136,11 +132,7 @@ class UserGroupByCampaign(AuthMgrMixin, Base):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return (
-            query.join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-        )
+        return UserGroup.authorize_query(actor, query.join(UserGroup))
 
     def authorize_read(self, actor):
         return db.session.query(
@@ -189,11 +181,7 @@ class UserGroupByCampaignScope(AuthMgrMixin, Base):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return (
-            query.join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-        )
+        return UserGroup.authorize_query(actor, query.join(UserGroup))
 
     def authorize_read(self, actor):
         return db.session.query(

@@ -162,14 +162,7 @@ class SitePropertyData(AuthMgrMixin, Base):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return (
-            query.join(Site)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-        )
+        return Site.authorize_query(actor, query.join(Site))
 
     def authorize_read(self, actor):
         return db.session.query(
@@ -228,15 +221,7 @@ class BuildingPropertyData(AuthMgrMixin, Base):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return (
-            query.join(Building)
-            .join(Site)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-        )
+        return Building.authorize_query(actor, query.join(Building))
 
     def authorize_read(self, actor):
         return db.session.query(
@@ -292,16 +277,7 @@ class StoreyPropertyData(AuthMgrMixin, Base):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return (
-            query.join(Storey)
-            .join(Building)
-            .join(Site)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-        )
+        return Storey.authorize_query(actor, query.join(Storey))
 
     def authorize_read(self, actor):
         return db.session.query(
@@ -358,17 +334,7 @@ class SpacePropertyData(AuthMgrMixin, Base):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return (
-            query.join(Space)
-            .join(Storey)
-            .join(Building)
-            .join(Site)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-        )
+        return Space.authorize_query(actor, query.join(Space))
 
     def authorize_read(self, actor):
         return db.session.query(
@@ -426,14 +392,7 @@ class ZonePropertyData(AuthMgrMixin, Base):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return (
-            query.join(Zone)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-        )
+        return Zone.authorize_query(actor, query.join(Zone))
 
     def authorize_read(self, actor):
         return db.session.query(
@@ -528,13 +487,7 @@ class Site(AuthMgrMixin, StructuralElementBase):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return (
-            query.join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-        )
+        return Campaign.authorize_query(actor, query.join(Campaign))
 
     def authorize_read(self, actor):
         return db.session.query(
@@ -588,14 +541,7 @@ class Building(AuthMgrMixin, StructuralElementBase):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return (
-            query.join(Site)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-        )
+        return Site.authorize_query(actor, query.join(Site))
 
     def authorize_read(self, actor):
         return db.session.query(
@@ -659,15 +605,7 @@ class Storey(AuthMgrMixin, StructuralElementBase):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return (
-            query.join(Building)
-            .join(Site)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-        )
+        return Building.authorize_query(actor, query.join(Building))
 
     def authorize_read(self, actor):
         return db.session.query(
@@ -743,16 +681,7 @@ class Space(AuthMgrMixin, StructuralElementBase):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return (
-            query.join(Storey)
-            .join(Building)
-            .join(Site)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-        )
+        return Storey.authorize_query(actor, query.join(Storey))
 
     def authorize_read(self, actor):
         return db.session.query(
@@ -798,13 +727,7 @@ class Zone(AuthMgrMixin, StructuralElementBase):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return (
-            query.join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-        )
+        return Campaign.authorize_query(actor, query.join(Campaign))
 
     def authorize_read(self, actor):
         return db.session.query(

@@ -121,7 +121,7 @@ class UserGroup(AuthMgrMixin, Base):
 
     @classmethod
     def authorize_query(cls, actor, query):
-        return query.join(UserByUserGroup).filter(UserByUserGroup.user_id == actor.id)
+        return UserByUserGroup.authorize_query(actor, query.join(UserByUserGroup))
 
     def authorize_create(self, actor):
         return False
