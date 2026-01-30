@@ -6,8 +6,7 @@ from bemserver_core.authorization import AuthMgrMixin, Relation
 from bemserver_core.common import PropertyType
 from bemserver_core.database import Base, db, make_columns_read_only
 
-from .campaigns import Campaign, UserGroupByCampaign
-from .users import UserByUserGroup, UserGroup
+from .campaigns import Campaign
 
 
 class StructuralElementProperty(AuthMgrMixin, Base):
@@ -165,16 +164,7 @@ class SitePropertyData(AuthMgrMixin, Base):
         return Site.authorize_query(actor, query.join(Site))
 
     def authorize_read(self, actor):
-        return db.session.query(
-            db.session.query(Site)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-            .filter(Site.id == self.site_id)
-            .exists()
-        ).scalar()
+        return self.site.campaign.is_member(actor)
 
 
 class BuildingPropertyData(AuthMgrMixin, Base):
@@ -224,17 +214,7 @@ class BuildingPropertyData(AuthMgrMixin, Base):
         return Building.authorize_query(actor, query.join(Building))
 
     def authorize_read(self, actor):
-        return db.session.query(
-            db.session.query(Building)
-            .join(Site)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-            .filter(Building.id == self.building_id)
-            .exists()
-        ).scalar()
+        return self.building.site.campaign.is_member(actor)
 
 
 class StoreyPropertyData(AuthMgrMixin, Base):
@@ -280,18 +260,7 @@ class StoreyPropertyData(AuthMgrMixin, Base):
         return Storey.authorize_query(actor, query.join(Storey))
 
     def authorize_read(self, actor):
-        return db.session.query(
-            db.session.query(Storey)
-            .join(Building)
-            .join(Site)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-            .filter(Storey.id == self.storey_id)
-            .exists()
-        ).scalar()
+        return self.storey.building.site.campaign.is_member(actor)
 
 
 class SpacePropertyData(AuthMgrMixin, Base):
@@ -337,19 +306,7 @@ class SpacePropertyData(AuthMgrMixin, Base):
         return Space.authorize_query(actor, query.join(Space))
 
     def authorize_read(self, actor):
-        return db.session.query(
-            db.session.query(Space)
-            .join(Storey)
-            .join(Building)
-            .join(Site)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-            .filter(Space.id == self.space_id)
-            .exists()
-        ).scalar()
+        return self.space.storey.building.site.campaign.is_member(actor)
 
 
 class ZonePropertyData(AuthMgrMixin, Base):
@@ -395,16 +352,7 @@ class ZonePropertyData(AuthMgrMixin, Base):
         return Zone.authorize_query(actor, query.join(Zone))
 
     def authorize_read(self, actor):
-        return db.session.query(
-            db.session.query(Zone)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-            .filter(Zone.id == self.zone_id)
-            .exists()
-        ).scalar()
+        return self.zone.campaign.is_member(actor)
 
 
 PROPERTIES_MAPPING = {
@@ -490,15 +438,7 @@ class Site(AuthMgrMixin, StructuralElementBase):
         return Campaign.authorize_query(actor, query.join(Campaign))
 
     def authorize_read(self, actor):
-        return db.session.query(
-            db.session.query(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-            .filter(Campaign.id == self.campaign_id)
-            .exists()
-        ).scalar()
+        return self.campaign.is_member(actor)
 
 
 class Building(AuthMgrMixin, StructuralElementBase):
@@ -544,16 +484,7 @@ class Building(AuthMgrMixin, StructuralElementBase):
         return Site.authorize_query(actor, query.join(Site))
 
     def authorize_read(self, actor):
-        return db.session.query(
-            db.session.query(Site)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-            .filter(Site.id == self.site_id)
-            .exists()
-        ).scalar()
+        return self.site.campaign.is_member(actor)
 
 
 class Storey(AuthMgrMixin, StructuralElementBase):
@@ -608,17 +539,7 @@ class Storey(AuthMgrMixin, StructuralElementBase):
         return Building.authorize_query(actor, query.join(Building))
 
     def authorize_read(self, actor):
-        return db.session.query(
-            db.session.query(Building)
-            .join(Site)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-            .filter(Building.id == self.building_id)
-            .exists()
-        ).scalar()
+        return self.building.site.campaign.is_member(actor)
 
 
 class Space(AuthMgrMixin, StructuralElementBase):
@@ -684,18 +605,7 @@ class Space(AuthMgrMixin, StructuralElementBase):
         return Storey.authorize_query(actor, query.join(Storey))
 
     def authorize_read(self, actor):
-        return db.session.query(
-            db.session.query(Storey)
-            .join(Building)
-            .join(Site)
-            .join(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-            .filter(Storey.id == self.storey_id)
-            .exists()
-        ).scalar()
+        return self.storey.building.site.campaign.is_member(actor)
 
 
 class Zone(AuthMgrMixin, StructuralElementBase):
@@ -730,15 +640,7 @@ class Zone(AuthMgrMixin, StructuralElementBase):
         return Campaign.authorize_query(actor, query.join(Campaign))
 
     def authorize_read(self, actor):
-        return db.session.query(
-            db.session.query(Campaign)
-            .join(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-            .filter(Campaign.id == self.campaign_id)
-            .exists()
-        ).scalar()
+        return self.campaign.is_member(actor)
 
 
 def init_db_structural_elements_triggers():

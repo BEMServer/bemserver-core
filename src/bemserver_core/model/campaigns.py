@@ -39,14 +39,19 @@ class Campaign(AuthMgrMixin, Base):
         )
 
     def authorize_read(self, actor):
-        return db.session.query(
-            db.session.query(UserGroupByCampaign)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-            .filter(UserGroupByCampaign.campaign_id == self.id)
-            .exists()
-        ).scalar()
+        return self.is_member(actor)
+
+    def is_member(self, user):
+        return bool(
+            db.session.query(
+                db.session.query(UserGroupByCampaign)
+                .join(UserGroup)
+                .join(UserByUserGroup)
+                .filter(UserByUserGroup.user_id == user.id)
+                .filter(UserGroupByCampaign.campaign_id == self.id)
+                .exists()
+            ).scalar()
+        )
 
 
 class CampaignScope(AuthMgrMixin, Base):
@@ -84,14 +89,19 @@ class CampaignScope(AuthMgrMixin, Base):
         )
 
     def authorize_read(self, actor):
-        return db.session.query(
-            db.session.query(UserGroupByCampaignScope)
-            .join(UserGroup)
-            .join(UserByUserGroup)
-            .filter(UserByUserGroup.user_id == actor.id)
-            .filter(UserGroupByCampaignScope.campaign_scope_id == self.id)
-            .exists()
-        ).scalar()
+        return self.is_member(actor)
+
+    def is_member(self, user):
+        return bool(
+            db.session.query(
+                db.session.query(UserGroupByCampaignScope)
+                .join(UserGroup)
+                .join(UserByUserGroup)
+                .filter(UserByUserGroup.user_id == user.id)
+                .filter(UserGroupByCampaignScope.campaign_scope_id == self.id)
+                .exists()
+            ).scalar()
+        )
 
 
 class UserGroupByCampaign(AuthMgrMixin, Base):
