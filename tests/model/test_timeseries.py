@@ -1044,9 +1044,9 @@ class TestTimeseriesByDataStateModel:
         ts_2 = timeseries[1]
 
         with CurrentUser(user_1):
-            timeseries_list = list(TimeseriesByDataState.get())
-            assert len(timeseries_list) == 1
-            assert timeseries_list[0].id == ts_2.id
+            tsbds_l = list(TimeseriesByDataState.get())
+            assert len(tsbds_l) == 1
+            assert tsbds_l[0].id == ts_2.id
             tsbds = TimeseriesByDataState.get_by_id(ts_2.id)
             tsbds.update(data_state_id=2)
             db.session.commit()
