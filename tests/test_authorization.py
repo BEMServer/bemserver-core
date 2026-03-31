@@ -6,25 +6,27 @@ import pytest
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMixin
+from bemserver_core.authorization import AuthMgrMixin
 from bemserver_core.database import Base, db
 
 
-class TestAuthMixin:
+class TestAuthMgrMixin:
     @pytest.mark.usefixtures("database")
-    def test_auth_mixin_sort(self):
-        """Check AuthMixin doesn't break database sort feature"""
+    def test_auth_mgr_mixin_sort(self):
+        """Check AuthMgrMixin doesn't break database sort feature"""
 
-        class TestAuthMixinSort(Base, AuthMixin):
-            __tablename__ = "test_auth_mixin_sort"
+        class TestAuthMgrMixinSort(Base, AuthMgrMixin):
+            __tablename__ = "test_auth_mgr_mixin_sort"
 
             id = sqla.Column(sqla.Integer, primary_key=True)
             title = sqla.Column(sqla.String())
             severity = sqla.Column(
-                sqla.Enum("Low", "High", "Critical", name="test_auth_mixin_severity")
+                sqla.Enum(
+                    "Low", "High", "Critical", name="test_auth_mgr_mixin_severity"
+                )
             )
 
-        Test = TestAuthMixinSort
+        Test = TestAuthMgrMixinSort
 
         Test.__table__.create(bind=db.engine)
 
@@ -56,17 +58,17 @@ class TestAuthMixin:
         assert ret == [mes_5, mes_2, mes_3, mes_6, mes_4, mes_1]
 
     @pytest.mark.usefixtures("database")
-    def test_auth_mixin_min_max(self):
-        """Check AuthMixin doesn't break database min/max feature"""
+    def test_auth_mgr_mixin_min_max(self):
+        """Check AuthMgrMixin doesn't break database min/max feature"""
 
-        class TestAuthMixinMinMax(Base, AuthMixin):
-            __tablename__ = "test_auth_mixin_min_max"
+        class TestAuthMgrMixinMinMax(Base, AuthMgrMixin):
+            __tablename__ = "test_auth_mgr_mixin_min_max"
 
             id = sqla.Column(sqla.Integer, primary_key=True)
             note = sqla.Column(sqla.Float())
             date = sqla.Column(sqla.DateTime(timezone=True))
 
-        Test = TestAuthMixinMinMax
+        Test = TestAuthMgrMixinMinMax
 
         Test.__table__.create(bind=db.engine)
 
