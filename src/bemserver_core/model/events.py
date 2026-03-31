@@ -6,7 +6,7 @@ from functools import total_ordering
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMixin, Relation, auth
+from bemserver_core.authorization import AuthMgrMixin, Relation
 from bemserver_core.celery import BEMServerCoreSystemTask, celery, logger
 from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.exceptions import (
@@ -42,15 +42,18 @@ class EventLevelEnum(enum.Enum):
 DEFAULT_NOTIFICATION_EVENT_LEVEL = EventLevelEnum.WARNING
 
 
-class EventCategory(AuthMixin, Base):
+class EventCategory(AuthMgrMixin, Base):
     __tablename__ = "event_categs"
 
     id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
     description = sqla.Column(sqla.String(250))
 
+    def authorize_read(self, actor):
+        return True
 
-class Event(AuthMixin, Base):
+
+class Event(AuthMgrMixin, Base):
     __tablename__ = "events"
 
     id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
@@ -71,8 +74,7 @@ class Event(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "campaign_scope": Relation(
                     kind="one",
@@ -82,6 +84,22 @@ class Event(AuthMixin, Base):
                 ),
             },
         )
+
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return CampaignScope.authorize_query(actor, query.join(CampaignScope))
+
+    def authorize_create(self, actor):
+        return self.campaign_scope.is_member(actor)
+
+    def authorize_read(self, actor):
+        return self.campaign_scope.is_member(actor)
+
+    def authorize_update(self, actor):
+        return self.campaign_scope.is_member(actor)
+
+    def authorize_delete(self, actor):
+        return self.campaign_scope.is_member(actor)
 
     @classmethod
     def get(
@@ -328,7 +346,7 @@ def notify(event_id, timestamp):
     db.session.commit()
 
 
-class EventCategoryByUser(AuthMixin, Base):
+class EventCategoryByUser(AuthMgrMixin, Base):
     """EventCategory x User associations"""
 
     __tablename__ = "event_categs_by_users"
@@ -354,8 +372,7 @@ class EventCategoryByUser(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "user": Relation(
                     kind="one",
@@ -372,8 +389,24 @@ class EventCategoryByUser(AuthMixin, Base):
             },
         )
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return query.filter(EventCategoryByUser.user_id == actor.id)
 
-class TimeseriesByEvent(AuthMixin, Base):
+    def authorize_create(self, actor):
+        return actor.id == self.user_id
+
+    def authorize_read(self, actor):
+        return actor.id == self.user_id
+
+    def authorize_update(self, actor):
+        return actor.id == self.user_id
+
+    def authorize_delete(self, actor):
+        return actor.id == self.user_id
+
+
+class TimeseriesByEvent(AuthMgrMixin, Base):
     __tablename__ = "ts_by_events"
     __table_args__ = (sqla.UniqueConstraint("event_id", "timeseries_id"),)
 
@@ -404,8 +437,7 @@ class TimeseriesByEvent(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "timeseries": Relation(
                     kind="one",
@@ -422,8 +454,24 @@ class TimeseriesByEvent(AuthMixin, Base):
             },
         )
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return Event.authorize_query(actor, query.join(Event))
 
-class EventBySite(AuthMixin, Base):
+    def authorize_create(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_read(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_update(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_delete(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+
+class EventBySite(AuthMgrMixin, Base):
     __tablename__ = "events_by_sites"
     __table_args__ = (sqla.UniqueConstraint("site_id", "event_id"),)
 
@@ -452,8 +500,7 @@ class EventBySite(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "event": Relation(
                     kind="one",
@@ -470,8 +517,24 @@ class EventBySite(AuthMixin, Base):
             },
         )
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return Event.authorize_query(actor, query.join(Event))
 
-class EventByBuilding(AuthMixin, Base):
+    def authorize_create(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_read(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_update(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_delete(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+
+class EventByBuilding(AuthMgrMixin, Base):
     __tablename__ = "events_by_buildings"
     __table_args__ = (sqla.UniqueConstraint("building_id", "event_id"),)
 
@@ -500,8 +563,7 @@ class EventByBuilding(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "event": Relation(
                     kind="one",
@@ -518,8 +580,24 @@ class EventByBuilding(AuthMixin, Base):
             },
         )
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return Event.authorize_query(actor, query.join(Event))
 
-class EventByStorey(AuthMixin, Base):
+    def authorize_create(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_read(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_update(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_delete(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+
+class EventByStorey(AuthMgrMixin, Base):
     __tablename__ = "events_by_storeys"
     __table_args__ = (sqla.UniqueConstraint("storey_id", "event_id"),)
 
@@ -548,8 +626,7 @@ class EventByStorey(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "event": Relation(
                     kind="one",
@@ -566,8 +643,24 @@ class EventByStorey(AuthMixin, Base):
             },
         )
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return Event.authorize_query(actor, query.join(Event))
 
-class EventBySpace(AuthMixin, Base):
+    def authorize_create(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_read(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_update(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_delete(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+
+class EventBySpace(AuthMgrMixin, Base):
     __tablename__ = "events_by_spaces"
     __table_args__ = (sqla.UniqueConstraint("space_id", "event_id"),)
 
@@ -596,8 +689,7 @@ class EventBySpace(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "event": Relation(
                     kind="one",
@@ -614,8 +706,24 @@ class EventBySpace(AuthMixin, Base):
             },
         )
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return Event.authorize_query(actor, query.join(Event))
 
-class EventByZone(AuthMixin, Base):
+    def authorize_create(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_read(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_update(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_delete(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+
+class EventByZone(AuthMgrMixin, Base):
     __tablename__ = "events_by_zones"
     __table_args__ = (sqla.UniqueConstraint("zone_id", "event_id"),)
 
@@ -644,8 +752,7 @@ class EventByZone(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "event": Relation(
                     kind="one",
@@ -661,6 +768,22 @@ class EventByZone(AuthMixin, Base):
                 ),
             },
         )
+
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return Event.authorize_query(actor, query.join(Event))
+
+    def authorize_create(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_read(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_update(self, actor):
+        return self.event.campaign_scope.is_member(actor)
+
+    def authorize_delete(self, actor):
+        return self.event.campaign_scope.is_member(actor)
 
 
 def init_db_events_triggers():
