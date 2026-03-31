@@ -2,7 +2,7 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMixin, Relation, auth, get_current_user
+from bemserver_core.authorization import AuthMgrMixin, Relation, auth_mgr
 from bemserver_core.celery import BEMServerCoreSystemTask, celery, logger
 from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.email import ems
@@ -14,7 +14,7 @@ from bemserver_core.model.events import Event
 from bemserver_core.model.users import User
 
 
-class Notification(AuthMixin, Base):
+class Notification(AuthMgrMixin, Base):
     __tablename__ = "notifs"
 
     id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
@@ -33,8 +33,7 @@ class Notification(AuthMixin, Base):
 
     @classmethod
     def register_class(cls):
-        auth.register_class(
-            cls,
+        super().register_class(
             fields={
                 "user": Relation(
                     kind="one",
@@ -50,6 +49,16 @@ class Notification(AuthMixin, Base):
                 ),
             },
         )
+
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return query.filter(Notification.user_id == actor.id)
+
+    def authorize_read(self, actor):
+        return actor.id == self.user_id
+
+    def authorize_update(self, actor):
+        return actor.id == self.user_id
 
     @classmethod
     def get(cls, campaign_id=None, **kwargs):
@@ -74,7 +83,7 @@ class Notification(AuthMixin, Base):
             Defaults to None, which means count all notifications.
         """
         user = User.get_by_id(user_id)
-        auth.authorize(get_current_user(), "count_notifications", user)
+        auth_mgr.authorize("count_notifications", user)
 
         stmt = (
             sqla.select(
@@ -114,7 +123,7 @@ class Notification(AuthMixin, Base):
             Defaults to None, which means all campaigns.
         """
         user = User.get_by_id(user_id)
-        auth.authorize(get_current_user(), "mark_notifications", user)
+        auth_mgr.authorize("mark_notifications", user)
 
         stmt = sqla.update(cls).values(read=True).where(cls.user_id == user_id)
 
@@ -129,6 +138,16 @@ class Notification(AuthMixin, Base):
             stmt = stmt.where(cls.id.in_(subq))
 
         db.session.execute(stmt)
+
+
+@auth_mgr.add_rule("count_notifications")
+def authorize_count_notifications(actor: User, user: User) -> bool:
+    return actor.id == user.id
+
+
+@auth_mgr.add_rule("mark_notifications")
+def authorize_mark_notifications(actor: User, user: User) -> bool:
+    return actor.id == user.id
 
 
 @sqla.event.listens_for(Notification, "after_insert")
