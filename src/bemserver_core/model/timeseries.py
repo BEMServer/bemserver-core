@@ -394,12 +394,14 @@ class Timeseries(AuthMgrMixin, Base):
 
 @auth_mgr.add_rule("read_ts_data")
 def authorize_read_ts_data(actor: User, timeseries: Timeseries) -> bool:
-    return False
+    campaign_scope = CampaignScope.get_by_id(timeseries.campaign_scope_id)
+    return campaign_scope.is_member(actor)
 
 
 @auth_mgr.add_rule("write_ts_data")
 def authorize_write_ts_data(actor: User, timeseries: Timeseries) -> bool:
-    return False
+    campaign_scope = CampaignScope.get_by_id(timeseries.campaign_scope_id)
+    return campaign_scope.is_member(actor)
 
 
 class TimeseriesPropertyData(AuthMgrMixin, Base):
