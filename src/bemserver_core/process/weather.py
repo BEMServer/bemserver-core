@@ -8,7 +8,7 @@ import pandas as pd
 import requests
 from requests.exceptions import RequestException
 
-from bemserver_core.authorization import auth, get_current_user
+from bemserver_core.authorization import auth_mgr
 from bemserver_core.exceptions import (
     BEMServerCoreSettingsError,
     BEMServerCoreWeatherAPIAuthenticationError,
@@ -157,7 +157,7 @@ class WeatherDataProcessor:
         :param datetime end_dt: Time interval exclusive upper bound (tz-aware)
         :param bool forecast: Whether or not the data is past data or forecast
         """
-        auth.authorize(get_current_user(), "get_weather_data", site)
+        auth_mgr.authorize("get_weather_data", site)
 
         ds_clean = TimeseriesDataState.get(name="Clean").first()
 

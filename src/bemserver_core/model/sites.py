@@ -2,11 +2,12 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMgrMixin, Relation
+from bemserver_core.authorization import AuthMgrMixin, Relation, auth_mgr
 from bemserver_core.common import PropertyType
 from bemserver_core.database import Base, db, make_columns_read_only
 
 from .campaigns import Campaign
+from .users import User
 
 
 class StructuralElementProperty(AuthMgrMixin, Base):
@@ -439,6 +440,11 @@ class Site(AuthMgrMixin, StructuralElementBase):
 
     def authorize_read(self, actor):
         return self.campaign.is_member(actor)
+
+
+@auth_mgr.add_rule("get_weather_data")
+def authorize_get_weather_data(actor: User, site: Site) -> bool:
+    return False
 
 
 class Building(AuthMgrMixin, StructuralElementBase):
