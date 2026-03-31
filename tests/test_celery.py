@@ -4,7 +4,7 @@ import pytest
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import OPEN_BAR, auth, get_current_user
+from bemserver_core.authorization import OPEN_BAR, auth_mgr
 from bemserver_core.celery import BEMServerCoreCelery, BEMServerCoreSystemTask
 from bemserver_core.database import db
 from bemserver_core.model import User
@@ -22,7 +22,7 @@ class TestCelery:
         @celery.task(base=BEMServerCoreSystemTask)
         def dummy_task():
             assert OPEN_BAR.get()
-            auth.authorized_query(get_current_user(), "read", User)
+            auth_mgr.authorize_query("read", User)
 
         result = dummy_task.apply()
 
