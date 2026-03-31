@@ -6,8 +6,6 @@ import warnings
 from contextvars import ContextVar
 from pathlib import Path
 
-import sqlalchemy as sqla
-
 from oso import Oso, OsoError, Relation  # noqa
 from polar.data.adapter.sqlalchemy_adapter import SqlAlchemyAdapter
 
@@ -153,8 +151,6 @@ class AuthorizationsManager:
     def authorize(self, action: str, item: any) -> bool:
         actor = get_current_user()
         db.session().enable_relationship_loading(item)
-        if sqla.inspect(item).persistent:
-            db.session().expire(item)
         if not (
             OPEN_BAR.get() or actor.is_admin or self.eval_rule(action, actor, item)
         ):
