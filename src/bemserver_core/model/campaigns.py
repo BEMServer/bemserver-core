@@ -2,7 +2,7 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMgrMixin, Relation
+from bemserver_core.authorization import AuthMgrMixin
 from bemserver_core.database import Base, db, make_columns_read_only
 
 from .users import UserByUserGroup, UserGroup
@@ -17,19 +17,6 @@ class Campaign(AuthMgrMixin, Base):
     start_time = sqla.Column(sqla.DateTime(timezone=True))
     end_time = sqla.Column(sqla.DateTime(timezone=True))
     timezone = sqla.Column(sqla.String(40), nullable=False, default="UTC")
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "user_groups_by_campaigns": Relation(
-                    kind="many",
-                    other_type="UserGroupByCampaign",
-                    my_field="id",
-                    other_field="campaign_id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):
@@ -67,19 +54,6 @@ class CampaignScope(AuthMgrMixin, Base):
         Campaign,
         backref=sqla.orm.backref("campaign_scopes", cascade="all, delete-orphan"),
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "user_groups_by_campaign_scopes": Relation(
-                    kind="many",
-                    other_type="UserGroupByCampaignScope",
-                    my_field="id",
-                    other_field="campaign_scope_id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):
@@ -128,19 +102,6 @@ class UserGroupByCampaign(AuthMgrMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "user_group": Relation(
-                    kind="one",
-                    other_type="UserGroup",
-                    my_field="user_group_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-    @classmethod
     def authorize_query(cls, actor, query):
         return UserGroup.authorize_query(actor, query.join(UserGroup))
 
@@ -175,19 +136,6 @@ class UserGroupByCampaignScope(AuthMgrMixin, Base):
             "user_groups_by_campaign_scopes", cascade="all, delete-orphan"
         ),
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "user_group": Relation(
-                    kind="one",
-                    other_type="UserGroup",
-                    my_field="user_group_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):

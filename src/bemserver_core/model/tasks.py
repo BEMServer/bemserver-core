@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 import sqlalchemy as sqla
 from sqlalchemy.dialects.postgresql import JSONB
 
-from bemserver_core.authorization import AuthMgrMixin, Relation
+from bemserver_core.authorization import AuthMgrMixin
 from bemserver_core.celery import logger
 from bemserver_core.database import Base
 from bemserver_core.time_utils import PeriodEnum, make_date_offset
@@ -32,19 +32,6 @@ class TaskByCampaign(AuthMgrMixin, Base):
     )
     start_offset = sqla.Column(sqla.Integer, default=-1, nullable=False)
     end_offset = sqla.Column(sqla.Integer, default=0, nullable=False)
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "campaign": Relation(
-                    kind="one",
-                    other_type="Campaign",
-                    my_field="campaign_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):

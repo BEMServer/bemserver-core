@@ -2,7 +2,7 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMgrMixin, Relation
+from bemserver_core.authorization import AuthMgrMixin
 from bemserver_core.database import Base, db
 
 from .timeseries import Timeseries
@@ -74,19 +74,6 @@ class EnergyConsumptionTimeseriesBySite(AuthMgrMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-    @classmethod
     def authorize_query(cls, actor, query):
         return Timeseries.authorize_query(actor, query.join(Timeseries))
 
@@ -129,19 +116,6 @@ class EnergyConsumptionTimeseriesByBuilding(AuthMgrMixin, Base):
             "energy_consumption_timeseries_by_buildings", cascade="all, delete-orphan"
         ),
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):
@@ -188,19 +162,6 @@ class EnergyProductionTimeseriesBySite(AuthMgrMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-    @classmethod
     def authorize_query(cls, actor, query):
         return Timeseries.authorize_query(actor, query.join(Timeseries))
 
@@ -245,19 +206,6 @@ class EnergyProductionTimeseriesByBuilding(AuthMgrMixin, Base):
             "energy_production_timeseries_by_buildings", cascade="all, delete-orphan"
         ),
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):

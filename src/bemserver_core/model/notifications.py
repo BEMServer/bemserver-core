@@ -2,7 +2,7 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMgrMixin, Relation, auth_mgr
+from bemserver_core.authorization import AuthMgrMixin, auth_mgr
 from bemserver_core.celery import BEMServerCoreSystemTask, celery, logger
 from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.email import ems
@@ -30,25 +30,6 @@ class Notification(AuthMgrMixin, Base):
     event = sqla.orm.relationship(
         "Event", backref=sqla.orm.backref("notifs", cascade="all, delete-orphan")
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "user": Relation(
-                    kind="one",
-                    other_type="User",
-                    my_field="user_id",
-                    other_field="id",
-                ),
-                "event": Relation(
-                    kind="one",
-                    other_type="Event",
-                    my_field="event_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):

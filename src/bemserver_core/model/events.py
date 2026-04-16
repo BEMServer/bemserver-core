@@ -6,7 +6,7 @@ from functools import total_ordering
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMgrMixin, Relation
+from bemserver_core.authorization import AuthMgrMixin
 from bemserver_core.celery import BEMServerCoreSystemTask, celery, logger
 from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.exceptions import (
@@ -71,19 +71,6 @@ class Event(AuthMgrMixin, Base):
     campaign_scope = sqla.orm.relationship(
         "CampaignScope", backref=sqla.orm.backref("sites", cascade="all, delete-orphan")
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "campaign_scope": Relation(
-                    kind="one",
-                    other_type="CampaignScope",
-                    my_field="campaign_scope_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):
@@ -375,25 +362,6 @@ class EventCategoryByUser(AuthMgrMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "user": Relation(
-                    kind="one",
-                    other_type="User",
-                    my_field="user_id",
-                    other_field="id",
-                ),
-                "event_category": Relation(
-                    kind="one",
-                    other_type="EventCategory",
-                    my_field="category_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-    @classmethod
     def authorize_query(cls, actor, query):
         return query.filter(EventCategoryByUser.user_id == actor.id)
 
@@ -438,25 +406,6 @@ class TimeseriesByEvent(AuthMgrMixin, Base):
                 raise BEMServerCoreCampaignScopeError(
                     "Event and timeseries must be in same campaign scope"
                 )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-                "event": Relation(
-                    kind="one",
-                    other_type="Event",
-                    my_field="event_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @property
     def campaign_scope(self):
@@ -511,25 +460,6 @@ class EventBySite(AuthMgrMixin, Base):
                     "Event and site must be in same campaign"
                 )
 
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "event": Relation(
-                    kind="one",
-                    other_type="Event",
-                    my_field="event_id",
-                    other_field="id",
-                ),
-                "site": Relation(
-                    kind="one",
-                    other_type="Site",
-                    my_field="site_id",
-                    other_field="id",
-                ),
-            },
-        )
-
     @property
     def campaign_scope(self):
         return (
@@ -582,25 +512,6 @@ class EventByBuilding(AuthMgrMixin, Base):
                 raise BEMServerCoreCampaignError(
                     "Event and building must be in same campaign"
                 )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "event": Relation(
-                    kind="one",
-                    other_type="Event",
-                    my_field="event_id",
-                    other_field="id",
-                ),
-                "building": Relation(
-                    kind="one",
-                    other_type="Building",
-                    my_field="building_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @property
     def campaign_scope(self):
@@ -655,25 +566,6 @@ class EventByStorey(AuthMgrMixin, Base):
                     "Event and storey must be in same campaign"
                 )
 
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "event": Relation(
-                    kind="one",
-                    other_type="Event",
-                    my_field="event_id",
-                    other_field="id",
-                ),
-                "storey": Relation(
-                    kind="one",
-                    other_type="Storey",
-                    my_field="storey_id",
-                    other_field="id",
-                ),
-            },
-        )
-
     @property
     def campaign_scope(self):
         return (
@@ -727,25 +619,6 @@ class EventBySpace(AuthMgrMixin, Base):
                     "Event and space must be in same campaign"
                 )
 
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "event": Relation(
-                    kind="one",
-                    other_type="Event",
-                    my_field="event_id",
-                    other_field="id",
-                ),
-                "space": Relation(
-                    kind="one",
-                    other_type="Space",
-                    my_field="space_id",
-                    other_field="id",
-                ),
-            },
-        )
-
     @property
     def campaign_scope(self):
         return (
@@ -798,25 +671,6 @@ class EventByZone(AuthMgrMixin, Base):
                 raise BEMServerCoreCampaignError(
                     "Event and zone must be in same campaign"
                 )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "event": Relation(
-                    kind="one",
-                    other_type="Event",
-                    my_field="event_id",
-                    other_field="id",
-                ),
-                "zone": Relation(
-                    kind="one",
-                    other_type="Zone",
-                    my_field="zone_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @property
     def campaign_scope(self):

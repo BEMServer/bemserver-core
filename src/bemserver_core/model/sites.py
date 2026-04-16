@@ -2,7 +2,7 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMgrMixin, Relation, auth_mgr
+from bemserver_core.authorization import AuthMgrMixin, auth_mgr
 from bemserver_core.common import PropertyType
 from bemserver_core.database import Base, db, make_columns_read_only
 
@@ -142,19 +142,6 @@ class SitePropertyData(AuthMgrMixin, Base):
         backref=sqla.orm.backref("site_property_data", cascade="all, delete-orphan"),
     )
 
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "site": Relation(
-                    kind="one",
-                    other_type="Site",
-                    my_field="site_id",
-                    other_field="id",
-                ),
-            },
-        )
-
     def _before_flush(self):
         # Get property type and try to parse value to ensure its type validity.
         if (prop := SiteProperty.get_by_id(self.site_property_id)) is not None:
@@ -194,19 +181,6 @@ class BuildingPropertyData(AuthMgrMixin, Base):
             "building_property_data", cascade="all, delete-orphan"
         ),
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "building": Relation(
-                    kind="one",
-                    other_type="Building",
-                    my_field="building_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     def _before_flush(self):
         # Get property type and try to parse value to ensure its type validity.
@@ -248,19 +222,6 @@ class StoreyPropertyData(AuthMgrMixin, Base):
         backref=sqla.orm.backref("storey_property_data", cascade="all, delete-orphan"),
     )
 
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "storey": Relation(
-                    kind="one",
-                    other_type="Storey",
-                    my_field="storey_id",
-                    other_field="id",
-                ),
-            },
-        )
-
     def _before_flush(self):
         # Get property type and try to parse value to ensure its type validity.
         if (prop := StoreyProperty.get_by_id(self.storey_property_id)) is not None:
@@ -300,19 +261,6 @@ class SpacePropertyData(AuthMgrMixin, Base):
         "SpaceProperty",
         backref=sqla.orm.backref("space_property_data", cascade="all, delete-orphan"),
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "space": Relation(
-                    kind="one",
-                    other_type="Space",
-                    my_field="space_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     def _before_flush(self):
         # Get property type and try to parse value to ensure its type validity.
@@ -354,19 +302,6 @@ class ZonePropertyData(AuthMgrMixin, Base):
         "ZoneProperty",
         backref=sqla.orm.backref("zone_property_data", cascade="all, delete-orphan"),
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "zone": Relation(
-                    kind="one",
-                    other_type="Zone",
-                    my_field="zone_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     def _before_flush(self):
         # Get property type and try to parse value to ensure its type validity.
@@ -450,19 +385,6 @@ class Site(AuthMgrMixin, StructuralElementBase):
     )
 
     @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "campaign": Relation(
-                    kind="one",
-                    other_type="Campaign",
-                    my_field="campaign_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-    @classmethod
     def authorize_query(cls, actor, query):
         return Campaign.authorize_query(actor, query.join(Campaign))
 
@@ -502,19 +424,6 @@ class Building(AuthMgrMixin, StructuralElementBase):
                 site.campaign_id == campaign_id
             )
         return query
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "site": Relation(
-                    kind="one",
-                    other_type="Site",
-                    my_field="site_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):
@@ -560,19 +469,6 @@ class Storey(AuthMgrMixin, StructuralElementBase):
                 building.site_id == site_id
             )
         return query
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "building": Relation(
-                    kind="one",
-                    other_type="Building",
-                    my_field="building_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):
@@ -635,19 +531,6 @@ class Space(AuthMgrMixin, StructuralElementBase):
         return query
 
     @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "storey": Relation(
-                    kind="one",
-                    other_type="Storey",
-                    my_field="storey_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-    @classmethod
     def authorize_query(cls, actor, query):
         return Storey.authorize_query(actor, query.join(Storey))
 
@@ -676,19 +559,6 @@ class Zone(AuthMgrMixin, StructuralElementBase):
     campaign = sqla.orm.relationship(
         "Campaign", backref=sqla.orm.backref("zones", cascade="all, delete-orphan")
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "campaign": Relation(
-                    kind="one",
-                    other_type="Campaign",
-                    my_field="campaign_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):

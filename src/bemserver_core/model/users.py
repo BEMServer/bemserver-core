@@ -5,7 +5,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 
 import argon2
 
-from bemserver_core.authorization import AuthMgrMixin, Relation, auth_mgr
+from bemserver_core.authorization import AuthMgrMixin, auth_mgr
 from bemserver_core.database import Base, db
 
 ph = argon2.PasswordHasher()
@@ -20,19 +20,6 @@ class User(AuthMgrMixin, Base):
     password = sqla.Column(sqla.String(200), nullable=False)
     _is_admin = sqla.Column(sqla.Boolean(), nullable=False)
     _is_active = sqla.Column(sqla.Boolean(), nullable=False)
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "users_by_user_groups": Relation(
-                    kind="many",
-                    other_type="UserByUserGroup",
-                    my_field="id",
-                    other_field="user_id",
-                ),
-            },
-        )
 
     def __repr__(self):
         return (
@@ -101,25 +88,6 @@ class UserGroup(AuthMgrMixin, Base):
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
 
     @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "user_groups_by_campaigns": Relation(
-                    kind="many",
-                    other_type="UserGroupByCampaign",
-                    my_field="id",
-                    other_field="user_group_id",
-                ),
-                "users_by_user_groups": Relation(
-                    kind="many",
-                    other_type="UserByUserGroup",
-                    my_field="id",
-                    other_field="user_group_id",
-                ),
-            },
-        )
-
-    @classmethod
     def authorize_query(cls, actor, query):
         return UserByUserGroup.authorize_query(actor, query.join(UserByUserGroup))
 
@@ -152,25 +120,6 @@ class UserByUserGroup(AuthMgrMixin, Base):
         UserGroup,
         backref=sqla.orm.backref("users_by_user_groups", cascade="all, delete-orphan"),
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "user": Relation(
-                    kind="one",
-                    other_type="User",
-                    my_field="user_id",
-                    other_field="id",
-                ),
-                "user_group": Relation(
-                    kind="one",
-                    other_type="UserGroup",
-                    my_field="user_group_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):

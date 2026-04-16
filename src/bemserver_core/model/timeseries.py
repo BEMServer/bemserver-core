@@ -2,7 +2,7 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMgrMixin, Relation, auth_mgr
+from bemserver_core.authorization import AuthMgrMixin, auth_mgr
 from bemserver_core.common import PropertyType, ureg
 from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.exceptions import TimeseriesNotFoundError
@@ -61,25 +61,6 @@ class Timeseries(AuthMgrMixin, Base):
         "CampaignScope",
         backref=sqla.orm.backref("timeseries", cascade="all, delete-orphan"),
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "campaign": Relation(
-                    kind="one",
-                    other_type="Campaign",
-                    my_field="campaign_id",
-                    other_field="id",
-                ),
-                "campaign_scope": Relation(
-                    kind="one",
-                    other_type="CampaignScope",
-                    my_field="campaign_scope_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     def _before_flush(self):
         if self.unit_symbol is not None:
@@ -423,19 +404,6 @@ class TimeseriesPropertyData(AuthMgrMixin, Base):
         ),
     )
 
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-            },
-        )
-
     def _before_flush(self):
         # Get property type and try to parse value to ensure its type validity.
         if (prop := TimeseriesProperty.get_by_id(self.property_id)) is not None:
@@ -470,19 +438,6 @@ class TimeseriesByDataState(AuthMgrMixin, Base):
             "timeseries_by_data_states", cascade="all, delete-orphan"
         ),
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):
@@ -523,25 +478,6 @@ class TimeseriesBySite(AuthMgrMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-                "site": Relation(
-                    kind="one",
-                    other_type="Site",
-                    my_field="site_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-    @classmethod
     def authorize_query(cls, actor, query):
         return Timeseries.authorize_query(actor, query.join(Timeseries))
 
@@ -572,25 +508,6 @@ class TimeseriesByBuilding(AuthMgrMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-                "building": Relation(
-                    kind="one",
-                    other_type="Building",
-                    my_field="building_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-    @classmethod
     def authorize_query(cls, actor, query):
         return Timeseries.authorize_query(actor, query.join(Timeseries))
 
@@ -615,25 +532,6 @@ class TimeseriesByStorey(AuthMgrMixin, Base):
         "Timeseries",
         backref=sqla.orm.backref("timeseries_by_storeys", cascade="all, delete-orphan"),
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-                "storey": Relation(
-                    kind="one",
-                    other_type="Storey",
-                    my_field="storey_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):
@@ -662,25 +560,6 @@ class TimeseriesBySpace(AuthMgrMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-                "space": Relation(
-                    kind="one",
-                    other_type="Space",
-                    my_field="space_id",
-                    other_field="id",
-                ),
-            },
-        )
-
-    @classmethod
     def authorize_query(cls, actor, query):
         return Timeseries.authorize_query(actor, query.join(Timeseries))
 
@@ -705,25 +584,6 @@ class TimeseriesByZone(AuthMgrMixin, Base):
         "Timeseries",
         backref=sqla.orm.backref("timeseries_by_zones", cascade="all, delete-orphan"),
     )
-
-    @classmethod
-    def register_class(cls):
-        super().register_class(
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-                "zone": Relation(
-                    kind="one",
-                    other_type="Zone",
-                    my_field="zone_id",
-                    other_field="id",
-                ),
-            },
-        )
 
     @classmethod
     def authorize_query(cls, actor, query):
