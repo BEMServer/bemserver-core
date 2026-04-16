@@ -51,7 +51,8 @@ class TaskByCampaign(AuthMgrMixin, Base):
         return Campaign.authorize_query(actor, query.join(Campaign))
 
     def authorize_read(self, actor):
-        return self.campaign.is_member(actor)
+        campaign = Campaign.get_by_id(self.campaign_id)
+        return campaign.is_member(actor)
 
     def make_interval(self):
         datetime = dt.datetime.now(tz=ZoneInfo(self.campaign.timezone))

@@ -68,4 +68,5 @@ class WeatherTimeseriesBySite(AuthMgrMixin, Base):
         return Timeseries.authorize_query(actor, query.join(Timeseries))
 
     def authorize_read(self, actor):
-        return self.timeseries.authorize_read(actor)
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)

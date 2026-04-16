@@ -90,16 +90,20 @@ class Event(AuthMgrMixin, Base):
         return CampaignScope.authorize_query(actor, query.join(CampaignScope))
 
     def authorize_create(self, actor):
-        return self.campaign_scope.is_member(actor)
+        campaign_scope = CampaignScope.get_by_id(self.campaign_scope_id)
+        return campaign_scope.is_member(actor)
 
     def authorize_read(self, actor):
-        return self.campaign_scope.is_member(actor)
+        campaign_scope = CampaignScope.get_by_id(self.campaign_scope_id)
+        return campaign_scope.is_member(actor)
 
     def authorize_update(self, actor):
-        return self.campaign_scope.is_member(actor)
+        campaign_scope = CampaignScope.get_by_id(self.campaign_scope_id)
+        return campaign_scope.is_member(actor)
 
     def authorize_delete(self, actor):
-        return self.campaign_scope.is_member(actor)
+        campaign_scope = CampaignScope.get_by_id(self.campaign_scope_id)
+        return campaign_scope.is_member(actor)
 
     @classmethod
     def get(
@@ -454,21 +458,30 @@ class TimeseriesByEvent(AuthMgrMixin, Base):
             },
         )
 
+    @property
+    def campaign_scope(self):
+        return (
+            db.session.query(CampaignScope)
+            .join(Event)
+            .filter(Event.id == self.event_id)
+            .one()
+        )
+
     @classmethod
     def authorize_query(cls, actor, query):
         return Event.authorize_query(actor, query.join(Event))
 
     def authorize_create(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_read(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_update(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_delete(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
 
 class EventBySite(AuthMgrMixin, Base):
@@ -517,21 +530,30 @@ class EventBySite(AuthMgrMixin, Base):
             },
         )
 
+    @property
+    def campaign_scope(self):
+        return (
+            db.session.query(CampaignScope)
+            .join(Event)
+            .filter(Event.id == self.event_id)
+            .one()
+        )
+
     @classmethod
     def authorize_query(cls, actor, query):
         return Event.authorize_query(actor, query.join(Event))
 
     def authorize_create(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_read(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_update(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_delete(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
 
 class EventByBuilding(AuthMgrMixin, Base):
@@ -580,21 +602,30 @@ class EventByBuilding(AuthMgrMixin, Base):
             },
         )
 
+    @property
+    def campaign_scope(self):
+        return (
+            db.session.query(CampaignScope)
+            .join(Event)
+            .filter(Event.id == self.event_id)
+            .one()
+        )
+
     @classmethod
     def authorize_query(cls, actor, query):
         return Event.authorize_query(actor, query.join(Event))
 
     def authorize_create(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_read(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_update(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_delete(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
 
 class EventByStorey(AuthMgrMixin, Base):
@@ -643,21 +674,30 @@ class EventByStorey(AuthMgrMixin, Base):
             },
         )
 
+    @property
+    def campaign_scope(self):
+        return (
+            db.session.query(CampaignScope)
+            .join(Event)
+            .filter(Event.id == self.event_id)
+            .one()
+        )
+
     @classmethod
     def authorize_query(cls, actor, query):
         return Event.authorize_query(actor, query.join(Event))
 
     def authorize_create(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_read(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_update(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_delete(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
 
 class EventBySpace(AuthMgrMixin, Base):
@@ -706,21 +746,30 @@ class EventBySpace(AuthMgrMixin, Base):
             },
         )
 
+    @property
+    def campaign_scope(self):
+        return (
+            db.session.query(CampaignScope)
+            .join(Event)
+            .filter(Event.id == self.event_id)
+            .one()
+        )
+
     @classmethod
     def authorize_query(cls, actor, query):
         return Event.authorize_query(actor, query.join(Event))
 
     def authorize_create(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_read(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_update(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_delete(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
 
 class EventByZone(AuthMgrMixin, Base):
@@ -769,21 +818,30 @@ class EventByZone(AuthMgrMixin, Base):
             },
         )
 
+    @property
+    def campaign_scope(self):
+        return (
+            db.session.query(CampaignScope)
+            .join(Event)
+            .filter(Event.id == self.event_id)
+            .one()
+        )
+
     @classmethod
     def authorize_query(cls, actor, query):
         return Event.authorize_query(actor, query.join(Event))
 
     def authorize_create(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_read(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_update(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
     def authorize_delete(self, actor):
-        return self.event.campaign_scope.is_member(actor)
+        return self.campaign_scope.is_member(actor)
 
 
 def init_db_events_triggers():

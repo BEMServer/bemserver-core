@@ -150,7 +150,6 @@ class AuthorizationsManager:
 
     def authorize(self, action: str, item: any) -> bool:
         actor = get_current_user()
-        db.session().enable_relationship_loading(item)
         if not (
             OPEN_BAR.get() or actor.is_admin or self.eval_rule(action, actor, item)
         ):

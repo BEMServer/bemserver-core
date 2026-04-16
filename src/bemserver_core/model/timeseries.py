@@ -90,7 +90,8 @@ class Timeseries(AuthMgrMixin, Base):
         return CampaignScope.authorize_query(actor, query.join(CampaignScope))
 
     def authorize_read(self, actor):
-        return self.campaign_scope.is_member(actor)
+        campaign_scope = CampaignScope.get_by_id(self.campaign_scope_id)
+        return campaign_scope.is_member(actor)
 
     @classmethod
     def get(
@@ -445,7 +446,8 @@ class TimeseriesPropertyData(AuthMgrMixin, Base):
         return Timeseries.authorize_query(actor, query.join(Timeseries))
 
     def authorize_read(self, actor):
-        return self.timeseries.authorize_read(actor)
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
 class TimeseriesByDataState(AuthMgrMixin, Base):
@@ -487,16 +489,20 @@ class TimeseriesByDataState(AuthMgrMixin, Base):
         return Timeseries.authorize_query(actor, query.join(Timeseries))
 
     def authorize_create(self, actor):
-        return self.timeseries.authorize_read(actor)
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
     def authorize_read(self, actor):
-        return self.timeseries.authorize_read(actor)
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
     def authorize_update(self, actor):
-        return self.timeseries.authorize_read(actor)
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
     def authorize_delete(self, actor):
-        return self.timeseries.authorize_read(actor)
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
 class TimeseriesBySite(AuthMgrMixin, Base):
@@ -540,7 +546,8 @@ class TimeseriesBySite(AuthMgrMixin, Base):
         return Timeseries.authorize_query(actor, query.join(Timeseries))
 
     def authorize_read(self, actor):
-        return self.timeseries.authorize_read(actor)
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
 class TimeseriesByBuilding(AuthMgrMixin, Base):
@@ -588,7 +595,8 @@ class TimeseriesByBuilding(AuthMgrMixin, Base):
         return Timeseries.authorize_query(actor, query.join(Timeseries))
 
     def authorize_read(self, actor):
-        return self.timeseries.authorize_read(actor)
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
 class TimeseriesByStorey(AuthMgrMixin, Base):
@@ -632,7 +640,8 @@ class TimeseriesByStorey(AuthMgrMixin, Base):
         return Timeseries.authorize_query(actor, query.join(Timeseries))
 
     def authorize_read(self, actor):
-        return self.timeseries.authorize_read(actor)
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
 class TimeseriesBySpace(AuthMgrMixin, Base):
@@ -676,7 +685,8 @@ class TimeseriesBySpace(AuthMgrMixin, Base):
         return Timeseries.authorize_query(actor, query.join(Timeseries))
 
     def authorize_read(self, actor):
-        return self.timeseries.authorize_read(actor)
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
 class TimeseriesByZone(AuthMgrMixin, Base):
@@ -720,7 +730,8 @@ class TimeseriesByZone(AuthMgrMixin, Base):
         return Timeseries.authorize_query(actor, query.join(Timeseries))
 
     def authorize_read(self, actor):
-        return self.timeseries.authorize_read(actor)
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
 def init_db_timeseries_triggers():
