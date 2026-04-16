@@ -6,8 +6,23 @@ import pytest
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMgrMixin
+from bemserver_core.authorization import AuthMgrMixin, AuthorizationsManager
 from bemserver_core.database import Base, db
+from bemserver_core.exceptions import BEMServerAuthorizationUndefinedActionError
+
+
+class TestAuthorizationsManager:
+    def test_auth_mgr_eval_rule(self):
+        auth_mgr = AuthorizationsManager()
+
+        @auth_mgr.add_rule("test")
+        def test(actor, item):
+            return True
+
+        assert auth_mgr.eval_rule("test", None, None) is True
+
+        with pytest.raises(BEMServerAuthorizationUndefinedActionError):
+            auth_mgr.eval_rule("dummy", None, None)
 
 
 class TestAuthMgrMixin:

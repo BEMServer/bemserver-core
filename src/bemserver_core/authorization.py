@@ -6,7 +6,10 @@ import warnings
 from contextvars import ContextVar
 
 from bemserver_core.database import db
-from bemserver_core.exceptions import BEMServerAuthorizationError
+from bemserver_core.exceptions import (
+    BEMServerAuthorizationError,
+    BEMServerAuthorizationUndefinedActionError,
+)
 from bemserver_core.utils import make_context_var_manager
 
 if typing.TYPE_CHECKING:
@@ -33,10 +36,6 @@ class OpenBarPolarClass:
         return OPEN_BAR.get()
 
 
-class AuthUndefinedActionError(Exception):
-    """"""
-
-
 class AuthorizationsManager:
     def __init__(self) -> None:
         self._rules: dict = {}
@@ -58,7 +57,9 @@ class AuthorizationsManager:
         try:
             rule = self._rules[action]
         except KeyError as exc:
-            raise AuthUndefinedActionError(f"Undefined action: {action}") from exc
+            raise BEMServerAuthorizationUndefinedActionError(
+                f"Undefined action: {action}"
+            ) from exc
         return rule(actor, item)
 
     def authorize(self, action: str, item: any) -> bool:
