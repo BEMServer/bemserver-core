@@ -6,6 +6,7 @@ import pytest
 
 import numpy as np
 import pandas as pd
+from pandas.testing import assert_frame_equal
 
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.model import (
@@ -79,7 +80,10 @@ class TestCleanupProcess:
                     ts_2.id: [0, 13, 33, 42, 69],
                     ts_3.id: [np.nan, np.nan, np.nan, np.nan, np.nan],
                 },
-                index=pd.DatetimeIndex(timestamps, name="timestamp"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp", freq=None).as_unit(
+                    "us"
+                ),
                 dtype=float,
             )
-            assert ret.equals(expected)
+            expected.columns.name = "id"
+            assert_frame_equal(ret, expected)

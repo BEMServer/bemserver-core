@@ -62,7 +62,7 @@ class TestTimeseriesDataIO:
                 "2020-01-01T03:00:00+00:00",
             ],
             name="timestamp",
-        )
+        ).as_unit("us")
         val_0 = [0, 1, 2, 3]
         val_2 = [10, 11, 12, np.nan]
         data_df = pd.DataFrame(
@@ -205,7 +205,7 @@ class TestTimeseriesDataIO:
                 "2020-01-01T03:00:00+00:00",
             ],
             name="timestamp",
-        )
+        ).as_unit("us")
         val_0 = [0, 1, 2, 3]
         val_2 = [10, 11, 12, 13]
 
@@ -260,7 +260,7 @@ class TestTimeseriesDataIO:
                 "2020-01-01T03:00:00+00:00",
             ],
             name="timestamp",
-        )
+        ).as_unit("us")
         val_0 = [0, 1, 2, 3]
 
         data_df = pd.DataFrame(
@@ -292,7 +292,7 @@ class TestTimeseriesDataIO:
                 "2020-01-01T03:00:00+00:00",
             ],
             name="timestamp",
-        )
+        ).as_unit("us")
         val_0 = [0, 1, 2, 3]
 
         data_df = pd.DataFrame(
@@ -326,14 +326,14 @@ class TestTimeseriesDataIO:
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
         # Empty dataframe
-        index = pd.DatetimeIndex([])
+        index = pd.DatetimeIndex([]).as_unit("us")
         data_df = pd.DataFrame({}, index=index)
 
         # Nothing happens. No crash.
         with CurrentUser(admin_user):
             tsdio.set_timeseries_data(data_df, ds_1, campaign)
 
-        index = pd.DatetimeIndex(["2020-01-01T00:00:00+00:00"])
+        index = pd.DatetimeIndex(["2020-01-01T00:00:00+00:00"]).as_unit("us")
         val_0 = [np.nan]
 
         # Not exactly empty but NaN-only dataframe
@@ -684,12 +684,13 @@ class TestTimeseriesDataIO:
             data_df = tsdio.get_timeseries_data(
                 start_dt, end_dt, ts_l, ds_1, col_label="name"
             )
-            index = pd.DatetimeIndex([], name="timestamp", tz="UTC")
+            index = pd.DatetimeIndex([], name="timestamp", tz="UTC").as_unit("us")
             no_data_df = pd.DataFrame(
                 {ts_0.name: [], ts_2.name: [], ts_4.name: []},
                 index=index,
             )
-            assert data_df.equals(no_data_df)
+            no_data_df.columns.name = "name"
+            assert_frame_equal(data_df, no_data_df)
 
         # Create data
         timestamps = pd.date_range(
@@ -710,7 +711,7 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+            ).as_unit("us")
             val_0 = [0.0, 1.0, 2.0]
             val_2 = [np.nan, np.nan, np.nan]
             val_4 = [10.0, 12.0, np.nan]
@@ -718,25 +719,26 @@ class TestTimeseriesDataIO:
                 {ts_0.id: val_0, ts_2.id: val_2, ts_4.id: val_4},
                 index=index,
             )
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "id"
+            assert_frame_equal(data_df, expected_data_df)
 
             # Get with no start_date
             data_df = tsdio.get_timeseries_data(None, end_dt, ts_l, ds_1)
-            assert data_df.equals(expected_data_df)
+            assert_frame_equal(data_df, expected_data_df)
 
             # Get with no end date
             data_df = tsdio.get_timeseries_data(start_dt, None, ts_l, ds_1)
-            assert data_df.equals(expected_data_df)
+            assert_frame_equal(data_df, expected_data_df)
 
             # Get with no start/end date
             data_df = tsdio.get_timeseries_data(None, None, ts_l, ds_1)
-            assert data_df.equals(expected_data_df)
+            assert_frame_equal(data_df, expected_data_df)
 
             # Get outside data range: no data
             data_df = tsdio.get_timeseries_data(
                 end_dt, None, ts_l, ds_1, col_label="name"
             )
-            assert data_df.equals(no_data_df)
+            assert_frame_equal(data_df, no_data_df)
 
             # Get with TZ
             data_df = tsdio.get_timeseries_data(
@@ -754,8 +756,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz=ZoneInfo("Europe/Paris"),
-            )
-            assert data_df.equals(expected_data_df)
+            ).as_unit("us")
+            assert_frame_equal(data_df, expected_data_df)
 
             # Test conversions
             with OpenBar():
@@ -776,7 +778,7 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+            ).as_unit("us")
             val_0 = [1000 * 0.0, 1000 * 1.0, 1000 * 2.0]
             val_2 = [np.nan, np.nan, np.nan]
             val_4 = [10.0, 12.0, np.nan]
@@ -784,7 +786,8 @@ class TestTimeseriesDataIO:
                 {ts_0.id: val_0, ts_2.id: val_2, ts_4.id: val_4},
                 index=index,
             )
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "id"
+            assert_frame_equal(data_df, expected_data_df)
             # Undefined: dummy
             with pytest.raises(BEMServerCoreUndefinedUnitError):
                 data_df = tsdio.get_timeseries_data(
@@ -815,7 +818,7 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+            ).as_unit("us")
             val_0 = [1.0, 2.0]
             val_2 = [np.nan, np.nan]
             val_4 = [12.0, np.nan]
@@ -823,25 +826,26 @@ class TestTimeseriesDataIO:
                 {ts_2.id: val_2, ts_0.id: val_0, ts_4.id: val_4},
                 index=index,
             )
+            expected_data_df.columns.name = "id"
             data_df = tsdio.get_timeseries_data(
                 h1_dt, h2_dt, ts_l, ds_1, inclusive="both"
             )
-            assert data_df.equals(expected_data_df)
+            assert_frame_equal(data_df, expected_data_df)
             data_df = tsdio.get_timeseries_data(
                 h1_dt, h2_dt, ts_l, ds_1, inclusive="neither"
             )
             mask = (expected_data_df.index > h1_dt) & (expected_data_df.index < h2_dt)
-            assert data_df.equals(expected_data_df.loc[mask])
+            assert_frame_equal(data_df, expected_data_df.loc[mask])
             data_df = tsdio.get_timeseries_data(
                 h1_dt, h2_dt, ts_l, ds_1, inclusive="left"
             )
             mask = (expected_data_df.index >= h1_dt) & (expected_data_df.index < h2_dt)
-            assert data_df.equals(expected_data_df.loc[mask])
+            assert_frame_equal(data_df, expected_data_df.loc[mask])
             data_df = tsdio.get_timeseries_data(
                 h1_dt, h2_dt, ts_l, ds_1, inclusive="right"
             )
             mask = (expected_data_df.index > h1_dt) & (expected_data_df.index <= h2_dt)
-            assert data_df.equals(expected_data_df.loc[mask])
+            assert_frame_equal(data_df, expected_data_df.loc[mask])
 
     @pytest.mark.parametrize("campaigns", (2,), indirect=True)
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
@@ -895,7 +899,7 @@ class TestTimeseriesDataIO:
             ],
             name="timestamp",
             tz="UTC",
-        )
+        ).as_unit("us")
         val_1 = [0.0, 1.0, 2.0]
         val_3 = [10.0, 12.0, np.nan]
         expected_data_df = pd.DataFrame(
@@ -905,7 +909,8 @@ class TestTimeseriesDataIO:
             },
             index=index,
         )
-        assert data_df.equals(expected_data_df)
+        expected_data_df.columns.name = col_label
+        assert_frame_equal(data_df, expected_data_df)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.parametrize("agg", ("avg", "min", "max", "count"))
@@ -945,7 +950,7 @@ class TestTimeseriesDataIO:
                 {agg: (0, 0, 0) if agg == "count" else (np.nan, np.nan, np.nan)},
                 index=pd.Index((getattr(ts, col_label) for ts in ts_l), name=col_label),
             )
-            assert data_df.equals(expected_data_df)
+            assert_frame_equal(data_df, expected_data_df)
 
         values_1 = range(24 * 3)
         create_timeseries_data(ts_0, ds_1, timestamps, values_1)
@@ -973,7 +978,7 @@ class TestTimeseriesDataIO:
                 {agg: expected_values},
                 index=pd.Index((getattr(ts, col_label) for ts in ts_l), name=col_label),
             )
-            assert data_df.equals(expected_data_df)
+            assert_frame_equal(data_df, expected_data_df)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     def test_timeseries_data_io_get_timeseries_buckets_data_fixed_size_as_admin(
@@ -1016,7 +1021,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="D",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.id: [np.nan, np.nan, np.nan],
@@ -1025,7 +1031,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "id"
+            assert_frame_equal(data_df, expected_data_df)
 
         values_1 = range(24 * 3)
         create_timeseries_data(ts_0, ds_1, timestamps, values_1)
@@ -1053,7 +1060,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="D",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [24, 24, 24],
@@ -1062,7 +1070,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # UTC count 1 day with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1087,7 +1096,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="D",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [24, 24, 24, 0, 0, 0],
@@ -1096,7 +1106,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # UTC count 1 day, 3 hour (and a half) offset
             # start time is floored to round to interval
@@ -1119,7 +1130,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="D",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [24, 24, 24],
@@ -1128,8 +1140,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # Local TZ count 1 week
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1152,7 +1164,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz=ZoneInfo("Europe/Paris"),
-            )
+                freq="W-MON",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [72, 0],
@@ -1161,8 +1174,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # UTC count 12 hours
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1187,7 +1200,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="12h",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: 6 * [12],
@@ -1196,7 +1210,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # Local TZ avg
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1218,7 +1233,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz=ZoneInfo("Europe/Paris"),
-            )
+                freq="D",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [11.0, 34.5, 58.5],
@@ -1227,8 +1243,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # UTC sum, with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1251,7 +1267,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="D",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [276.0, 852.0, 1428.0, np.nan],
@@ -1260,8 +1277,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # UTC min, with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1284,7 +1301,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="D",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [0.0, 24.0, 48.0, np.nan],
@@ -1293,8 +1311,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # UTC max, with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1307,7 +1325,6 @@ class TestTimeseriesDataIO:
                 "max",
                 col_label="name",
             )
-
             index = pd.DatetimeIndex(
                 [
                     "2020-01-01T00:00:00",
@@ -1317,7 +1334,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="D",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [23.0, 47.0, 71.0, np.nan],
@@ -1326,8 +1344,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # Test conversions
             with OpenBar():
@@ -1350,7 +1368,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="D",
+            ).as_unit("us")
             val_0 = [1000 * 11.5, 1000 * 35.5, 1000 * 59.5]
             val_2 = [np.nan, np.nan, np.nan]
             val_4 = [33.0, 81.0, np.nan]
@@ -1358,7 +1377,8 @@ class TestTimeseriesDataIO:
                 {ts_0.id: val_0, ts_2.id: val_2, ts_4.id: val_4},
                 index=index,
             )
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "id"
+            assert_frame_equal(data_df, expected_data_df)
             # Undefined: dummy
             with pytest.raises(BEMServerCoreUndefinedUnitError):
                 data_df = tsdio.get_timeseries_buckets_data(
@@ -1412,7 +1432,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="D",
+            ).as_unit("us")
             val_0 = [24, 24, 24]
             val_2 = [0, 0, 0]
             val_4 = [24, 24, 0]
@@ -1420,7 +1441,8 @@ class TestTimeseriesDataIO:
                 {ts_0.id: val_0, ts_2.id: val_2, ts_4.id: val_4},
                 index=index,
             )
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "id"
+            assert_frame_equal(data_df, expected_data_df)
 
             # Purposely set order different than ID order to check output ordering
             ts_l = (ts_2, ts_0, ts_4)
@@ -1434,7 +1456,6 @@ class TestTimeseriesDataIO:
                 1,
                 "day",
                 "count",
-                col_label="id",
             )
 
             index = pd.DatetimeIndex(
@@ -1445,7 +1466,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="D",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_2.id: [0, 0, 0],
@@ -1454,7 +1476,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "id"
+            assert_frame_equal(data_df, expected_data_df)
 
             # No timeseries
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1469,9 +1492,11 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="D",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame({}, index=index)
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "id"
+            assert_frame_equal(data_df, expected_data_df)
 
             # Invalid aggregation
             with pytest.raises(TimeseriesDataIOInvalidAggregationError):
@@ -1556,17 +1581,23 @@ class TestTimeseriesDataIO:
                 col_label="name",
             )
 
-            index = pd.DatetimeIndex(
-                [
-                    "2020-10-25T00:00:00",
-                    "2020-10-25T01:00:00",
-                ],
-                name="timestamp",
-                tz="UTC",
-            ).tz_convert(ZoneInfo("Europe/Paris"))
+            index = (
+                pd.DatetimeIndex(
+                    [
+                        "2020-10-25T00:00:00",
+                        "2020-10-25T01:00:00",
+                    ],
+                    name="timestamp",
+                    tz="UTC",
+                    freq="h",
+                )
+                .as_unit("us")
+                .tz_convert(ZoneInfo("Europe/Paris"))
+            )
             expected_data_df = pd.DataFrame({ts_0.name: [1, 1]}, index=index)
+            expected_data_df.columns.name = "name"
 
-            assert data_df.equals(expected_data_df)
+            assert_frame_equal(data_df, expected_data_df)
 
     def test_timeseries_data_io_get_timeseries_buckets_data_fixed_size_dst_as_admin(
         self, users, timeseries
@@ -1618,9 +1649,11 @@ class TestTimeseriesDataIO:
                 ["2020-03-28T00:00:00", "2020-03-29T00:00:00"],
                 name="timestamp",
                 tz=ZoneInfo("Europe/Paris"),
-            )
+                freq="D",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame({ts_0.name: [24, 23]}, index=index)
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # local TZ count 1 day - Fall back
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1630,9 +1663,11 @@ class TestTimeseriesDataIO:
                 ["2020-10-24T00:00:00", "2020-10-25T00:00:00"],
                 name="timestamp",
                 tz=ZoneInfo("Europe/Paris"),
-            )
+                freq="D",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame({ts_0.name: [24, 25]}, index=index)
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     def test_timeseries_data_io_get_timeseries_buckets_data_variable_size_as_admin(
@@ -1674,7 +1709,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="YS",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [24 * 366, 24 * 365],
@@ -1683,8 +1719,9 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
+            expected_data_df.columns.name = "name"
 
-            assert data_df.equals(expected_data_df)
+            assert_frame_equal(data_df, expected_data_df)
 
             # UTC count year, with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1706,7 +1743,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="YS",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [24 * 366, 24 * 365, 0],
@@ -1715,7 +1753,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # Local TZ count year - start_dt floored
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1737,7 +1776,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz=ZoneInfo("Europe/Paris"),
-            )
+                freq="YS",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [
@@ -1754,7 +1794,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # UTC avg month, with gapfill
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1778,7 +1819,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="MS",
+            ).as_unit("us")
 
             expected_data_df = pd.DataFrame(
                 {
@@ -1788,8 +1830,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # UTC avg month
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1811,7 +1853,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="MS",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [371.5, 1091.5, 1811.5],
@@ -1820,8 +1863,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # Local TZ avg month
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1845,7 +1888,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz=ZoneInfo("Europe/Paris"),
-            )
+                freq="MS",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [371.0, 1090.5, 1810.0, 2541.5],
@@ -1854,8 +1898,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # UTC sum month
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1877,7 +1921,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="MS",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [276396.0, 759684.0, 1347756.0],
@@ -1886,8 +1931,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # UTC min month
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1909,7 +1954,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="MS",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [0.0, 744.0, 1440.0],
@@ -1918,8 +1964,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # UTC max month
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1941,7 +1987,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="MS",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.name: [743.0, 1439.0, 2183.0],
@@ -1950,8 +1997,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "name"
+            assert_frame_equal(data_df, expected_data_df)
 
             # UTC count year by ID
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1965,7 +2012,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="YS",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_0.id: [24 * 366, 24 * 365],
@@ -1974,8 +2022,8 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
-
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "id"
+            assert_frame_equal(data_df, expected_data_df)
 
             # No timeseries
             data_df = tsdio.get_timeseries_buckets_data(
@@ -1989,9 +2037,11 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="YS",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame({}, index=index)
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "id"
+            assert_frame_equal(data_df, expected_data_df)
 
             with pytest.raises(BEMServerCorePeriodError):
                 # 2 years
@@ -2060,7 +2110,8 @@ class TestTimeseriesDataIO:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+                freq="D",
+            ).as_unit("us")
             expected_data_df = pd.DataFrame(
                 {
                     ts_1.name if col_label == "name" else ts_1.id: [11.5, 35.5, 59.5],
@@ -2068,8 +2119,9 @@ class TestTimeseriesDataIO:
                 },
                 index=index,
             )
+            expected_data_df.columns.name = col_label
 
-            assert data_df.equals(expected_data_df)
+            assert_frame_equal(data_df, expected_data_df)
 
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     def test_timeseries_data_io_delete_as_admin(
@@ -2356,13 +2408,13 @@ class TestTimeseriesDataCSVIO:
             # Value not float
             ("2020-01-01T00:00:00+00:00,a", TimeseriesDataCSVIOError),
             # Too many columns
-            ("2500-01-01T00:00:00+00:00,1,2,3,4,5", TimeseriesDataCSVIOError),
+            ("2020-01-01T00:00:00+00:00,1,2,3,4,5", TimeseriesDataCSVIOError),
             # Naive datetime
             ("2020-01-01T00:00:00,12", TimeseriesDataIODatetimeError),
             # Invalid timestamp
             ("dummy,1", TimeseriesDataIODatetimeError),
             ("0,1", TimeseriesDataIODatetimeError),
-            ("2500-01-01T00:00:00+00:00,12", TimeseriesDataIODatetimeError),
+            ("10000-01-01T00:00:00+00:00,12", TimeseriesDataIODatetimeError),
         ),
     )
     @pytest.mark.usefixtures("timeseries")
@@ -2378,7 +2430,7 @@ class TestTimeseriesDataCSVIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        header = "Datetime,Timeseries 0\n" if for_campaign else "Datetime,1\n"
+        header = "Datetime,Timeseries 1\n" if for_campaign else "Datetime,1\n"
         csv_data = header + row
 
         with CurrentUser(admin_user):
@@ -2970,7 +3022,7 @@ class TestTimeseriesDataJSONIO:
             # Invalid timestamp
             ('{"1": {"dummy": 1}}', TimeseriesDataIODatetimeError),
             ('{"1": [{"dummy": 1}]}', TimeseriesDataIODatetimeError),
-            ('{"1": {"2500-01-01T00:00:00+00:00": 1}}', TimeseriesDataIODatetimeError),
+            ('{"1": {"10000-01-01T00:00:00+00:00": 1}}', TimeseriesDataIODatetimeError),
             # Invalid value
             ('{"1": {"2020-01-01T00:00:00+00:00": "lol"}}', TimeseriesDataJSONIOError),
         ),

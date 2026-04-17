@@ -96,7 +96,7 @@ class TestWeatherClient:
             ["2020-01-01T00:00:00+00:00", "2020-01-01T01:00:00+00:00"],
             name="timestamp",
             tz="UTC",
-        )
+        ).as_unit("us")
         expected_data_df = pd.DataFrame(
             {"AIR_TEMPERATURE": [2.45, 2.59], "RELATIVE_HUMIDITY": [0.78, 0.78]},
             index=index,
@@ -354,7 +354,7 @@ class TestWeatherDataProcessor:
             ],
             name="timestamp",
             tz="UTC",
-        )
+        ).as_unit("us")
         expected_data_df = pd.DataFrame(
             {"Timeseries 1": [2.45, 2.59], "Timeseries 2": [np.nan, np.nan]},
             index=index,
@@ -379,7 +379,7 @@ class TestWeatherDataProcessor:
             ],
             name="timestamp",
             tz="UTC",
-        )
+        ).as_unit("us")
         expected_data_df = pd.DataFrame(
             {"Timeseries 1": [2.45, 2.59], "Timeseries 2": [78.0, 79.0]}, index=index
         )

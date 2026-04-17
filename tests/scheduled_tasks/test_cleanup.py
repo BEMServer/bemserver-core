@@ -5,6 +5,7 @@ import datetime as dt
 import pytest
 
 import pandas as pd
+from pandas.testing import assert_frame_equal
 
 from bemserver_core.authorization import OpenBar
 from bemserver_core.database import db
@@ -56,13 +57,15 @@ class TestCleanupScheduledTask:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+            ).as_unit("us")
             val_0 = [13.0]
             expected_data_df = pd.DataFrame({ts_0.id: val_0}, index=index)
-            assert data_df.equals(expected_data_df)
+            expected_data_df.columns.name = "id"
+            assert_frame_equal(data_df, expected_data_df)
 
             # Campaign 2 (not cleaned), TS 1 -> no clean data
             data_df = tsdio.get_timeseries_data(start_dt, end_dt, (ts_1,), ds_2)
-            index = pd.DatetimeIndex([], name="timestamp", tz="UTC")
+            index = pd.DatetimeIndex([], name="timestamp", tz="UTC").as_unit("us")
             no_data_df = pd.DataFrame({ts_1.id: []}, index=index)
-            assert data_df.equals(no_data_df)
+            no_data_df.columns.name = "id"
+            assert_frame_equal(data_df, no_data_df)

@@ -5,6 +5,7 @@ from unittest import mock
 import pytest
 
 import pandas as pd
+from pandas.testing import assert_frame_equal
 
 from bemserver_core import BEMServerCore
 from bemserver_core.common import ureg
@@ -66,7 +67,7 @@ class TestUnits:
     def test_ureg_convert_df(self):
         data_df = pd.DataFrame({"id": [0, 1, 2]})
         ureg.convert_df(data_df, {"id": "km"}, {"id": "m"})
-        assert data_df.equals(1000.0 * pd.DataFrame({"id": [0, 1, 2]}))
+        assert_frame_equal(data_df, (1000.0 * pd.DataFrame({"id": [0, 1, 2]})))
 
     def test_ureg_convert_df_undefined_unit(self):
         data_df = pd.DataFrame({"id": [0, 1, 2]})
