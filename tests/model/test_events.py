@@ -134,8 +134,8 @@ class TestEventModel:
         campaign_scope_2 = campaign_scopes[1]
         ec_1 = event_categories[0]
 
-        timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
-        timestamp_2 = dt.datetime(2020, 6, 1, tzinfo=dt.timezone.utc)
+        timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.UTC)
+        timestamp_2 = dt.datetime(2020, 6, 1, tzinfo=dt.UTC)
 
         evt_1 = Event.new(
             campaign_scope_id=campaign_scope_1.id,
@@ -175,7 +175,7 @@ class TestEventModel:
         campaign_scope_1 = campaign_scopes[0]
         ec_1 = event_categories[0]
 
-        timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
+        timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.UTC)
 
         evt_1 = Event.new(
             campaign_scope_id=campaign_scope_1.id,
@@ -470,7 +470,7 @@ class TestEventModel:
             assert Event.get_by_id(event_1.id) == event_1
             Event.new(
                 campaign_scope_id=campaign_scope_1.id,
-                timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
+                timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.UTC),
                 category_id=ec_1.id,
                 level=EventLevelEnum.WARNING,
                 source="src",
@@ -505,7 +505,7 @@ class TestEventModel:
             with pytest.raises(BEMServerAuthorizationError):
                 Event.new(
                     campaign_scope_id=campaign_scope_1.id,
-                    timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
+                    timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.UTC),
                     category_id=ec_1.id,
                     level=EventLevelEnum.WARNING,
                     source="src",
@@ -518,7 +518,7 @@ class TestEventModel:
             # Member of campaign_scope
             Event.new(
                 campaign_scope_id=campaign_scope_2.id,
-                timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc),
+                timestamp=dt.datetime(2020, 5, 1, tzinfo=dt.UTC),
                 category_id=ec_1.id,
                 level=EventLevelEnum.WARNING,
                 source="src",
@@ -549,7 +549,7 @@ class TestEventModel:
         # Notify INFO: only user_0 is notified
         event_i = Event.new(
             campaign_scope_id=campaign_scopes[0].id,
-            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.UTC),
             category_id=event_categories[0].id,
             level=EventLevelEnum.INFO,
             source="src",
@@ -565,7 +565,7 @@ class TestEventModel:
         # Notify WARNING: both users are notified
         event_w = Event.new(
             campaign_scope_id=campaign_scopes[0].id,
-            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.UTC),
             category_id=event_categories[0].id,
             level=EventLevelEnum.WARNING,
             source="src",
@@ -583,7 +583,7 @@ class TestEventModel:
         # Notify ERROR: both users are notified
         event_e = Event.new(
             campaign_scope_id=campaign_scopes[0].id,
-            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.UTC),
             category_id=event_categories[0].id,
             level=EventLevelEnum.ERROR,
             source="src",
@@ -599,7 +599,7 @@ class TestEventModel:
 
 def test_event_notify_task(events):
     evt_1 = events[0]
-    dt_1 = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+    dt_1 = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
 
     with pytest.raises(BEMServerCoreTaskError):
         notify_task(DUMMY_ID, dt_1)
@@ -623,7 +623,7 @@ def test_event_after_insert(notify_delay_mock, campaign_scopes, event_categories
 
     event_1 = Event.new(
         campaign_scope_id=campaign_scope_1.id,
-        timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+        timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.UTC),
         category_id=ec_1.id,
         level=EventLevelEnum.WARNING,
         source="src",
@@ -644,7 +644,7 @@ def test_event_after_insert(notify_delay_mock, campaign_scopes, event_categories
     notify_delay_mock.reset_mock()
     event = Event.new(
         campaign_scope_id=campaign_scope_1.id,
-        timestamp=dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc),
+        timestamp=dt.datetime(2020, 1, 2, tzinfo=dt.UTC),
         category_id=ec_1.id,
         level=EventLevelEnum.WARNING,
         source="src",
@@ -658,7 +658,7 @@ def test_event_after_insert(notify_delay_mock, campaign_scopes, event_categories
     notify_delay_mock.reset_mock()
     Event.new(
         campaign_scope_id=campaign_scope_1.id,
-        timestamp=dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc),
+        timestamp=dt.datetime(2020, 1, 2, tzinfo=dt.UTC),
         category_id=ec_1.id,
         level=EventLevelEnum.WARNING,
         source="src",

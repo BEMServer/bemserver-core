@@ -61,8 +61,8 @@ class TestCleanupProcess:
                 value="42",
             )
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
+        end_dt = dt.datetime(2020, 1, 2, tzinfo=dt.UTC)
         timestamps = pd.date_range(start_dt, end_dt, inclusive="both", freq="6h")
         values = [0, 13, 33, 42, 69]
         create_timeseries_data(ts_0, ds_1, timestamps, values)

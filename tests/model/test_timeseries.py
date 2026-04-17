@@ -97,7 +97,7 @@ class TestTimeseriesDataStateModel:
             ts_data_state_1 = TimeseriesByDataState.get()[0]
 
             TimeseriesData.new(
-                timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+                timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.UTC),
                 timeseries_by_data_state_id=tsbds_1.id,
                 value="12",
             )
@@ -164,7 +164,7 @@ class TestTimeseriesModel:
 
         with CurrentUser(admin_user):
             TimeseriesData.new(
-                timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+                timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.UTC),
                 timeseries_by_data_state_id=tsbds_1.id,
                 value="12",
             )
@@ -993,7 +993,7 @@ class TestTimeseriesByDataStateModel:
 
         with CurrentUser(admin_user):
             TimeseriesData.new(
-                timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+                timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.UTC),
                 timeseries_by_data_state_id=tsbds_1.id,
                 value="12",
             )

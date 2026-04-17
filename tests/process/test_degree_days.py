@@ -22,7 +22,7 @@ from bemserver_core.process.degree_days import compute_dd, compute_dd_for_site
 
 @pytest.mark.parametrize("type_", ("heating", "cooling"))
 @pytest.mark.parametrize("base", (18, 19.5))
-@pytest.mark.parametrize("timezone", (dt.timezone.utc, ZoneInfo("Europe/Paris")))
+@pytest.mark.parametrize("timezone", (dt.UTC, ZoneInfo("Europe/Paris")))
 def test_compute_dd(type_, base, timezone):
     index = pd.date_range(
         "2020-01-01", "2021-01-01", freq="h", tz=timezone, inclusive="left"

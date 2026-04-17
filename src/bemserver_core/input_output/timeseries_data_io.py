@@ -665,7 +665,7 @@ def to_utc_index(index):
 
     # We can't just use tz_convert because it would silently swallow naive datetimes
     try:
-        index = index.apply(lambda x: x.astimezone(dt.timezone.utc))
+        index = index.apply(lambda x: x.astimezone(dt.UTC))
     except TypeError as exc:
         raise TimeseriesDataIODatetimeError("Invalid or TZ-naive timestamp") from exc
 

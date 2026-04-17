@@ -30,8 +30,8 @@ from tests.utils import create_timeseries_data
 
 class TestEnergyConsumption:
     def _create_data(self, campaign, campaign_scope):
-        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.UTC)
+        end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.UTC)
 
         timestamps = pd.date_range(start_dt, end_dt, inclusive="left", freq="h")
 

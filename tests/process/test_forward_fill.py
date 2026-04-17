@@ -34,10 +34,10 @@ class TestForewardFillProcess:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Clean").first()
 
-        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc)
-        h4_dt = dt.datetime(2020, 1, 1, 4, 0, tzinfo=dt.timezone.utc)
-        h6_dt = dt.datetime(2020, 1, 1, 6, 0, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 1, 1, 12, 0, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.UTC)
+        h4_dt = dt.datetime(2020, 1, 1, 4, 0, tzinfo=dt.UTC)
+        h6_dt = dt.datetime(2020, 1, 1, 6, 0, tzinfo=dt.UTC)
+        end_dt = dt.datetime(2020, 1, 1, 12, 0, tzinfo=dt.UTC)
 
         timestamps_1 = pd.date_range(start_dt, h6_dt, inclusive="left", freq="h")
         values_1 = [ts.hour % 2 for ts in timestamps_1]
@@ -60,7 +60,7 @@ class TestForewardFillProcess:
             data_df = ffill(h4_dt, end_dt, ts_l, ds_1, 2, "hour")
 
             timestamps = [
-                dt.datetime(2020, 1, 1, hour, 0, tzinfo=dt.timezone.utc)
+                dt.datetime(2020, 1, 1, hour, 0, tzinfo=dt.UTC)
                 for hour in (4, 5, 6, 8, 9, 10)
             ]
             expected_data_df = pd.DataFrame(
@@ -80,7 +80,7 @@ class TestForewardFillProcess:
             )
 
             timestamps = [
-                dt.datetime(2020, 1, 1, hour, 0, tzinfo=dt.timezone.utc)
+                dt.datetime(2020, 1, 1, hour, 0, tzinfo=dt.UTC)
                 for hour in (6, 8, 9, 10)
             ]
             expected_data_df = pd.DataFrame(
@@ -100,7 +100,7 @@ class TestForewardFillProcess:
             data_df = ffill(h4_dt, end_dt, ts_l, ds_1, 2, "hour")
 
             timestamps = [
-                dt.datetime(2020, 1, 1, hour, 0, tzinfo=dt.timezone.utc)
+                dt.datetime(2020, 1, 1, hour, 0, tzinfo=dt.UTC)
                 for hour in (4, 5, 6, 8, 10)
             ]
             expected_data_df = pd.DataFrame(

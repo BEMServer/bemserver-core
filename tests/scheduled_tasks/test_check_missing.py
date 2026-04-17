@@ -61,9 +61,9 @@ class TestCheckMissingScheduledTask:
             )
             db.session.flush()
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
-        intermediate_dt = dt.datetime(2020, 1, 1, 12, 0, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
+        intermediate_dt = dt.datetime(2020, 1, 1, 12, 0, tzinfo=dt.UTC)
+        end_dt = dt.datetime(2020, 1, 2, tzinfo=dt.UTC)
 
         timestamps_1 = pd.date_range(start_dt, end_dt, inclusive="left", freq="600s")
         values_1 = range(len(timestamps_1))

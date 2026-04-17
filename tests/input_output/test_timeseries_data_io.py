@@ -102,9 +102,7 @@ class TestTimeseriesDataIO:
             .all()
         )
 
-        timestamps = [
-            dt.datetime(2020, 1, 1, i, tzinfo=dt.timezone.utc) for i in range(4)
-        ]
+        timestamps = [dt.datetime(2020, 1, 1, i, tzinfo=dt.UTC) for i in range(4)]
 
         expected = [
             (timestamp, tsbds_0.id, float(idx))
@@ -148,9 +146,7 @@ class TestTimeseriesDataIO:
             .all()
         )
 
-        timestamps = [
-            dt.datetime(2020, 1, 1, i, tzinfo=dt.timezone.utc) for i in range(4)
-        ]
+        timestamps = [dt.datetime(2020, 1, 1, i, tzinfo=dt.UTC) for i in range(4)]
 
         expected = [
             (timestamp, tsbds_0.id, float(idx))
@@ -676,7 +672,7 @@ class TestTimeseriesDataIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         h1_dt = start_dt + dt.timedelta(hours=1)
         h2_dt = start_dt + dt.timedelta(hours=2)
         end_dt = start_dt + dt.timedelta(hours=3)
@@ -867,7 +863,7 @@ class TestTimeseriesDataIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(hours=3)
 
         timestamps = pd.date_range(
@@ -926,7 +922,7 @@ class TestTimeseriesDataIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
         timestamps = pd.date_range(
@@ -992,7 +988,7 @@ class TestTimeseriesDataIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
         timestamps = pd.date_range(
@@ -1138,7 +1134,7 @@ class TestTimeseriesDataIO:
             # Local TZ count 1 week
             data_df = tsdio.get_timeseries_buckets_data(
                 # Check start_dt TZ doesn't change alignment to 00:00 local TZ
-                dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+                dt.datetime(2020, 1, 1, tzinfo=dt.UTC),
                 dt.datetime(2020, 1, 9, tzinfo=ZoneInfo("Europe/Paris")),
                 ts_l,
                 ds_1,
@@ -1534,8 +1530,8 @@ class TestTimeseriesDataIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        start_dt = dt.datetime(2020, 10, 25, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 10, 26, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 10, 25, tzinfo=dt.UTC)
+        end_dt = dt.datetime(2020, 10, 26, tzinfo=dt.UTC)
 
         timestamps = pd.date_range(
             start=start_dt, end=end_dt, inclusive="left", freq="h"
@@ -1549,8 +1545,8 @@ class TestTimeseriesDataIO:
         with CurrentUser(admin_user):
             # Local TZ count 1 hour
             data_df = tsdio.get_timeseries_buckets_data(
-                dt.datetime(2020, 10, 25, 0, 0, tzinfo=dt.timezone.utc),
-                dt.datetime(2020, 10, 25, 2, 0, tzinfo=dt.timezone.utc),
+                dt.datetime(2020, 10, 25, 0, 0, tzinfo=dt.UTC),
+                dt.datetime(2020, 10, 25, 2, 0, tzinfo=dt.UTC),
                 ts_l,
                 ds_1,
                 1,
@@ -1588,16 +1584,16 @@ class TestTimeseriesDataIO:
         # In fact, use UTC for all for date_range
         start_dt_1 = dt.datetime(
             2020, 3, 28, tzinfo=ZoneInfo("Europe/Paris")
-        ).astimezone(dt.timezone.utc)
+        ).astimezone(dt.UTC)
         end_dt_1 = dt.datetime(2020, 3, 30, tzinfo=ZoneInfo("Europe/Paris")).astimezone(
-            dt.timezone.utc
+            dt.UTC
         )
         start_dt_2 = dt.datetime(
             2020, 10, 24, tzinfo=ZoneInfo("Europe/Paris")
-        ).astimezone(dt.timezone.utc)
+        ).astimezone(dt.UTC)
         end_dt_2 = dt.datetime(
             2020, 10, 26, tzinfo=ZoneInfo("Europe/Paris")
-        ).astimezone(dt.timezone.utc)
+        ).astimezone(dt.UTC)
 
         timestamps_1 = pd.date_range(
             start=start_dt_1, end=end_dt_1, inclusive="left", freq="h"
@@ -1651,8 +1647,8 @@ class TestTimeseriesDataIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
-        start_dt_plus_3_months = dt.datetime(2020, 4, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
+        start_dt_plus_3_months = dt.datetime(2020, 4, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(days=366 + 365)
 
         timestamps = pd.date_range(
@@ -2029,7 +2025,7 @@ class TestTimeseriesDataIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
         timestamps = pd.date_range(
@@ -2089,7 +2085,7 @@ class TestTimeseriesDataIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(hours=3)
 
         timestamps = pd.date_range(
@@ -2123,7 +2119,7 @@ class TestTimeseriesDataIO:
             ds_1 = TimeseriesDataState.get(name="Raw").first()
             tsbds_1 = ts_1.get_timeseries_by_data_state(ds_1)
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(hours=3)
 
         timestamps = pd.date_range(
@@ -2213,9 +2209,7 @@ class TestTimeseriesDataCSVIO:
             .all()
         )
 
-        timestamps = [
-            dt.datetime(2020, 1, 1, i, tzinfo=dt.timezone.utc) for i in range(4)
-        ]
+        timestamps = [dt.datetime(2020, 1, 1, i, tzinfo=dt.UTC) for i in range(4)]
 
         expected = [
             (timestamp, tsbds_0.id, float(idx))
@@ -2259,9 +2253,7 @@ class TestTimeseriesDataCSVIO:
             .all()
         )
 
-        timestamps = [
-            dt.datetime(2020, 1, 1, i, tzinfo=dt.timezone.utc) for i in range(4)
-        ]
+        timestamps = [dt.datetime(2020, 1, 1, i, tzinfo=dt.UTC) for i in range(4)]
 
         expected = [
             (timestamp, tsbds_0.id, float(idx))
@@ -2421,7 +2413,7 @@ class TestTimeseriesDataCSVIO:
             ds_1 = TimeseriesDataState.get(name="Raw").first()
             ts_0.unit_symbol = "meter"
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(hours=3)
 
         timestamps = pd.date_range(
@@ -2515,7 +2507,7 @@ class TestTimeseriesDataCSVIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(hours=3)
 
         timestamps = pd.date_range(
@@ -2566,7 +2558,7 @@ class TestTimeseriesDataCSVIO:
             ds_1 = TimeseriesDataState.get(name="Raw").first()
             ts_0.unit_symbol = "meter"
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
         timestamps = pd.date_range(
@@ -2730,7 +2722,7 @@ class TestTimeseriesDataCSVIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
         timestamps = pd.date_range(
@@ -2838,9 +2830,7 @@ class TestTimeseriesDataJSONIO:
             .all()
         )
 
-        timestamps = [
-            dt.datetime(2020, 1, 1, i, tzinfo=dt.timezone.utc) for i in range(4)
-        ]
+        timestamps = [dt.datetime(2020, 1, 1, i, tzinfo=dt.UTC) for i in range(4)]
 
         expected = [
             (timestamp, tsbds_0.id, float(idx))
@@ -2884,9 +2874,7 @@ class TestTimeseriesDataJSONIO:
             .all()
         )
 
-        timestamps = [
-            dt.datetime(2020, 1, 1, i, tzinfo=dt.timezone.utc) for i in range(4)
-        ]
+        timestamps = [dt.datetime(2020, 1, 1, i, tzinfo=dt.UTC) for i in range(4)]
 
         expected = [
             (timestamp, tsbds_0.id, float(idx))
@@ -3030,7 +3018,7 @@ class TestTimeseriesDataJSONIO:
             ds_1 = TimeseriesDataState.get(name="Raw").first()
             ts_0.unit_symbol = "meter"
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(hours=3)
 
         timestamps = pd.date_range(
@@ -3149,7 +3137,7 @@ class TestTimeseriesDataJSONIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(hours=3)
 
         timestamps = pd.date_range(
@@ -3203,7 +3191,7 @@ class TestTimeseriesDataJSONIO:
             ds_1 = TimeseriesDataState.get(name="Raw").first()
             ts_0.unit_symbol = "meter"
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
         timestamps = pd.date_range(
@@ -3438,7 +3426,7 @@ class TestTimeseriesDataJSONIO:
         with OpenBar():
             ds_1 = TimeseriesDataState.get(name="Raw").first()
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
         end_dt = start_dt + dt.timedelta(hours=24 * 3)
 
         timestamps = pd.date_range(

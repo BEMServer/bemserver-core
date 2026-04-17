@@ -185,7 +185,7 @@ class WeatherDataProcessor:
 
             convert_from = {
                 ts.id: OIKOLAB_WEATHER_PARAMETERS_UNITS_MAPPING[param]
-                for ts, param in zip(ts_l, params_l)
+                for ts, param in zip(ts_l, params_l, strict=True)
             }
 
             tsdio.delete(start_dt, end_dt, ts_l, ds_clean)

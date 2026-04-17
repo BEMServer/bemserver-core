@@ -47,9 +47,9 @@ class TestDownloadWeatherDataScheduledTask:
         campaign_1 = campaigns[0]
         campaign_2 = campaigns[1]
 
-        start_dt = dt.datetime(2020, 1, 1, 0, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 1, 1, 2, tzinfo=dt.timezone.utc)
-        oik_end_dt = dt.datetime(2020, 1, 1, 1, 0, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, 0, tzinfo=dt.UTC)
+        end_dt = dt.datetime(2020, 1, 1, 2, tzinfo=dt.UTC)
+        oik_end_dt = dt.datetime(2020, 1, 1, 1, 0, tzinfo=dt.UTC)
 
         with OpenBar():
             ds_clean = TimeseriesDataState.get(name="Clean").first()

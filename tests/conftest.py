@@ -144,8 +144,8 @@ def campaigns(request, bemservercore):
         for i in range(max(2, request.param)):
             campaign_i = model.Campaign.new(
                 name=f"Campaign {i + 1}",
-                start_time=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
-                end_time=dt.datetime(2020, 2, 1, tzinfo=dt.timezone.utc),
+                start_time=dt.datetime(2020, 1, 1, tzinfo=dt.UTC),
+                end_time=dt.datetime(2020, 2, 1, tzinfo=dt.UTC),
             )
             campaigns.append(campaign_i)
         db.session.commit()
@@ -317,14 +317,14 @@ def events(bemservercore, campaign_scopes, event_categories):
     with OpenBar():
         event_1 = model.Event.new(
             campaign_scope_id=campaign_scopes[0].id,
-            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.UTC),
             category_id=event_categories[0].id,
             level=model.EventLevelEnum.WARNING,
             source="src",
         )
         event_2 = model.Event.new(
             campaign_scope_id=campaign_scopes[1].id,
-            timestamp=dt.datetime(2020, 1, 15, tzinfo=dt.timezone.utc),
+            timestamp=dt.datetime(2020, 1, 15, tzinfo=dt.UTC),
             category_id=event_categories[1].id,
             level=model.EventLevelEnum.DEBUG,
             source="src",
@@ -446,13 +446,13 @@ def notifications(bemservercore, events, users):
         notif_1 = model.Notification.new(
             event_id=events[0].id,
             user_id=users[0].id,
-            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
+            timestamp=dt.datetime(2020, 1, 1, tzinfo=dt.UTC),
             read=False,
         )
         notif_2 = model.Notification.new(
             event_id=events[1].id,
             user_id=users[1].id,
-            timestamp=dt.datetime(2021, 1, 1, tzinfo=dt.timezone.utc),
+            timestamp=dt.datetime(2021, 1, 1, tzinfo=dt.UTC),
             read=True,
         )
         db.session.commit()
