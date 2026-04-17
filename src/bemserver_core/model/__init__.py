@@ -1,7 +1,5 @@
 """Model"""
 
-from pathlib import Path
-
 from .campaigns import (
     Campaign,
     CampaignScope,
@@ -181,6 +179,3 @@ AUTH_MODEL_CLASSES = [
     EnergyProductionTimeseriesByBuilding,
     WeatherTimeseriesBySite,
 ]
-
-
-AUTH_POLAR_FILE = Path(__file__).parent / "authorization.polar"

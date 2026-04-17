@@ -2,32 +2,43 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMixin, Relation, auth
+from bemserver_core.authorization import AuthMgrMixin
 from bemserver_core.database import Base, db
 
+from .timeseries import Timeseries
 
-class Energy(AuthMixin, Base):
+
+class Energy(AuthMgrMixin, Base):
     __tablename__ = "energies"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
 
+    def authorize_read(self, actor):
+        return True
 
-class EnergyEndUse(AuthMixin, Base):
+
+class EnergyEndUse(AuthMgrMixin, Base):
     __tablename__ = "ener_end_uses"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
 
+    def authorize_read(self, actor):
+        return True
 
-class EnergyProductionTechnology(AuthMixin, Base):
+
+class EnergyProductionTechnology(AuthMgrMixin, Base):
     __tablename__ = "ener_prod_techs"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
 
+    def authorize_read(self, actor):
+        return True
 
-class EnergyConsumptionTimeseriesBySite(AuthMixin, Base):
+
+class EnergyConsumptionTimeseriesBySite(AuthMgrMixin, Base):
     __tablename__ = "ener_cons_ts_by_site"
     __table_args__ = (sqla.UniqueConstraint("site_id", "energy_id", "end_use_id"),)
 
@@ -63,21 +74,15 @@ class EnergyConsumptionTimeseriesBySite(AuthMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-            },
-        )
+    def authorize_query(cls, actor, query):
+        return Timeseries.authorize_query(actor, query.join(Timeseries))
+
+    def authorize_read(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
-class EnergyConsumptionTimeseriesByBuilding(AuthMixin, Base):
+class EnergyConsumptionTimeseriesByBuilding(AuthMgrMixin, Base):
     __tablename__ = "ener_cons_ts_by_building"
     __table_args__ = (sqla.UniqueConstraint("building_id", "energy_id", "end_use_id"),)
 
@@ -113,21 +118,15 @@ class EnergyConsumptionTimeseriesByBuilding(AuthMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-            },
-        )
+    def authorize_query(cls, actor, query):
+        return Timeseries.authorize_query(actor, query.join(Timeseries))
+
+    def authorize_read(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
-class EnergyProductionTimeseriesBySite(AuthMixin, Base):
+class EnergyProductionTimeseriesBySite(AuthMgrMixin, Base):
     __tablename__ = "ener_prod_ts_by_site"
     __table_args__ = (sqla.UniqueConstraint("site_id", "energy_id", "prod_tech_id"),)
 
@@ -163,21 +162,15 @@ class EnergyProductionTimeseriesBySite(AuthMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-            },
-        )
+    def authorize_query(cls, actor, query):
+        return Timeseries.authorize_query(actor, query.join(Timeseries))
+
+    def authorize_read(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
-class EnergyProductionTimeseriesByBuilding(AuthMixin, Base):
+class EnergyProductionTimeseriesByBuilding(AuthMgrMixin, Base):
     __tablename__ = "ener_prod_ts_by_building"
     __table_args__ = (
         sqla.UniqueConstraint("building_id", "energy_id", "prod_tech_id"),
@@ -215,18 +208,12 @@ class EnergyProductionTimeseriesByBuilding(AuthMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-            },
-        )
+    def authorize_query(cls, actor, query):
+        return Timeseries.authorize_query(actor, query.join(Timeseries))
+
+    def authorize_read(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
 def init_db_energy():

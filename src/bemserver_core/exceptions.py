@@ -89,6 +89,10 @@ class BEMServerAuthorizationError(BEMServerCoreIOError):
     """Operation not autorized to current user"""
 
 
+class BEMServerAuthorizationUndefinedActionError(BEMServerCoreIOError):
+    """Action undefined"""
+
+
 class PropertyTypeInvalidError(BEMServerCoreError):
     """Invalid property value type: cast error"""
 

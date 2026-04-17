@@ -2,7 +2,7 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMixin, Relation, auth
+from bemserver_core.authorization import AuthMgrMixin, auth_mgr
 from bemserver_core.common import PropertyType, ureg
 from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.exceptions import TimeseriesNotFoundError
@@ -16,7 +16,7 @@ from bemserver_core.model.sites import Building, Site, Space, Storey, Zone
 from bemserver_core.model.users import User, UserByUserGroup, UserGroup
 
 
-class TimeseriesProperty(AuthMixin, Base):
+class TimeseriesProperty(AuthMgrMixin, Base):
     __tablename__ = "ts_props"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -29,15 +29,21 @@ class TimeseriesProperty(AuthMixin, Base):
     )
     unit_symbol = sqla.Column(sqla.String(20))
 
+    def authorize_read(self, actor):
+        return True
 
-class TimeseriesDataState(AuthMixin, Base):
+
+class TimeseriesDataState(AuthMgrMixin, Base):
     __tablename__ = "ts_data_states"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
 
+    def authorize_read(self, actor):
+        return True
 
-class Timeseries(AuthMixin, Base):
+
+class Timeseries(AuthMgrMixin, Base):
     __tablename__ = "timeseries"
     __table_args__ = (sqla.UniqueConstraint("campaign_id", "name"),)
 
@@ -56,29 +62,17 @@ class Timeseries(AuthMixin, Base):
         backref=sqla.orm.backref("timeseries", cascade="all, delete-orphan"),
     )
 
-    @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "campaign": Relation(
-                    kind="one",
-                    other_type="Campaign",
-                    my_field="campaign_id",
-                    other_field="id",
-                ),
-                "campaign_scope": Relation(
-                    kind="one",
-                    other_type="CampaignScope",
-                    my_field="campaign_scope_id",
-                    other_field="id",
-                ),
-            },
-        )
-
     def _before_flush(self):
         if self.unit_symbol is not None:
             ureg.validate_unit(self.unit_symbol)
+
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return CampaignScope.authorize_query(actor, query.join(CampaignScope))
+
+    def authorize_read(self, actor):
+        campaign_scope = CampaignScope.get_by_id(self.campaign_scope_id)
+        return campaign_scope.is_member(actor)
 
     @classmethod
     def get(
@@ -380,7 +374,19 @@ class Timeseries(AuthMixin, Base):
         return dict(list(db.session.execute(stmt)))
 
 
-class TimeseriesPropertyData(AuthMixin, Base):
+@auth_mgr.add_rule("read_ts_data")
+def authorize_read_ts_data(actor: User, timeseries: Timeseries) -> bool:
+    campaign_scope = CampaignScope.get_by_id(timeseries.campaign_scope_id)
+    return campaign_scope.is_member(actor)
+
+
+@auth_mgr.add_rule("write_ts_data")
+def authorize_write_ts_data(actor: User, timeseries: Timeseries) -> bool:
+    campaign_scope = CampaignScope.get_by_id(timeseries.campaign_scope_id)
+    return campaign_scope.is_member(actor)
+
+
+class TimeseriesPropertyData(AuthMgrMixin, Base):
     """Timeseries property data"""
 
     __tablename__ = "ts_prop_data"
@@ -398,27 +404,21 @@ class TimeseriesPropertyData(AuthMixin, Base):
         ),
     )
 
-    @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-            },
-        )
-
     def _before_flush(self):
         # Get property type and try to parse value to ensure its type validity.
         if (prop := TimeseriesProperty.get_by_id(self.property_id)) is not None:
             prop.value_type.verify(self.value)
 
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return Timeseries.authorize_query(actor, query.join(Timeseries))
 
-class TimeseriesByDataState(AuthMixin, Base):
+    def authorize_read(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
+
+
+class TimeseriesByDataState(AuthMgrMixin, Base):
     __tablename__ = "ts_by_data_states"
     __table_args__ = (sqla.UniqueConstraint("timeseries_id", "data_state_id"),)
 
@@ -440,21 +440,27 @@ class TimeseriesByDataState(AuthMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-            },
-        )
+    def authorize_query(cls, actor, query):
+        return Timeseries.authorize_query(actor, query.join(Timeseries))
+
+    def authorize_create(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
+
+    def authorize_read(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
+
+    def authorize_update(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
+
+    def authorize_delete(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
-class TimeseriesBySite(AuthMixin, Base):
+class TimeseriesBySite(AuthMgrMixin, Base):
     __tablename__ = "ts_by_sites"
     __table_args__ = (sqla.UniqueConstraint("site_id", "timeseries_id"),)
 
@@ -472,27 +478,15 @@ class TimeseriesBySite(AuthMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-                "site": Relation(
-                    kind="one",
-                    other_type="Site",
-                    my_field="site_id",
-                    other_field="id",
-                ),
-            },
-        )
+    def authorize_query(cls, actor, query):
+        return Timeseries.authorize_query(actor, query.join(Timeseries))
+
+    def authorize_read(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
-class TimeseriesByBuilding(AuthMixin, Base):
+class TimeseriesByBuilding(AuthMgrMixin, Base):
     __tablename__ = "ts_by_buildings"
     __table_args__ = (sqla.UniqueConstraint("building_id", "timeseries_id"),)
 
@@ -514,27 +508,15 @@ class TimeseriesByBuilding(AuthMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-                "building": Relation(
-                    kind="one",
-                    other_type="Building",
-                    my_field="building_id",
-                    other_field="id",
-                ),
-            },
-        )
+    def authorize_query(cls, actor, query):
+        return Timeseries.authorize_query(actor, query.join(Timeseries))
+
+    def authorize_read(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
-class TimeseriesByStorey(AuthMixin, Base):
+class TimeseriesByStorey(AuthMgrMixin, Base):
     __tablename__ = "ts_by_storeys"
     __table_args__ = (sqla.UniqueConstraint("storey_id", "timeseries_id"),)
 
@@ -552,27 +534,15 @@ class TimeseriesByStorey(AuthMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-                "storey": Relation(
-                    kind="one",
-                    other_type="Storey",
-                    my_field="storey_id",
-                    other_field="id",
-                ),
-            },
-        )
+    def authorize_query(cls, actor, query):
+        return Timeseries.authorize_query(actor, query.join(Timeseries))
+
+    def authorize_read(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
-class TimeseriesBySpace(AuthMixin, Base):
+class TimeseriesBySpace(AuthMgrMixin, Base):
     __tablename__ = "ts_by_spaces"
     __table_args__ = (sqla.UniqueConstraint("space_id", "timeseries_id"),)
 
@@ -590,27 +560,15 @@ class TimeseriesBySpace(AuthMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-                "space": Relation(
-                    kind="one",
-                    other_type="Space",
-                    my_field="space_id",
-                    other_field="id",
-                ),
-            },
-        )
+    def authorize_query(cls, actor, query):
+        return Timeseries.authorize_query(actor, query.join(Timeseries))
+
+    def authorize_read(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
-class TimeseriesByZone(AuthMixin, Base):
+class TimeseriesByZone(AuthMgrMixin, Base):
     __tablename__ = "ts_by_zones"
     __table_args__ = (sqla.UniqueConstraint("zone_id", "timeseries_id"),)
 
@@ -628,24 +586,12 @@ class TimeseriesByZone(AuthMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-                "zone": Relation(
-                    kind="one",
-                    other_type="Zone",
-                    my_field="zone_id",
-                    other_field="id",
-                ),
-            },
-        )
+    def authorize_query(cls, actor, query):
+        return Timeseries.authorize_query(actor, query.join(Timeseries))
+
+    def authorize_read(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)
 
 
 def init_db_timeseries_triggers():

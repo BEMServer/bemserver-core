@@ -6,13 +6,15 @@ from zoneinfo import ZoneInfo
 import sqlalchemy as sqla
 from sqlalchemy.dialects.postgresql import JSONB
 
-from bemserver_core.authorization import AuthMixin, Relation, auth
+from bemserver_core.authorization import AuthMgrMixin
 from bemserver_core.celery import logger
 from bemserver_core.database import Base
 from bemserver_core.time_utils import PeriodEnum, make_date_offset
 
+from .campaigns import Campaign
 
-class TaskByCampaign(AuthMixin, Base):
+
+class TaskByCampaign(AuthMgrMixin, Base):
     __tablename__ = "tasks_by_campaigns"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -32,18 +34,12 @@ class TaskByCampaign(AuthMixin, Base):
     end_offset = sqla.Column(sqla.Integer, default=0, nullable=False)
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "campaign": Relation(
-                    kind="one",
-                    other_type="Campaign",
-                    my_field="campaign_id",
-                    other_field="id",
-                ),
-            },
-        )
+    def authorize_query(cls, actor, query):
+        return Campaign.authorize_query(actor, query.join(Campaign))
+
+    def authorize_read(self, actor):
+        campaign = Campaign.get_by_id(self.campaign_id)
+        return campaign.is_member(actor)
 
     def make_interval(self):
         datetime = dt.datetime.now(tz=ZoneInfo(self.campaign.timezone))

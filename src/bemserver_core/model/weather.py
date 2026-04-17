@@ -4,8 +4,10 @@ import enum
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMixin, Relation, auth
+from bemserver_core.authorization import AuthMgrMixin
 from bemserver_core.database import Base
+
+from .timeseries import Timeseries
 
 
 class WeatherParameterEnum(enum.Enum):
@@ -25,7 +27,7 @@ class WeatherParameterEnum(enum.Enum):
     TOTAL_PRECIPITATION = "total precipitation"
 
 
-class WeatherTimeseriesBySite(AuthMixin, Base):
+class WeatherTimeseriesBySite(AuthMgrMixin, Base):
     __tablename__ = "weather_ts_by_site"
     __table_args__ = (sqla.UniqueConstraint("site_id", "parameter", "forecast"),)
 
@@ -49,15 +51,9 @@ class WeatherTimeseriesBySite(AuthMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "timeseries": Relation(
-                    kind="one",
-                    other_type="Timeseries",
-                    my_field="timeseries_id",
-                    other_field="id",
-                ),
-            },
-        )
+    def authorize_query(cls, actor, query):
+        return Timeseries.authorize_query(actor, query.join(Timeseries))
+
+    def authorize_read(self, actor):
+        timeseries = Timeseries.get_by_id(self.timeseries_id)
+        return timeseries.authorize_read(actor)

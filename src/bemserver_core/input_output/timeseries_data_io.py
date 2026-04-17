@@ -11,7 +11,7 @@ import sqlalchemy as sqla
 import numpy as np
 import pandas as pd
 
-from bemserver_core.authorization import auth, get_current_user
+from bemserver_core.authorization import auth_mgr
 from bemserver_core.common import ureg
 from bemserver_core.database import db
 from bemserver_core.exceptions import (
@@ -74,7 +74,7 @@ class TimeseriesDataIO:
         """
         # Check permissions
         for ts in timeseries:
-            auth.authorize(get_current_user(), "read_data", ts)
+            auth_mgr.authorize("read_ts_data", ts)
 
         params = {
             "timeseries_ids": [ts.id for ts in timeseries],
@@ -146,7 +146,7 @@ class TimeseriesDataIO:
         """
         # Check permissions
         for ts in timeseries:
-            auth.authorize(get_current_user(), "read_data", ts)
+            auth_mgr.authorize("read_ts_data", ts)
 
         params = {
             "timeseries_ids": [ts.id for ts in timeseries],
@@ -276,7 +276,7 @@ class TimeseriesDataIO:
 
         # Check permissions
         for ts in timeseries:
-            auth.authorize(get_current_user(), "write_data", ts)
+            auth_mgr.authorize("write_ts_data", ts)
 
         if convert_from:
             cls._convert_from(
@@ -355,7 +355,7 @@ class TimeseriesDataIO:
         """
         # Check permissions
         for ts in timeseries:
-            auth.authorize(get_current_user(), "read_data", ts)
+            auth_mgr.authorize("read_ts_data", ts)
 
         # Get timeseries data
         stmt = (
@@ -455,7 +455,7 @@ class TimeseriesDataIO:
 
         # Check permissions
         for ts in timeseries:
-            auth.authorize(get_current_user(), "read_data", ts)
+            auth_mgr.authorize("read_ts_data", ts)
 
         fill_value = 0 if aggregation == "count" else np.nan
         dtype = int if aggregation == "count" else float
@@ -574,7 +574,7 @@ class TimeseriesDataIO:
         Returns a dataframe.
         """
         for ts in timeseries:
-            auth.authorize(get_current_user(), "read_data", ts)
+            auth_mgr.authorize("read_ts_data", ts)
 
         if agg == "avg":
             agg_func = sqla.func.avg(TimeseriesData.value)
@@ -633,7 +633,7 @@ class TimeseriesDataIO:
         """
         # Check permissions
         for ts in timeseries:
-            auth.authorize(get_current_user(), "write_data", ts)
+            auth_mgr.authorize("write_ts_data", ts)
 
         # Delete timeseries data
         (

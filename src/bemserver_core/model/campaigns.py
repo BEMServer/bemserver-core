@@ -2,11 +2,13 @@
 
 import sqlalchemy as sqla
 
-from bemserver_core.authorization import AuthMixin, Relation, auth
-from bemserver_core.database import Base, make_columns_read_only
+from bemserver_core.authorization import AuthMgrMixin
+from bemserver_core.database import Base, db, make_columns_read_only
+
+from .users import UserByUserGroup, UserGroup
 
 
-class Campaign(AuthMixin, Base):
+class Campaign(AuthMgrMixin, Base):
     __tablename__ = "campaigns"
 
     id = sqla.Column(sqla.Integer, primary_key=True)
@@ -17,21 +19,29 @@ class Campaign(AuthMixin, Base):
     timezone = sqla.Column(sqla.String(40), nullable=False, default="UTC")
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "user_groups_by_campaigns": Relation(
-                    kind="many",
-                    other_type="UserGroupByCampaign",
-                    my_field="id",
-                    other_field="campaign_id",
-                ),
-            },
+    def authorize_query(cls, actor, query):
+        return UserGroupByCampaign.authorize_query(
+            actor,
+            query.join(UserGroupByCampaign),
+        )
+
+    def authorize_read(self, actor):
+        return self.is_member(actor)
+
+    def is_member(self, user):
+        return bool(
+            db.session.query(
+                db.session.query(UserGroupByCampaign)
+                .join(UserGroup)
+                .join(UserByUserGroup)
+                .filter(UserByUserGroup.user_id == user.id)
+                .filter(UserGroupByCampaign.campaign_id == self.id)
+                .exists()
+            ).scalar()
         )
 
 
-class CampaignScope(AuthMixin, Base):
+class CampaignScope(AuthMgrMixin, Base):
     __tablename__ = "c_scopes"
     __table_args__ = (sqla.UniqueConstraint("campaign_id", "name"),)
 
@@ -46,21 +56,29 @@ class CampaignScope(AuthMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "user_groups_by_campaign_scopes": Relation(
-                    kind="many",
-                    other_type="UserGroupByCampaignScope",
-                    my_field="id",
-                    other_field="campaign_scope_id",
-                ),
-            },
+    def authorize_query(cls, actor, query):
+        return UserGroupByCampaignScope.authorize_query(
+            actor,
+            query.join(UserGroupByCampaignScope),
+        )
+
+    def authorize_read(self, actor):
+        return self.is_member(actor)
+
+    def is_member(self, user):
+        return bool(
+            db.session.query(
+                db.session.query(UserGroupByCampaignScope)
+                .join(UserGroup)
+                .join(UserByUserGroup)
+                .filter(UserByUserGroup.user_id == user.id)
+                .filter(UserGroupByCampaignScope.campaign_scope_id == self.id)
+                .exists()
+            ).scalar()
         )
 
 
-class UserGroupByCampaign(AuthMixin, Base):
+class UserGroupByCampaign(AuthMgrMixin, Base):
     """UserGroup x Campaign associations"""
 
     __tablename__ = "u_groups_by_campaigns"
@@ -84,21 +102,19 @@ class UserGroupByCampaign(AuthMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "user_group": Relation(
-                    kind="one",
-                    other_type="UserGroup",
-                    my_field="user_group_id",
-                    other_field="id",
-                ),
-            },
-        )
+    def authorize_query(cls, actor, query):
+        return UserGroup.authorize_query(actor, query.join(UserGroup))
+
+    def authorize_read(self, actor):
+        return db.session.query(
+            db.session.query(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+            .filter(UserByUserGroup.user_group_id == self.user_group_id)
+            .exists()
+        ).scalar()
 
 
-class UserGroupByCampaignScope(AuthMixin, Base):
+class UserGroupByCampaignScope(AuthMgrMixin, Base):
     """UserGroup x CampaignScope associations"""
 
     __tablename__ = "u_groups_by_c_scopes"
@@ -122,18 +138,16 @@ class UserGroupByCampaignScope(AuthMixin, Base):
     )
 
     @classmethod
-    def register_class(cls):
-        auth.register_class(
-            cls,
-            fields={
-                "user_group": Relation(
-                    kind="one",
-                    other_type="UserGroup",
-                    my_field="user_group_id",
-                    other_field="id",
-                ),
-            },
-        )
+    def authorize_query(cls, actor, query):
+        return UserGroup.authorize_query(actor, query.join(UserGroup))
+
+    def authorize_read(self, actor):
+        return db.session.query(
+            db.session.query(UserByUserGroup)
+            .filter(UserByUserGroup.user_id == actor.id)
+            .filter(UserByUserGroup.user_group_id == self.user_group_id)
+            .exists()
+        ).scalar()
 
 
 def init_db_campaigns_triggers():

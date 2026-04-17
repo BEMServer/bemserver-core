@@ -1171,7 +1171,7 @@ class TestSitePropertyDataModel:
 
         with CurrentUser(user_1):
             SitePropertyData.get_by_id(spd_2.id)
-
+            assert set(SitePropertyData.get()) == set(site_property_data[1:])
             with pytest.raises(BEMServerAuthorizationError):
                 SitePropertyData.get_by_id(spd_1.id)
             with pytest.raises(BEMServerAuthorizationError):
@@ -1359,7 +1359,7 @@ class TestBuildingPropertyDataModel:
 
         with CurrentUser(user_1):
             BuildingPropertyData.get_by_id(bpd_2.id)
-
+            assert set(BuildingPropertyData.get()) == set(building_property_data[1:])
             with pytest.raises(BEMServerAuthorizationError):
                 BuildingPropertyData.get_by_id(bpd_1.id)
             with pytest.raises(BEMServerAuthorizationError):
@@ -1553,7 +1553,7 @@ class TestStoreyPropertyDataModel:
 
         with CurrentUser(user_1):
             StoreyPropertyData.get_by_id(spd_2.id)
-
+            assert set(StoreyPropertyData.get()) == set(storey_property_data[1:])
             with pytest.raises(BEMServerAuthorizationError):
                 StoreyPropertyData.get_by_id(spd_1.id)
             with pytest.raises(BEMServerAuthorizationError):
@@ -1745,7 +1745,7 @@ class TestSpacePropertyDataModel:
 
         with CurrentUser(user_1):
             SpacePropertyData.get_by_id(spd_2.id)
-
+            assert set(SpacePropertyData.get()) == set(space_property_data[1:])
             with pytest.raises(BEMServerAuthorizationError):
                 SpacePropertyData.get_by_id(spd_1.id)
             with pytest.raises(BEMServerAuthorizationError):
@@ -1935,7 +1935,7 @@ class TestZonePropertyDataModel:
 
         with CurrentUser(user_1):
             ZonePropertyData.get_by_id(zpd_2.id)
-
+            assert set(ZonePropertyData.get()) == set(zone_property_data[1:])
             with pytest.raises(BEMServerAuthorizationError):
                 ZonePropertyData.get_by_id(zpd_1.id)
             with pytest.raises(BEMServerAuthorizationError):
