@@ -129,7 +129,7 @@ class Event(AuthMgrMixin, Base):
                 .filter(ubug.user_id == user_id)
             )
         if timeseries_id is not None:
-            from .timeseries import Timeseries  # noqa: avoid cyclic import
+            from .timeseries import Timeseries  # noqa: E402
 
             Timeseries.get_by_id(timeseries_id)
             query = query.join(TimeseriesByEvent).filter(
@@ -316,7 +316,7 @@ def event_after_insert(_mapper, _connection, target):
 
     https://stackoverflow.com/questions/25078815/
     """
-    timestamp = dt.datetime.now(tz=dt.timezone.utc)
+    timestamp = dt.datetime.now(tz=dt.UTC)
 
     @sqla.event.listens_for(db.session, "after_commit", once=True)
     def event_after_commit_after_insert(_session):
@@ -398,7 +398,7 @@ class TimeseriesByEvent(AuthMgrMixin, Base):
     def _before_flush(self):
         # Ensure TS and Event are in same Campaign scope
         if self.timeseries_id and self.event_id:
-            from .timeseries import Timeseries  # noqa: avoid cyclic import
+            from .timeseries import Timeseries  # noqa: E402
 
             timeseries = Timeseries.get_by_id(self.timeseries_id)
             event = Event.get_by_id(self.event_id)

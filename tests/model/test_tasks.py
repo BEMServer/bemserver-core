@@ -94,5 +94,5 @@ class TestTaskByCampaignModel:
             )
             start_dt, end_dt = tbc_1.make_interval()
 
-        assert start_dt == dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
-        assert end_dt == dt.datetime(2020, 1, 4, tzinfo=dt.timezone.utc)
+        assert start_dt == dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
+        assert end_dt == dt.datetime(2020, 1, 4, tzinfo=dt.UTC)

@@ -29,7 +29,7 @@ def test_time_utils_make_date_offset():
 
 
 class TestTimeUtilsFloor:
-    @pytest.mark.parametrize("timezone", (dt.timezone.utc, ZoneInfo("Europe/Paris")))
+    @pytest.mark.parametrize("timezone", (dt.UTC, ZoneInfo("Europe/Paris")))
     def test_floor(self, timezone):
         datetime = dt.datetime(2020, 3, 17, 5, 23, 54, 123, tzinfo=timezone)
         assert floor(datetime, "year") == dt.datetime(2020, 1, 1, tzinfo=timezone)
@@ -79,7 +79,7 @@ class TestTimeUtilsFloor:
 
 
 class TestTimeUtilsCeil:
-    @pytest.mark.parametrize("timezone", (dt.timezone.utc, ZoneInfo("Europe/Paris")))
+    @pytest.mark.parametrize("timezone", (dt.UTC, ZoneInfo("Europe/Paris")))
     def test_ceil(self, timezone):
         datetime = dt.datetime(2020, 3, 17, 5, 23, 54, 123, tzinfo=timezone)
         assert ceil(datetime, "year") == dt.datetime(2021, 1, 1, tzinfo=timezone)
@@ -111,7 +111,7 @@ class TestTimeUtilsCeil:
             2020, 3, 17, 5, 24, 0, tzinfo=timezone
         )
 
-    @pytest.mark.parametrize("timezone", (dt.timezone.utc, ZoneInfo("Europe/Paris")))
+    @pytest.mark.parametrize("timezone", (dt.UTC, ZoneInfo("Europe/Paris")))
     def test_ceil_round_value(self, timezone):
         datetime = dt.datetime(2018, 1, 1, 0, 0, 0, 0, tzinfo=timezone)
         assert ceil(datetime, "year") == datetime
@@ -144,7 +144,7 @@ class TestTimeUtilsCeil:
             ceil(dt.datetime(2020, 1, 1), period, 2)
 
 
-@pytest.mark.parametrize("timezone", (dt.timezone.utc, ZoneInfo("Europe/Paris")))
+@pytest.mark.parametrize("timezone", (dt.UTC, ZoneInfo("Europe/Paris")))
 def test_make_date_range_around_datetime(timezone):
     dt_1 = dt.datetime(2020, 1, 1, 0, 0, tzinfo=timezone)
     assert make_date_range_around_datetime(dt_1, "hour", 1, 0, 0) == (

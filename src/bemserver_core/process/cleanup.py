@@ -37,7 +37,7 @@ def cleanup(
     ts_mins = Timeseries.get_property_for_many_timeseries(timeseries_ids, "Min")
     ts_maxs = Timeseries.get_property_for_many_timeseries(timeseries_ids, "Max")
 
-    for ts_id, (_, col) in zip(timeseries_ids, data_df.items()):
+    for ts_id, (_, col) in zip(timeseries_ids, data_df.items(), strict=True):
         if (ts_min := ts_mins[ts_id]) is not None:
             col.loc[col < float(ts_min)] = np.nan
         if (ts_max := ts_maxs[ts_id]) is not None:

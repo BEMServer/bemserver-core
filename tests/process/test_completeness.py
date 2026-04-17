@@ -55,13 +55,13 @@ class TestCompleteness:
                 value="1200",
             )
 
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
-        start_dt_plus_8_hours = dt.datetime(2020, 1, 1, 8, 0, tzinfo=dt.timezone.utc)
-        start_dt_plus_1_day = dt.datetime(2020, 1, 2, tzinfo=dt.timezone.utc)
-        start_dt_plus_2_days = dt.datetime(2020, 1, 3, tzinfo=dt.timezone.utc)
-        intermediate_dt_1 = dt.datetime(2020, 1, 25, 10, 3, tzinfo=dt.timezone.utc)
-        intermediate_dt_2 = dt.datetime(2020, 2, 1, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 3, 1, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
+        start_dt_plus_8_hours = dt.datetime(2020, 1, 1, 8, 0, tzinfo=dt.UTC)
+        start_dt_plus_1_day = dt.datetime(2020, 1, 2, tzinfo=dt.UTC)
+        start_dt_plus_2_days = dt.datetime(2020, 1, 3, tzinfo=dt.UTC)
+        intermediate_dt_1 = dt.datetime(2020, 1, 25, 10, 3, tzinfo=dt.UTC)
+        intermediate_dt_2 = dt.datetime(2020, 2, 1, tzinfo=dt.UTC)
+        end_dt = dt.datetime(2020, 3, 1, tzinfo=dt.UTC)
 
         timestamps_1 = pd.date_range(start_dt, end_dt, inclusive="left", freq="600s")
         values_1 = range(len(timestamps_1))
@@ -94,8 +94,8 @@ class TestCompleteness:
             ret = compute_completeness(start_dt, end_dt, ts_l, ds_1, 1, "month")
             assert ret == {
                 "timestamps": [
-                    dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc),
-                    dt.datetime(2020, 2, 1, tzinfo=dt.timezone.utc),
+                    dt.datetime(2020, 1, 1, tzinfo=dt.UTC),
+                    dt.datetime(2020, 2, 1, tzinfo=dt.UTC),
                 ],
                 "timeseries": {
                     1: {
@@ -158,12 +158,8 @@ class TestCompleteness:
 
             # 2 months - daily
             ret = compute_completeness(start_dt, end_dt, ts_l, ds_1, 1, "day")
-            assert ret["timestamps"][0] == dt.datetime(
-                2020, 1, 1, tzinfo=dt.timezone.utc
-            )
-            assert ret["timestamps"][-1] == dt.datetime(
-                2020, 2, 29, tzinfo=dt.timezone.utc
-            )
+            assert ret["timestamps"][0] == dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
+            assert ret["timestamps"][-1] == dt.datetime(2020, 2, 29, tzinfo=dt.UTC)
             assert ret["timeseries"][1]["avg_count"] == 144.0
             assert ret["timeseries"][1]["total_count"] == 8640
             assert ret["timeseries"][1]["avg_ratio"] == 1.0
@@ -197,12 +193,8 @@ class TestCompleteness:
 
             # 2 months - weekly
             ret = compute_completeness(start_dt, end_dt, ts_l, ds_1, 1, "week")
-            assert ret["timestamps"][0] == dt.datetime(
-                2019, 12, 30, tzinfo=dt.timezone.utc
-            )
-            assert ret["timestamps"][-1] == dt.datetime(
-                2020, 2, 24, tzinfo=dt.timezone.utc
-            )
+            assert ret["timestamps"][0] == dt.datetime(2019, 12, 30, tzinfo=dt.UTC)
+            assert ret["timestamps"][-1] == dt.datetime(2020, 2, 24, tzinfo=dt.UTC)
             assert ret["timeseries"][1]["count"] == [
                 720,
                 1008,
@@ -270,11 +262,9 @@ class TestCompleteness:
             ret = compute_completeness(
                 start_dt, start_dt_plus_1_day, ts_l, ds_1, 1, "minute"
             )
-            assert ret["timestamps"][0] == dt.datetime(
-                2020, 1, 1, tzinfo=dt.timezone.utc
-            )
+            assert ret["timestamps"][0] == dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
             assert ret["timestamps"][-1] == dt.datetime(
-                2020, 1, 1, 23, 59, tzinfo=dt.timezone.utc
+                2020, 1, 1, 23, 59, tzinfo=dt.UTC
             )
             assert ret["timeseries"][1]["avg_count"] == 0.1
             assert ret["timeseries"][1]["total_count"] == 6 * 24
@@ -307,9 +297,9 @@ class TestCompleteness:
             )
             assert ret == {
                 "timestamps": [
-                    dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-                    dt.datetime(2020, 1, 1, 1, 0, tzinfo=dt.timezone.utc),
-                    dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc),
+                    dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.UTC),
+                    dt.datetime(2020, 1, 1, 1, 0, tzinfo=dt.UTC),
+                    dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.UTC),
                 ],
                 "timeseries": {
                     1: {

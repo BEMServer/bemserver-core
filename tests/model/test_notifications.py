@@ -32,8 +32,8 @@ class TestNotificationModel:
         event_1 = events[0]
         event_2 = events[1]
 
-        timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
-        timestamp_2 = dt.datetime(2020, 6, 1, tzinfo=dt.timezone.utc)
+        timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.UTC)
+        timestamp_2 = dt.datetime(2020, 6, 1, tzinfo=dt.UTC)
 
         notif_1 = Notification.new(
             user_id=user_1.id,
@@ -106,7 +106,7 @@ class TestNotificationModel:
         cs_2 = campaign_scopes[1]
         ec_1 = event_categories[0]
 
-        timestamp_1 = dt.datetime(2021, 1, 1, tzinfo=dt.timezone.utc)
+        timestamp_1 = dt.datetime(2021, 1, 1, tzinfo=dt.UTC)
 
         with OpenBar():
             event_1 = Event.new(
@@ -217,7 +217,7 @@ class TestNotificationModel:
         cs_2 = campaign_scopes[1]
         ec_1 = event_categories[0]
 
-        timestamp_1 = dt.datetime(2021, 1, 1, tzinfo=dt.timezone.utc)
+        timestamp_1 = dt.datetime(2021, 1, 1, tzinfo=dt.UTC)
 
         with OpenBar():
             event_1 = Event.new(
@@ -297,7 +297,7 @@ class TestNotificationModel:
         assert admin_user.is_admin
         event_1 = events[0]
 
-        timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
+        timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.UTC)
 
         with CurrentUser(admin_user):
             notifs = list(Notification.get())
@@ -325,7 +325,7 @@ class TestNotificationModel:
         notif_2 = notifications[1]
         assert notif_2.user == user_1
 
-        timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
+        timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.UTC)
 
         with CurrentUser(user_1):
             notifs = list(Notification.get())
@@ -367,7 +367,7 @@ def test_send_notification_email_task(smtp_mock, users, events):
     user_1 = users[0]
     event_1 = events[0]
 
-    timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
+    timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.UTC)
 
     with pytest.raises(BEMServerCoreTaskError):
         send_notification_email(DUMMY_ID)
@@ -415,7 +415,7 @@ def test_notification_after_insert(send_notification_email_delay_mock, users, ev
     user_1 = users[0]
     event_1 = events[0]
 
-    timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.timezone.utc)
+    timestamp_1 = dt.datetime(2020, 5, 1, tzinfo=dt.UTC)
 
     notif_1 = Notification.new(
         user_id=user_1.id,

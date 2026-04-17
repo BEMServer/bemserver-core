@@ -76,7 +76,7 @@ def compute_completeness(
                 else np.nan
             )
         )
-        for i, col in zip(intervals, counts_df.columns)
+        for i, col in zip(intervals, counts_df.columns, strict=True)
     ]
 
     # Add a special case for empty intervals to avoid a deprecation warning

@@ -12,12 +12,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {name: '3.9', python: '3.9', tox: py39}
-          - {name: '3.12', python: '3.12', tox: py312}
-          - {name: 'min', python: '3.9', tox: min}
+          - {name: '3.11', python: '3.11', tox: py311}
+          - {name: '3.14', python: '3.14', tox: py314}
+          - {name: 'min', python: '3.11', tox: min}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
@@ -33,10 +33,10 @@ jobs:
     name: Build package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.14"
       - name: Install pypa/build
         run: python -m pip install build
       - name: Build a binary wheel and a source tarball
@@ -46,7 +46,7 @@ jobs:
       - name: Check build
         run: python -m twine check --strict dist/*
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: python-package-distributions
           path: dist/
@@ -57,10 +57,10 @@ jobs:
     if: startsWith(github.ref, 'refs/tags')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
-          python-version: 3.12
+          python-version: 3.14
       - run: python -m pip install tox
       - run: python -m tox -elint
   publish-to-pypi:
@@ -75,7 +75,7 @@ jobs:
       id-token: write
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: python-package-distributions
           path: dist/

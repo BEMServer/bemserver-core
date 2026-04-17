@@ -98,9 +98,9 @@ class TestDatabase:
 
         Test.__table__.create(bind=db.engine)
 
-        mes_1 = Test(note=10, date=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc))
-        mes_2 = Test(note=15, date=dt.datetime(2025, 1, 1, tzinfo=dt.timezone.utc))
-        mes_3 = Test(note=18, date=dt.datetime(2015, 1, 1, tzinfo=dt.timezone.utc))
+        mes_1 = Test(note=10, date=dt.datetime(2020, 1, 1, tzinfo=dt.UTC))
+        mes_2 = Test(note=15, date=dt.datetime(2025, 1, 1, tzinfo=dt.UTC))
+        mes_3 = Test(note=18, date=dt.datetime(2015, 1, 1, tzinfo=dt.UTC))
         db.session.add(mes_1)
         db.session.add(mes_2)
         db.session.add(mes_3)
@@ -108,12 +108,12 @@ class TestDatabase:
         ret = Test.get(note_min=12).all()
         assert ret == [mes_2, mes_3]
 
-        ret = Test.get(date_min=dt.datetime(2019, 1, 1, tzinfo=dt.timezone.utc)).all()
+        ret = Test.get(date_min=dt.datetime(2019, 1, 1, tzinfo=dt.UTC)).all()
         assert ret == [mes_1, mes_2]
 
         ret = Test.get(
             note_max=12,
-            date_min=dt.datetime(2019, 1, 1, tzinfo=dt.timezone.utc),
+            date_min=dt.datetime(2019, 1, 1, tzinfo=dt.UTC),
         ).all()
         assert ret == [
             mes_1,
@@ -135,17 +135,13 @@ class TestDatabase:
 
         Test.__table__.create(bind=db.engine)
 
-        mes_1 = Test(
-            name="Toto", note=10, date=dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
-        )
+        mes_1 = Test(name="Toto", note=10, date=dt.datetime(2020, 1, 1, tzinfo=dt.UTC))
         mes_2 = Test(
             name="Juanito",
             note=15,
-            date=dt.datetime(2025, 1, 1, tzinfo=dt.timezone.utc),
+            date=dt.datetime(2025, 1, 1, tzinfo=dt.UTC),
         )
-        mes_3 = Test(
-            name="Juan", note=18, date=dt.datetime(2015, 1, 1, tzinfo=dt.timezone.utc)
-        )
+        mes_3 = Test(name="Juan", note=18, date=dt.datetime(2015, 1, 1, tzinfo=dt.UTC))
         db.session.add(mes_1)
         db.session.add(mes_2)
         db.session.add(mes_3)
@@ -156,7 +152,7 @@ class TestDatabase:
             Test.get(in_note=12).all()
         db.session.rollback()
         with pytest.raises(sqla.exc.ProgrammingError):
-            Test.get(in_date=dt.datetime(2019, 1, 1, tzinfo=dt.timezone.utc)).all()
+            Test.get(in_date=dt.datetime(2019, 1, 1, tzinfo=dt.UTC)).all()
         db.session.rollback()
 
         # Exact matches.

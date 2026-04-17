@@ -42,9 +42,9 @@ class TestWeatherClient:
     @patch("requests.get")
     @pytest.mark.parametrize("forecast", (False, True))
     def test_get_weather_data(self, mock_get, forecast):
-        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc)
-        oik_end_dt = dt.datetime(2020, 1, 1, 1, 0, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.UTC)
+        end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.UTC)
+        oik_end_dt = dt.datetime(2020, 1, 1, 1, 0, tzinfo=dt.UTC)
 
         resp_data = {
             "columns": [
@@ -120,8 +120,8 @@ class TestWeatherClient:
                 params=["AIR_TEMPERATURE"],
                 latitude="dummy",
                 longitude=6.0,
-                start_dt=dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-                end_dt=dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc),
+                start_dt=dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.UTC),
+                end_dt=dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.UTC),
             )
 
     @patch("requests.get")
@@ -137,8 +137,8 @@ class TestWeatherClient:
                 params=["AIR_TEMPERATURE"],
                 latitude="dummy",
                 longitude=6.0,
-                start_dt=dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-                end_dt=dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc),
+                start_dt=dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.UTC),
+                end_dt=dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.UTC),
             )
 
     @patch("requests.get")
@@ -153,8 +153,8 @@ class TestWeatherClient:
                 params=["AIR_TEMPERATURE"],
                 latitude=46.0,
                 longitude=6.0,
-                start_dt=dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-                end_dt=dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc),
+                start_dt=dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.UTC),
+                end_dt=dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.UTC),
             )
 
     @pytest.mark.parametrize(
@@ -180,8 +180,8 @@ class TestWeatherClient:
                 params=["AIR_TEMPERATURE", "RELATIVE_HUMIDITY"],
                 latitude=46.0,
                 longitude=6.0,
-                start_dt=dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-                end_dt=dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc),
+                start_dt=dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.UTC),
+                end_dt=dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.UTC),
             )
 
     @pytest.mark.parametrize(
@@ -268,8 +268,8 @@ class TestWeatherClient:
                 params=["AIR_TEMPERATURE", "RELATIVE_HUMIDITY"],
                 latitude=46.0,
                 longitude=6.0,
-                start_dt=dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc),
-                end_dt=dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc),
+                start_dt=dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.UTC),
+                end_dt=dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.UTC),
             )
 
 
@@ -294,9 +294,9 @@ class TestWeatherDataProcessor:
         rh_ts = wtbs_2.timeseries
         ds_clean = TimeseriesDataState.get(name="Clean").first()
 
-        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc)
-        oik_end_dt = dt.datetime(2020, 1, 1, 1, 0, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.UTC)
+        end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.UTC)
+        oik_end_dt = dt.datetime(2020, 1, 1, 1, 0, tzinfo=dt.UTC)
 
         # The payload should contain only air temp or RH depending on the call
         # but for the purpose of the test, it is easier here to write a single payload.
@@ -433,8 +433,8 @@ class TestWeatherDataProcessor:
     def test_get_weather_data_for_site_no_call_if_no_ts(self, mock_get, sites):
         site_1 = sites[0]
 
-        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.UTC)
+        end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.UTC)
 
         wdp.get_weather_data_for_site(site_1, start_dt, end_dt)
         mock_get.assert_not_called()
@@ -463,8 +463,8 @@ class TestWeatherDataProcessor:
     def test_get_weather_data_for_site_api_settings_error(self, sites):
         site_1 = sites[0]
 
-        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.UTC)
+        end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.UTC)
 
         with pytest.raises(
             BEMServerCoreSettingsError, match="Missing weather API settings."
@@ -489,8 +489,8 @@ class TestWeatherDataProcessor:
         for coord in missing_coords:
             setattr(site_1, coord, None)
 
-        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.UTC)
+        end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.UTC)
 
         with pytest.raises(
             BEMServerCoreWeatherProcessMissingCoordinatesError,
@@ -505,8 +505,8 @@ class TestWeatherDataProcessor:
         user_2 = users[1]
         site_1 = sites[0]
 
-        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.timezone.utc)
-        end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.timezone.utc)
+        start_dt = dt.datetime(2020, 1, 1, 0, 0, tzinfo=dt.UTC)
+        end_dt = dt.datetime(2020, 1, 1, 2, 0, tzinfo=dt.UTC)
 
         with CurrentUser(user_2):
             with pytest.raises(BEMServerAuthorizationError):
