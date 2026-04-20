@@ -34,16 +34,11 @@ def downgrade():
     op.add_column(
         "ener_cons_ts_by_site",
         sa.Column(
-            "wh_conversion_factor",
-            sa.DOUBLE_PRECISION(precision=53),
-            autoincrement=False,
-            nullable=False,
+            "wh_conversion_factor", sa.DOUBLE_PRECISION(precision=53), nullable=False
         ),
     )
     op.add_column(
         "ener_cons_ts_by_building",
-        sa.Column(
-            "wh_conversion_factor", sa.INTEGER(), autoincrement=False, nullable=False
-        ),
+        sa.Column("wh_conversion_factor", sa.INTEGER(), nullable=False),
     )
     # ### end Alembic commands ###
