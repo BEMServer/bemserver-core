@@ -915,7 +915,7 @@ class TestTimeseriesDataIO:
     @pytest.mark.parametrize("timeseries", (5,), indirect=True)
     @pytest.mark.parametrize("agg", ("avg", "min", "max", "count"))
     @pytest.mark.parametrize("col_label", ("id", "name"))
-    def test_timeseries_data_io_get_aggreagate_data(
+    def test_timeseries_data_io_get_aggregate_data(
         self, users, timeseries, agg, col_label
     ):
         admin_user = users[0]
