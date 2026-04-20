@@ -27,9 +27,7 @@ class TaskByCampaign(AuthMgrMixin, Base):
         backref=sqla.orm.backref("tasks_by_campaigns", cascade="all, delete-orphan"),
     )
     parameters = sqla.Column(JSONB, default=dict, nullable=False)
-    offset_unit = sqla.Column(
-        sqla.Enum(PeriodEnum, name="period_names"), nullable=False
-    )
+    offset_unit = sqla.Column(sqla.Enum(PeriodEnum, name="periodenum"), nullable=False)
     start_offset = sqla.Column(sqla.Integer, default=-1, nullable=False)
     end_offset = sqla.Column(sqla.Integer, default=0, nullable=False)
 
