@@ -111,7 +111,7 @@ class OikolabWeatherDataClient:
                 index=pd.DatetimeIndex(
                     pd.to_datetime(timestamps, utc=True, unit="s"),
                     name="timestamp",
-                ),
+                ).as_unit("us"),
                 data=ret_data["data"],
                 # Strip (unit) from column names to facilitate selection
                 columns=[str(col).split()[0] for col in ret_data["columns"]],

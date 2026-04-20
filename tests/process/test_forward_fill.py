@@ -70,7 +70,7 @@ class TestForewardFillProcess:
                     ts_2.id: [np.nan, np.nan, 42.0, 42.0, np.nan, 42.0],
                     ts_3.id: [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan],
                 },
-                index=pd.DatetimeIndex(timestamps, name="timestamp"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp").as_unit("us"),
             )
             assert_frame_equal(data_df, expected_data_df)
 
@@ -90,7 +90,7 @@ class TestForewardFillProcess:
                     ts_2.id: [42.0, 42.0, np.nan, 42.0],
                     ts_3.id: [np.nan, np.nan, np.nan, np.nan],
                 },
-                index=pd.DatetimeIndex(timestamps, name="timestamp"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp").as_unit("us"),
             )
             assert_frame_equal(data_df, expected_data_df)
 
@@ -110,7 +110,7 @@ class TestForewardFillProcess:
                     3: [np.nan, np.nan, 42.0, 42.0, 42.0],
                     4: [0.0, 1.0, 1.0, 1.0, 1.0],
                 },
-                index=pd.DatetimeIndex(timestamps, name="timestamp"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp").as_unit("us"),
             )
             expected_data_df.columns = [ts_3.id, ts_2.id, ts_2.id, ts_0.id]
             assert_frame_equal(data_df, expected_data_df)
@@ -138,6 +138,6 @@ class TestForewardFillProcess:
                     ts_2.id: [np.nan, 42.0, 42.0, 42.0, 42.0],
                     ts_3.id: [np.nan, np.nan, np.nan, np.nan, np.nan],
                 },
-                index=pd.DatetimeIndex(timestamps, name="timestamp"),
+                index=pd.DatetimeIndex(timestamps, name="timestamp").as_unit("us"),
             )
             assert_frame_equal(data_df, expected_data_df)

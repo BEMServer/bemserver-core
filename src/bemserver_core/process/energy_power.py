@@ -137,7 +137,7 @@ def energyindex2power(
     power_s = power_s.resample(pd_freq, closed="left", label="left").agg("mean")
 
     # Convert to desired unit
-    convert_from = ureg.validate_unit(index_ts.unit_symbol) / ureg.validate_unit("ns")
+    convert_from = ureg.validate_unit(index_ts.unit_symbol) / ureg.validate_unit("us")
     power_s = pd.Series(
         ureg.convert(power_s.values, convert_from, convert_to),
         index=power_s.index,

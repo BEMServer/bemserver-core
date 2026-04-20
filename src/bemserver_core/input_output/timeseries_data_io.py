@@ -388,8 +388,10 @@ class TimeseriesDataIO:
             data, columns=("timestamp", "id", "name", "value")
         ).set_index("timestamp")
         data_df["value"] = data_df["value"].astype(float)
-        data_df.index = pd.DatetimeIndex(data_df.index, tz="UTC").tz_convert(
-            ZoneInfo(timezone)
+        data_df.index = (
+            pd.DatetimeIndex(data_df.index, tz="UTC")
+            .as_unit("us")
+            .tz_convert(ZoneInfo(timezone))
         )
 
         data_df = data_df.pivot(columns=col_label, values="value")
@@ -482,7 +484,9 @@ class TimeseriesDataIO:
         )
 
         if not timeseries:
-            return pd.DataFrame({}, index=complete_idx)
+            ret_df = pd.DataFrame({}, index=complete_idx)
+            ret_df.columns.name = col_label
+            return ret_df
 
         # At this stage, date_trunc can only aggregate by 1 x unit.
         # For a N x width bucket size, the remaining aggregation is
@@ -513,7 +517,9 @@ class TimeseriesDataIO:
             data, columns=("timestamp", "id", "name", "value")
         ).set_index("timestamp")
 
-        data_df.index = pd.DatetimeIndex(data_df.index, tz="UTC").tz_convert(tz_info)
+        data_df.index = (
+            pd.DatetimeIndex(data_df.index, tz="UTC").as_unit("us").tz_convert(tz_info)
+        )
 
         # Pivot table to get timeseries in columns
         data_df = data_df.pivot(values="value", columns=col_label).fillna(fill_value)
@@ -652,6 +658,7 @@ class TimeseriesDataIO:
 
 def to_utc_index(index):
     """Create UTC datetime index from timezone aware datetime list"""
+    # https://github.com/pandas-dev/pandas/issues/54995
 
     try:
         # Cast to series so that output is series, with an apply method
@@ -669,7 +676,7 @@ def to_utc_index(index):
     except TypeError as exc:
         raise TimeseriesDataIODatetimeError("Invalid or TZ-naive timestamp") from exc
 
-    return pd.DatetimeIndex(index, name="timestamp")
+    return pd.DatetimeIndex(index, name="timestamp").as_unit("us")
 
 
 class TimeseriesDataCSVIO(TimeseriesDataIO, BaseCSVIO):

@@ -2,8 +2,6 @@
 
 import os
 
-import pandas as pd
-
 from bemserver_core import (
     common,
     database,
@@ -17,9 +15,6 @@ from bemserver_core.celery import celery as celery_app
 from bemserver_core.email import ems
 from bemserver_core.exceptions import BEMServerCoreSettingsError
 from bemserver_core.process.weather import wdp
-
-# Set pandas future flags to silence deprecation warnings
-pd.set_option("future.no_silent_downcasting", True)
 
 
 class BEMServerCore:

@@ -141,7 +141,7 @@ class TestDownloadWeatherDataScheduledTask:
                 ],
                 name="timestamp",
                 tz="UTC",
-            )
+            ).as_unit("us")
             if forecast is False:
                 expected_data_df = pd.DataFrame(
                     {"Timeseries 1": [2.45, 2.59], "Timeseries 2": [np.nan, np.nan]},
