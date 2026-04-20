@@ -45,7 +45,7 @@ DEFAULT_NOTIFICATION_EVENT_LEVEL = EventLevelEnum.WARNING
 class EventCategory(AuthMgrMixin, Base):
     __tablename__ = "event_categs"
 
-    id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
+    id = sqla.Column(sqla.Integer, primary_key=True, nullable=False)
     name = sqla.Column(sqla.String(80), unique=True, nullable=False)
     description = sqla.Column(sqla.String(250))
 
@@ -56,7 +56,7 @@ class EventCategory(AuthMgrMixin, Base):
 class Event(AuthMgrMixin, Base):
     __tablename__ = "events"
 
-    id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
+    id = sqla.Column(sqla.Integer, primary_key=True, nullable=False)
     campaign_scope_id = sqla.Column(sqla.ForeignKey("c_scopes.id"), nullable=False)
     category_id = sqla.Column(sqla.ForeignKey("event_categs.id"), nullable=False)
     timestamp = sqla.Column(sqla.DateTime(timezone=True), nullable=False)

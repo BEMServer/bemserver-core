@@ -17,7 +17,7 @@ from bemserver_core.model.users import User
 class Notification(AuthMgrMixin, Base):
     __tablename__ = "notifs"
 
-    id = sqla.Column(sqla.Integer, primary_key=True, autoincrement=True, nullable=False)
+    id = sqla.Column(sqla.Integer, primary_key=True, nullable=False)
     user_id = sqla.Column(sqla.ForeignKey("users.id"), nullable=False)
     event_id = sqla.Column(sqla.ForeignKey("events.id"), nullable=False)
     timestamp = sqla.Column(sqla.DateTime(timezone=True), nullable=False)
