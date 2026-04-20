@@ -15,7 +15,7 @@ from .energy import (
     EnergyProductionTimeseriesByBuilding,
     EnergyProductionTimeseriesBySite,
 )
-from .events import (  # noqa
+from .events import (
     Event,
     EventByBuilding,
     EventBySite,
@@ -59,7 +59,7 @@ from .timeseries import (
     TimeseriesProperty,
     TimeseriesPropertyData,
 )
-from .timeseries_data import TimeseriesData  # noqa
+from .timeseries_data import TimeseriesData
 from .users import User, UserByUserGroup, UserGroup
 from .weather import (
     WeatherParameterEnum,
@@ -122,60 +122,4 @@ __all__ = [
     "EnergyProductionTimeseriesByBuilding",
     "WeatherParameterEnum",
     "WeatherTimeseriesBySite",
-]
-
-
-AUTH_MODEL_CLASSES = [
-    User,
-    UserGroup,
-    UserByUserGroup,
-    Campaign,
-    CampaignScope,
-    UserGroupByCampaign,
-    UserGroupByCampaignScope,
-    StructuralElementProperty,
-    SiteProperty,
-    BuildingProperty,
-    StoreyProperty,
-    SpaceProperty,
-    ZoneProperty,
-    Site,
-    Building,
-    Storey,
-    Space,
-    Zone,
-    SitePropertyData,
-    BuildingPropertyData,
-    StoreyPropertyData,
-    SpacePropertyData,
-    ZonePropertyData,
-    TaskByCampaign,
-    TimeseriesDataState,
-    TimeseriesProperty,
-    Timeseries,
-    TimeseriesPropertyData,
-    TimeseriesByDataState,
-    TimeseriesBySite,
-    TimeseriesByBuilding,
-    TimeseriesByStorey,
-    TimeseriesBySpace,
-    TimeseriesByZone,
-    EventCategory,
-    Event,
-    EventCategoryByUser,
-    TimeseriesByEvent,
-    EventBySite,
-    EventByBuilding,
-    EventByStorey,
-    EventBySpace,
-    EventByZone,
-    Notification,
-    Energy,
-    EnergyEndUse,
-    EnergyProductionTechnology,
-    EnergyConsumptionTimeseriesBySite,
-    EnergyConsumptionTimeseriesByBuilding,
-    EnergyProductionTimeseriesBySite,
-    EnergyProductionTimeseriesByBuilding,
-    WeatherTimeseriesBySite,
 ]
