@@ -1,6 +1,19 @@
 Changelog
 ---------
 
+0.22.0 (2026-04-20)
++++++++++++++++++++
+
+Features:
+
+- Refactor authorization layer to get rid of (deprecated) Oso
+
+Other changes:
+
+- Support Python 3.13 and 3.14
+- Remove official Python 3.9 and 3.10 support
+- Support pandas 3 and drop pandas 2
+
 0.21.4 (2025-06-06)
 +++++++++++++++++++
 
