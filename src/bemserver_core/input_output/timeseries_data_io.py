@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from bemserver_core.authorization import auth_mgr
-from bemserver_core.common import ureg
+from bemserver_core.common import AggregationFunctionsEnum, ureg
 from bemserver_core.database import db
 from bemserver_core.exceptions import (
     TimeseriesDataCSVIOError,
@@ -30,8 +30,6 @@ from bemserver_core.model import (
 from bemserver_core.time_utils import PERIODS, ceil, floor, make_pandas_freq
 
 from .base import BaseCSVIO, BaseJSONIO
-
-AGGREGATION_FUNCTIONS = ("avg", "sum", "min", "max", "count")
 
 # Function to use to re-aggregate in pandas after SQL aggregation
 PANDAS_RE_AGGREG_FUNC_MAPPING = {
@@ -452,8 +450,12 @@ class TimeseriesDataIO:
             raise TimeseriesDataIOInvalidBucketWidthError(
                 f"bucket_width_unit not in {PERIODS}"
             )
-        if aggregation not in AGGREGATION_FUNCTIONS:
-            raise TimeseriesDataIOInvalidAggregationError("Invalid aggregation method")
+        try:
+            AggregationFunctionsEnum(aggregation)
+        except ValueError as exc:
+            raise TimeseriesDataIOInvalidAggregationError(
+                "Invalid aggregation method"
+            ) from exc
 
         # Check permissions
         for ts in timeseries:
