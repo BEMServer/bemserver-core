@@ -981,3 +981,35 @@ def tasks_by_campaigns(bemservercore, campaigns):
         )
         db.session.commit()
     return (tbc_1, tbc_2)
+
+
+@pytest.fixture
+def expressions(bemservercore, timeseries, campaign_scopes):
+    with OpenBar():
+        expr_1 = model.Expression.new(
+            campaign_scope_id=campaign_scopes[0].id,
+            expr="2*a",
+            timeseries_id=timeseries[0].id,
+        )
+        expr_2 = model.Expression.new(
+            campaign_scope_id=campaign_scopes[0].id,
+            expr="a**2",
+            timeseries_id=timeseries[0].id,
+        )
+        db.session.flush()
+        model.ExpressionVariable.new(
+            campaign_scope_id=campaign_scopes[0].id,
+            expression_id=expr_1.id,
+            name="a",
+            timeseries_id=timeseries[1].id,
+            aggregation="avg",
+        )
+        model.ExpressionVariable.new(
+            campaign_scope_id=campaign_scopes[0].id,
+            expression_id=expr_2.id,
+            name="a",
+            timeseries_id=timeseries[1].id,
+            aggregation="avg",
+        )
+        db.session.commit()
+    return (expr_1, expr_2)
