@@ -27,6 +27,7 @@ from .events import (
     EventLevelEnum,
     TimeseriesByEvent,
 )
+from .expressions import Expression, ExpressionVariable
 from .notifications import Notification
 from .sites import (
     Building,
@@ -122,4 +123,6 @@ __all__ = [
     "EnergyProductionTimeseriesByBuilding",
     "WeatherParameterEnum",
     "WeatherTimeseriesBySite",
+    "Expression",
+    "ExpressionVariable",
 ]
