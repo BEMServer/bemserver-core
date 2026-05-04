@@ -12,6 +12,7 @@ from bemserver_core.database import Base, db, make_columns_read_only
 from bemserver_core.exceptions import (
     BEMServerCoreCampaignError,
     BEMServerCoreCampaignScopeError,
+    BEMServerCoreIntegrityError,
     BEMServerCoreTaskError,
 )
 from bemserver_core.model.campaigns import (
@@ -402,6 +403,14 @@ class TimeseriesByEvent(AuthMgrMixin, Base):
 
             timeseries = Timeseries.get_by_id(self.timeseries_id)
             event = Event.get_by_id(self.event_id)
+            if timeseries is None:
+                raise BEMServerCoreIntegrityError(
+                    f"Can't find Timeseries with id {self.timeseries_id}"
+                )
+            if event is None:
+                raise BEMServerCoreIntegrityError(
+                    f"Can't find Event with id {self.event_id}"
+                )
             if timeseries.campaign_scope != event.campaign_scope:
                 raise BEMServerCoreCampaignScopeError(
                     "Event and timeseries must be in same campaign scope"
@@ -455,6 +464,14 @@ class EventBySite(AuthMgrMixin, Base):
         if self.site_id and self.event_id:
             site = Site.get_by_id(self.site_id)
             event = Event.get_by_id(self.event_id)
+            if site is None:
+                raise BEMServerCoreIntegrityError(
+                    f"Can't find Site with id {self.site_id}"
+                )
+            if event is None:
+                raise BEMServerCoreIntegrityError(
+                    f"Can't find Event with id {self.event_id}"
+                )
             if site.campaign != event.campaign_scope.campaign:
                 raise BEMServerCoreCampaignError(
                     "Event and site must be in same campaign"
@@ -508,6 +525,14 @@ class EventByBuilding(AuthMgrMixin, Base):
         if self.building_id and self.event_id:
             building = Building.get_by_id(self.building_id)
             event = Event.get_by_id(self.event_id)
+            if building is None:
+                raise BEMServerCoreIntegrityError(
+                    f"Can't find Building with id {self.building_id}"
+                )
+            if event is None:
+                raise BEMServerCoreIntegrityError(
+                    f"Can't find Event with id {self.event_id}"
+                )
             if building.site.campaign != event.campaign_scope.campaign:
                 raise BEMServerCoreCampaignError(
                     "Event and building must be in same campaign"
@@ -561,6 +586,14 @@ class EventByStorey(AuthMgrMixin, Base):
         if self.storey_id and self.event_id:
             storey = Storey.get_by_id(self.storey_id)
             event = Event.get_by_id(self.event_id)
+            if storey is None:
+                raise BEMServerCoreIntegrityError(
+                    f"Can't find Storey with id {self.storey_id}"
+                )
+            if event is None:
+                raise BEMServerCoreIntegrityError(
+                    f"Can't find Event with id {self.event_id}"
+                )
             if storey.building.site.campaign != event.campaign_scope.campaign:
                 raise BEMServerCoreCampaignError(
                     "Event and storey must be in same campaign"
@@ -614,6 +647,14 @@ class EventBySpace(AuthMgrMixin, Base):
         if self.space_id and self.event_id:
             space = Space.get_by_id(self.space_id)
             event = Event.get_by_id(self.event_id)
+            if space is None:
+                raise BEMServerCoreIntegrityError(
+                    f"Can't find Space with id {self.space_id}"
+                )
+            if event is None:
+                raise BEMServerCoreIntegrityError(
+                    f"Can't find Event with id {self.event_id}"
+                )
             if space.storey.building.site.campaign != event.campaign_scope.campaign:
                 raise BEMServerCoreCampaignError(
                     "Event and space must be in same campaign"
@@ -667,6 +708,14 @@ class EventByZone(AuthMgrMixin, Base):
         if self.zone_id and self.event_id:
             zone = Zone.get_by_id(self.zone_id)
             event = Event.get_by_id(self.event_id)
+            if zone is None:
+                raise BEMServerCoreIntegrityError(
+                    f"Can't find Zone with id {self.zone_id}"
+                )
+            if event is None:
+                raise BEMServerCoreIntegrityError(
+                    f"Can't find Event with id {self.event_id}"
+                )
             if zone.campaign != event.campaign_scope.campaign:
                 raise BEMServerCoreCampaignError(
                     "Event and zone must be in same campaign"

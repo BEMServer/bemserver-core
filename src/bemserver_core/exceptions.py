@@ -9,6 +9,10 @@ class BEMServerCoreSettingsError(BEMServerCoreError):
     """Base BEMServer settings error"""
 
 
+class BEMServerCoreIntegrityError(BEMServerCoreError):
+    """DB integrity error"""
+
+
 class BEMServerCorePeriodError(BEMServerCoreError):
     """Wrong time period unit or multiplier"""
 

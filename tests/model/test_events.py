@@ -14,6 +14,7 @@ from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
     BEMServerCoreCampaignError,
     BEMServerCoreCampaignScopeError,
+    BEMServerCoreIntegrityError,
     BEMServerCoreTaskError,
 )
 from bemserver_core.model import (
@@ -683,6 +684,14 @@ class TestTimeseriesByEventModel:
         event_1 = events[0]
 
         with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreIntegrityError):
+                TimeseriesByEvent.new(timeseries_id=DUMMY_ID, event_id=event_1.id)
+                db.session.flush()
+            db.session.rollback()
+            with pytest.raises(BEMServerCoreIntegrityError):
+                TimeseriesByEvent.new(timeseries_id=ts_1.id, event_id=DUMMY_ID)
+                db.session.flush()
+            db.session.rollback()
             with pytest.raises(BEMServerCoreCampaignScopeError):
                 TimeseriesByEvent.new(timeseries_id=ts_2.id, event_id=event_1.id)
                 db.session.flush()
@@ -756,6 +765,14 @@ class TestEventBySiteModel:
         event_1 = events[0]
 
         with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreIntegrityError):
+                EventBySite.new(site_id=DUMMY_ID, event_id=event_1.id)
+                db.session.flush()
+            db.session.rollback()
+            with pytest.raises(BEMServerCoreIntegrityError):
+                EventBySite.new(site_id=site_1.id, event_id=DUMMY_ID)
+                db.session.flush()
+            db.session.rollback()
             with pytest.raises(BEMServerCoreCampaignError):
                 EventBySite.new(site_id=site_2.id, event_id=event_1.id)
                 db.session.flush()
@@ -821,6 +838,14 @@ class TestEventByBuildingModel:
         event_1 = events[0]
 
         with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreIntegrityError):
+                EventByBuilding.new(building_id=DUMMY_ID, event_id=event_1.id)
+                db.session.flush()
+            db.session.rollback()
+            with pytest.raises(BEMServerCoreIntegrityError):
+                EventByBuilding.new(building_id=building_1.id, event_id=DUMMY_ID)
+                db.session.flush()
+            db.session.rollback()
             with pytest.raises(BEMServerCoreCampaignError):
                 EventByBuilding.new(building_id=building_2.id, event_id=event_1.id)
                 db.session.flush()
@@ -886,6 +911,14 @@ class TestEventByStoreyModel:
         event_1 = events[0]
 
         with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreIntegrityError):
+                EventByStorey.new(storey_id=DUMMY_ID, event_id=event_1.id)
+                db.session.flush()
+            db.session.rollback()
+            with pytest.raises(BEMServerCoreIntegrityError):
+                EventByStorey.new(storey_id=storey_1.id, event_id=DUMMY_ID)
+                db.session.flush()
+            db.session.rollback()
             with pytest.raises(BEMServerCoreCampaignError):
                 EventByStorey.new(storey_id=storey_2.id, event_id=event_1.id)
                 db.session.flush()
@@ -951,6 +984,14 @@ class TestEventBySpaceModel:
         event_1 = events[0]
 
         with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreIntegrityError):
+                EventBySpace.new(space_id=DUMMY_ID, event_id=event_1.id)
+                db.session.flush()
+            db.session.rollback()
+            with pytest.raises(BEMServerCoreIntegrityError):
+                EventBySpace.new(space_id=space_1.id, event_id=DUMMY_ID)
+                db.session.flush()
+            db.session.rollback()
             with pytest.raises(BEMServerCoreCampaignError):
                 EventBySpace.new(space_id=space_2.id, event_id=event_1.id)
                 db.session.flush()
@@ -1016,6 +1057,14 @@ class TestEventByZoneModel:
         event_1 = events[0]
 
         with CurrentUser(admin_user):
+            with pytest.raises(BEMServerCoreIntegrityError):
+                EventByZone.new(zone_id=DUMMY_ID, event_id=event_1.id)
+                db.session.flush()
+            db.session.rollback()
+            with pytest.raises(BEMServerCoreIntegrityError):
+                EventByZone.new(zone_id=zone_1.id, event_id=DUMMY_ID)
+                db.session.flush()
+            db.session.rollback()
             with pytest.raises(BEMServerCoreCampaignError):
                 EventByZone.new(zone_id=zone_2.id, event_id=event_1.id)
                 db.session.flush()
