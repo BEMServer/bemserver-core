@@ -20,6 +20,7 @@ class Expression(AuthMgrMixin, Base):
 
     id = sqla.Column(sqla.Integer, primary_key=True)
     campaign_scope_id = sqla.Column(sqla.ForeignKey("c_scopes.id"), nullable=False)
+    name = sqla.Column(sqla.String, nullable=False)
     expr = sqla.Column(sqla.String, nullable=False)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
     unit_symbol = sqla.Column(sqla.String(20))

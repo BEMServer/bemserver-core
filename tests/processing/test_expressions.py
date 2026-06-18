@@ -32,6 +32,7 @@ class TestExpressionsEvaluateProcessing:
             ds_clean = TimeseriesDataState.get(name="Clean").first()
             expr_1 = Expression.new(
                 campaign_scope_id=cs_1.id,
+                name="2 times a",
                 expr="2*a",
                 timeseries_id=ts_1.id,
             )
@@ -84,11 +85,13 @@ class TestExpressionsEvaluateProcessing:
             ds_clean = TimeseriesDataState.get(name="Clean").first()
             expr_1 = Expression.new(
                 campaign_scope_id=cs_1.id,
+                name="2 times a",
                 expr="2*a",
                 timeseries_id=ts_1.id,
             )
             expr_2 = Expression.new(
                 campaign_scope_id=cs_1.id,
+                name="a squared",
                 expr="a**2",
                 timeseries_id=ts_1.id,
             )

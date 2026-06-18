@@ -32,6 +32,7 @@ class TestExpressionModel:
         with OpenBar():
             expr_1 = Expression.new(
                 campaign_scope_id=cs_1.id,
+                name="2 times a",
                 expr="2*a",
                 timeseries_id=ts_1.id,
             )
@@ -59,6 +60,7 @@ class TestExpressionModel:
 
         expr_1 = Expression.new(
             campaign_scope_id=cs_1.id,
+            name="2 times a",
             expr="2*a",
             timeseries_id=ts_1.id,
         )
@@ -76,6 +78,7 @@ class TestExpressionModel:
         # Missing variable
         expr_2 = Expression.new(
             campaign_scope_id=cs_1.id,
+            name="2 times a",
             expr="2*a",
             timeseries_id=ts_1.id,
         )
@@ -86,6 +89,7 @@ class TestExpressionModel:
         # Invalid expression
         expr_3 = Expression.new(
             campaign_scope_id=cs_1.id,
+            name="2 times a",
             expr="2a",
             timeseries_id=ts_1.id,
         )
@@ -110,6 +114,7 @@ class TestExpressionModel:
 
         expr_1 = Expression.new(
             campaign_scope_id=cs_2.id,
+            name="2 times a",
             expr="2*a",
             timeseries_id=ts_2.id,
         )
@@ -136,6 +141,7 @@ class TestExpressionModel:
             with pytest.raises(BEMServerCoreIntegrityError):
                 Expression.new(
                     campaign_scope_id=cs_1.id,
+                    name="2 times a",
                     expr="2*a",
                     timeseries_id=DUMMY_ID,
                 )
@@ -143,6 +149,7 @@ class TestExpressionModel:
             db.session.rollback()
             expr_1 = Expression.new(
                 campaign_scope_id=cs_1.id,
+                name="2 times a",
                 expr="2*a",
                 timeseries_id=ts_1.id,
             )
@@ -176,11 +183,13 @@ class TestExpressionModel:
         with OpenBar():
             expr_1 = Expression.new(
                 campaign_scope_id=cs_1.id,
+                name="2 times a",
                 expr="2*a",
                 timeseries_id=ts_1.id,
             )
             expr_2 = Expression.new(
                 campaign_scope_id=cs_2.id,
+                name="2 times a",
                 expr="2*a",
                 timeseries_id=ts_2.id,
             )
@@ -190,6 +199,7 @@ class TestExpressionModel:
             with pytest.raises(BEMServerAuthorizationError):
                 Expression.new(
                     campaign_scope_id=cs_2.id,
+                    name="2 times a",
                     expr="2*a",
                     timeseries_id=ts_2.id,
                 )
@@ -216,18 +226,21 @@ class TestExpressionVariableModel:
 
         expr_1 = Expression.new(
             campaign_scope_id=cs_1.id,
+            name="2 times a",
             expr="2*a",
             timeseries_id=ts_1.id,
         )
         # Same scope as expr_v_1: used to test expression_id read-only
         expr_2 = Expression.new(
             campaign_scope_id=cs_1.id,
+            name="3 times a",
             expr="3*a",
             timeseries_id=ts_1.id,
         )
         # Different scope: used to test campaign_scope_id read-only
         expr_3 = Expression.new(
             campaign_scope_id=cs_2.id,
+            name="4 times a",
             expr="4*a",
             timeseries_id=ts_2.id,
         )
@@ -273,6 +286,7 @@ class TestExpressionVariableModel:
         with CurrentUser(admin_user):
             expr_1 = Expression.new(
                 campaign_scope_id=cs_1.id,
+                name="2 times a",
                 expr="2*a",
                 timeseries_id=ts_1.id,
             )
@@ -334,16 +348,19 @@ class TestExpressionVariableModel:
         with OpenBar():
             expr_1 = Expression.new(
                 campaign_scope_id=cs_1.id,
+                name="2 times a",
                 expr="2*a",
                 timeseries_id=ts_1.id,
             )
             expr_2 = Expression.new(
                 campaign_scope_id=cs_2.id,
+                name="2 times a",
                 expr="2*a",
                 timeseries_id=ts_2.id,
             )
             expr_3 = Expression.new(
                 campaign_scope_id=cs_2.id,
+                name="2 times a",
                 expr="2*a",
                 timeseries_id=ts_2.id,
             )
