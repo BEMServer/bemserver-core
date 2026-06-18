@@ -5,11 +5,10 @@ import datetime as dt
 import pytest
 
 import pandas as pd
-from pandas.testing import assert_frame_equal, assert_series_equal
+from pandas.testing import assert_series_equal
 
 from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.database import db
-from bemserver_core.input_output import tsdio
 from bemserver_core.model import Expression, ExpressionVariable, TimeseriesDataState
 from bemserver_core.processing.expressions import (
     evaluate,
@@ -119,44 +118,33 @@ class TestExpressionsEvaluateProcessing:
         create_timeseries_data(ts_3, ds_clean, timestamps, values_2)
 
         with CurrentUser(admin_user):
-            # Expression 1 : TS0 = 2 * TS1
-            evaluate(expr_1, start_dt, end_dt, 6, "hour")
-            data_df = tsdio.get_timeseries_data(start_dt, end_dt, [ts_1], ds_clean)
-            expected_df = pd.DataFrame(
-                {ts_1.id: [0, 4, 8, 16]},
+            data_s = evaluate(expr_1, start_dt, end_dt, 6, "hour")
+            expected_s = pd.Series(
+                [0, 4, 8, 16],
                 pd.DatetimeIndex(timestamps, name="timestamp", freq="6h").as_unit("us"),
+                name="2 times a",
                 dtype=float,
             )
-            expected_df.columns.name = "id"
-            expected_df.index.freq = None
-            assert_frame_equal(data_df, expected_df)
+            assert_series_equal(data_s, expected_s)
 
-            # Expression 2 : TS0 = TS1**2
-            tsdio.delete(start_dt, end_dt, [ts_1], ds_clean)
-            evaluate(expr_2, start_dt, end_dt, 6, "hour")
-            data_df = tsdio.get_timeseries_data(start_dt, end_dt, [ts_1], ds_clean)
-            expected_df = pd.DataFrame(
-                {ts_1.id: [0, 4, 16, 64]},
+            data_s = evaluate(expr_2, start_dt, end_dt, 6, "hour")
+            expected_s = pd.Series(
+                [0, 4, 16, 64],
                 pd.DatetimeIndex(timestamps, name="timestamp", freq="6h").as_unit("us"),
+                name="a squared",
                 dtype=float,
             )
-            expected_df.columns.name = "id"
-            expected_df.index.freq = None
-            assert_frame_equal(data_df, expected_df)
+            assert_series_equal(data_s, expected_s)
 
-            # Expression 1 : TS0 = 2 * TS1, aggreg avg
-            tsdio.delete(start_dt, end_dt, [ts_1], ds_clean)
-            evaluate(expr_1, start_dt, end_dt, 12, "hour")
-            data_df = tsdio.get_timeseries_data(start_dt, end_dt, [ts_1], ds_clean)
-            expected_df = pd.DataFrame(
-                {ts_1.id: [2, 12]},
+            data_s = evaluate(expr_1, start_dt, end_dt, 12, "hour")
+            expected_s = pd.Series(
+                [2, 12],
                 pd.DatetimeIndex(
                     pd.date_range(start_dt, end_dt, inclusive="left", freq="12h"),
                     name="timestamp",
                     freq="12h",
                 ).as_unit("us"),
+                name="2 times a",
                 dtype=float,
             )
-            expected_df.columns.name = "id"
-            expected_df.index.freq = None
-            assert_frame_equal(data_df, expected_df)
+            assert_series_equal(data_s, expected_s)

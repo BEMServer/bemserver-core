@@ -3,8 +3,6 @@
 Evaluate expressions
 """
 
-import pandas as pd
-
 from bemserver_core import expression_eval
 from bemserver_core.input_output import tsdio
 from bemserver_core.model import TimeseriesDataState
@@ -56,7 +54,4 @@ def evaluate(
             timezone=timezone,
         )
 
-    data_s = expression_eval.evaluate(expression.expr, namespace)
-    data_df = pd.DataFrame({expression.timeseries_id: data_s}, data_s.index)
-
-    tsdio.set_timeseries_data(data_df, ds_clean, convert_from=expression.unit_symbol)
+    return expression_eval.evaluate(expression.expr, namespace).rename(expression.name)
