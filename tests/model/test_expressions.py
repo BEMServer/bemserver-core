@@ -45,6 +45,8 @@ class TestExpressionModel:
                 campaign_scope_id=cs_1.id,
                 expression_id=expr_1.id,
                 timeseries_id=ts_1.id,
+                bucket_width_value=1,
+                bucket_width_unit="day",
             )
             db.session.flush()
 
@@ -405,6 +407,8 @@ class TestTimeseriesExpressionModel:
             campaign_scope_id=cs_1.id,
             expression_id=expr_1.id,
             timeseries_id=ts_1.id,
+            bucket_width_value=1,
+            bucket_width_unit="day",
         )
         db.session.commit()
 
@@ -450,6 +454,8 @@ class TestTimeseriesExpressionModel:
                     campaign_scope_id=cs_1.id,
                     expression_id=expr_1.id,
                     timeseries_id=DUMMY_ID,
+                    bucket_width_value=1,
+                    bucket_width_unit="day",
                 )
                 db.session.flush()
             db.session.rollback()
@@ -458,6 +464,8 @@ class TestTimeseriesExpressionModel:
                     campaign_scope_id=cs_1.id,
                     expression_id=DUMMY_ID,
                     timeseries_id=ts_1.id,
+                    bucket_width_value=1,
+                    bucket_width_unit="day",
                 )
                 db.session.flush()
             db.session.rollback()
@@ -465,6 +473,8 @@ class TestTimeseriesExpressionModel:
                 campaign_scope_id=cs_1.id,
                 expression_id=expr_1.id,
                 timeseries_id=ts_1.id,
+                bucket_width_value=1,
+                bucket_width_unit="day",
             )
             db.session.flush()
 
@@ -514,11 +524,15 @@ class TestTimeseriesExpressionModel:
                 campaign_scope_id=cs_1.id,
                 expression_id=expr_1.id,
                 timeseries_id=ts_1.id,
+                bucket_width_value=1,
+                bucket_width_unit="day",
             )
             ts_expr_2 = TimeseriesExpression.new(
                 campaign_scope_id=cs_2.id,
                 expression_id=expr_2.id,
                 timeseries_id=ts_2.id,
+                bucket_width_value=1,
+                bucket_width_unit="day",
             )
             db.session.flush()
 
@@ -527,6 +541,8 @@ class TestTimeseriesExpressionModel:
                 TimeseriesExpression.new(
                     expression_id=expr_3.id,
                     timeseries_id=ts_2.id,
+                    bucket_width_value=1,
+                    bucket_width_unit="day",
                 )
 
             TimeseriesExpression.get_by_id(ts_expr_2.id)

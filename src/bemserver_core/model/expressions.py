@@ -10,6 +10,7 @@ from bemserver_core.exceptions import (
     BEMServerCoreCampaignScopeError,
     BEMServerCoreIntegrityError,
 )
+from bemserver_core.time_utils import PeriodEnum
 
 from .campaigns import CampaignScope
 from .timeseries import Timeseries
@@ -117,6 +118,11 @@ class TimeseriesExpression(AuthMgrMixin, Base):
     campaign_scope_id = sqla.Column(sqla.ForeignKey("c_scopes.id"), nullable=False)
     expression_id = sqla.Column(sqla.ForeignKey("expressions.id"), nullable=False)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
+    bucket_width_value = sqla.Column(sqla.Integer, nullable=False)
+    bucket_width_unit = sqla.Column(
+        sqla.Enum(PeriodEnum, name="periodenum"), nullable=False
+    )
+    timezone = sqla.Column(sqla.String(40), nullable=False, default="UTC")
 
     campaign_scope = sqla.orm.relationship(
         "CampaignScope",
