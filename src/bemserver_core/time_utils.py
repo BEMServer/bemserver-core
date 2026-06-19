@@ -19,7 +19,7 @@ PANDAS_PERIOD_ALIASES = {
 }
 
 
-class PeriodEnum(enum.Enum):
+class PeriodEnum(enum.StrEnum):
     """Period names enum"""
 
     second = "second"

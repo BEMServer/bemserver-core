@@ -10,7 +10,7 @@ from bemserver_core.database import Base
 from .timeseries import Timeseries
 
 
-class WeatherParameterEnum(enum.Enum):
+class WeatherParameterEnum(enum.StrEnum):
     """Weather parameter enum"""
 
     AIR_TEMPERATURE = "air temperature"

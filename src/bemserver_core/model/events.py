@@ -25,7 +25,7 @@ from bemserver_core.model.users import User, UserByUserGroup, UserGroup
 
 
 @total_ordering
-class EventLevelEnum(enum.Enum):
+class EventLevelEnum(enum.IntEnum):
     """Event levels enum"""
 
     DEBUG = 10

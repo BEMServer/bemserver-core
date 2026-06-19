@@ -1,7 +1,6 @@
 """Event tests"""
 
 import datetime as dt
-import enum
 from unittest import mock
 
 import pytest
@@ -44,16 +43,6 @@ class TestEventLevelEnum:
             < EventLevelEnum.ERROR
             < EventLevelEnum.CRITICAL
         )
-
-        with pytest.raises(TypeError):
-            EventLevelEnum.DEBUG > 0  # noqa: B015 Pointless comparison.
-
-        class OtherEnum(enum.Enum):
-            A = 1
-            B = 2
-
-        with pytest.raises(TypeError):
-            EventLevelEnum.DEBUG > OtherEnum.A  # noqa: B015 Pointless comparison.
 
 
 class TestEventCategoryModel:
