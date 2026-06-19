@@ -2,8 +2,6 @@
 
 import datetime as dt
 
-import pytest
-
 import pandas as pd
 from pandas.testing import assert_series_equal
 
@@ -18,14 +16,11 @@ from tests.utils import create_timeseries_data
 
 
 class TestExpressionsEvaluateProcessing:
-    @pytest.mark.parametrize("campaigns", (2,), indirect=True)
-    @pytest.mark.parametrize("timeseries", (3,), indirect=True)
     def test_get_expression_variable_values(self, users, timeseries, campaign_scopes):
         admin_user = users[0]
         assert admin_user.is_admin
         cs_1 = campaign_scopes[0]
         ts_1 = timeseries[0]
-        ts_3 = timeseries[2]
 
         with OpenBar():
             ds_clean = TimeseriesDataState.get(name="Clean").first()
@@ -33,14 +28,13 @@ class TestExpressionsEvaluateProcessing:
                 campaign_scope_id=cs_1.id,
                 name="2 times a",
                 expr="2*a",
-                timeseries_id=ts_1.id,
             )
             db.session.flush()
             expr_var_1 = ExpressionVariable.new(
                 campaign_scope_id=cs_1.id,
                 expression_id=expr_1.id,
                 name="a",
-                timeseries_id=ts_3.id,
+                timeseries_id=ts_1.id,
                 aggregation="avg",
             )
             db.session.flush()
@@ -49,7 +43,7 @@ class TestExpressionsEvaluateProcessing:
         end_dt = dt.datetime(2020, 1, 2, tzinfo=dt.UTC)
         timestamps = pd.date_range(start_dt, end_dt, inclusive="left", freq="6h")
         values_2 = [0, 2, 4, 8]
-        create_timeseries_data(ts_3, ds_clean, timestamps, values_2)
+        create_timeseries_data(ts_1, ds_clean, timestamps, values_2)
 
         with CurrentUser(admin_user):
             data_s = get_expression_variable_values(
@@ -66,19 +60,16 @@ class TestExpressionsEvaluateProcessing:
                 index=pd.DatetimeIndex(timestamps, name="timestamp", freq="6h").as_unit(
                     "us"
                 ),
-                name=ts_3.id,
+                name=ts_1.id,
                 dtype=float,
             )
             assert_series_equal(data_s, expected_s)
 
-    @pytest.mark.parametrize("campaigns", (2,), indirect=True)
-    @pytest.mark.parametrize("timeseries", (3,), indirect=True)
     def test_evaluate(self, users, timeseries, campaign_scopes):
         admin_user = users[0]
         assert admin_user.is_admin
         cs_1 = campaign_scopes[0]
         ts_1 = timeseries[0]
-        ts_3 = timeseries[2]
 
         with OpenBar():
             ds_clean = TimeseriesDataState.get(name="Clean").first()
@@ -86,27 +77,25 @@ class TestExpressionsEvaluateProcessing:
                 campaign_scope_id=cs_1.id,
                 name="2 times a",
                 expr="2*a",
-                timeseries_id=ts_1.id,
             )
             expr_2 = Expression.new(
                 campaign_scope_id=cs_1.id,
                 name="a squared",
                 expr="a**2",
-                timeseries_id=ts_1.id,
             )
             db.session.flush()
             ExpressionVariable.new(
                 campaign_scope_id=cs_1.id,
                 expression_id=expr_1.id,
                 name="a",
-                timeseries_id=ts_3.id,
+                timeseries_id=ts_1.id,
                 aggregation="avg",
             )
             ExpressionVariable.new(
                 campaign_scope_id=cs_1.id,
                 expression_id=expr_2.id,
                 name="a",
-                timeseries_id=ts_3.id,
+                timeseries_id=ts_1.id,
                 aggregation="avg",
             )
             db.session.flush()
@@ -115,7 +104,7 @@ class TestExpressionsEvaluateProcessing:
         end_dt = dt.datetime(2020, 1, 2, tzinfo=dt.UTC)
         timestamps = pd.date_range(start_dt, end_dt, inclusive="left", freq="6h")
         values_2 = [0, 2, 4, 8]
-        create_timeseries_data(ts_3, ds_clean, timestamps, values_2)
+        create_timeseries_data(ts_1, ds_clean, timestamps, values_2)
 
         with CurrentUser(admin_user):
             data_s = evaluate(expr_1, start_dt, end_dt, 6, "hour")

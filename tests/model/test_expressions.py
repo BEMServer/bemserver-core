@@ -21,27 +21,23 @@ DUMMY_NAME = "Dummy name"
 
 
 class TestExpressionModel:
-    @pytest.mark.parametrize("campaigns", (2,), indirect=True)
-    @pytest.mark.parametrize("timeseries", (3,), indirect=True)
     def test_expressions_delete_cascade(self, users, timeseries, campaign_scopes):
         admin_user = users[0]
         cs_1 = campaign_scopes[0]
         ts_1 = timeseries[0]
-        ts_3 = timeseries[2]
 
         with OpenBar():
             expr_1 = Expression.new(
                 campaign_scope_id=cs_1.id,
                 name="2 times a",
                 expr="2*a",
-                timeseries_id=ts_1.id,
             )
             db.session.flush()
             ExpressionVariable.new(
                 campaign_scope_id=cs_1.id,
                 expression_id=expr_1.id,
                 name="a",
-                timeseries_id=ts_3.id,
+                timeseries_id=ts_1.id,
                 aggregation="avg",
             )
             db.session.flush()
@@ -62,7 +58,6 @@ class TestExpressionModel:
             campaign_scope_id=cs_1.id,
             name="2 times a",
             expr="2*a",
-            timeseries_id=ts_1.id,
         )
         db.session.flush()
         ExpressionVariable.new(
@@ -80,7 +75,6 @@ class TestExpressionModel:
             campaign_scope_id=cs_1.id,
             name="2 times a",
             expr="2*a",
-            timeseries_id=ts_1.id,
         )
         db.session.flush()
         with pytest.raises(BEMServerCoreExpressionValidationError):
@@ -91,7 +85,6 @@ class TestExpressionModel:
             campaign_scope_id=cs_1.id,
             name="2 times a",
             expr="2a",
-            timeseries_id=ts_1.id,
         )
         db.session.flush()
         ExpressionVariable.new(
@@ -109,19 +102,15 @@ class TestExpressionModel:
     def test_expression_read_only_fields(self, campaign_scopes, timeseries):
         cs_1 = campaign_scopes[0]
         cs_2 = campaign_scopes[1]
-        ts_1 = timeseries[0]
-        ts_2 = timeseries[1]
 
         expr_1 = Expression.new(
             campaign_scope_id=cs_2.id,
             name="2 times a",
             expr="2*a",
-            timeseries_id=ts_2.id,
         )
         db.session.commit()
 
-        # Update timeseries_id alongside so _before_flush doesn't raise
-        expr_1.update(campaign_scope_id=cs_1.id, timeseries_id=ts_1.id)
+        expr_1.update(campaign_scope_id=cs_1.id)
         with pytest.raises(
             sqla.exc.IntegrityError,
             match="campaign_scope_id cannot be modified",
@@ -135,23 +124,12 @@ class TestExpressionModel:
         admin_user = users[0]
         assert admin_user.is_admin
         cs_1 = campaign_scopes[0]
-        ts_1 = timeseries[0]
 
         with CurrentUser(admin_user):
-            with pytest.raises(BEMServerCoreIntegrityError):
-                Expression.new(
-                    campaign_scope_id=cs_1.id,
-                    name="2 times a",
-                    expr="2*a",
-                    timeseries_id=DUMMY_ID,
-                )
-                db.session.flush()
-            db.session.rollback()
             expr_1 = Expression.new(
                 campaign_scope_id=cs_1.id,
                 name="2 times a",
                 expr="2*a",
-                timeseries_id=ts_1.id,
             )
             db.session.flush()
 
@@ -177,21 +155,17 @@ class TestExpressionModel:
         assert not user_1.is_admin
         cs_1 = campaign_scopes[0]
         cs_2 = campaign_scopes[1]
-        ts_1 = timeseries[0]
-        ts_2 = timeseries[1]
 
         with OpenBar():
             expr_1 = Expression.new(
                 campaign_scope_id=cs_1.id,
                 name="2 times a",
                 expr="2*a",
-                timeseries_id=ts_1.id,
             )
             expr_2 = Expression.new(
                 campaign_scope_id=cs_2.id,
                 name="2 times a",
                 expr="2*a",
-                timeseries_id=ts_2.id,
             )
             db.session.flush()
 
@@ -201,7 +175,6 @@ class TestExpressionModel:
                     campaign_scope_id=cs_2.id,
                     name="2 times a",
                     expr="2*a",
-                    timeseries_id=ts_2.id,
                 )
 
             expr = Expression.get_by_id(expr_2.id)
@@ -228,21 +201,18 @@ class TestExpressionVariableModel:
             campaign_scope_id=cs_1.id,
             name="2 times a",
             expr="2*a",
-            timeseries_id=ts_1.id,
         )
         # Same scope as expr_v_1: used to test expression_id read-only
         expr_2 = Expression.new(
             campaign_scope_id=cs_1.id,
             name="3 times a",
             expr="3*a",
-            timeseries_id=ts_1.id,
         )
         # Different scope: used to test campaign_scope_id read-only
         expr_3 = Expression.new(
             campaign_scope_id=cs_2.id,
             name="4 times a",
             expr="4*a",
-            timeseries_id=ts_2.id,
         )
         expr_v_1 = ExpressionVariable.new(
             campaign_scope_id=cs_1.id,
@@ -288,7 +258,6 @@ class TestExpressionVariableModel:
                 campaign_scope_id=cs_1.id,
                 name="2 times a",
                 expr="2*a",
-                timeseries_id=ts_1.id,
             )
             db.session.commit()
             with pytest.raises(BEMServerCoreIntegrityError):
@@ -350,19 +319,16 @@ class TestExpressionVariableModel:
                 campaign_scope_id=cs_1.id,
                 name="2 times a",
                 expr="2*a",
-                timeseries_id=ts_1.id,
             )
             expr_2 = Expression.new(
                 campaign_scope_id=cs_2.id,
                 name="2 times a",
                 expr="2*a",
-                timeseries_id=ts_2.id,
             )
             expr_3 = Expression.new(
                 campaign_scope_id=cs_2.id,
                 name="2 times a",
                 expr="2*a",
-                timeseries_id=ts_2.id,
             )
             db.session.flush()
             ExpressionVariable.new(

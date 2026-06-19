@@ -990,13 +990,11 @@ def expressions(bemservercore, timeseries, campaign_scopes):
             campaign_scope_id=campaign_scopes[0].id,
             name="2 times a",
             expr="2*a",
-            timeseries_id=timeseries[0].id,
         )
         expr_2 = model.Expression.new(
             campaign_scope_id=campaign_scopes[0].id,
             name="a squared",
             expr="a**2",
-            timeseries_id=timeseries[0].id,
         )
         db.session.flush()
         model.ExpressionVariable.new(

@@ -22,33 +22,15 @@ class Expression(AuthMgrMixin, Base):
     campaign_scope_id = sqla.Column(sqla.ForeignKey("c_scopes.id"), nullable=False)
     name = sqla.Column(sqla.String, nullable=False)
     expr = sqla.Column(sqla.String, nullable=False)
-    timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
     unit_symbol = sqla.Column(sqla.String(20))
 
     campaign_scope = sqla.orm.relationship(
         "CampaignScope",
         backref=sqla.orm.backref("expressions", cascade="all, delete-orphan"),
     )
-    timeseries = sqla.orm.relationship(
-        "Timeseries",
-        backref=sqla.orm.backref("expressions", cascade="all, delete-orphan"),
-    )
 
     def validate(self):
         expression_eval.validate(self.expr, [v.name for v in self.variables])
-
-    def _before_flush(self):
-        # Ensure TS is in Campaign scope
-        if self.timeseries_id and self.campaign_scope_id:
-            timeseries = Timeseries.get_by_id(self.timeseries_id)
-            if timeseries is None:
-                raise BEMServerCoreIntegrityError(
-                    f"Can't find Timeseries with id {self.timeseries_id}"
-                )
-            if timeseries.campaign_scope_id != self.campaign_scope_id:
-                raise BEMServerCoreCampaignScopeError(
-                    "Expression and timeseries must be in same campaign scope"
-                )
 
     @classmethod
     def authorize_query(cls, actor, query):
