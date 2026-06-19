@@ -992,7 +992,7 @@ def expressions(bemservercore, timeseries, campaign_scopes):
             expr="2*a",
         )
         expr_2 = model.Expression.new(
-            campaign_scope_id=campaign_scopes[0].id,
+            campaign_scope_id=campaign_scopes[1].id,
             name="a squared",
             expr="a**2",
         )
@@ -1001,11 +1001,11 @@ def expressions(bemservercore, timeseries, campaign_scopes):
             campaign_scope_id=campaign_scopes[0].id,
             expression_id=expr_1.id,
             name="a",
-            timeseries_id=timeseries[1].id,
+            timeseries_id=timeseries[0].id,
             aggregation="avg",
         )
         model.ExpressionVariable.new(
-            campaign_scope_id=campaign_scopes[0].id,
+            campaign_scope_id=campaign_scopes[1].id,
             expression_id=expr_2.id,
             name="a",
             timeseries_id=timeseries[1].id,
@@ -1013,3 +1013,20 @@ def expressions(bemservercore, timeseries, campaign_scopes):
         )
         db.session.commit()
     return (expr_1, expr_2)
+
+
+@pytest.fixture
+def ts_expressions(bemservercore, timeseries, campaign_scopes, expressions):
+    with OpenBar():
+        ts_expr_1 = model.TimeseriesExpression.new(
+            campaign_scope_id=campaign_scopes[0].id,
+            expression_id=expressions[0].id,
+            timeseries_id=timeseries[0].id,
+        )
+        ts_expr_2 = model.TimeseriesExpression.new(
+            campaign_scope_id=campaign_scopes[1].id,
+            expression_id=expressions[1].id,
+            timeseries_id=timeseries[1].id,
+        )
+        db.session.flush()
+    return (ts_expr_1, ts_expr_2)

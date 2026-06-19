@@ -110,6 +110,64 @@ class ExpressionVariable(AuthMgrMixin, Base):
         return campaign_scope.is_member(actor)
 
 
+class TimeseriesExpression(AuthMgrMixin, Base):
+    __tablename__ = "ts_expressions"
+
+    id = sqla.Column(sqla.Integer, primary_key=True)
+    campaign_scope_id = sqla.Column(sqla.ForeignKey("c_scopes.id"), nullable=False)
+    expression_id = sqla.Column(sqla.ForeignKey("expressions.id"), nullable=False)
+    timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
+
+    campaign_scope = sqla.orm.relationship(
+        "CampaignScope",
+        backref=sqla.orm.backref("ts_expressions", cascade="all, delete-orphan"),
+    )
+    expression = sqla.orm.relationship(
+        "Expression",
+        backref=sqla.orm.backref("ts_expressions", cascade="all, delete-orphan"),
+    )
+    timeseries = sqla.orm.relationship(
+        "Timeseries",
+        backref=sqla.orm.backref("ts_expressions", cascade="all, delete-orphan"),
+    )
+
+    def _before_flush(self):
+        # Ensure Expression and Timeseries are in Campaign scope
+        if self.timeseries_id and self.expression_id and self.campaign_scope_id:
+            timeseries = Timeseries.get_by_id(self.timeseries_id)
+            expression = Expression.get_by_id(self.expression_id)
+            if timeseries is None:
+                raise BEMServerCoreIntegrityError(
+                    f"Can't find Timeseries with id {self.timeseries_id}"
+                )
+            if expression is None:
+                raise BEMServerCoreIntegrityError(
+                    f"Can't find Expression with id {self.expression_id}"
+                )
+            if timeseries.campaign_scope_id != self.campaign_scope_id:
+                raise BEMServerCoreCampaignScopeError(
+                    "Timeseries expression and timeseries "
+                    "must be in same campaign scope"
+                )
+            if expression.campaign_scope_id != self.campaign_scope_id:
+                raise BEMServerCoreCampaignScopeError(
+                    "Timeseries expression and expression "
+                    "must be in same campaign scope"
+                )
+
+    @classmethod
+    def authorize_query(cls, actor, query):
+        return CampaignScope.authorize_query(actor, query.join(CampaignScope))
+
+    def authorize_read(self, actor):
+        campaign_scope = (
+            db.session.query(CampaignScope)
+            .filter(CampaignScope.id == self.campaign_scope_id)
+            .one()
+        )
+        return campaign_scope.is_member(actor)
+
+
 def init_db_expressions_triggers():
     """Create triggers to protect some columns from update.
 
@@ -120,4 +178,6 @@ def init_db_expressions_triggers():
         Expression.campaign_scope_id,
         ExpressionVariable.campaign_scope_id,
         ExpressionVariable.expression_id,
+        TimeseriesExpression.campaign_scope_id,
+        TimeseriesExpression.expression_id,
     )

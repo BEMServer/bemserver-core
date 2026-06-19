@@ -18,6 +18,7 @@ from bemserver_core.exceptions import (
 from bemserver_core.model import (
     EnergyConsumptionTimeseriesByBuilding,
     EnergyConsumptionTimeseriesBySite,
+    ExpressionVariable,
     Timeseries,
     TimeseriesByBuilding,
     TimeseriesByDataState,
@@ -28,6 +29,7 @@ from bemserver_core.model import (
     TimeseriesByZone,
     TimeseriesData,
     TimeseriesDataState,
+    TimeseriesExpression,
     TimeseriesProperty,
     TimeseriesPropertyData,
 )
@@ -155,6 +157,8 @@ class TestTimeseriesModel:
     @pytest.mark.usefixtures("energy_consumption_timeseries_by_sites")
     @pytest.mark.usefixtures("energy_consumption_timeseries_by_buildings")
     @pytest.mark.usefixtures("timeseries_by_events")
+    @pytest.mark.usefixtures("expressions")
+    @pytest.mark.usefixtures("ts_expressions")
     def test_timeseries_delete_cascade(
         self, users, timeseries, timeseries_by_data_states
     ):
@@ -181,6 +185,8 @@ class TestTimeseriesModel:
             assert len(list(EnergyConsumptionTimeseriesBySite.get())) == 2
             assert len(list(EnergyConsumptionTimeseriesByBuilding.get())) == 2
             assert len(list(TimeseriesByEvent.get())) == 2
+            assert len(list(ExpressionVariable.get())) == 2
+            assert len(list(TimeseriesExpression.get())) == 2
 
             ts_1.delete()
             db.session.commit()
@@ -195,6 +201,8 @@ class TestTimeseriesModel:
             assert len(list(EnergyConsumptionTimeseriesBySite.get())) == 1
             assert len(list(EnergyConsumptionTimeseriesByBuilding.get())) == 1
             assert len(list(TimeseriesByEvent.get())) == 1
+            assert len(list(ExpressionVariable.get())) == 1
+            assert len(list(TimeseriesExpression.get())) == 1
 
     @pytest.mark.usefixtures("as_admin")
     def test_timeseries_get_timeseries_by_data_states(self, timeseries):
