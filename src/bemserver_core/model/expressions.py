@@ -118,6 +118,12 @@ class TimeseriesExpression(AuthMgrMixin, Base):
     campaign_scope_id = sqla.Column(sqla.ForeignKey("c_scopes.id"), nullable=False)
     expression_id = sqla.Column(sqla.ForeignKey("expressions.id"), nullable=False)
     timeseries_id = sqla.Column(sqla.ForeignKey("timeseries.id"), nullable=False)
+    src_data_state_id = sqla.Column(
+        sqla.ForeignKey("ts_data_states.id"), nullable=False
+    )
+    dest_data_state_id = sqla.Column(
+        sqla.ForeignKey("ts_data_states.id"), nullable=False
+    )
     bucket_width_value = sqla.Column(sqla.Integer, nullable=False)
     bucket_width_unit = sqla.Column(
         sqla.Enum(PeriodEnum, name="periodenum"), nullable=False
@@ -135,6 +141,16 @@ class TimeseriesExpression(AuthMgrMixin, Base):
     timeseries = sqla.orm.relationship(
         "Timeseries",
         backref=sqla.orm.backref("ts_expressions", cascade="all, delete-orphan"),
+    )
+    src_data_state = sqla.orm.relationship(
+        "TimeseriesDataState",
+        foreign_keys=[src_data_state_id],
+        backref=sqla.orm.backref("ts_expr_src", cascade="all, delete-orphan"),
+    )
+    dest_data_state = sqla.orm.relationship(
+        "TimeseriesDataState",
+        foreign_keys=[dest_data_state_id],
+        backref=sqla.orm.backref("ts_expr_dest", cascade="all, delete-orphan"),
     )
 
     def _before_flush(self):

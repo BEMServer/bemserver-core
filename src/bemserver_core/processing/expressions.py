@@ -5,7 +5,6 @@ Evaluate expressions
 
 from bemserver_core import expression_eval
 from bemserver_core.input_output import tsdio
-from bemserver_core.model import TimeseriesDataState
 
 
 def get_expression_variable_values(
@@ -35,20 +34,19 @@ def evaluate(
     expression,
     start_dt,
     end_dt,
+    data_state,
     bucket_width_value,
     bucket_width_unit,
     timezone="UTC",
 ):
     namespace = {}
 
-    ds_clean = TimeseriesDataState.get(name="Clean").first()
-
     for expr_var in expression.variables:
         namespace[expr_var.name] = get_expression_variable_values(
             expr_var,
             start_dt,
             end_dt,
-            ds_clean,
+            data_state,
             bucket_width_value,
             bucket_width_unit,
             timezone=timezone,

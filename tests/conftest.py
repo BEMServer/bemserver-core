@@ -1022,6 +1022,8 @@ def ts_expressions(bemservercore, timeseries, campaign_scopes, expressions):
             campaign_scope_id=campaign_scopes[0].id,
             expression_id=expressions[0].id,
             timeseries_id=timeseries[0].id,
+            src_data_state_id=1,
+            dest_data_state_id=1,
             bucket_width_value=1,
             bucket_width_unit="day",
         )
@@ -1029,6 +1031,8 @@ def ts_expressions(bemservercore, timeseries, campaign_scopes, expressions):
             campaign_scope_id=campaign_scopes[1].id,
             expression_id=expressions[1].id,
             timeseries_id=timeseries[1].id,
+            src_data_state_id=2,
+            dest_data_state_id=2,
             bucket_width_value=1,
             bucket_width_unit="day",
         )

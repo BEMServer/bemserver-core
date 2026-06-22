@@ -45,6 +45,8 @@ class TestExpressionModel:
                 campaign_scope_id=cs_1.id,
                 expression_id=expr_1.id,
                 timeseries_id=ts_1.id,
+                src_data_state_id=1,
+                dest_data_state_id=1,
                 bucket_width_value=1,
                 bucket_width_unit="day",
             )
@@ -407,6 +409,8 @@ class TestTimeseriesExpressionModel:
             campaign_scope_id=cs_1.id,
             expression_id=expr_1.id,
             timeseries_id=ts_1.id,
+            src_data_state_id=1,
+            dest_data_state_id=1,
             bucket_width_value=1,
             bucket_width_unit="day",
         )
@@ -454,6 +458,8 @@ class TestTimeseriesExpressionModel:
                     campaign_scope_id=cs_1.id,
                     expression_id=expr_1.id,
                     timeseries_id=DUMMY_ID,
+                    src_data_state_id=1,
+                    dest_data_state_id=1,
                     bucket_width_value=1,
                     bucket_width_unit="day",
                 )
@@ -464,6 +470,8 @@ class TestTimeseriesExpressionModel:
                     campaign_scope_id=cs_1.id,
                     expression_id=DUMMY_ID,
                     timeseries_id=ts_1.id,
+                    src_data_state_id=1,
+                    dest_data_state_id=1,
                     bucket_width_value=1,
                     bucket_width_unit="day",
                 )
@@ -473,6 +481,8 @@ class TestTimeseriesExpressionModel:
                 campaign_scope_id=cs_1.id,
                 expression_id=expr_1.id,
                 timeseries_id=ts_1.id,
+                src_data_state_id=1,
+                dest_data_state_id=1,
                 bucket_width_value=1,
                 bucket_width_unit="day",
             )
@@ -524,6 +534,8 @@ class TestTimeseriesExpressionModel:
                 campaign_scope_id=cs_1.id,
                 expression_id=expr_1.id,
                 timeseries_id=ts_1.id,
+                src_data_state_id=1,
+                dest_data_state_id=1,
                 bucket_width_value=1,
                 bucket_width_unit="day",
             )
@@ -531,6 +543,8 @@ class TestTimeseriesExpressionModel:
                 campaign_scope_id=cs_2.id,
                 expression_id=expr_2.id,
                 timeseries_id=ts_2.id,
+                src_data_state_id=2,
+                dest_data_state_id=2,
                 bucket_width_value=1,
                 bucket_width_unit="day",
             )
@@ -543,6 +557,8 @@ class TestTimeseriesExpressionModel:
                     timeseries_id=ts_2.id,
                     bucket_width_value=1,
                     bucket_width_unit="day",
+                    src_data_state_id=1,
+                    dest_data_state_id=1,
                 )
 
             TimeseriesExpression.get_by_id(ts_expr_2.id)

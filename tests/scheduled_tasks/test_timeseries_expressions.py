@@ -29,11 +29,14 @@ class TestTimeseriesExpressionScheduledTask:
         cs_1 = campaign_scopes[0]
 
         with OpenBar():
+            ds_raw = TimeseriesDataState.get(name="Raw").first()
             ds_clean = TimeseriesDataState.get(name="Clean").first()
             TimeseriesExpression.new(
                 campaign_scope_id=cs_1.id,
                 expression_id=expr_1.id,
                 timeseries_id=ts_3.id,
+                src_data_state_id=ds_raw.id,
+                dest_data_state_id=ds_clean.id,
                 bucket_width_value=1,
                 bucket_width_unit="day",
             )
@@ -43,7 +46,7 @@ class TestTimeseriesExpressionScheduledTask:
         end_dt = dt.datetime(2020, 1, 5, tzinfo=dt.UTC)
         timestamps = pd.date_range(start_dt, end_dt, inclusive="left", freq="1D")
         values = [0, 1, 2, 3]
-        create_timeseries_data(ts_0, ds_clean, timestamps, values)
+        create_timeseries_data(ts_0, ds_raw, timestamps, values)
 
         with OpenBar():
             compute_timeseries_expressions(campaign_1, start_dt, end_dt)

@@ -107,7 +107,7 @@ class TestExpressionsEvaluateProcessing:
         create_timeseries_data(ts_1, ds_clean, timestamps, values_2)
 
         with CurrentUser(admin_user):
-            data_s = evaluate(expr_1, start_dt, end_dt, 6, "hour")
+            data_s = evaluate(expr_1, start_dt, end_dt, ds_clean, 6, "hour")
             expected_s = pd.Series(
                 [0, 4, 8, 16],
                 pd.DatetimeIndex(timestamps, name="timestamp", freq="6h").as_unit("us"),
@@ -116,7 +116,7 @@ class TestExpressionsEvaluateProcessing:
             )
             assert_series_equal(data_s, expected_s)
 
-            data_s = evaluate(expr_2, start_dt, end_dt, 6, "hour")
+            data_s = evaluate(expr_2, start_dt, end_dt, ds_clean, 6, "hour")
             expected_s = pd.Series(
                 [0, 4, 16, 64],
                 pd.DatetimeIndex(timestamps, name="timestamp", freq="6h").as_unit("us"),
@@ -125,7 +125,7 @@ class TestExpressionsEvaluateProcessing:
             )
             assert_series_equal(data_s, expected_s)
 
-            data_s = evaluate(expr_1, start_dt, end_dt, 12, "hour")
+            data_s = evaluate(expr_1, start_dt, end_dt, ds_clean, 12, "hour")
             expected_s = pd.Series(
                 [2, 12],
                 pd.DatetimeIndex(
