@@ -33,6 +33,42 @@ class Expression(AuthMgrMixin, Base):
     def validate(self):
         expression_eval.validate(self.expr, [v.name for v in self.variables])
 
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "expr": self.expr,
+            "unit_symbol": self.unit_symbol,
+            "campaign_scope_id": self.campaign_scope_id,
+            "variables": [
+                {
+                    "name": expr_var.name,
+                    "unit_symbol": expr_var.unit_symbol,
+                    "timeseries_id": expr_var.timeseries_id,
+                    "aggregation": expr_var.aggregation,
+                }
+                for expr_var in self.variables
+            ],
+        }
+
+    @classmethod
+    def from_dict(cls, expr_dict):
+        expression = cls.new(
+            name=expr_dict["name"],
+            expr=expr_dict["expr"],
+            unit_symbol=expr_dict["unit_symbol"],
+            campaign_scope_id=expr_dict["campaign_scope_id"],
+        )
+        for expr_var_dict in expr_dict["variables"]:
+            ExpressionVariable.new(
+                name=expr_var_dict["name"],
+                unit_symbol=expr_var_dict["unit_symbol"],
+                campaign_scope_id=expr_dict["campaign_scope_id"],
+                timeseries_id=expr_var_dict["timeseries_id"],
+                aggregation=expr_var_dict["aggregation"],
+                expression=expression,
+            )
+        return expression
+
     @classmethod
     def authorize_query(cls, actor, query):
         return CampaignScope.authorize_query(actor, query.join(CampaignScope))

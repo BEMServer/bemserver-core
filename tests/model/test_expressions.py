@@ -189,6 +189,17 @@ class TestExpressionModel:
                     expr="2*a",
                 )
 
+            with pytest.raises(BEMServerAuthorizationError):
+                Expression.from_dict(
+                    {
+                        "name": "2 times a",
+                        "expr": "2*a",
+                        "unit_symbol": "kW",
+                        "campaign_scope_id": cs_2.id,
+                        "variables": [],
+                    }
+                )
+
             expr = Expression.get_by_id(expr_2.id)
             expr_list = list(Expression.get())
             assert len(expr_list) == 1
@@ -199,6 +210,41 @@ class TestExpressionModel:
                 expr.update(expr="2+a")
             with pytest.raises(BEMServerAuthorizationError):
                 expr.delete()
+
+    @pytest.mark.usefixtures("as_admin")
+    def test_expression_from_dict_to_dict(self, campaign_scopes, timeseries):
+        cs_1 = campaign_scopes[0]
+        ts_1 = timeseries[0]
+
+        expr_dict = {
+            "name": "2 times a",
+            "expr": "2*a",
+            "unit_symbol": "kW",
+            "campaign_scope_id": cs_1.id,
+            "variables": [
+                {
+                    "name": "a",
+                    "unit_symbol": "kW",
+                    "timeseries_id": ts_1.id,
+                    "aggregation": "avg",
+                }
+            ],
+        }
+
+        expr = Expression.from_dict(expr_dict)
+
+        assert expr.name == "2 times a"
+        assert expr.expr == "2*a"
+        assert expr.unit_symbol == "kW"
+        assert expr.campaign_scope_id == cs_1.id
+        assert len(expr.variables) == 1
+        expr_var = expr.variables[0]
+        assert expr_var.name == "a"
+        assert expr_var.unit_symbol == "kW"
+        assert expr_var.timeseries_id == ts_1.id
+        assert expr_var.aggregation == "avg"
+
+        assert expr.to_dict() == expr_dict
 
 
 class TestExpressionVariableModel:
