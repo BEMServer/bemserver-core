@@ -8,6 +8,7 @@ import pandas as pd
 from pandas.testing import assert_series_equal
 
 from bemserver_core.database import db
+from bemserver_core.exceptions import TimeseriesNotFoundError
 from bemserver_core.model import Expression, ExpressionVariable, TimeseriesDataState
 from bemserver_core.processing.expressions import (
     evaluate,
@@ -15,6 +16,8 @@ from bemserver_core.processing.expressions import (
     get_expression_variable_values,
 )
 from tests.utils import create_timeseries_data
+
+DUMMY_ID = 69
 
 
 class TestExpressionsEvaluateProcessing:
@@ -209,3 +212,8 @@ class TestExpressionsEvaluateProcessing:
             dtype=float,
         )
         assert_series_equal(data_s, expected_s)
+
+        expr_1_dict = expr_1.to_dict()
+        expr_1_dict["variables"][0]["timeseries_id"] = DUMMY_ID
+        with pytest.raises(TimeseriesNotFoundError):
+            evaluate_from_dict(expr_1_dict, start_dt, end_dt, ds_clean, 12, "hour")

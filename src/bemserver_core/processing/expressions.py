@@ -4,6 +4,7 @@ Evaluate expressions
 """
 
 from bemserver_core import expression_eval
+from bemserver_core.exceptions import TimeseriesNotFoundError
 from bemserver_core.input_output import tsdio
 from bemserver_core.model import Timeseries
 
@@ -69,6 +70,10 @@ def evaluate_from_dict(
 
     for expr_var in expression["variables"]:
         timeseries = Timeseries.get_by_id(expr_var["timeseries_id"])
+        if timeseries is None:
+            raise TimeseriesNotFoundError(
+                f"Unknown timeseries: {expr_var['timeseries_id']}"
+            )
         namespace[expr_var["name"]] = tsdio.get_timeseries_buckets_data(
             start_dt,
             end_dt,
