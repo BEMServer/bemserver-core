@@ -215,6 +215,7 @@ class TestExpressionModel:
     def test_expression_from_dict_to_dict(self, campaign_scopes, timeseries):
         cs_1 = campaign_scopes[0]
         ts_1 = timeseries[0]
+        ts_2 = timeseries[1]
 
         expr_dict = {
             "name": "2 times a",
@@ -232,6 +233,7 @@ class TestExpressionModel:
         }
 
         expr = Expression.from_dict(expr_dict)
+        db.session.flush()
 
         assert expr.name == "2 times a"
         assert expr.expr == "2*a"
@@ -244,7 +246,19 @@ class TestExpressionModel:
         assert expr_var.timeseries_id == ts_1.id
         assert expr_var.aggregation == "avg"
 
-        assert expr.to_dict() == expr_dict
+        ret = expr.to_dict()
+        del ret["id"]
+        assert ret == expr_dict
+
+        expr_dict_2 = expr_dict
+        expr_dict_2["unit_symbol"] = (None,)
+        expr_dict_2["variables"][0]["timeseries_id"] = ts_2.id
+        expr.update_from_dict(expr_dict_2)
+        db.session.flush()
+
+        ret = expr.to_dict()
+        del ret["id"]
+        assert ret == expr_dict_2
 
 
 class TestExpressionVariableModel:

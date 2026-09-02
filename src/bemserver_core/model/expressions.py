@@ -35,6 +35,7 @@ class Expression(AuthMgrMixin, Base):
 
     def to_dict(self):
         return {
+            "id": self.id,
             "name": self.name,
             "expr": self.expr,
             "unit_symbol": self.unit_symbol,
@@ -68,6 +69,25 @@ class Expression(AuthMgrMixin, Base):
                 expression=expression,
             )
         return expression
+
+    def update_from_dict(self, expr_dict):
+        expr_dict = expr_dict.copy()
+        variables = expr_dict.pop("variables")
+        del self.variables
+        # Flush to avoid unique constraint issue when recreating variables
+        db.session.flush()
+        self.update(**expr_dict)
+        self.variables = [
+            ExpressionVariable.new(
+                name=expr_var_dict["name"],
+                unit_symbol=expr_var_dict["unit_symbol"],
+                campaign_scope_id=self.campaign_scope_id,
+                timeseries_id=expr_var_dict["timeseries_id"],
+                aggregation=expr_var_dict["aggregation"],
+                expression=self,
+            )
+            for expr_var_dict in variables
+        ]
 
     @classmethod
     def authorize_query(cls, actor, query):
