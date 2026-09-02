@@ -8,6 +8,7 @@ from bemserver_core.authorization import CurrentUser, OpenBar
 from bemserver_core.database import db
 from bemserver_core.exceptions import (
     BEMServerAuthorizationError,
+    BEMServerCoreCampaignScopeError,
     BEMServerCoreExpressionValidationError,
     BEMServerCoreIntegrityError,
 )
@@ -217,6 +218,13 @@ class TestExpressionModel:
         ts_1 = timeseries[0]
         ts_2 = timeseries[1]
 
+        var_dict = {
+            "name": "a",
+            "unit_symbol": "kW",
+            "timeseries_id": ts_1.id,
+            "aggregation": "avg",
+        }
+
         expr_dict = {
             "name": "2 times a",
             "expr": "2*a",
@@ -250,15 +258,31 @@ class TestExpressionModel:
         del ret["id"]
         assert ret == expr_dict
 
-        expr_dict_2 = expr_dict
-        expr_dict_2["unit_symbol"] = (None,)
-        expr_dict_2["variables"][0]["timeseries_id"] = ts_2.id
-        expr.update_from_dict(expr_dict_2)
+        expr_dict_3 = expr_dict
+        expr_dict_3["unit_symbol"] = (None,)
+        expr.update_from_dict(expr_dict_3)
         db.session.flush()
 
         ret = expr.to_dict()
         del ret["id"]
-        assert ret == expr_dict_2
+        assert ret == expr_dict_3
+
+        db.session.commit()
+
+        expr_dict_2 = expr_dict.copy()
+        var_dict_2 = var_dict.copy()
+        var_dict_2["timeseries_id"] = ts_2.id
+        expr_dict_2["variables"] = [var_dict_2]
+        with pytest.raises(BEMServerCoreCampaignScopeError):
+            Expression.from_dict(expr_dict_2)
+            db.session.flush()
+        db.session.rollback()
+
+        expr_dict_4 = expr_dict
+        expr_dict_4["variables"][0]["timeseries_id"] = ts_2.id
+        with pytest.raises(BEMServerCoreCampaignScopeError):
+            expr.update_from_dict(expr_dict_4)
+            db.session.flush()
 
 
 class TestExpressionVariableModel:

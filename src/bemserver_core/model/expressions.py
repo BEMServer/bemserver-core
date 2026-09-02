@@ -59,6 +59,7 @@ class Expression(AuthMgrMixin, Base):
             unit_symbol=expr_dict["unit_symbol"],
             campaign_scope_id=expr_dict["campaign_scope_id"],
         )
+        db.session.flush()
         for expr_var_dict in expr_dict["variables"]:
             ExpressionVariable.new(
                 name=expr_var_dict["name"],
@@ -66,7 +67,7 @@ class Expression(AuthMgrMixin, Base):
                 campaign_scope_id=expr_dict["campaign_scope_id"],
                 timeseries_id=expr_var_dict["timeseries_id"],
                 aggregation=expr_var_dict["aggregation"],
-                expression=expression,
+                expression_id=expression.id,
             )
         return expression
 
@@ -84,7 +85,7 @@ class Expression(AuthMgrMixin, Base):
                 campaign_scope_id=self.campaign_scope_id,
                 timeseries_id=expr_var_dict["timeseries_id"],
                 aggregation=expr_var_dict["aggregation"],
-                expression=self,
+                expression_id=self.id,
             )
             for expr_var_dict in variables
         ]
