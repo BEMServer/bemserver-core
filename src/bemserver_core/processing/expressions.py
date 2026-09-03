@@ -29,7 +29,7 @@ def evaluate(
             bucket_width_value,
             bucket_width_unit,
             aggregation=expr_var.aggregation,
-            convert_to=expr_var.unit_symbol,
+            convert_to={expr_var.timeseries.id: expr_var.unit_symbol},
             timezone=timezone,
             col_label="id",
         )[expr_var.timeseries_id]
@@ -62,7 +62,7 @@ def evaluate_from_dict(
             bucket_width_value,
             bucket_width_unit,
             aggregation=expr_var["aggregation"],
-            convert_to=expr_var["unit_symbol"],
+            convert_to={timeseries.id: expr_var["unit_symbol"]},
             timezone=timezone,
             col_label="id",
         )[expr_var["timeseries_id"]]
