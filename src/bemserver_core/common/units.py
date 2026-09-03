@@ -51,11 +51,11 @@ class BEMServerUnitRegistry:
         :param dict src_units: Mapping of column name -> source unit
         :param dict dest_units: Mapping of column name -> destination unit
 
-        Only columns in desc_units are converted. src_units is supposed to contain
-        all keys in dest_units.
+        Only columns in desc_units are converted. None values in desc_units are skipped.
+        src_units must contain non-None values for all non-None values in dest_units.
         """
         for col in data_df.columns:
-            if col in dest_units:
+            if col in dest_units and dest_units[col] is not None:
                 data_df[col] = self.convert(
                     data_df[col].values, src_units[col], dest_units[col]
                 )

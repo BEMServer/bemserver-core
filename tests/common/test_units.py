@@ -81,6 +81,13 @@ class TestUnits:
         with pytest.raises(BEMServerCoreDimensionalityError):
             ureg.convert_df(data_df, {"id": "m"}, {"id": "kW"})
 
+    def test_ureg_convert_df_none_unit(self):
+        data_df = pd.DataFrame({"id": [0, 1, 2]})
+        ureg.convert_df(data_df, {"id": "m"}, {"id": None})
+        assert_frame_equal(data_df, pd.DataFrame({"id": [0, 1, 2]}))
+        with pytest.raises(BEMServerCoreDimensionalityError):
+            ureg.convert_df(data_df, {"id": None}, {"id": "m"})
+
 
 @pytest.mark.parametrize("bemservercore", (False,), indirect=True)
 def test_bemserver_core_load_units_definitions_file(bemservercore):
