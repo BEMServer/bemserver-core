@@ -13,7 +13,6 @@ from bemserver_core.model import Expression, ExpressionVariable, TimeseriesDataS
 from bemserver_core.processing.expressions import (
     evaluate,
     evaluate_from_dict,
-    get_expression_variable_values,
 )
 from tests.utils import create_timeseries_data
 
@@ -21,52 +20,6 @@ DUMMY_ID = 69
 
 
 class TestExpressionsEvaluateProcessing:
-    @pytest.mark.usefixtures("as_admin")
-    def test_get_expression_variable_values(self, timeseries, campaign_scopes):
-        cs_1 = campaign_scopes[0]
-        ts_1 = timeseries[0]
-
-        ds_clean = TimeseriesDataState.get(name="Clean").first()
-        expr_1 = Expression.new(
-            campaign_scope_id=cs_1.id,
-            name="2 times a",
-            expr="2*a",
-        )
-        db.session.flush()
-        expr_var_1 = ExpressionVariable.new(
-            campaign_scope_id=cs_1.id,
-            expression_id=expr_1.id,
-            name="a",
-            timeseries_id=ts_1.id,
-            aggregation="avg",
-        )
-        db.session.flush()
-
-        start_dt = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
-        end_dt = dt.datetime(2020, 1, 2, tzinfo=dt.UTC)
-        timestamps = pd.date_range(start_dt, end_dt, inclusive="left", freq="6h")
-        values_2 = [0, 2, 4, 8]
-        create_timeseries_data(ts_1, ds_clean, timestamps, values_2)
-
-        data_s = get_expression_variable_values(
-            expr_var_1,
-            start_dt,
-            end_dt,
-            ds_clean,
-            6,
-            "hour",
-            timezone="UTC",
-        )
-        expected_s = pd.Series(
-            [0, 2, 4, 8],
-            index=pd.DatetimeIndex(timestamps, name="timestamp", freq="6h").as_unit(
-                "us"
-            ),
-            name=ts_1.id,
-            dtype=float,
-        )
-        assert_series_equal(data_s, expected_s)
-
     @pytest.mark.usefixtures("as_admin")
     def test_evaluate(self, timeseries, campaign_scopes):
         cs_1 = campaign_scopes[0]
